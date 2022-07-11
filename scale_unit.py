@@ -1,4 +1,4 @@
-#!/work/home/mayuan/miniconda3/envs/cage/bin/python3
+#!/work/home/may/miniconda3/bin/python3
 import os
 import numpy as np
 from argparse import ArgumentParser

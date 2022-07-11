@@ -1,4 +1,4 @@
-#!/work/home/mayuan/miniconda3/envs/cage/bin/python3
+#!/work/home/may/miniconda3/bin/python3
 '''
 Use example:
     VaspPhono.py -d phonopy/ -pposf -scell 2 2 2 
@@ -94,7 +94,7 @@ def slurmDFPT(slurm_dirpath):
         slurm.write("#SBATCH  --job-name=ls              \n")                         
         slurm.write("#SBATCH  --output=DFPT.out.%j       \n")                       
         slurm.write("#SBATCH  --error=DFPT.err.%j        \n")                      
-        slurm.write("#SBATCH  --partition=xieyu          \n")    # lhy lbt is both ok                
+        slurm.write("#SBATCH  --partition=lhy          \n")    # lhy lbt is both ok                
         slurm.write("#SBATCH  --nodes=1                  \n")             
         slurm.write("#SBATCH  --ntasks=48                \n")               
         slurm.write("#SBATCH  --ntasks-per-node=48       \n")                        
@@ -118,7 +118,7 @@ def slurmDisplacement(slurm_dirpath, number):
         slurm.write("#SBATCH  --job-name=Disp            \n")                         
         slurm.write("#SBATCH  --output=Disp.out.%j       \n")                       
         slurm.write("#SBATCH  --error=Disp.err.%j        \n")                      
-        slurm.write("#SBATCH  --partition=xieyu          \n")    # lhy lbt is both ok                
+        slurm.write("#SBATCH  --partition=lhy          \n")    # lhy lbt is both ok                
         slurm.write("#SBATCH  --nodes=1                  \n")             
         slurm.write("#SBATCH  --ntasks=48                \n")               
         slurm.write("#SBATCH  --ntasks-per-node=48       \n")                        

@@ -1,4 +1,4 @@
-#!/work/home/mayuan/miniconda3/envs/cage/bin/python3
+#!/work/home/may/miniconda3/bin/python3
 '''
 The requirement is:
     1. 赝势文件UPFs收集好之后放在一个子目录中, 例如放在名为pp的子目录中

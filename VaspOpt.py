@@ -1,4 +1,4 @@
-#!/work/home/mayuan/miniconda3/envs/cage/bin/python3
+#!/work/home/may/miniconda3/bin/python3
 '''
 The function of this scripts is opt many structures at the same time.
 The requirement is:
@@ -134,7 +134,7 @@ def slurm3opt(slurm_dirpath):
         slurm.write("#SBATCH  --job-name=opt3steps        \n")                         
         slurm.write("#SBATCH  --output=opt3steps.out.%j   \n")                       
         slurm.write("#SBATCH  --error=opt3steps.err.%j    \n")                      
-        slurm.write("#SBATCH  --partition=xieyu           \n")                   
+        slurm.write("#SBATCH  --partition=lhy           \n")                   
         slurm.write("#SBATCH  --nodes=1                   \n")             
         slurm.write("#SBATCH  --ntasks=48                 \n")               
         slurm.write("#SBATCH  --ntasks-per-node=48        \n")                        
@@ -163,7 +163,7 @@ def slurmFopt(slurm_dirpath):
         slurm.write('#SBATCH  --job-name=opt_fine                                             \n')                         
         slurm.write('#SBATCH  --output=opt_fine.out.%j                                        \n')                       
         slurm.write('#SBATCH  --error=opt_fine.err.%j                                         \n')                      
-        slurm.write('#SBATCH  --partition=xieyu                                               \n')    # lhy lbt is both ok                
+        slurm.write('#SBATCH  --partition=lhy                                               \n')    # lhy lbt is both ok                
         slurm.write('#SBATCH  --nodes=1                                                       \n')             
         slurm.write('#SBATCH  --ntasks=48                                                     \n')               
         slurm.write('#SBATCH  --ntasks-per-node=48                                            \n')                        
@@ -319,7 +319,7 @@ if __name__ == "__main__":
                         if potcar_file_flag:
                             # 准备分离的赝势
                             all_element = [ ele.name for ele in pstruct.types_of_species ]
-                            POT_dir = os.path.abspath("/work/home/mayuan/POT/vasp_pot1/potpaw_PBE54")
+                            POT_dir = os.path.abspath("/work/home/may/POT/vasp_pot1/potpaw_PBE54")
                                                       
                             for element in all_element:
                                 print("\n\n ------------element={}-------------".format(element))
@@ -394,7 +394,7 @@ if __name__ == "__main__":
                     if potcar_file_flag:
                         # 准备分离的赝势
                         all_element = [ ele.name for ele in pstruct.types_of_species ]
-                        POT_dir = os.path.abspath("/work/home/mayuan/POT/vasp_pot1/potpaw_PBE54")
+                        POT_dir = os.path.abspath("/work/home/may/POT/vasp_pot1/potpaw_PBE54")
                         # 提前准备好一个赝势库的空目录
                         pot_lib = os.path.join(directory_sourcefile, "potcar_lib")
                         if not os.path.exists(pot_lib):

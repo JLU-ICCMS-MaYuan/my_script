@@ -1,4 +1,4 @@
-#!/work/home/mayuan/miniconda3/envs/pyxtal/bin/python3
+#!/work/home/may/miniconda3/bin/python3
 '''
 测试截断能脚本的灵活性：
     1. 可以灵活的针对不同的 物质体系 进行截断能测
@@ -46,7 +46,7 @@ def slurmkspacing(slurm_dirpath):
         slurm.write("#SBATCH  --job-name=kspacing_test   \n")                         
         slurm.write("#SBATCH  --output=kspacing.out.%j   \n")                       
         slurm.write("#SBATCH  --error=kspacing.err.%j    \n")                      
-        slurm.write("#SBATCH  --partition=xieyu          \n")     # 注意修改 队列名 lhy lbt               
+        slurm.write("#SBATCH  --partition=lhy          \n")     # 注意修改 队列名 lhy lbt               
         slurm.write("#SBATCH  --nodes=1                  \n")             
         slurm.write("#SBATCH  --ntasks=48                \n")               
         slurm.write("#SBATCH  --ntasks-per-node=48       \n")                        
