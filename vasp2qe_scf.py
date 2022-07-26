@@ -37,6 +37,7 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
     pp_dir = args.pp_dir
+    
     pp_dir_path = os.path.abspath(pp_dir)
     for root, dirs, files in os.walk(pp_dir_path):
         pp_file = files

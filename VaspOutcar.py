@@ -54,7 +54,6 @@ def get_energy_sigma_0(outcar_path):
                 energy_sigma_0_list.append(energy)
     return energy_sigma_0_list[-1]   
 
-
 def plot_encut_or_kspacing(path_dat, path_jpeg):
     import pandas as pd
     import matplotlib.pyplot as plt
@@ -174,6 +173,7 @@ if __name__ == "__main__":
             if "OUTCAR" in files and "POSCAR" in files:
                 outcar_path = os.path.join(root, "OUTCAR")
                 poscar_path = os.path.join(root, "POSCAR")
+                print(outcar_path)
                 struct = Structure.from_file(poscar_path);  atoms_amount     = struct.composition.num_atoms
                 energy = get_free_energy(outcar_path)    ;  energy_per_atoms = float(energy) / atoms_amount
                 name   = (root.split("/")[-1])

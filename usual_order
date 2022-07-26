@@ -1,4 +1,4 @@
-encut_test.py -pos 200-opt/POSCAR -pot 200-opt/POTCAR -erange 50 1000 50 -re
+encut_test.py -pos 200-opt/POSCAR -pot 200-opt/POTCAR -erange 200 1000 50 -re
 kspacing_test.py -pos 200-opt/POSCAR -pot 200-opt/POTCAR -krange 0.1 0.9 0.1 -rk
 
 VaspOutcar.py -d encut/    -et -posf -plot
@@ -11,5 +11,7 @@ VaspPhono.py -d 200-Disp/ -pposf -scell 2 2 2 -encut 650 -k 10 10 10 -inc-Disp
 VaspPhono.py -d 200-Disp/ -Disp
 VaspPhono.py -d 500-Disp/ -Disp-prog
 
-
-
+for i in Zr1*; do cd $i/ && pwd && tail  -n 10 200-opt/OSZICAR | grep "1 F=" && sleep 0 && cd ../; done
+for i in Zr1*; do cd $i/ && pwd && mkdir 200-Disp && cp 200-opt/CONTCAR 200-Disp/POSCAR  && cp 200-opt/POTCAR 200-Disp/POTCAR && ls 200-Disp  && cd ../; done
+for i in Zr1*; do cd $i/ && pwd && VaspPhono.py -d 200-Disp/ -pposf -scell 2 2 2 -encut 800 -k 10 10 10 -inc-Disp -Disp && cd ../; done
+# for i in Ce1H10*; do cd $i/ && VaspPhono.py -d 200-Disp/ -Disp && cd ../; done

@@ -63,7 +63,7 @@ def get_X(X_occupied_wps, X_permutation_combination):
     """
     获得氢原子的所有wp的占位的组合情况 以及 每种组合情况的原子数为多少
     example: 1a, 2b, 3c
-        other_wps          = [['1a'], ['2b'], ['3c'], ['1a', '2b'], ['1a', '3c'], ['2b', '3c']]
+        other_wps      = [['1a'], ['2b'], ['3c'], ['1a', '2b'], ['1a', '3c'], ['2b', '3c']]
         X_atoms_number = [[ 1  ], [ 2  ], [ 3  ], [ 1,    2  ], [ 1,    3],   [ 2,    3  ]]
     Notes: 不考虑氢占据所有wp这种组合情况，也就是说，不考虑["1a", "1b", "1c"]这种情况
     Returns:  other_element_wps
