@@ -42,10 +42,10 @@ class qe_superconduct_workflow:
         self.struct               = AseAtomsAdaptor.get_structure(relax_ase)
         self.get_struct_info(self.struct)
         self.work_underpressure   = None
-        self.run_relax   , self.run_scfFit     ,                      \
-        self.run_scf     , self.run_ph_no_split, self.run_ph_split  , \
-        self.run_q2r     , self.run_matdyn     , self.run_matdyn_dos, \
-        self.run_lambda = False, False, False, False, False, False, False, False, False
+        # self.run_relax   , self.run_scfFit     ,                      \
+        # self.run_scf     , self.run_ph_no_split, self.run_ph_split  , \
+        # self.run_q2r     , self.run_matdyn     , self.run_matdyn_dos, \
+        # self.run_lambda = False, False, False, False, False, False, False, False, False
         if kwargs:
             for key, value in kwargs.items():
                 if key == "pressure":
@@ -57,32 +57,13 @@ class qe_superconduct_workflow:
                     self.q1,        self.q2,        self.q3        = [kp/4 for kp in kwargs["kpoints_dense"]]
                 if key == "kpoints_sparse":
                     self.k1_sparse, self.k2_sparse, self.k3_sparse = value
+                    self.k1_dense , self.k2_dense , self.k3_dense  = [kp*2 for kp in kwargs["kpoints_sparse"]]
+                    self.q1,        self.q2,        self.q3        = [kp/2 for kp in kwargs["kpoints_sparse"]]
                 if key == "qpoints":
                     self.q1, self.q2, self.q3 = value 
+                    self.k1_dense , self.k2_dense , self.k3_dense  = [kp*4 for kp in kwargs["qpoints"]]
+                    self.k1_sparse, self.k2_sparse, self.k3_sparse = [kp*2 for kp in kwargs["qpoints"]]
                       
-                if key == "scf_out_path":
-                    self.scf_out_path    = value
-                 # running mode 
-                if key == "run_relax":
-                    self.run_relax       = value
-                if key == "run_scfFit":
-                    self.run_scfFit      = value
-                if key == "run_scf":
-                    self.run_scf         = value
-                if key == "run_ph_no_split":
-                    self.run_ph_no_split = value
-                if key == "run_ph_split":
-                    self.run_ph_split    = value
-                if key == "run_q2r":
-                    self.run_q2r         = value
-                if key == "run_matdyn":
-                    self.run_matdyn      = value
-                if key == "run_matdyn_dos":
-                    self.run_matdyn_dos  = value
-                if key == "run_lambda":
-                    self.run_lambda      = value
-
-
         if self.work_underpressure is None:
             self.work_underpressure = self.work_path
 
@@ -104,38 +85,6 @@ class qe_superconduct_workflow:
 
         logger.info(f"create *.in file in {self.work_underpressure}")
 
-    
-        if self.run_relax       :
-            self.write_relax_in()
-        if self.run_scfFit      :
-            self.write_scf_fit_in(self.work_underpressure)
-        if self.run_scf         :
-            self.write_scf_in(self.work_underpressure)
-        if self.run_ph_no_split :
-            self.write_ph_no_split_in(self.work_underpressure)
-        if self.run_ph_split    :
-            if self.scf_out_path:
-                self.get_q1(self.scf_out_path) # get self.q_list
-            else:
-                self.get_q2(self.dyn0_path)
-
-            for i, q3 in enumerate(self.q_list):
-                    split_ph_dir = os.path.join(self.work_underpressure, str(i+1))
-                    if not os.path.exists(split_ph_dir):
-                        os.makedirs(split_ph_dir)
-                    self.write_split_ph_in(split_ph_dir, q3)
-                    self.write_scf_fit_in(split_ph_dir)
-                    self.write_scf_in(split_ph_dir)
-
-        if self.run_q2r         :
-            self.write_q2r_in()
-        if self.run_matdyn      :
-            self.write_matdyn_in()
-        if self.run_matdyn_dos  :
-            self.write_matdyn_dos_in()
-        if self.run_lambda      :
-                self.write_lambda_in()
-        # self.checkfile()
 
     def get_struct_info(self, struct):
         
@@ -395,7 +344,7 @@ class qe_superconduct_workflow:
             qe.write("/                                                  \n")
 
     # split mode
-    def get_q1(self, dir):
+    def get_q_from_scfout(self, dir):
         if not os.path.exists(dir):
             raise FileExistsError ("scf.out didn't exist!")
         content = open(dir, "r").readlines()
@@ -403,27 +352,44 @@ class qe_superconduct_workflow:
             if re.search(r"k\(\s*\d+\)\s*=\s*", item):
                 return item
 
-        self.q_list   = []
-        self.nqs_list = []
-        self.q_total  = self.q1 * self.q2 * self.q3
+
+        self.q_coordinate_list = []
+        self.q_weight_list     = []
+        self.q_total_amount    = self.q1 * self.q2 * self.q3
+
         result = filter(find_k, content)
         for res in result:
             ks  = re.findall(r"\-?\d+\.\d+", res.split(",")[0])
-            self.q_list.append(ks)
+            self.q_coordinate_list.append(ks)
             wp = re.findall(r"\-?\d+\.\d+", res.split(",")[1])
-            nqs = float(wp[0]) * self.q_total / 2
-            self.nqs_list.append(nqs)
+            nqs = float(wp[0]) * self.q_total_amount / 2
+            self.q_weight_list.append(nqs)
 
-        self.q_nqs_pair = zip(self.q_list, self.nqs_list)
+        self.q_total_amount           = self.q1 * self.q2 * self.q3
+        self.q_non_irreducible_amount = len(self.q_coordinate_list)
 
-    def get_q2(self, dir):
+        return self.q_total_amount,    self.q_non_irreducible_amount, \
+               self.q_coordinate_list, self.q_weight_list
+
+    def get_q_from_dyn0(self, dir):
         if not os.path.exists(dir):
-            raise FileExistsError (f"{self.system_name}.dyn0 didn't exist!")
+            raise FileExistsError ("dyn0 file doesn't exist!")
         content = open(dir, "r").readlines()
+        _q_total_amount = content[0].strip("\n").split()
+        q_total_amount  = list(map(int, _q_total_amount))
+        if q_total_amount != [self.q1, self.q2, self.q3]:
+            raise ValueError ("q points set wrong")
         def find_q(item):
-            if re.search(r"k\(\s*\d+\)\s*=\s*", item):
+            if re.search(r"E\+", item):
                 return item
+        self.q_total_amount           = self.q1 * self.q2 * self.q3
+        self.q_non_irreducible_amount = content[1]
+        _q_coordinate_list            = list(filter(find_q, content))
+        self.q_coordinate_list        = [q_string.strip("\n").split() for q_string in _q_coordinate_list]
 
+        return  self.q_total_amount, self.q_non_irreducible_amount, \
+                self.q_coordinate_list
+    
     def write_dyn0(self, dir):
         dyn0_path = os.path.join(dir, self.system_name+".dyn0")
         with open(dyn0_path, "w") as qe:
@@ -432,9 +398,7 @@ class qe_superconduct_workflow:
             for q in self.q_list:
                 qe.write("{:<30}  {:<30}  {:<30}     \n".format(q[0], q[1], q[2]))
 
-
-    def write_split_ph_in(self, many_split_ph_dirs, q3):
-
+    def write_split_ph_in_from_dyn0(self, many_split_ph_dirs, q3):
         split_ph = os.path.join(many_split_ph_dirs, "split_ph.in")
         with open(split_ph, "w") as qe:
             qe.write("Electron-phonon coefficients for {}                \n".format(self.system_name))                                    
@@ -454,14 +418,40 @@ class qe_superconduct_workflow:
             qe.write("  trans=.true.,                                    \n")            
             qe.write("  ldisp=.false.,                                   \n")            
             qe.write("/                                                  \n")
-            qe.write(" {:<5} {:<5} {:<5}                                 \n".format(q3[0], q3[1], q3[2]))
+            qe.write(" {:<30} {:<30} {:<30}                              \n".format(q3[0], q3[1], q3[2]))
     
+    def write_split_ph_in_set_startlast_q(self, dir, start_q, last_q):
+        
+        split_ph_in = "split_ph" + str(start_q) + "-" + str(last_q) + ".in"
+        split_ph_path = os.path.join(dir, split_ph_in)
+        with open(split_ph_path, "w") as qe:
+            qe.write("Electron-phonon coefficients for {}                \n".format(self.system_name))                                    
+            qe.write(" &inputph                                          \n")      
+            qe.write("  tr2_ph=1.0d-16,                                  \n")              
+            qe.write("  prefix='{}',                                     \n".format(self.system_name))                
+            qe.write("  fildvscf='{}.dv',                                \n".format(self.system_name))                     
+            qe.write("  electron_phonon='interpolated',                  \n")                              
+            qe.write("  el_ph_sigma=0.005,                               \n")                 
+            qe.write("  el_ph_nsigma=10,                                 \n")
+            for i, species_name in enumerate(self.composition.keys()):
+                element      = Element(species_name)
+                species_mass = str(element.atomic_mass).strip("amu")
+                qe.write("  amass({})={},                                \n".format(i+1, species_mass))             
+            qe.write("  outdir='./tmp',                                  \n")               
+            qe.write("  fildyn='{}.dyn',                                 \n".format(self.system_name))                    
+            qe.write("  trans=.true.,                                    \n")            
+            qe.write("  ldisp=.true.,                                    \n")
+            qe.write("  nq1={},nq2={},nq3={},                            \n".format(self.q1, self.q2, self.q3))                 
+            qe.write("  start_q={}                                       \n".format(start_q)) 
+            qe.write("  last_q={}                                        \n".format(last_q)) 
+            qe.write("/                                                  \n")
+
     def merge(self, dir):
         elph_dir_path = os.path.join(dir, "elph_dir")
         if not os.path.exists(elph_dir_path):
             os.makedirs(elph_dir_path)
 
-        for i in range(len(self.q_list)):
+        for i in range(int(self.q_non_irreducible_amount)):
             src_elph   = os.path.join(dir, str(i+1), elph_dir_path, "elph.inp_lambda.1"        )
             dst_elph   = os.path.join(elph_dir_path,                "elph.inp_lambda."+str(i+1))
             shutil.copy(src_elph, dst_elph)
@@ -644,9 +634,9 @@ class qe_superconduct_workflow:
             slurm.write('\n\n                                                                                      \n')
             slurm.write('mpirun -n 48 /work/software/q-e-qe-6.8/bin/ph.x -npool 4 <ph_no_split.in> ph_no_split.out \n')
 
-
-    def slurmph_split(cls, slurm_dirpath):
-        slurm_script_filepath = os.path.join(slurm_dirpath, "slurmph_split.sh")
+    @classmethod
+    def slurmph_split_form_dyn0(cls, slurm_dirpath):
+        slurm_script_filepath = os.path.join(slurm_dirpath, "slurmph_split_form_dyn0.sh")
         with open(slurm_script_filepath, "w") as slurm:
             slurm.write('#!/bin/sh                                                                          \n')     
             slurm.write('#SBATCH  --job-name=ph_split                                                       \n')                         
@@ -667,6 +657,26 @@ class qe_superconduct_workflow:
             slurm.write('mpirun -n 48 /work/software/q-e-qe-6.8/bin/pw.x -npool 4 <scf.in> scf.out          \n')
             slurm.write('echo "run split_ph"                                                                \n')
             slurm.write('mpirun -n 48 /work/software/q-e-qe-6.8/bin/ph.x -npool 4 <split_ph.in> split_ph.out\n')   
+
+    @classmethod
+    def slurmph_split_set_startlast_q(cls, slurm_dirpath, split_ph_name):
+        slurm_script_filepath = os.path.join(slurm_dirpath, "slurm_"+split_ph_name+".sh")
+        with open(slurm_script_filepath, "w") as slurm:
+            slurm.write('#!/bin/sh                                                                          \n')     
+            slurm.write('#SBATCH  --job-name={}                                                             \n'.format(split_ph_name))                         
+            slurm.write('#SBATCH  --output=log.{}.out                                                       \n'.format(split_ph_name))                       
+            slurm.write('#SBATCH  --error=log.{}.err                                                        \n'.format(split_ph_name))                      
+            slurm.write('#SBATCH  --partition=xieyu                                                         \n')    # lhy lbt is both ok                
+            slurm.write('#SBATCH  --nodes=1                                                                 \n')             
+            slurm.write('#SBATCH  --ntasks=48                                                               \n')               
+            slurm.write('#SBATCH  --ntasks-per-node=48                                                      \n')                        
+            slurm.write('#SBATCH  --cpus-per-task=1                                                         \n')                     
+            slurm.write('\n\n                                                                               \n')
+            slurm.write('source /work/env/intel2018                                                         \n')
+            slurm.write('ulimit -s unlimited                                                                \n')
+            slurm.write('\n\n                                                                               \n')
+            # TODO 
+            slurm.write('mpirun -n 48 /work/software/q-e-qe-6.8/bin/ph.x -npool 4 <{}.in> {}.out            \n'.format(split_ph_name, split_ph_name))
 
 
     @classmethod
