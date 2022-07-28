@@ -1,4 +1,4 @@
-#!/work/home/may/miniconda3/bin/python3
+#!/public/home/mayuan/miniconda3/envs/cage/bin/python3
 import matplotlib as mpl  # 导入Matplotlib库
 import matplotlib.cm as cm  # 导入Matplotlib颜色配置模块
 import matplotlib.patches as patches  # 导入Matplotlib形状绘制模块

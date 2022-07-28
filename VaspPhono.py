@@ -1,4 +1,4 @@
-#!/work/home/may/miniconda3/bin/python3
+#!/public/home/mayuan/miniconda3/envs/cage/bin/python3
 '''
 Use example:
     VaspPhono.py -d phonopy/ -pposf -scell 2 2 2 

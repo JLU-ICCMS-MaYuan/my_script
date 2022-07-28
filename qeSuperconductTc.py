@@ -1,3 +1,4 @@
+#!/public/home/mayuan/miniconda3/envs/cage/bin/python3
 #!/work/home/mayuan/miniconda3/envs/cage/bin/python3
 
 '''
@@ -562,7 +563,7 @@ class qe_superconduct_workflow:
             slurm.write('#SBATCH  --job-name=relax                                             \n')                         
             slurm.write('#SBATCH  --output=log.relax.out                                      \n')                       
             slurm.write('#SBATCH  --error=log.relax.err                                       \n')                      
-            slurm.write('#SBATCH  --partition=xieyu                                               \n')    # lhy lbt is both ok                
+            slurm.write('#SBATCH  --partition=lhy                                               \n')    # lhy lbt is both ok                
             slurm.write('#SBATCH  --nodes=1                                                       \n')             
             slurm.write('#SBATCH  --ntasks=48                                                     \n')               
             slurm.write('#SBATCH  --ntasks-per-node=48                                            \n')                        
@@ -585,7 +586,7 @@ class qe_superconduct_workflow:
             slurm.write('#SBATCH  --job-name=scf.fit                                             \n')                         
             slurm.write('#SBATCH  --output=log.scf.fit.out                                      \n')                       
             slurm.write('#SBATCH  --error=log.scf.fit.err                                       \n')                      
-            slurm.write('#SBATCH  --partition=xieyu                                               \n')    # lhy lbt is both ok                
+            slurm.write('#SBATCH  --partition=lhy                                               \n')    # lhy lbt is both ok                
             slurm.write('#SBATCH  --nodes=1                                                       \n')             
             slurm.write('#SBATCH  --ntasks=48                                                     \n')               
             slurm.write('#SBATCH  --ntasks-per-node=48                                            \n')                        
@@ -604,7 +605,7 @@ class qe_superconduct_workflow:
             slurm.write('#SBATCH  --job-name=scf                                                  \n')                         
             slurm.write('#SBATCH  --output=log.scf.out                                           \n')                       
             slurm.write('#SBATCH  --error=log.scf.err                                            \n')                      
-            slurm.write('#SBATCH  --partition=xieyu                                               \n')    # lhy lbt is both ok                
+            slurm.write('#SBATCH  --partition=lhy                                               \n')    # lhy lbt is both ok                
             slurm.write('#SBATCH  --nodes=1                                                       \n')             
             slurm.write('#SBATCH  --ntasks=48                                                     \n')               
             slurm.write('#SBATCH  --ntasks-per-node=48                                            \n')                        
@@ -623,7 +624,7 @@ class qe_superconduct_workflow:
             slurm.write('#SBATCH  --job-name=ph_no_split                                                           \n')                         
             slurm.write('#SBATCH  --output=log.ph_no_split.out                                                     \n')                       
             slurm.write('#SBATCH  --error=log.ph_no_split.err                                                      \n')                      
-            slurm.write('#SBATCH  --partition=xieyu                                                                \n')    # lhy lbt is both ok                
+            slurm.write('#SBATCH  --partition=lhy                                                                \n')    # lhy lbt is both ok                
             slurm.write('#SBATCH  --nodes=1                                                                        \n')             
             slurm.write('#SBATCH  --ntasks=48                                                                      \n')               
             slurm.write('#SBATCH  --ntasks-per-node=48                                                             \n')                        
@@ -642,7 +643,7 @@ class qe_superconduct_workflow:
             slurm.write('#SBATCH  --job-name=ph_split                                                       \n')                         
             slurm.write('#SBATCH  --output=log.ph_split.out                                                 \n')                       
             slurm.write('#SBATCH  --error=log.ph_split.err                                                  \n')                      
-            slurm.write('#SBATCH  --partition=xieyu                                                         \n')    # lhy lbt is both ok                
+            slurm.write('#SBATCH  --partition=lhy                                                         \n')    # lhy lbt is both ok                
             slurm.write('#SBATCH  --nodes=1                                                                 \n')             
             slurm.write('#SBATCH  --ntasks=48                                                               \n')               
             slurm.write('#SBATCH  --ntasks-per-node=48                                                      \n')                        
@@ -666,7 +667,7 @@ class qe_superconduct_workflow:
             slurm.write('#SBATCH  --job-name={}                                                             \n'.format(split_ph_name))                         
             slurm.write('#SBATCH  --output=log.{}.out                                                       \n'.format(split_ph_name))                       
             slurm.write('#SBATCH  --error=log.{}.err                                                        \n'.format(split_ph_name))                      
-            slurm.write('#SBATCH  --partition=xieyu                                                         \n')    # lhy lbt is both ok                
+            slurm.write('#SBATCH  --partition=lhy                                                         \n')    # lhy lbt is both ok                
             slurm.write('#SBATCH  --nodes=1                                                                 \n')             
             slurm.write('#SBATCH  --ntasks=48                                                               \n')               
             slurm.write('#SBATCH  --ntasks-per-node=48                                                      \n')                        
@@ -687,7 +688,7 @@ class qe_superconduct_workflow:
             slurm.write('#SBATCH  --job-name=q2r                                                    \n')                         
             slurm.write('#SBATCH  --output=log.q2r.out                                         \n')                       
             slurm.write('#SBATCH  --error=log.q2r.err                                          \n')                      
-            slurm.write('#SBATCH  --partition=xieyu                                                 \n')    # lhy lbt is both ok                
+            slurm.write('#SBATCH  --partition=lhy                                                 \n')    # lhy lbt is both ok                
             slurm.write('#SBATCH  --nodes=1                                                         \n')             
             slurm.write('#SBATCH  --ntasks=48                                                       \n')               
             slurm.write('#SBATCH  --ntasks-per-node=48                                              \n')                        
@@ -707,7 +708,7 @@ class qe_superconduct_workflow:
             slurm.write('#SBATCH  --job-name=matgen                                               \n')                         
             slurm.write('#SBATCH  --output=log.matgen.out                                    \n')                       
             slurm.write('#SBATCH  --error=log.matgen.err                                     \n')                      
-            slurm.write('#SBATCH  --partition=xieyu                                               \n')    # lhy lbt is both ok                
+            slurm.write('#SBATCH  --partition=lhy                                               \n')    # lhy lbt is both ok                
             slurm.write('#SBATCH  --nodes=1                                                       \n')             
             slurm.write('#SBATCH  --ntasks=48                                                     \n')               
             slurm.write('#SBATCH  --ntasks-per-node=48                                            \n')                        
@@ -726,7 +727,7 @@ class qe_superconduct_workflow:
             slurm.write('#SBATCH  --job-name=matgen_dos                                           \n')                         
             slurm.write('#SBATCH  --output=log.matgen_dos.out                                    \n')                       
             slurm.write('#SBATCH  --error=log.matgen_dos.err                                     \n')                      
-            slurm.write('#SBATCH  --partition=xieyu                                               \n')    # lhy lbt is both ok                
+            slurm.write('#SBATCH  --partition=lhy                                               \n')    # lhy lbt is both ok                
             slurm.write('#SBATCH  --nodes=1                                                       \n')             
             slurm.write('#SBATCH  --ntasks=48                                                     \n')               
             slurm.write('#SBATCH  --ntasks-per-node=48                                            \n')                        
@@ -745,7 +746,7 @@ class qe_superconduct_workflow:
             slurm.write('#SBATCH  --job-name=lambda                                           \n')                         
             slurm.write('#SBATCH  --output=log.lambda.out                                    \n')                       
             slurm.write('#SBATCH  --error=log.lambda.err                                     \n')                      
-            slurm.write('#SBATCH  --partition=xieyu                                               \n')    # lhy lbt is both ok                
+            slurm.write('#SBATCH  --partition=lhy                                               \n')    # lhy lbt is both ok                
             slurm.write('#SBATCH  --nodes=1                                                       \n')             
             slurm.write('#SBATCH  --ntasks=48                                                     \n')               
             slurm.write('#SBATCH  --ntasks-per-node=48                                            \n')                        

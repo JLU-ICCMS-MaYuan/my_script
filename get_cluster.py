@@ -1,4 +1,4 @@
-#!/work/home/may/miniconda3/bin/python3
+#!/public/home/mayuan/miniconda3/envs/cage/bin/python3
 
 from pymatgen.core.structure import Molecule
 from pymatgen.symmetry.groups import PointGroup

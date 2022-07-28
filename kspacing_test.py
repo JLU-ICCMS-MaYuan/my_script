@@ -1,4 +1,4 @@
-#!/work/home/may/miniconda3/bin/python3
+#!/public/home/mayuan/miniconda3/envs/cage/bin/python3
 '''
 测试截断能脚本的灵活性：
     1. 可以灵活的针对不同的 物质体系 进行截断能测
