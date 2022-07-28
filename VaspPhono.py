@@ -74,7 +74,7 @@ def Displacemnet_incar(incar_dirpath, encut):
         incar.write("ENCUT    = {}   \n".format(str(encut)))        
         incar.write("PREC     = A    \n")
         incar.write("#NCORE    = 4   \n")         
-        incar.write("ISMEAR   = 1    \n")   
+        incar.write("ISMEAR   = 0    \n")   
         incar.write("SIGMA    = 0.01 \n")   
         incar.write("NELM     = 100  \n")   
         incar.write("EDIFF    = 1e-8 \n")
