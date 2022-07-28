@@ -1,6 +1,7 @@
 
-#files
+#directories
 /scripts_tests
 /.ipynb_checkpoints
 /useless-scripts
 /.vscode
+/.__pycache__
