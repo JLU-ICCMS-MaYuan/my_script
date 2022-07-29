@@ -24,7 +24,7 @@ relax:24 24 24
     # split method 2
     qe_main.py -w ./ -ph-split-startlastq -q 4 4 4 -q-no-irr-num 8
 
-
+    # decide the system of Job submission system
 
 
 
@@ -71,6 +71,14 @@ if __name__ == "__main__":
         dest='work_path',
         help="please tell me your calculated directory, I will put all file there",
     )
+    parser.add_argument(
+        '-j',
+        '-job-submission-system',
+        type=str,
+        default="slurm",
+        dest='job_submission_system',
+        help="please tell me your job submition system, eg: slurm, pbs",
+    ) 
     parser.add_argument(
         '-kd',
         '-kpoints_dense',
@@ -206,10 +214,12 @@ if __name__ == "__main__":
         dest='run_lambda',
         help="whether run matdyn.dos.in or not",
     )
+    
     args = parser.parse_args()
-    input_file_path = args.input_file_path
-    press           = args.press
-    work_path       = args.work_path
+    input_file_path       = args.input_file_path
+    press                 = args.press
+    work_path             = args.work_path
+    job_submission_system = args.job_submission_system
 
     kpoints_dense   = args.kpoints_dense
     kpoints_sparse  = args.kpoints_sparse
