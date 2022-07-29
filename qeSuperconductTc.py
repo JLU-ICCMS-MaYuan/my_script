@@ -579,7 +579,6 @@ class qe_superconduct_workflow:
             slurm.write('grep "Sym. Ops." relax.out                                               \n')
             slurm.write("awk '/Begin final coordinates/,/End final coordinates/{print $0}' relax.out \n")
 
-
     @classmethod
     def slurmscfFit(cls, slurm_dirpath):
         slurm_script_filepath = os.path.join(slurm_dirpath, "slurmscfFit.sh")
@@ -681,7 +680,6 @@ class qe_superconduct_workflow:
             # TODO 
             slurm.write('mpirun -n 48 /work/software/q-e-qe-6.8/bin/ph.x -npool 4 <{}.in> {}.out            \n'.format(split_ph_name, split_ph_name))
 
-
     @classmethod
     def slurmq2r(cls, slurm_dirpath):
         slurm_script_filepath = os.path.join(slurm_dirpath, "slurmq2r.sh")
@@ -759,6 +757,6 @@ class qe_superconduct_workflow:
             slurm.write('\n\n                                                                     \n')
             slurm.write('mpirun -n 48 /work/software/q-e-qe-6.8/bin/lambda.x <lambda.in> lambda.out \n')  
         
-
+    
 
     

@@ -262,12 +262,15 @@ if __name__ == "__main__":
                 qe_sc = qe_sc_workflow(relax_out_path, work_path, kpoints_dense=kpoints_dense)
                 qe_sc.write_scf_fit_in(root)
                 if 'scf.fit.in' in os.listdir(root):
-                    qe_sc.slurmscfFit(root)
-                    cwd = os.getcwd()
-                    os.chdir(root)
-                    os.system("sbatch slurmscfFit.sh")
-                    logger.info("qe scf.fit is running")
-                    os.chdir(cwd)
+                    if job_submission_system == "slurm":
+                        qe_sc.slurmscfFit(root)
+                        cwd = os.getcwd()
+                        os.chdir(root)
+                        os.system("sbatch slurmscfFit.sh")
+                        logger.info("qe scf.fit is running")
+                        os.chdir(cwd)
+                    if job_submission_system == "pbs":
+                        pass
 
     if run_scf and work_path is not None:
         for root, dirs, files in os.walk(work_path):
