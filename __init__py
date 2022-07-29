@@ -1,2 +1,2 @@
 from .qeSuperconductTc import qe_superconduct_workflow
-
+from .qe_submitjob import qe_submitjob

@@ -6,21 +6,18 @@ qeSuperconductTc.py -pos scripts_tests/POSCAR -caldir scripts_tests/out
 -caldir scripts_tests/out
 '''
 
-from asyncore import write
-from cmath import log
-from genericpath import exists
 import os
 import re
 import shutil
 import logging
-from argparse import ArgumentParser
 
-from pymatgen.core.structure import Structure
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from pymatgen.core.periodic_table import Element
 from pymatgen.io.vasp import Poscar
 from pymatgen.io.ase import AseAtomsAdaptor
 from ase.io import read
+
+from qe_submitjob import qe_submitjob
 
 logging.basicConfig(
     level = logging.INFO, 
@@ -63,7 +60,9 @@ class qe_superconduct_workflow:
                     self.q1, self.q2, self.q3 = value 
                     self.k1_dense , self.k2_dense , self.k3_dense  = [kp*4 for kp in kwargs["qpoints"]]
                     self.k1_sparse, self.k2_sparse, self.k3_sparse = [kp*2 for kp in kwargs["qpoints"]]
-                      
+                if key == "run_mode":
+                    self.run_mode = value
+
         if self.work_underpressure is None:
             self.work_underpressure = self.work_path
 
@@ -83,9 +82,14 @@ class qe_superconduct_workflow:
         self.get_USPP(self.workpath_pppath)
         ############################# done pp ##########################
 
-        logger.info(f"create *.in file in {self.work_underpressure}")
-
-
+        # write submit task scripts
+        self.submit = qe_submitjob(
+            submit_path=self.work_underpressure,
+            submit_job_system=self.submit_job_system,
+            running_mode=self.running_mode,
+            system_name=self.system_name
+        )
+        
     def get_struct_info(self, struct):
         
         spa = SpacegroupAnalyzer(struct)
@@ -343,7 +347,6 @@ class qe_superconduct_workflow:
             qe.write("  ldisp=.true.,                                    \n")            
             qe.write("  nq1={},nq2={},nq3={},                            \n".format(self.q1, self.q2, self.q3 ))                 
             qe.write("/                                                  \n")
-
     
     def get_q_from_scfout(self, dir):
         if not os.path.exists(dir):
@@ -557,205 +560,6 @@ class qe_superconduct_workflow:
                 qe.write("{}                                             \n".format(str(mu)))
 
 
-    @classmethod
-    def slurmrelax(cls, slurm_dirpath):
-        slurm_script_filepath = os.path.join(slurm_dirpath, "slurmrelax.sh")
-        with open(slurm_script_filepath, "w") as slurm:
-            slurm.write('#!/bin/sh                                                                \n')     
-            slurm.write('#SBATCH  --job-name=relax                                             \n')                         
-            slurm.write('#SBATCH  --output=log.relax.out                                      \n')                       
-            slurm.write('#SBATCH  --error=log.relax.err                                       \n')                      
-            slurm.write('#SBATCH  --partition=xieyu                                               \n')    # lhy lbt is both ok                
-            slurm.write('#SBATCH  --nodes=1                                                       \n')             
-            slurm.write('#SBATCH  --ntasks=48                                                     \n')               
-            slurm.write('#SBATCH  --ntasks-per-node=48                                            \n')                        
-            slurm.write('#SBATCH  --cpus-per-task=1                                               \n')                     
-            slurm.write('\n\n                                                                     \n')
-            slurm.write('source /work/env/intel2018                                               \n')
-            slurm.write('ulimit -s unlimited                                                      \n')
-            slurm.write('\n\n                                                                     \n')
-            slurm.write('mpirun -n 48 /work/software/q-e-qe-6.8/bin/pw.x -npool 4 <relax.in> relax.out \n')
-            slurm.write('check symmetry ops is consistent or not after vc-relax                   \n')
-            slurm.write('grep "Sym. Ops." relax.out                                               \n')
-            slurm.write("awk '/Begin final coordinates/,/End final coordinates/{print $0}' relax.out \n")
-
-    @classmethod
-    def slurmscfFit(cls, slurm_dirpath):
-        slurm_script_filepath = os.path.join(slurm_dirpath, "slurmscfFit.sh")
-        with open(slurm_script_filepath, "w") as slurm:
-            slurm.write('#!/bin/sh                                                                \n')     
-            slurm.write('#SBATCH  --job-name=scf.fit                                             \n')                         
-            slurm.write('#SBATCH  --output=log.scf.fit.out                                      \n')                       
-            slurm.write('#SBATCH  --error=log.scf.fit.err                                       \n')                      
-            slurm.write('#SBATCH  --partition=xieyu                                               \n')    # lhy lbt is both ok                
-            slurm.write('#SBATCH  --nodes=1                                                       \n')             
-            slurm.write('#SBATCH  --ntasks=48                                                     \n')               
-            slurm.write('#SBATCH  --ntasks-per-node=48                                            \n')                        
-            slurm.write('#SBATCH  --cpus-per-task=1                                               \n')                     
-            slurm.write('\n\n                                                                     \n')
-            slurm.write('source /work/env/intel2018                                               \n')
-            slurm.write('ulimit -s unlimited                                                      \n')
-            slurm.write('\n\n                                                                     \n')
-            slurm.write('mpirun -n 48 /work/software/q-e-qe-6.8/bin/pw.x -npool 4 <scf.fit.in> scf.fit.out \n')                                                                         
-
-    @classmethod
-    def slurmscf(cls, slurm_dirpath):
-        slurm_script_filepath = os.path.join(slurm_dirpath, "slurmscf.sh")
-        with open(slurm_script_filepath, "w") as slurm:
-            slurm.write('#!/bin/sh                                                                \n')     
-            slurm.write('#SBATCH  --job-name=scf                                                  \n')                         
-            slurm.write('#SBATCH  --output=log.scf.out                                           \n')                       
-            slurm.write('#SBATCH  --error=log.scf.err                                            \n')                      
-            slurm.write('#SBATCH  --partition=xieyu                                               \n')    # lhy lbt is both ok                
-            slurm.write('#SBATCH  --nodes=1                                                       \n')             
-            slurm.write('#SBATCH  --ntasks=48                                                     \n')               
-            slurm.write('#SBATCH  --ntasks-per-node=48                                            \n')                        
-            slurm.write('#SBATCH  --cpus-per-task=1                                               \n')                     
-            slurm.write('\n\n                                                                     \n')
-            slurm.write('source /work/env/intel2018                                               \n')
-            slurm.write('ulimit -s unlimited                                                      \n')
-            slurm.write('\n\n                                                                     \n')
-            slurm.write('mpirun -n 48 /work/software/q-e-qe-6.8/bin/pw.x -npool 4 <scf.in> scf.out\n')   
-
-    @classmethod
-    def slurmph_no_split(cls, slurm_dirpath):
-        slurm_script_filepath = os.path.join(slurm_dirpath, "slurmph_no_split.sh")
-        with open(slurm_script_filepath, "w") as slurm:
-            slurm.write('#!/bin/sh                                                                                 \n')     
-            slurm.write('#SBATCH  --job-name=ph_no_split                                                           \n')                         
-            slurm.write('#SBATCH  --output=log.ph_no_split.out                                                     \n')                       
-            slurm.write('#SBATCH  --error=log.ph_no_split.err                                                      \n')                      
-            slurm.write('#SBATCH  --partition=xieyu                                                                \n')    # lhy lbt is both ok                
-            slurm.write('#SBATCH  --nodes=1                                                                        \n')             
-            slurm.write('#SBATCH  --ntasks=48                                                                      \n')               
-            slurm.write('#SBATCH  --ntasks-per-node=48                                                             \n')                        
-            slurm.write('#SBATCH  --cpus-per-task=1                                                                \n')                     
-            slurm.write('\n\n                                                                                      \n')
-            slurm.write('source /work/env/intel2018                                                                \n')
-            slurm.write('ulimit -s unlimited                                                                       \n')
-            slurm.write('\n\n                                                                                      \n')
-            slurm.write('mpirun -n 48 /work/software/q-e-qe-6.8/bin/ph.x -npool 4 <ph_no_split.in> ph_no_split.out \n')
-
-    @classmethod
-    def slurmph_split_form_dyn0(cls, slurm_dirpath):
-        slurm_script_filepath = os.path.join(slurm_dirpath, "slurmph_split_form_dyn0.sh")
-        with open(slurm_script_filepath, "w") as slurm:
-            slurm.write('#!/bin/sh                                                                          \n')     
-            slurm.write('#SBATCH  --job-name=ph_split                                                       \n')                         
-            slurm.write('#SBATCH  --output=log.ph_split.out                                                 \n')                       
-            slurm.write('#SBATCH  --error=log.ph_split.err                                                  \n')                      
-            slurm.write('#SBATCH  --partition=xieyu                                                         \n')    # lhy lbt is both ok                
-            slurm.write('#SBATCH  --nodes=1                                                                 \n')             
-            slurm.write('#SBATCH  --ntasks=48                                                               \n')               
-            slurm.write('#SBATCH  --ntasks-per-node=48                                                      \n')                        
-            slurm.write('#SBATCH  --cpus-per-task=1                                                         \n')                     
-            slurm.write('\n\n                                                                               \n')
-            slurm.write('source /work/env/intel2018                                                         \n')
-            slurm.write('ulimit -s unlimited                                                                \n')
-            slurm.write('\n\n                                                                               \n')
-            slurm.write('echo "run scf.fit"                                                                 \n')
-            slurm.write('mpirun -n 48 /work/software/q-e-qe-6.8/bin/pw.x -npool 4 <scf.fit.in> scf.fit.out  \n')
-            slurm.write('echo "run scf"                                                                     \n')
-            slurm.write('mpirun -n 48 /work/software/q-e-qe-6.8/bin/pw.x -npool 4 <scf.in> scf.out          \n')
-            slurm.write('echo "run split_ph"                                                                \n')
-            slurm.write('mpirun -n 48 /work/software/q-e-qe-6.8/bin/ph.x -npool 4 <split_ph.in> split_ph.out\n')   
-
-    @classmethod
-    def slurmph_split_set_startlast_q(cls, slurm_dirpath, split_ph_name):
-        slurm_script_filepath = os.path.join(slurm_dirpath, "slurm_"+split_ph_name+".sh")
-        with open(slurm_script_filepath, "w") as slurm:
-            slurm.write('#!/bin/sh                                                                          \n')     
-            slurm.write('#SBATCH  --job-name={}                                                             \n'.format(split_ph_name))                         
-            slurm.write('#SBATCH  --output=log.{}.out                                                       \n'.format(split_ph_name))                       
-            slurm.write('#SBATCH  --error=log.{}.err                                                        \n'.format(split_ph_name))                      
-            slurm.write('#SBATCH  --partition=xieyu                                                         \n')    # lhy lbt is both ok                
-            slurm.write('#SBATCH  --nodes=1                                                                 \n')             
-            slurm.write('#SBATCH  --ntasks=48                                                               \n')               
-            slurm.write('#SBATCH  --ntasks-per-node=48                                                      \n')                        
-            slurm.write('#SBATCH  --cpus-per-task=1                                                         \n')                     
-            slurm.write('\n\n                                                                               \n')
-            slurm.write('source /work/env/intel2018                                                         \n')
-            slurm.write('ulimit -s unlimited                                                                \n')
-            slurm.write('\n\n                                                                               \n')
-            # TODO 
-            slurm.write('mpirun -n 48 /work/software/q-e-qe-6.8/bin/ph.x -npool 4 <{}.in> {}.out            \n'.format(split_ph_name, split_ph_name))
-
-    @classmethod
-    def slurmq2r(cls, slurm_dirpath):
-        slurm_script_filepath = os.path.join(slurm_dirpath, "slurmq2r.sh")
-        with open(slurm_script_filepath, "w") as slurm:
-            slurm.write('#!/bin/sh                                                                  \n')     
-            slurm.write('#SBATCH  --job-name=q2r                                                    \n')                         
-            slurm.write('#SBATCH  --output=log.q2r.out                                         \n')                       
-            slurm.write('#SBATCH  --error=log.q2r.err                                          \n')                      
-            slurm.write('#SBATCH  --partition=xieyu                                                 \n')    # lhy lbt is both ok                
-            slurm.write('#SBATCH  --nodes=1                                                         \n')             
-            slurm.write('#SBATCH  --ntasks=48                                                       \n')               
-            slurm.write('#SBATCH  --ntasks-per-node=48                                              \n')                        
-            slurm.write('#SBATCH  --cpus-per-task=1                                                 \n')                     
-            slurm.write('\n\n                                                                       \n')
-            slurm.write('source /work/env/intel2018                                                 \n')
-            slurm.write('ulimit -s unlimited                                                        \n')
-            slurm.write('\n\n                                                                       \n')
-            slurm.write('mpirun -n 48 /work/software/q-e-qe-6.8/bin/q2r.x -npool 4 <q2r.in> q2r.out \n')
-            slurm.write('grep nqs q2r.out > nqs                                                     \n')  
-
-    @classmethod
-    def slurmmatgen(cls, slurm_dirpath):
-        slurm_script_filepath = os.path.join(slurm_dirpath, "slurmmatgen.sh")
-        with open(slurm_script_filepath, "w") as slurm:
-            slurm.write('#!/bin/sh                                                                \n')     
-            slurm.write('#SBATCH  --job-name=matgen                                               \n')                         
-            slurm.write('#SBATCH  --output=log.matgen.out                                    \n')                       
-            slurm.write('#SBATCH  --error=log.matgen.err                                     \n')                      
-            slurm.write('#SBATCH  --partition=xieyu                                               \n')    # lhy lbt is both ok                
-            slurm.write('#SBATCH  --nodes=1                                                       \n')             
-            slurm.write('#SBATCH  --ntasks=48                                                     \n')               
-            slurm.write('#SBATCH  --ntasks-per-node=48                                            \n')                        
-            slurm.write('#SBATCH  --cpus-per-task=1                                               \n')                     
-            slurm.write('\n\n                                                                     \n')
-            slurm.write('source /work/env/intel2018                                               \n')
-            slurm.write('ulimit -s unlimited                                                      \n')
-            slurm.write('\n\n                                                                     \n')
-            slurm.write('mpirun -n 48 /work/software/q-e-qe-6.8/bin/matdyn.x -npool 4 <matdyn.in> matdyn.out \n')  
-
-    @classmethod
-    def slurmmatgen_dos(cls, slurm_dirpath):
-        slurm_script_filepath = os.path.join(slurm_dirpath, "slurmmatgen_dos.sh")
-        with open(slurm_script_filepath, "w") as slurm:
-            slurm.write('#!/bin/sh                                                                \n')     
-            slurm.write('#SBATCH  --job-name=matgen_dos                                           \n')                         
-            slurm.write('#SBATCH  --output=log.matgen_dos.out                                    \n')                       
-            slurm.write('#SBATCH  --error=log.matgen_dos.err                                     \n')                      
-            slurm.write('#SBATCH  --partition=xieyu                                               \n')    # lhy lbt is both ok                
-            slurm.write('#SBATCH  --nodes=1                                                       \n')             
-            slurm.write('#SBATCH  --ntasks=48                                                     \n')               
-            slurm.write('#SBATCH  --ntasks-per-node=48                                            \n')                        
-            slurm.write('#SBATCH  --cpus-per-task=1                                               \n')                     
-            slurm.write('\n\n                                                                     \n')
-            slurm.write('source /work/env/intel2018                                               \n')
-            slurm.write('ulimit -s unlimited                                                      \n')
-            slurm.write('\n\n                                                                     \n')
-            slurm.write('mpirun -n 48 /work/software/q-e-qe-6.8/bin/matdyn.x -npool 4 <matdyn.dos.in> matdyn.dos.out \n')  
-
-    @classmethod
-    def slurmlambda(cls, slurm_dirpath):
-        slurm_script_filepath = os.path.join(slurm_dirpath, "slurmlambda.sh")
-        with open(slurm_script_filepath, "w") as slurm:
-            slurm.write('#!/bin/sh                                                                \n')     
-            slurm.write('#SBATCH  --job-name=lambda                                           \n')                         
-            slurm.write('#SBATCH  --output=log.lambda.out                                    \n')                       
-            slurm.write('#SBATCH  --error=log.lambda.err                                     \n')                      
-            slurm.write('#SBATCH  --partition=xieyu                                               \n')    # lhy lbt is both ok                
-            slurm.write('#SBATCH  --nodes=1                                                       \n')             
-            slurm.write('#SBATCH  --ntasks=48                                                     \n')               
-            slurm.write('#SBATCH  --ntasks-per-node=48                                            \n')                        
-            slurm.write('#SBATCH  --cpus-per-task=1                                               \n')                     
-            slurm.write('\n\n                                                                     \n')
-            slurm.write('source /work/env/intel2018                                               \n')
-            slurm.write('ulimit -s unlimited                                                      \n')
-            slurm.write('\n\n                                                                     \n')
-            slurm.write('mpirun -n 48 /work/software/q-e-qe-6.8/bin/lambda.x <lambda.in> lambda.out \n')  
         
     
 

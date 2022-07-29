@@ -31,7 +31,6 @@ relax:24 24 24
 """
 import os
 import re
-import shutil
 import time
 import logging
 from pathlib import Path
@@ -108,111 +107,15 @@ if __name__ == "__main__":
         default=[1, 1, 1],
         dest='qpoints',
         help="please tell me your qpoints dense!",
-    )
+    )    
     parser.add_argument(
-        '-relax',
-        '--run-relax',
-        action='store_true',
-        default=False,
-        dest='run_relax',
-        help="whether run relax.in or not",
-    )
-    parser.add_argument(
-        '-scffit',
-        '--run-scf-fit',
-        action='store_true',
-        default=False,
-        dest='run_scfFit',
-        help="whether run scf.fit.in or not",
-    )
-    parser.add_argument(
-        '-scf',
-        '--run-scf',
-        action='store_true',
-        default=False,
-        dest='run_scf',
-        help="whether run scf.in or not",
-    )
-    parser.add_argument(
-        '-ph-nosplit',
-        '--run-ph-no-split',
-        action='store_true',
-        default=False,
-        dest='run_ph_no_split',
-        help="whether run run_ph_no_split.in or not",
-    )
-    parser.add_argument(
-        '-dyn0',
-        '--for-get-dyn0',
-        action='store_true',
-        default=False,
-        dest='dyn0_flag',
-        help="whether only get *.dyn0 or not",
-    )
-    parser.add_argument(
-        '-ph-split-from-dyn0',
-        '--run-ph-split-1',
-        action='store_true',
-        default=False,
-        dest='run_ph_split_form_dyn0',
-        help="whether run ph.in in the way1 or not",
-    )
-    parser.add_argument(
-        '-ph-split-startlastq',
-        '--run-ph-split-startlastq',
-        action='store_true',
-        default=False,
-        dest='run_ph_split_set_startlast_q',
-        help="whether run ph.in in the way2 or not",
-    )
-    parser.add_argument(
-        '-q-no-irr-num',
-        '--q-non-irreducible-amount',
+        '-mode',
+        '--running-mode',
+        type=str,
         action='store',
-        type=int,
-        default=0,
-        dest='q_non_irreducible_amount',
-        help="non irreducible q amount you need input",
-    )
-    parser.add_argument(
-        '-m',
-        '--run-merge',
-        action='store_true',
-        default=False,
-        dest='run_merge',
-        help="whether run_merge or not",
-    )
-    parser.add_argument(
-        '-q2r',
-        '--run-q2r',
-        action='store_true',
-        default=False,
-        dest='run_q2r',
-        help="whether run q2r.in or not",
-    )
-    parser.add_argument(
-        '-matdyn',
-        '--run-matdyn',
-        action='store_true',
-        default=False,
-        dest='run_matdyn',
-        help="whether run matdyn.in or not",
-    )
-    parser.add_argument(
-        '-dos',
-        '--run-matdyn-dos',
-        action='store_true',
-        default=False,
-        dest='run_matdyn_dos',
-        help="whether run matdyn.dos.in or not",
-    )
-    parser.add_argument(
-        '-lambda',
-        '--run-lambda',
-        action='store_true',
-        default=False,
-        dest='run_lambda',
-        help="whether run matdyn.dos.in or not",
+        default=None,
+        dest='run_mode',
+        help="please tell me your running mode!",
     )
     
     args = parser.parse_args()
@@ -221,30 +124,30 @@ if __name__ == "__main__":
     work_path             = args.work_path
     job_submission_system = args.job_submission_system
 
-    kpoints_dense   = args.kpoints_dense
-    kpoints_sparse  = args.kpoints_sparse
-    qpoints         = args.qpoints
-
-    run_relax       = args.run_relax
-    run_scfFit      = args.run_scfFit
-    run_scf         = args.run_scf
+    kpoints_dense  = args.kpoints_dense
+    kpoints_sparse = args.kpoints_sparse
+    qpoints        = args.qpoints
+    run_mode       = args.run_mode
     
-    run_ph_no_split = args.run_ph_no_split
+    # Running task types list
+    run_mode_list = [
+        "relax",                        # whether run relax.in or not
+        "scffit",                       # whether run scf.fit.in or not
+        "scf",                          # whether run scf.in or not
+        "ph_no_split",                  # whether run run_ph_no_split.in or not
+        "dyn0_flag",                    # whether only get *.dyn0 or not
+        "ph_split_form_dyn0",           # whether run ph-split-from-dyn0.ph in the way1 or not
+        "ph_split_set_startlast_q",     # whether run ph-split-startlastq.in in the way2 or not
+        "q_non_irreducible_amount",     # non irreducible q amount you need input
+        "merge",                        # whether run_merge or not
+        "q2r",                          # whether run q2r.in or not
+        "matdyn",                       # whether run matdyn.in or not
+        "matdyn_dos",                   # whether run matdyn.dos.in or not
+        "lambda"                        # whether run matdyn.dos.in or not
+    ]
 
-    dyn0_flag              = args.dyn0_flag
-    run_ph_split_form_dyn0 = args.run_ph_split_form_dyn0
-
-    run_ph_split_set_startlast_q = args.run_ph_split_set_startlast_q
-    q_non_irreducible_amount     = args.q_non_irreducible_amount
-
-    run_merge       = args.run_merge
-    run_q2r         = args.run_q2r
-    run_matdyn      = args.run_matdyn
-    run_matdyn_dos  = args.run_matdyn_dos      
-    run_lambda      = args.run_lambda
-
-    if run_relax and work_path is not None:
-        qe_sc = qe_sc_workflow(input_file_path, work_path, kpoints_dense=kpoints_dense, pressure=press)
+    if run_mode=="relax" and (work_path is not None):
+        qe_sc = qe_sc_workflow(input_file_path, work_path, kpoints_dense=kpoints_dense, pressure=press, run_mode=run_mode)
         qe_sc.write_relax_in()
         for root, dirs, files in os.walk(work_path):
             if 'relax.in' in files:
@@ -255,7 +158,7 @@ if __name__ == "__main__":
                 logger.info("qe relax is running")
                 os.chdir(cwd)
 
-    if run_scfFit and work_path is not None:
+    if run_mode=="scffit" and work_path is not None:
         for root, dirs, files in os.walk(work_path):
             if 'relax.out' in files:
                 relax_out_path = os.path.join(root, 'relax.out')
@@ -263,16 +166,16 @@ if __name__ == "__main__":
                 qe_sc.write_scf_fit_in(root)
                 if 'scf.fit.in' in os.listdir(root):
                     if job_submission_system == "slurm":
-                        qe_sc.slurmscfFit(root)
+                        qe_sc.slurmscffit(root)
                         cwd = os.getcwd()
                         os.chdir(root)
-                        os.system("sbatch slurmscfFit.sh")
+                        os.system("sbatch slurmscffit.sh")
                         logger.info("qe scf.fit is running")
                         os.chdir(cwd)
                     if job_submission_system == "pbs":
                         pass
 
-    if run_scf and work_path is not None:
+    if run_mode=="scf" and work_path is not None:
         for root, dirs, files in os.walk(work_path):
             if 'relax.out' in files:
                 relax_out_path = os.path.join(root, 'relax.out')
@@ -286,7 +189,7 @@ if __name__ == "__main__":
                     logger.info("qe scf.fit is running")
                     os.chdir(cwd)
            
-    if run_ph_no_split and work_path is not None:
+    if run_mode=="ph_no_split" and work_path is not None:
         for root, dirs, files in os.walk(work_path):
             if 'relax.out' in files:
                 relax_out_path = os.path.join(root, 'relax.out')
@@ -311,7 +214,7 @@ if __name__ == "__main__":
                 dyn0_flag = True
 
     # run_ph_split_form_dyn0
-    if run_ph_split_form_dyn0 and work_path is not None:
+    if run_mode=="ph_split_form_dyn0" and work_path is not None:
         files = os.listdir(work_path)
         dyn0_names = list(Path(work_path).glob("*.dyn0"))
         if 'relax.out' in files and 'scf.out' in files and dyn0_names:
@@ -341,7 +244,7 @@ if __name__ == "__main__":
                 os.chdir(cwd)
    
     # run_ph_split_set_startlast_q
-    if run_ph_split_set_startlast_q and work_path is not None:
+    if run_mode=="ph_split_set_startlast_q" and work_path is not None:
         files = os.listdir(work_path)
         if 'relax.out' in files:
             relax_out_path = os.path.join(work_path, 'relax.out')
@@ -365,7 +268,7 @@ if __name__ == "__main__":
                     os.system("sbatch slurm_{}.sh".format(split_ph_name))
                     os.chdir(cwd)
                 
-    if run_merge and work_path is not None:
+    if run_mode=="merge" and work_path is not None:
         for root, dirs, files in os.walk(work_path):
             if len(dirs) > 3 and "relax.out" in files:
                 relax_out_path = os.path.join(root, 'relax.out')
@@ -377,7 +280,7 @@ if __name__ == "__main__":
                 q_total_amount, q_non_irreducible_amount, q_coordinate_list = qe_sc.get_q_from_dyn0(dyn0_path)
                 qe_sc.merge(root)
 
-    if run_q2r and work_path is not None:
+    if run_mode=="q2r" and work_path is not None:
         files = os.listdir(work_path)
         if 'relax.out' in files:
             relax_out_path = os.path.join(work_path, 'relax.out')
@@ -390,7 +293,7 @@ if __name__ == "__main__":
             os.system("sbatch slurmq2r.sh")
             os.chdir(cwd)
     
-    if run_matdyn and work_path is not None:
+    if run_mode=="matdyn" and work_path is not None:
         for root, dirs, files in os.walk(work_path):
             if 'relax.out' in files:
                 relax_out_path = os.path.join(root, 'relax.out')
@@ -403,7 +306,7 @@ if __name__ == "__main__":
                 os.system("sbatch slurmmatgen.sh")
                 os.chdir(cwd)
 
-    if run_matdyn_dos and work_path is not None:
+    if run_mode=="matdyn_dos" and work_path is not None:
         for root, dirs, files in os.walk(work_path):
             if 'matdyn.dos.in' in files:
                 qe_sc_workflow.slurmmatgen_dos(root)
@@ -412,7 +315,7 @@ if __name__ == "__main__":
                 os.system("sbatch slurmmatgen_dos.sh")
                 os.chdir(cwd)
 
-    if run_lambda and work_path is not None:
+    if run_mode=="lambda" and work_path is not None:
         for root, dirs, files in os.walk(work_path):
             if 'relax.out' in files:
                 relax_out_path = os.path.join(root, 'relax.out')
