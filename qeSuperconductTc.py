@@ -7,21 +7,18 @@ qeSuperconductTc.py -pos scripts_tests/POSCAR -caldir scripts_tests/out
 -caldir scripts_tests/out
 '''
 
-from asyncore import write
-from cmath import log
-from genericpath import exists
 import os
 import re
 import shutil
 import logging
-from argparse import ArgumentParser
 
-from pymatgen.core.structure import Structure
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from pymatgen.core.periodic_table import Element
 from pymatgen.io.vasp import Poscar
 from pymatgen.io.ase import AseAtomsAdaptor
 from ase.io import read
+
+from qe_submitjob import qe_submitjob
 
 logging.basicConfig(
     level = logging.INFO, 
@@ -64,7 +61,9 @@ class qe_superconduct_workflow:
                     self.q1, self.q2, self.q3 = value 
                     self.k1_dense , self.k2_dense , self.k3_dense  = [kp*4 for kp in kwargs["qpoints"]]
                     self.k1_sparse, self.k2_sparse, self.k3_sparse = [kp*2 for kp in kwargs["qpoints"]]
-                      
+                if key == "run_mode":
+                    self.run_mode = value
+
         if self.work_underpressure is None:
             self.work_underpressure = self.work_path
 
@@ -84,9 +83,14 @@ class qe_superconduct_workflow:
         self.get_USPP(self.workpath_pppath)
         ############################# done pp ##########################
 
-        logger.info(f"create *.in file in {self.work_underpressure}")
-
-
+        # write submit task scripts
+        self.submit = qe_submitjob(
+            submit_path=self.work_underpressure,
+            submit_job_system=self.submit_job_system,
+            running_mode=self.running_mode,
+            system_name=self.system_name
+        )
+        
     def get_struct_info(self, struct):
         
         spa = SpacegroupAnalyzer(struct)
@@ -333,6 +337,7 @@ class qe_superconduct_workflow:
             qe.write("  electron_phonon='interpolated',                  \n")                              
             qe.write("  el_ph_sigma=0.005,                               \n")                 
             qe.write("  el_ph_nsigma=10,                                 \n")
+            qe.write("  alpha_mix(1)=0.5,                                \n")  # 可以修改的更小一些, 如果用vasp计算声子谱稳定, 可以修改为0.3
             for i, species_name in enumerate(self.composition.keys()):
                 element      = Element(species_name)
                 species_mass = str(element.atomic_mass).strip("amu")
@@ -343,8 +348,7 @@ class qe_superconduct_workflow:
             qe.write("  ldisp=.true.,                                    \n")            
             qe.write("  nq1={},nq2={},nq3={},                            \n".format(self.q1, self.q2, self.q3 ))                 
             qe.write("/                                                  \n")
-
-    # split mode
+    
     def get_q_from_scfout(self, dir):
         if not os.path.exists(dir):
             raise FileExistsError ("scf.out didn't exist!")
@@ -399,6 +403,7 @@ class qe_superconduct_workflow:
             for q in self.q_list:
                 qe.write("{:<30}  {:<30}  {:<30}     \n".format(q[0], q[1], q[2]))
 
+    # split mode1
     def write_split_ph_in_from_dyn0(self, many_split_ph_dirs, q3):
         split_ph = os.path.join(many_split_ph_dirs, "split_ph.in")
         with open(split_ph, "w") as qe:
@@ -421,6 +426,7 @@ class qe_superconduct_workflow:
             qe.write("/                                                  \n")
             qe.write(" {:<30} {:<30} {:<30}                              \n".format(q3[0], q3[1], q3[2]))
     
+    # split mode2
     def write_split_ph_in_set_startlast_q(self, dir, start_q, last_q):
         
         split_ph_in = "split_ph" + str(start_q) + "-" + str(last_q) + ".in"
@@ -555,6 +561,7 @@ class qe_superconduct_workflow:
                 qe.write("{}                                             \n".format(str(mu)))
 
 
+<<<<<<< HEAD
     @classmethod
     def slurmrelax(cls, slurm_dirpath):
         slurm_script_filepath = os.path.join(slurm_dirpath, "slurmrelax.sh")
@@ -756,7 +763,9 @@ class qe_superconduct_workflow:
             slurm.write('ulimit -s unlimited                                                      \n')
             slurm.write('\n\n                                                                     \n')
             slurm.write('mpirun -n 48 /work/software/q-e-qe-6.8/bin/lambda.x <lambda.in> lambda.out \n')  
+=======
+>>>>>>> master
         
-
+    
 
     
