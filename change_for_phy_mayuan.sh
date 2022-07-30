@@ -10,4 +10,6 @@ for fpy in *.py; do
 	sed -i 's/xieyu/lhy/g' $fpy
 
 done
+#qeSuperconductTc.py 119
+#PP = os.path.abspath("/public/home/mayuan/POT/qe-pp/all_pbe_UPF_v1.5")
 

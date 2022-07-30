@@ -1,12 +1,11 @@
 #!/public/home/mayuan/miniconda3/envs/cage/bin/python3
-#!/work/home/mayuan/miniconda3/envs/cage/bin/python3
 
 """
 # check tasks number
 j=0;x=1; for i in `squeue | awk '{print $1}'`; do  let j+=x; done; echo $j
 
 relax:24 24 24
-    qe_main.py -i ./POSCAR -w ./out -relax -kd 24 24 24  -p 150
+    qe_main.py -i ./test/POSCAR -w ./out -kd 24 24 24 -p 150 -mode relax -j pbs 
 
     qe_main.py -w ./ -scffit -kd 24 24 24 
 
@@ -37,7 +36,7 @@ import logging
 from pathlib import Path
 from argparse import ArgumentParser
 
-from qeSuperconductTc import qe_superconduct_workflow as qe_sc_workflow
+from qe_workflow import qe_workflow
 
 logging.basicConfig(level = logging.INFO,format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -71,14 +70,6 @@ if __name__ == "__main__":
         dest='work_path',
         help="please tell me your calculated directory, I will put all file there",
     )
-    parser.add_argument(
-        '-j',
-        '-job-submission-system',
-        type=str,
-        default="slurm",
-        dest='job_submission_system',
-        help="please tell me your job submition system, eg: slurm, pbs",
-    ) 
     parser.add_argument(
         '-kd',
         '-kpoints_dense',
@@ -118,18 +109,24 @@ if __name__ == "__main__":
         dest='run_mode',
         help="please tell me your running mode!",
     )
-    
+    parser.add_argument(
+        '-j',
+        '-submit-job-system',
+        type=str,
+        default="slurm",
+        dest='submit_job_system',
+        help="please tell me your job submition system, eg: slurm, pbs",
+    ) 
     args = parser.parse_args()
     input_file_path       = args.input_file_path
     press                 = args.press
     work_path             = args.work_path
-    job_submission_system = args.job_submission_system
 
-    kpoints_dense  = args.kpoints_dense
-    kpoints_sparse = args.kpoints_sparse
-    qpoints        = args.qpoints
-    run_mode       = args.run_mode
-    
+    kpoints_dense     = args.kpoints_dense
+    kpoints_sparse    = args.kpoints_sparse
+    qpoints           = args.qpoints
+    run_mode          = args.run_mode
+    submit_job_system = args.submit_job_system
     # Running task types list
     run_mode_list = [
         "relax",                        # whether run relax.in or not
@@ -148,39 +145,51 @@ if __name__ == "__main__":
     ]
 
     if run_mode=="relax" and (work_path is not None):
-        qe_sc = qe_sc_workflow(input_file_path, work_path, kpoints_dense=kpoints_dense, pressure=press, run_mode=run_mode)
-        qe_sc.write_relax_in()
+        qe_sc = qe_workflow(
+            input_file_path, 
+            work_path, 
+            kpoints_dense=kpoints_dense, 
+            pressure=press, 
+            run_mode=run_mode, 
+            submit_job_system=submit_job_system)
         for root, dirs, files in os.walk(work_path):
             if 'relax.in' in files:
-                qe_sc.slurmrelax(root)
-                cwd = os.getcwd()
-                os.chdir(root)
-                os.system("sbatch slurmrelax.sh")
-                logger.info("qe relax is running")
-                os.chdir(cwd)
+                if submit_job_system == "slurm":
+                    cwd = os.getcwd()
+                    os.chdir(root)
+                    os.system("sbatch slurmrelax.sh")
+                    logger.info("qe relax is running")
+                    os.chdir(cwd)
+                if submit_job_system == "pbs":
+                    cwd = os.getcwd()
+                    os.chdir(root)
+                    os.system("qsub pbsrelax.sh")
+                    logger.info("qe relax is running")
+                    os.chdir(cwd)
+
 
     if run_mode=="scffit" and work_path is not None:
         for root, dirs, files in os.walk(work_path):
             if 'relax.out' in files:
                 relax_out_path = os.path.join(root, 'relax.out')
-                qe_sc = qe_sc_workflow(relax_out_path, work_path, kpoints_dense=kpoints_dense)
+                qe_sc = qe_workflow(relax_out_path, work_path, kpoints_dense=kpoints_dense)
                 qe_sc.write_scf_fit_in(root)
                 if 'scf.fit.in' in os.listdir(root):
-                    if job_submission_system == "slurm":
+                    if submit_job_system == "slurm":
                         qe_sc.slurmscffit(root)
                         cwd = os.getcwd()
                         os.chdir(root)
                         os.system("sbatch slurmscffit.sh")
                         logger.info("qe scf.fit is running")
                         os.chdir(cwd)
-                    if job_submission_system == "pbs":
+                    if submit_job_system == "pbs":
                         pass
 
     if run_mode=="scf" and work_path is not None:
         for root, dirs, files in os.walk(work_path):
             if 'relax.out' in files:
                 relax_out_path = os.path.join(root, 'relax.out')
-                qe_sc = qe_sc_workflow(relax_out_path, work_path, kpoints_sparse=kpoints_sparse)
+                qe_sc = qe_workflow(relax_out_path, work_path, kpoints_sparse=kpoints_sparse)
                 qe_sc.write_scf_in(root)
                 if 'scf.in' in os.listdir(root):
                     qe_sc.slurmscf(root)
@@ -189,12 +198,12 @@ if __name__ == "__main__":
                     os.system("sbatch slurmscf.sh")
                     logger.info("qe scf.fit is running")
                     os.chdir(cwd)
-           
+        
     if run_mode=="ph_no_split" and work_path is not None:
         for root, dirs, files in os.walk(work_path):
             if 'relax.out' in files:
                 relax_out_path = os.path.join(root, 'relax.out')
-                qe_sc = qe_sc_workflow(relax_out_path, work_path, qpoints=qpoints)
+                qe_sc = qe_workflow(relax_out_path, work_path, qpoints=qpoints)
                 qe_sc.write_ph_no_split_in(root)
                 if "ph_no_split.in" in os.listdir(root):
                     qe_sc.slurmph_no_split(root)
@@ -225,7 +234,7 @@ if __name__ == "__main__":
                 dyn0_path = dyn0_names[0]
             else:
                 raise FileExistsError("Exist many *.dyn0 files or No *.dyn0")
-            qe_sc = qe_sc_workflow(relax_out_path, work_path, qpoints=qpoints)
+            qe_sc = qe_workflow(relax_out_path, work_path, qpoints=qpoints)
             q_total_amount, q_non_irreducible_amount, q_coordinate_list = qe_sc.get_q_from_dyn0(dyn0_path)
 
         for i, q3 in enumerate(q_coordinate_list):
@@ -243,14 +252,14 @@ if __name__ == "__main__":
                 os.chdir(root)
                 os.system("sbatch slurmph_split_form_dyn0.sh")
                 os.chdir(cwd)
-   
+
     # run_ph_split_set_startlast_q
     if run_mode=="ph_split_set_startlast_q" and work_path is not None:
         files = os.listdir(work_path)
         if 'relax.out' in files:
             relax_out_path = os.path.join(work_path, 'relax.out')
             # scf_out_path   = os.path.join(work_path, 'scf.out')
-            qe_sc = qe_sc_workflow(relax_out_path, work_path, qpoints=qpoints)
+            qe_sc = qe_workflow(relax_out_path, work_path, qpoints=qpoints)
             # if  'scf.out' in files: 
             #     q_total_amount,    q_non_irreducible_amount, \
             #     q_coordinate_list, q_weight_list             = qe_sc.get_q_from_scfout(scf_out_path)
@@ -274,7 +283,7 @@ if __name__ == "__main__":
             if len(dirs) > 3 and "relax.out" in files:
                 relax_out_path = os.path.join(root, 'relax.out')
                 scf_out_path   = os.path.join(root, 'scf.out')
-                qe_sc = qe_sc_workflow(relax_out_path, work_path, qpoints=qpoints)
+                qe_sc = qe_workflow(relax_out_path, work_path, qpoints=qpoints)
                 dyn0_names = list(Path(work_path).glob("*.dyn0"))
                 if len(dyn0_names)==1:
                     dyn0_path = dyn0_names[0]
@@ -285,10 +294,10 @@ if __name__ == "__main__":
         files = os.listdir(work_path)
         if 'relax.out' in files:
             relax_out_path = os.path.join(work_path, 'relax.out')
-            qe_sc = qe_sc_workflow(relax_out_path, work_path)
+            qe_sc = qe_workflow(relax_out_path, work_path)
             qe_sc.write_q2r_in()
         if 'q2r.in' in os.listdir(work_path):
-            qe_sc_workflow.slurmq2r(work_path)
+            qe_workflow.slurmq2r(work_path)
             cwd = os.getcwd()
             os.chdir(work_path)
             os.system("sbatch slurmq2r.sh")
@@ -298,10 +307,10 @@ if __name__ == "__main__":
         for root, dirs, files in os.walk(work_path):
             if 'relax.out' in files:
                 relax_out_path = os.path.join(root, 'relax.out')
-                qe_sc = qe_sc_workflow(relax_out_path, work_path)
+                qe_sc = qe_workflow(relax_out_path, work_path)
                 qe_sc.write_matdyn_in()
             if 'matdyn.in' in os.listdir(root):
-                qe_sc_workflow.slurmmatgen(root)
+                qe_workflow.slurmmatgen(root)
                 cwd = os.getcwd()
                 os.chdir(root)
                 os.system("sbatch slurmmatgen.sh")
@@ -310,7 +319,7 @@ if __name__ == "__main__":
     if run_mode=="matdyn_dos" and work_path is not None:
         for root, dirs, files in os.walk(work_path):
             if 'matdyn.dos.in' in files:
-                qe_sc_workflow.slurmmatgen_dos(root)
+                qe_workflow.slurmmatgen_dos(root)
                 cwd = os.getcwd()
                 os.chdir(root)
                 os.system("sbatch slurmmatgen_dos.sh")
@@ -320,9 +329,9 @@ if __name__ == "__main__":
         for root, dirs, files in os.walk(work_path):
             if 'relax.out' in files:
                 relax_out_path = os.path.join(root, 'relax.out')
-                qe_sc = qe_sc_workflow(relax_out_path, work_path, run_lambda=run_lambda)
+                qe_sc = qe_workflow(relax_out_path, work_path, run_lambda=run_lambda)
             if 'lambda.in' in files:
-                qe_sc_workflow.slurmlambda(root)
+                qe_workflow.slurmlambda(root)
                 cwd = os.getcwd()
                 os.chdir(root)
                 os.system("sbatch slurmlambda.sh")

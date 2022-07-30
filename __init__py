@@ -1,2 +1,4 @@
-from .qeSuperconductTc import qe_superconduct_workflow
-from .qe_submitjob import qe_submitjob
+from .qe_workflow import qe_workflow
+from .qe_inputpara import qe_superconductTc
+from .qe_writesubmit import qe_writesubmit
+from .qe_writeinput import qe_writeinput
