@@ -16,9 +16,10 @@ class qe_workflow:
         work_path: str,
         **kwargs: dict,
     ):
-        self.work_path            = work_path
-        self.work_underpressure   = None
-        self.input_file_path      = input_file_path 
+        self.work_path           = work_path
+        self.pressure            = None
+        self.work_underpressure  = None
+        self.input_file_path     = input_file_path 
         if kwargs:
             for key, value in kwargs.items():
                 if key == "pressure":
@@ -68,7 +69,7 @@ class qe_workflow:
             qe_input_object=self.qe_inputpara, 
             run_mode=self.run_mode,
         )
-        # write submit task scripts
+        
         self.qe_writesubmit = qe_writesubmit(
             qe_input_object=self.qe_inputpara, 
             run_mode=self.run_mode,

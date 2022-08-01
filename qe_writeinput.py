@@ -104,14 +104,14 @@ class qe_writeinput:
             qe.write("K_POINTS {automatic}             \n")
             qe.write(" {} {} {} 0 0 0                  \n".format(self._qe_inputpara.k1_dense , self._qe_inputpara.k2_dense , self._qe_inputpara.k3_dense))
 
-    def write_scf_fit_in(self, dir):
-        scf_fit_in = os.path.join(dir, "scf.fit.in")
+    def write_scf_fit_in(self):
+        scf_fit_in = os.path.join(self._qe_inputpara.work_underpressure, "scf.fit.in")
         with open(scf_fit_in, "w") as qe:
             qe.write("&CONTROL\n")
             qe.write(" calculation='scf',              \n")
             qe.write(" restart_mode='from_scratch',    \n")
-            qe.write(" prefix='{}',                    \n".format(self.system_name))
-            qe.write(" pseudo_dir='{}',                \n".format(self.workpath_pppath))
+            qe.write(" prefix='{}',                    \n".format(self._qe_inputpara.system_name))
+            qe.write(" pseudo_dir='{}',                \n".format(self._qe_inputpara.workpath_pppath))
             qe.write(" outdir='./tmp',                 \n")
             qe.write(" forc_conv_thr = 1.0d-3,         \n")
             qe.write(" etot_conv_thr = 1.0d-4,         \n")
@@ -119,8 +119,8 @@ class qe_writeinput:
 
             qe.write("&SYSTEM\n")
             qe.write(" ibrav=0,                        \n")  # 设置ibrav=0，这时需要在输入文件中写入CELL_PARAMETERS，即CELL的基矢量. alat bohr angstrom alat 由 celldm(1)或A定义的晶格常数单位
-            qe.write(" nat={},                         \n".format(self.all_atoms_quantity))
-            qe.write(" ntyp={},                        \n".format(self.species_quantity))
+            qe.write(" nat={},                         \n".format(self._qe_inputpara.all_atoms_quantity))
+            qe.write(" ntyp={},                        \n".format(self._qe_inputpara.species_quantity))
             qe.write(" occupations = 'smearing',       \n")
             qe.write(" smearing = 'methfessel-paxton'  \n")
             qe.write(" degauss = 0.02                  \n")
@@ -135,24 +135,24 @@ class qe_writeinput:
             qe.write("/\n")
 
             qe.write("ATOMIC_SPECIES                   \n")
-            for species_name in self.composition.keys():
-                for species_pseudo in self.final_choosed_pp:
+            for species_name in self._qe_inputpara.composition.keys():
+                for species_pseudo in self._qe_inputpara.final_choosed_pp:
                     if species_name.lower() in species_pseudo.lower():
                         element      = Element(species_name)
                         species_mass = str(element.atomic_mass).strip("amu")
                         qe.write(" {:<5}  {:<10}  {:<50} \n".format(species_name, species_mass, species_pseudo))
             qe.write("CELL_PARAMETERS {angstrom}        \n")  # 如果选择angstrom单未，原子坐标选择分数坐标，即，ATOMIC_POSITIONS (crystal), 且不设置celldm(1). 这时alat和celldm(1)设置成v1的长度
-            for cell_p in self.cell_parameters:
+            for cell_p in self._qe_inputpara.cell_parameters:
                 cell_p = list(map(str, cell_p))
                 qe.write("{:>25} {:>25} {:>25} \n".format(cell_p[0], cell_p[1], cell_p[2]))
             qe.write("ATOMIC_POSITIONS (crystal)       \n")
-            for site in self.fractional_sites:
+            for site in self._qe_inputpara.fractional_sites:
                 coord = list(map(str, site.frac_coords))
                 name  = re.search(r"[A-Za-z]+", str(site.species)).group()
                 # 左对齐5个字符，左对齐30个字符
                 qe.write("{:<5} {:<30} {:<30} {:<30} \n".format(name, coord[0], coord[1], coord[2]))
             qe.write("K_POINTS {automatic}             \n")
-            qe.write(" {} {} {} 0 0 0                  \n".format(self.k1_dense, self.k2_dense, self.k3_dense))
+            qe.write(" {} {} {} 0 0 0                  \n".format(self._qe_inputpara.k1_dense, self._qe_inputpara.k2_dense, self._qe_inputpara.k3_dense))
 
     def write_scf_in(self, dir):
         scf_in = os.path.join(dir, "scf.in")
@@ -160,8 +160,8 @@ class qe_writeinput:
             qe.write("&CONTROL\n")
             qe.write(" calculation='scf',              \n")
             qe.write(" restart_mode='from_scratch',    \n")
-            qe.write(" prefix='{}',                    \n".format(self.system_name))
-            qe.write(" pseudo_dir='{}',                \n".format(self.workpath_pppath))
+            qe.write(" prefix='{}',                    \n".format(self._qe_inputpara.system_name))
+            qe.write(" pseudo_dir='{}',                \n".format(self._qe_inputpara.workpath_pppath))
             qe.write(" outdir='./tmp',                 \n")
             qe.write(" forc_conv_thr = 1.0d-3,         \n")
             qe.write(" etot_conv_thr = 1.0d-4,         \n")
@@ -169,8 +169,8 @@ class qe_writeinput:
 
             qe.write("&SYSTEM\n")
             qe.write(" ibrav=0,                        \n")  # 设置ibrav=0，这时需要在输入文件中写入CELL_PARAMETERS，即CELL的基矢量. alat bohr angstrom alat 由 celldm(1)或A定义的晶格常数单位
-            qe.write(" nat={},                         \n".format(self.all_atoms_quantity))
-            qe.write(" ntyp={},                        \n".format(self.species_quantity))
+            qe.write(" nat={},                         \n".format(self._qe_inputpara.all_atoms_quantity))
+            qe.write(" ntyp={},                        \n".format(self._qe_inputpara.species_quantity))
             qe.write(" occupations = 'smearing',       \n")
             qe.write(" smearing = 'methfessel-paxton'  \n")
             qe.write(" degauss = 0.02                  \n")
@@ -184,24 +184,24 @@ class qe_writeinput:
             qe.write("/\n")
 
             qe.write("ATOMIC_SPECIES                   \n")
-            for species_name in self.composition.keys():
-                for species_pseudo in self.final_choosed_pp:
+            for species_name in self._qe_inputpara.composition.keys():
+                for species_pseudo in self._qe_inputpara.final_choosed_pp:
                     if species_name.lower() in species_pseudo.lower():
                         element      = Element(species_name)
                         species_mass = str(element.atomic_mass).strip("amu")
                         qe.write(" {:<5}  {:<10}  {:<50} \n".format(species_name, species_mass, species_pseudo))
             qe.write("CELL_PARAMETERS {angstrom}        \n")  # 如果选择angstrom单未，原子坐标选择分数坐标，即，ATOMIC_POSITIONS (crystal), 且不设置celldm(1). 这时alat和celldm(1)设置成v1的长度
-            for cell_p in self.cell_parameters:
+            for cell_p in self._qe_inputpara.cell_parameters:
                 cell_p = list(map(str, cell_p))
                 qe.write("{:>25} {:>25} {:>25} \n".format(cell_p[0], cell_p[1], cell_p[2]))
             qe.write("ATOMIC_POSITIONS (crystal)       \n")
-            for site in self.fractional_sites:
+            for site in self._qe_inputpara.fractional_sites:
                 coord = list(map(str, site.frac_coords))
                 name  = re.search(r"[A-Za-z]+", str(site.species)).group()
                 # 左对齐5个字符，左对齐30个字符
                 qe.write("{:<5} {:<30} {:<30} {:<30} \n".format(name, coord[0], coord[1], coord[2]))
             qe.write("K_POINTS {automatic}             \n")
-            qe.write(" {} {} {} 0 0 0                  \n".format(self.k1_sparse, self.k2_sparse, self.k3_sparse))  
+            qe.write(" {} {} {} 0 0 0                  \n".format(self._qe_inputpara.k1_sparse, self._qe_inputpara.k2_sparse, self._qe_inputpara.k3_sparse))  
 
     # not split mode
     def write_ph_no_split_in(self, dir):

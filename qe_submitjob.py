@@ -1,6 +1,10 @@
 import os
+import logging
 
+from pathlib import Path
 from qe_inputpara import qe_inputpara
+
+logger = logging.getLogger("qe_workflow")
 
 class qe_submitjob:
     
@@ -10,19 +14,48 @@ class qe_submitjob:
             self._qe_inputpara = qe_input_object
         self.submit_job_system = submit_job_system 
         self.run_mode          = run_mode
+        self.mode2input_dict   = {
+            "relax"  : "relax.in",
+            "scffit" : "scf.fit.in",
+            
+        }
 
         if self.submit_job_system == "slurm":
             self.slurm_submitjob()
         elif self.submit_job_system == "pbs":
             self.pbs_submitjob()
 
-    def pbs_job_system(self):
+    def pbs_submitjob(self):
         if self.run_mode == "relax":
-            self.pbsrelax(self._qe_inputpara.work_underpressure)
+            dst_files = Path(self._qe_inputpara.work_underpressure).glob("relax.in")
+            for dst_file in dst_files:
+                if dst_file.exists():
+                    cwd = dst_file.cwd()
+                    dst_dir = dst_file.parent.absolute()
+                    os.chdir(dst_dir)
+                    os.system("qsub pbsrelax.sh")
+                    logger.info("qe relax is running")
+                    os.chdir(cwd)
         if self.run_mode == "scffit":
-            self.pbsscfFit(self.submit_path)
+            dst_files = Path(self._qe_inputpara.work_underpressure).glob("scf.fit.in")
+            for dst_file in dst_files:
+                if dst_file.exists():
+                    cwd = dst_file.cwd()
+                    dst_dir = dst_file.parent.absolute()
+                    os.chdir(dst_dir)
+                    os.system("qsub pbsscffit.sh")
+                    logger.info("qe scffit is running")
+                    os.chdir(cwd)
         if self.run_mode == "scf":
-            self.pbsscf(self.submit_path)
+            dst_files = Path(self._qe_inputpara.work_underpressure).glob("scf.in")
+            for dst_file in dst_files:
+                if dst_file.exists():
+                    cwd = dst_file.cwd()
+                    dst_dir = dst_file.parent.absolute()
+                    os.chdir(dst_dir)
+                    os.system("qsub pbsscf.sh")
+                    logger.info("qe scf is running")
+                    os.chdir(cwd)
         if self.run_mode =="ph_no_split":
             self.pbsph_no_split(self.submit_path)
         if self.run_mode =="ph_split_form_dyn0":

@@ -5,9 +5,10 @@
 j=0;x=1; for i in `squeue | awk '{print $1}'`; do  let j+=x; done; echo $j
 
 relax:24 24 24
-    qe_main.py -i ./test/POSCAR -w ./out -kd 24 24 24 -p 150 -mode relax -j pbs 
+    qe_main.py -i ./test/POSCAR -w ./test/out -kd 24 24 24 -p 150 -mode relax -j pbs 
 
     qe_main.py -w ./ -scffit -kd 24 24 24 
+    qe_main.py -w ./test/out/150.0/  -kd 16 16 16 -mode scffit -j pbs
 
     qe_main.py -w ./ -scf -ks 12 12 12 
 
@@ -152,39 +153,21 @@ if __name__ == "__main__":
             pressure=press, 
             run_mode=run_mode, 
             submit_job_system=submit_job_system)
-        for root, dirs, files in os.walk(work_path):
-            if 'relax.in' in files:
-                if submit_job_system == "slurm":
-                    cwd = os.getcwd()
-                    os.chdir(root)
-                    os.system("sbatch slurmrelax.sh")
-                    logger.info("qe relax is running")
-                    os.chdir(cwd)
-                if submit_job_system == "pbs":
-                    cwd = os.getcwd()
-                    os.chdir(root)
-                    os.system("qsub pbsrelax.sh")
-                    logger.info("qe relax is running")
-                    os.chdir(cwd)
-
 
     if run_mode=="scffit" and work_path is not None:
-        for root, dirs, files in os.walk(work_path):
-            if 'relax.out' in files:
-                relax_out_path = os.path.join(root, 'relax.out')
-                qe_sc = qe_workflow(relax_out_path, work_path, kpoints_dense=kpoints_dense)
-                qe_sc.write_scf_fit_in(root)
-                if 'scf.fit.in' in os.listdir(root):
-                    if submit_job_system == "slurm":
-                        qe_sc.slurmscffit(root)
-                        cwd = os.getcwd()
-                        os.chdir(root)
-                        os.system("sbatch slurmscffit.sh")
-                        logger.info("qe scf.fit is running")
-                        os.chdir(cwd)
-                    if submit_job_system == "pbs":
-                        pass
-
+        # for root, dirs, files in os.walk(work_path):
+        #     if 'relax.out' in files:
+        relax_out = list(Path(work_path).glob("relax.out"))
+        if relax_out:
+            relax_out_path = str(relax_out[0].absolute())
+            qe_sc = qe_workflow(
+                relax_out_path, 
+                work_path, 
+                kpoints_dense=kpoints_dense,
+                run_mode=run_mode,
+                submit_job_system=submit_job_system
+                )
+    
     if run_mode=="scf" and work_path is not None:
         for root, dirs, files in os.walk(work_path):
             if 'relax.out' in files:

@@ -42,23 +42,23 @@ class qe_writesubmit:
         if self.run_mode == "relax":
             self.pbsrelax(self._qe_inputpara.work_underpressure)
         if self.run_mode == "scffit":
-            self.pbsscfFit(self.submit_path)
+            self.pbsscffit(self._qe_inputpara.work_underpressure)
         if self.run_mode == "scf":
-            self.pbsscf(self.submit_path)
+            self.pbsscf(self._qe_inputpara.work_underpressure)
         if self.run_mode =="ph_no_split":
-            self.pbsph_no_split(self.submit_path)
+            self.pbsph_no_split(self._qe_inputpara.work_underpressure)
         if self.run_mode =="ph_split_form_dyn0":
-            self.pbsph_split_form_dyn0(self.submit_path)
+            self.pbsph_split_form_dyn0(self._qe_inputpara.work_underpressure)
         if self.run_mode =="ph_split_set_startlast_q":
-            self.pbsph_split_set_startlast_q(self.submit_path, self.system_name)
+            self.pbsph_split_set_startlast_q(self._qe_inputpara.work_underpressure, self._qe_inputpara.system_name)
         if self.run_mode =="q2r":
-            self.pbsq2r(self.submit_path)
+            self.pbsq2r(self._qe_inputpara.work_underpressure)
         if self.run_mode =="matdyn":
-            self.pbsmatgen(self.submit_path)
+            self.pbsmatgen(self._qe_inputpara.work_underpressure)
         if self.run_mode =="matdyn_dos":
-            self.pbsmatgen_dos(self.submit_path)
+            self.pbsmatgen_dos(self._qe_inputpara.work_underpressure)
         if self.run_mode =="lambda":
-            self.pbslambda(self.submit_path)
+            self.pbslambda(self._qe_inputpara.work_underpressure)
 
 
     # slurm job scripts
@@ -278,19 +278,16 @@ class qe_writesubmit:
         pbs_script_filepath = os.path.join(pbs_dirpath, "pbsscffit.sh")
         with open(pbs_script_filepath, "w") as pbs:
             pbs.write('#!/bin/sh                                                                \n')     
-            pbs.write('#SBATCH  --job-name=scf.fit                                             \n')                         
-            pbs.write('#SBATCH  --output=log.scf.fit.out                                      \n')                       
-            pbs.write('#SBATCH  --error=log.scf.fit.err                                       \n')                      
-            pbs.write('#SBATCH  --partition=xieyu                                               \n')    # lhy lbt is both ok                
-            pbs.write('#SBATCH  --nodes=1                                                       \n')             
-            pbs.write('#SBATCH  --ntasks=48                                                     \n')               
-            pbs.write('#SBATCH  --ntasks-per-node=48                                            \n')                        
-            pbs.write('#SBATCH  --cpus-per-task=1                                               \n')                     
+            pbs.write('#PBS -N    scffit                                                         \n')                         
+            pbs.write('#PBS -q    liuhy                                                         \n')    # lhy lbt is both ok                
+            pbs.write('#PBS -l    nodes=1:ppn=28                                                \n')             
+            pbs.write('#PBS -j    oe                                                            \n')                        
+            pbs.write('#PBS -V                                                                  \n')                     
             pbs.write('\n\n                                                                     \n')
-            pbs.write('source /work/env/intel2018                                               \n')
+            pbs.write('source /public/home/mayuan/intel/oneapi/setvars.sh                       \n')
             pbs.write('ulimit -s unlimited                                                      \n')
             pbs.write('\n\n                                                                     \n')
-            pbs.write('mpirun -n 48 /work/software/q-e-qe-6.8/bin/pw.x -npool 4 <scf.fit.in> scf.fit.out \n')                                                                         
+            pbs.write('mpirun -np 28 /public/home/mayuan/software/qe-7.1/bin/pw.x -npool 4 <scf.fit.in> scf.fit.out \n')
 
     def pbsscf(self, pbs_dirpath):
         pbs_script_filepath = os.path.join(pbs_dirpath, "pbsscf.sh")
