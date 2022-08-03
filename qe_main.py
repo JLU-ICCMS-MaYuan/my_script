@@ -1,20 +1,35 @@
-#!/work/home/mayuan/miniconda3/envs/cage/bin/python3
 #!/public/home/mayuan/miniconda3/envs/cage/bin/python3
+#!/work/home/mayuan/miniconda3/envs/cage/bin/python3
 
 """
 # check tasks number
 j=0;x=1; for i in `squeue | awk '{print $1}'`; do  let j+=x; done; echo $j
-
-relax:24 24 24
-
-    qe_main.py -i ./test/POSCAR -w ./test/out -kd 16 16 16 -p 150 -mode relax -j slurm
-    qe_main.py -i ./test/POSCAR -w ./test/out -kd 24 24 24 -p 150 -mode relax -j pbs 
-
-    qe_main.py -w ./test/out/150.0/  -kd 16 16 16 -mode scffit -j slurm
+pbs
+    qe_main.py -i ./test/POSCAR -w ./test/out -kd 16 16 16 -p 150 -mode relax -j pbs 
     qe_main.py -w ./test/out/150.0/  -kd 16 16 16 -mode scffit -j pbs
-
-    qe_main.py -w ./test/out/150.0/  -kd 8 8 8 -mode scf -j slurm
     qe_main.py -w ./test/out/150.0/  -kd 8 8 8 -mode scf -j pbs
+
+    # no split method
+    qe_main.py -w ./test/out/150.0/ -q 4 4 4 -j pbs -mode ph_no_split 
+    qe_main.py -w ./test/out/150.0/ -q 4 4 4 -j pbs -mode ph_no_split -dyn0
+
+    # spilit method 1
+    qe_main.py -w ./test/out/150.0/ -q 4 4 4 -j pbs -mode ph_no_split -dyn0
+    qe_main.py -w ./test/out/150.0/ -q 4 4 4 -j pbs -mode ph_split_form_dyn0 
+    qe_main.py -w ./test/out/150.0/ -q 4 4 4 -mode merge
+
+    # split method 2
+    qe_main.py -w ./test/out/150.0/ -q 4 4 4 -j pbs -mode ph_split_set_startlast_q -q-no-irr-num 8
+
+    qe_main.py -w ./test/out/150.0/ -j pbs -mode q2r 
+    qe_main.py -w ./test/out/150.0/ -j pbs -mode matdyn
+    qe_main.py -w ./test/out/150.0/ -j pbs -mode matdyn_dos
+    qe_main.py -w ./test/out/150.0/ -j pbs -mode lambda -q 4 4 4
+
+slurm
+    qe_main.py -i ./test/POSCAR -w ./test/out -kd 16 16 16 -p 150 -mode relax -j slurm
+    qe_main.py -w ./test/out/150.0/  -kd 16 16 16 -mode scffit -j slurm
+    qe_main.py -w ./test/out/150.0/  -kd 8 8 8 -mode scf -j slurm
 
     # no split method
     qe_main.py -w ./test/out/150.0/ -mode ph_no_split -q 8 8 8 -j slurm
@@ -28,15 +43,9 @@ relax:24 24 24
     # split method 2
     qe_main.py -w ./test/out/150.0/ -q 4 4 4 -j slurm -mode ph_split_set_startlast_q -q-no-irr-num 8
 
-
     qe_main.py -w ./test/out/150.0/ -j slurm -mode q2r 
-
-
     qe_main.py -w ./test/out/150.0/ -j slurm -mode matdyn
-
-
     qe_main.py -w ./test/out/150.0/ -j slurm -mode matdyn_dos
-
     qe_main.py -w ./test/out/150.0/ -j slurm -mode lambda -q 4 4 4
 """
 import os
@@ -266,6 +275,7 @@ if __name__ == "__main__":
                 relax_out_path, 
                 work_path, 
                 run_mode=run_mode,
+                submit_job_system=submit_job_system,
             )
     
     if run_mode=="matdyn" and work_path is not None:
@@ -277,6 +287,7 @@ if __name__ == "__main__":
                 work_path, 
                 qpoints=qpoints,
                 run_mode=run_mode,
+                submit_job_system=submit_job_system,
             )
 
     if run_mode=="matdyn_dos" and work_path is not None:
@@ -287,6 +298,7 @@ if __name__ == "__main__":
                 relax_out_path, 
                 work_path, 
                 run_mode=run_mode,
+                submit_job_system=submit_job_system,
             )
 
     if run_mode=="lambda" and work_path is not None:
@@ -298,4 +310,5 @@ if __name__ == "__main__":
                 work_path, 
                 qpoints=qpoints,
                 run_mode=run_mode,
+                submit_job_system=submit_job_system,
             )

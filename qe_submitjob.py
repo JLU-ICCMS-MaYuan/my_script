@@ -116,7 +116,7 @@ class qe_submitjob:
                     cwd = dst_file.cwd()
                     dst_dir = dst_file.parent.absolute()
                     os.chdir(dst_dir)
-                    os.system("sbatch slurmmatgen.sh")
+                    os.system("sbatch slurmmatdyn.sh")
                     logger.info("qe matdyn is running")
                     os.chdir(cwd)
         if self.run_mode =="matdyn_dos":
@@ -126,10 +126,9 @@ class qe_submitjob:
                     cwd = dst_file.cwd()
                     dst_dir = dst_file.parent.absolute()
                     os.chdir(dst_dir)
-                    os.system("sbatch slurmmatgen_dos.sh")
+                    os.system("sbatch slurmmatdyn_dos.sh")
                     logger.info("qe matdyn_dos is running")
                     os.chdir(cwd)
-            
         if self.run_mode =="lambda":
             dst_files = Path(self._qe_inputpara.work_underpressure).glob("lambda.in")
             for dst_file in dst_files:
@@ -173,16 +172,80 @@ class qe_submitjob:
                     logger.info("qe scf is running")
                     os.chdir(cwd)
         if self.run_mode =="ph_no_split":
-            self.pbsph_no_split(self.submit_path)
+            dst_files = Path(self._qe_inputpara.work_underpressure).glob("ph_no_split.in")
+            for dst_file in dst_files:
+                if dst_file.exists():
+                    cwd = dst_file.cwd()
+                    dst_dir = dst_file.parent.absolute()
+                    os.chdir(dst_dir)
+                    id_info = os.popen("qsub pbsph_no_split.sh").read()
+                    print(f"{id_info}")
+                    if re.search(r"\d+", id_info) is not None:
+                        id_num  = re.search(r"\d+", id_info).group()
+                    os.chdir(cwd)
+            while self.dyn0_flag:
+                if os.path.exists(os.path.join(self._qe_inputpara.work_underpressure, self._qe_inputpara.system_name+".dyn0")):
+                    os.system("qstat")
+                    os.system("qdel {}".format(id_num))
+                    logger.info(f"The script detected the *.dyn0, so scancel the slurm job {id_num}")
+                    self.dyn0_flag = False
+                else:
+                    time.sleep(5)
+                    self.dyn0_flag = True
         if self.run_mode =="ph_split_form_dyn0":
-            self.pbsph_split_form_dyn0(self.submit_path)
+            for root, dirs, files in os.walk(self._qe_inputpara.work_underpressure):
+                if "split_ph.in" in files and "scf.fit.in" in files and "scf.in" in files and "pbsph_split_form_dyn0.sh" in files:
+                    cwd = os.getcwd()
+                    os.chdir(root)
+                    os.system("qsub pbsph_split_form_dyn0.sh")
+                    os.chdir(cwd)
         if self.run_mode =="ph_split_set_startlast_q":
-            self.pbsph_split_set_startlast_q(self.submit_path, self.system_name)
+            split_ph_files = list(Path(self._qe_inputpara.work_underpressure).glob("split_ph*.in"))
+            if len(split_ph_files)==self.q_non_irreducible_amount:
+                for split_ph_file in split_ph_files:
+                    split_ph_name = re.split(r"[\/.]" ,str(split_ph_file))[-2]
+                    cwd = os.getcwd()
+                    os.chdir(self._qe_inputpara.work_underpressure)
+                    os.system("qsub pbs_{}.sh".format(split_ph_name))
+                    logger.info(f"finish submit {split_ph_name}")
+                    os.chdir(cwd) 
         if self.run_mode =="q2r":
-            self.pbsq2r(self.submit_path)
+            dst_files = Path(self._qe_inputpara.work_underpressure).glob("q2r.in")
+            for dst_file in dst_files:
+                if dst_file.exists():
+                    cwd = dst_file.cwd()
+                    dst_dir = dst_file.parent.absolute()
+                    os.chdir(dst_dir)
+                    os.system("qsub pbsq2r.sh")
+                    logger.info("qe q2r is running")
+                    os.chdir(cwd)
         if self.run_mode =="matdyn":
-            self.pbsmatgen(self.submit_path)
+            dst_files = Path(self._qe_inputpara.work_underpressure).glob("matdyn.in")
+            for dst_file in dst_files:
+                if dst_file.exists():
+                    cwd = dst_file.cwd()
+                    dst_dir = dst_file.parent.absolute()
+                    os.chdir(dst_dir)
+                    os.system("qsub pbsmatdyn.sh")
+                    logger.info("qe matdyn is running")
+                    os.chdir(cwd)
         if self.run_mode =="matdyn_dos":
-            self.pbsmatgen_dos(self.submit_path)
+            dst_files = Path(self._qe_inputpara.work_underpressure).glob("matdyn.dos.in")
+            for dst_file in dst_files:
+                if dst_file.exists():
+                    cwd = dst_file.cwd()
+                    dst_dir = dst_file.parent.absolute()
+                    os.chdir(dst_dir)
+                    os.system("qsub pbsmatdyn_dos.sh")
+                    logger.info("qe matdyn_dos is running")
+                    os.chdir(cwd)
         if self.run_mode =="lambda":
-            self.pbslambda(self.submit_path)
+            dst_files = Path(self._qe_inputpara.work_underpressure).glob("lambda.in")
+            for dst_file in dst_files:
+                if dst_file.exists():
+                    cwd = dst_file.cwd()
+                    dst_dir = dst_file.parent.absolute()
+                    os.chdir(dst_dir)
+                    os.system("qsub pbslambda.sh")
+                    logger.info("qe lambda is running")
+                    os.chdir(cwd)
