@@ -1,6 +1,3 @@
-#!/public/home/mayuan/miniconda3/envs/cage/bin/python3
-#!/work/home/mayuan/miniconda3/envs/cage/bin/python3
-
 import os
 import re
 import logging
@@ -118,7 +115,9 @@ class qe_writeinput:
             qe.write("ATOMIC_SPECIES                   \n")
             for species_name in self._qe_inputpara.composition.keys():
                 for species_pseudo in self._qe_inputpara.final_choosed_pp:
-                    if species_name.lower() in species_pseudo.lower():
+                    match_res = re.search(species_name.lower()+"\_", species_pseudo)
+                    if match_res is not None:
+                        logger.info(f"write USPP for species in relax.in: {match_res.group()}") 
                         element      = Element(species_name)
                         species_mass = str(element.atomic_mass).strip("amu")
                         qe.write(" {:<5}  {:<10}  {:<50} \n".format(species_name, species_mass, species_pseudo))
@@ -168,7 +167,9 @@ class qe_writeinput:
             qe.write("ATOMIC_SPECIES                   \n")
             for species_name in self._qe_inputpara.composition.keys():
                 for species_pseudo in self._qe_inputpara.final_choosed_pp:
-                    if species_name.lower() in species_pseudo.lower():
+                    match_res = re.search(species_name.lower()+"\_", species_pseudo)
+                    if match_res is not None:
+                        logger.info(f"write USPP for species in relax.in: {match_res.group()}") 
                         element      = Element(species_name)
                         species_mass = str(element.atomic_mass).strip("amu")
                         qe.write(" {:<5}  {:<10}  {:<50} \n".format(species_name, species_mass, species_pseudo))
@@ -217,7 +218,9 @@ class qe_writeinput:
             qe.write("ATOMIC_SPECIES                   \n")
             for species_name in self._qe_inputpara.composition.keys():
                 for species_pseudo in self._qe_inputpara.final_choosed_pp:
-                    if species_name.lower() in species_pseudo.lower():
+                    match_res = re.search(species_name.lower()+"\_", species_pseudo)
+                    if match_res is not None:
+                        logger.info(f"write USPP for species in relax.in: {match_res.group()}") 
                         element      = Element(species_name)
                         species_mass = str(element.atomic_mass).strip("amu")
                         qe.write(" {:<5}  {:<10}  {:<50} \n".format(species_name, species_mass, species_pseudo))

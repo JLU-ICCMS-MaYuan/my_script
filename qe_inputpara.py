@@ -1,6 +1,3 @@
-#!/public/home/mayuan/miniconda3/envs/cage/bin/python3
-#!/work/home/mayuan/miniconda3/envs/cage/bin/python3
-
 '''
 qeSuperconductTc.py -pos scripts_tests/POSCAR -caldir scripts_tests/out
 -pos    scripts_tests/POSCAR 
@@ -97,7 +94,7 @@ class qe_inputpara:
 
     def get_USPP(self, workpath_pppath):
         pp_files = os.listdir(workpath_pppath)
-        if not pp_files:
+        if len(pp_files) != len(self.species):
             #qe_USPP = os.path.abspath("/public/home/mayuan/POT/qe-pp/all_pbe_UPF_v1.5")
             qe_USPP = os.path.abspath("/work/home/mayuan/POT/qe-pp/all_pbe_UPF_v1.5")
 
@@ -105,7 +102,8 @@ class qe_inputpara:
             for species in self.species:
                 species_name = species.name.lower()
                 ppfiles       = os.listdir(qe_USPP)
-                targetppfiles = filter(lambda file: species_name in file.lower(), ppfiles)
+                logger.info(f"species_name {species_name}")
+                targetppfiles = filter(lambda file: re.search(species_name+"\_", file.lower()), ppfiles)
                 targetppnames = [pp for pp in targetppfiles]
                 choosed_flag  = False
                 while not choosed_flag:

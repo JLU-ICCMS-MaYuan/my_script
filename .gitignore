@@ -4,6 +4,6 @@
 /.ipynb_checkpoints
 /useless-scripts
 /.vscode
-/.__pycache__
+/__pycache__
 /test
 /out

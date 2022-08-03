@@ -1,5 +1,5 @@
-#!/public/home/mayuan/miniconda3/envs/cage/bin/python3
 #!/work/home/mayuan/miniconda3/envs/cage/bin/python3
+#!/public/home/mayuan/miniconda3/envs/cage/bin/python3
 
 """
 # check tasks number
@@ -29,7 +29,7 @@ pbs
 slurm
     qe_main.py -i ./test/POSCAR -w ./test/out -kd 16 16 16 -p 150 -mode relax -j slurm
     qe_main.py -w ./test/out/150.0/  -kd 16 16 16 -mode scffit -j slurm
-    qe_main.py -w ./test/out/150.0/  -kd 8 8 8 -mode scf -j slurm
+    qe_main.py -w ./test/out/150.0/  -ks 8 8 8 -mode scf -j slurm
 
     # no split method
     qe_main.py -w ./test/out/150.0/ -mode ph_no_split -q 8 8 8 -j slurm
