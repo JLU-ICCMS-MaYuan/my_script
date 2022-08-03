@@ -1,15 +1,25 @@
 import os
-
+import re
+import logging
+from pathlib import Path
 from qe_inputpara import qe_inputpara
+
+logger = logging.getLogger("qe_writesubmit")
 
 class qe_writesubmit:
 
-    def __init__(self, qe_input_object, submit_job_system="slurm", run_mode=None):
+    def __init__(self, qe_input_object, submit_job_system="slurm", run_mode=None, **kwargs):
 
         if isinstance(qe_input_object, qe_inputpara):
-            self._qe_inputpara = qe_input_object
-        self.submit_job_system = submit_job_system 
-        self.run_mode      = run_mode
+            self._qe_inputpara  = qe_input_object
+        self.submit_job_system        = submit_job_system 
+        self.run_mode                 = run_mode
+        self.q_non_irreducible_amount = None
+
+        if kwargs:
+            for key, value in kwargs.items():
+                if key=="q_non_irreducible_amount":
+                    self.q_non_irreducible_amount = value
 
         if self.submit_job_system == "slurm":
             self.slurm_job_system()
@@ -20,23 +30,38 @@ class qe_writesubmit:
         if self.run_mode == "relax":
             self.slurmrelax(self._qe_inputpara.work_underpressure)
         if self.run_mode == "scffit":
-            self.slurmscfFit(self.submit_path)
+            self.slurmscffit(self._qe_inputpara.work_underpressure)
         if self.run_mode == "scf":
-            self.slurmscf(self.submit_path)
+            self.slurmscf(self._qe_inputpara.work_underpressure)
         if self.run_mode =="ph_no_split":
-            self.slurmph_no_split(self.submit_path)
+            self.slurmph_no_split(self._qe_inputpara.work_underpressure)
         if self.run_mode =="ph_split_form_dyn0":
-            self.slurmph_split_form_dyn0(self.submit_path)
+            dyn0_names = list(Path(self._qe_inputpara.work_underpressure).glob("*.dyn0"))
+            if len(dyn0_names)==1:
+                dyn0_path = str(dyn0_names[0].absolute())
+            else:
+                raise FileExistsError("Exist many *.dyn0 files or No *.dyn0")
+            _, _, q_coordinate_list, _ = self._qe_inputpara.get_q_from_dyn0(dyn0_path)
+            for i, q3 in enumerate(q_coordinate_list):
+                split_ph_dir = os.path.join(self._qe_inputpara.work_underpressure, str(i+1))
+                if not os.path.exists(split_ph_dir):
+                    raise FileExistsError (f"There is no {split_ph_dir}")
+                self.slurmph_split_form_dyn0(split_ph_dir)
+                logger.info(f"finish submit job script in {i+1}")
         if self.run_mode =="ph_split_set_startlast_q":
-            self.slurmph_split_set_startlast_q(self.submit_path, self.system_name)
+            split_ph_files = list(Path(self._qe_inputpara.work_underpressure).glob("split_ph*.in"))
+            if len(split_ph_files)==self.q_non_irreducible_amount:
+                for split_ph_file in split_ph_files:
+                    split_ph_name = re.split(r"[\/.]" ,str(split_ph_file))[-2]
+                    self.slurmph_split_set_startlast_q(self._qe_inputpara.work_underpressure, split_ph_name)
         if self.run_mode =="q2r":
-            self.slurmq2r(self.submit_path)
+            self.slurmq2r(self._qe_inputpara.work_underpressure)
         if self.run_mode =="matdyn":
-            self.slurmmatgen(self.submit_path)
+            self.slurmmatgen(self._qe_inputpara.work_underpressure)
         if self.run_mode =="matdyn_dos":
-            self.slurmmatgen_dos(self.submit_path)
+            self.slurmmatgen_dos(self._qe_inputpara.work_underpressure)
         if self.run_mode =="lambda":
-            self.slurmlambda(self.submit_path)
+            self.slurmlambda(self._qe_inputpara.work_underpressure)
 
     def pbs_job_system(self):
         if self.run_mode == "relax":
@@ -83,8 +108,8 @@ class qe_writesubmit:
             slurm.write('grep "Sym. Ops." relax.out                                               \n')
             slurm.write("awk '/Begin final coordinates/,/End final coordinates/{print $0}' relax.out \n")
 
-    def slurmscfFit(self, slurm_dirpath):
-        slurm_script_filepath = os.path.join(slurm_dirpath, "slurmscfFit.sh")
+    def slurmscffit(self, slurm_dirpath):
+        slurm_script_filepath = os.path.join(slurm_dirpath, "slurmscffit.sh")
         with open(slurm_script_filepath, "w") as slurm:
             slurm.write('#!/bin/sh                                                                \n')     
             slurm.write('#SBATCH  --job-name=scf.fit                                             \n')                         

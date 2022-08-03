@@ -3,32 +3,63 @@
 
 import os
 import re
+import logging
+from pathlib import Path 
 
 from qe_inputpara import qe_inputpara
 
 from pymatgen.core.periodic_table import Element
 
+logger = logging.getLogger("qe_writeinput")
+
 class qe_writeinput:
     
-    def __init__(self, qe_input_object, run_mode):
+    def __init__(self, qe_input_object, run_mode, **kwargs):
         if isinstance(qe_input_object, qe_inputpara):
             self._qe_inputpara = qe_input_object
         self.run_mode = run_mode
+        self.q_non_irreducible_amount = None
+        if kwargs:
+            for key, value in kwargs.items():
+                if key=="q_non_irreducible_amount":
+                    self.q_non_irreducible_amount = value
+        
         self.writeinput()
+
+
 
     def writeinput(self):
         if self.run_mode == "relax":
             self.write_relax_in()
         if self.run_mode == "scffit":
-            self.write_scf_fit_in()
+            self.write_scf_fit_in(self._qe_inputpara.work_underpressure)
         if self.run_mode == "scf":
-            self.write_scf_in()
+            self.write_scf_in(self._qe_inputpara.work_underpressure)
         if self.run_mode =="ph_no_split":
             self.write_ph_no_split_in()
         if self.run_mode =="ph_split_form_dyn0":
-            self.write_split_ph_in_from_dyn0()
+            dyn0_names = list(Path(self._qe_inputpara.work_underpressure).glob("*.dyn0"))
+            if len(dyn0_names)==1:
+                dyn0_path = str(dyn0_names[0].absolute())
+            else:
+                raise FileExistsError ("exist many *.dyn0 files or no *.dyn0")
+            _, _, q_coordinate_list, _ = self._qe_inputpara.get_q_from_dyn0(dyn0_path)
+            for i, q3 in enumerate(q_coordinate_list):
+                split_ph_dir = os.path.join(self._qe_inputpara.work_underpressure, str(i+1))
+                if not os.path.exists(split_ph_dir):
+                    os.makedirs(split_ph_dir)
+                self.write_split_ph_in_from_dyn0(split_ph_dir, q3)
+                self.write_scf_fit_in(split_ph_dir)
+                self.write_scf_in(split_ph_dir)
+                logger.info(f"finish input files in {i+1}")
         if self.run_mode =="ph_split_set_startlast_q":
-            self.write_split_ph_in_set_startlast_q()
+            if self.q_non_irreducible_amount is not None:
+                for i in range(self.q_non_irreducible_amount):
+                    self.write_split_ph_in_set_startlast_q(
+                        self._qe_inputpara.work_underpressure, 
+                        i+1, 
+                        i+1)
+                logger.info(f"finish input files {i+1}")
         if self.run_mode =="q2r":
             self.write_q2r_in()
         if self.run_mode =="matdyn":
@@ -104,8 +135,8 @@ class qe_writeinput:
             qe.write("K_POINTS {automatic}             \n")
             qe.write(" {} {} {} 0 0 0                  \n".format(self._qe_inputpara.k1_dense , self._qe_inputpara.k2_dense , self._qe_inputpara.k3_dense))
 
-    def write_scf_fit_in(self):
-        scf_fit_in = os.path.join(self._qe_inputpara.work_underpressure, "scf.fit.in")
+    def write_scf_fit_in(self, dir):
+        scf_fit_in = os.path.join(dir, "scf.fit.in")
         with open(scf_fit_in, "w") as qe:
             qe.write("&CONTROL\n")
             qe.write(" calculation='scf',              \n")
@@ -204,74 +235,56 @@ class qe_writeinput:
             qe.write(" {} {} {} 0 0 0                  \n".format(self._qe_inputpara.k1_sparse, self._qe_inputpara.k2_sparse, self._qe_inputpara.k3_sparse))  
 
     # not split mode
-    def write_ph_no_split_in(self, dir):
-        ph_in = os.path.join(dir, "ph_no_split.in")
+    def write_ph_no_split_in(self):
+        ph_in = os.path.join(self._qe_inputpara.work_underpressure, "ph_no_split.in")
         with open(ph_in, "w") as qe:
-            qe.write("Electron-phonon coefficients for {}                \n".format(self.system_name))                                    
+            qe.write("Electron-phonon coefficients for {}                \n".format(self._qe_inputpara.system_name))                                    
             qe.write(" &inputph                                          \n")      
             qe.write("  tr2_ph=1.0d-16,                                  \n")              
-            qe.write("  prefix='{}',                                     \n".format(self.system_name))                
-            qe.write("  fildvscf='{}.dv',                                \n".format(self.system_name))                     
+            qe.write("  prefix='{}',                                     \n".format(self._qe_inputpara.system_name))                
+            qe.write("  fildvscf='{}.dv',                                \n".format(self._qe_inputpara.system_name))                     
             qe.write("  electron_phonon='interpolated',                  \n")                              
             qe.write("  el_ph_sigma=0.005,                               \n")                 
             qe.write("  el_ph_nsigma=10,                                 \n")
             qe.write("  alpha_mix(1)=0.5,                                \n")  # 可以修改的更小一些, 如果用vasp计算声子谱稳定, 可以修改为0.3
-            for i, species_name in enumerate(self.composition.keys()):
+            for i, species_name in enumerate(self._qe_inputpara.composition.keys()):
                 element      = Element(species_name)
                 species_mass = str(element.atomic_mass).strip("amu")
                 qe.write("  amass({})={},                                \n".format(i+1, species_mass))             
             qe.write("  outdir='./tmp',                                  \n")               
-            qe.write("  fildyn='{}.dyn',                                 \n".format(self.system_name))                    
+            qe.write("  fildyn='{}.dyn',                                 \n".format(self._qe_inputpara.system_name))                    
             qe.write("  trans=.true.,                                    \n")            
             qe.write("  ldisp=.true.,                                    \n")            
-            qe.write("  nq1={},nq2={},nq3={},                            \n".format(self.q1, self.q2, self.q3 ))                 
+            qe.write("  nq1={},nq2={},nq3={},                            \n".format(self._qe_inputpara.q1, self._qe_inputpara.q2, self._qe_inputpara.q3 ))                 
             qe.write("/                                                  \n")
     
-  
-        if not os.path.exists(dir):
-            raise FileExistsError ("dyn0 file doesn't exist!")
-        content = open(dir, "r").readlines()
-        _q_total_amount = content[0].strip("\n").split()
-        q_total_amount  = list(map(int, _q_total_amount))
-        if q_total_amount != [self.q1, self.q2, self.q3]:
-            raise ValueError ("q points set wrong")
-        def find_q(item):
-            if re.search(r"E\+", item):
-                return item
-        self.q_total_amount           = self.q1 * self.q2 * self.q3
-        self.q_non_irreducible_amount = content[1]
-        _q_coordinate_list            = list(filter(find_q, content))
-        self.q_coordinate_list        = [q_string.strip("\n").split() for q_string in _q_coordinate_list]
-
-        return  self.q_total_amount, self.q_non_irreducible_amount, \
-                self.q_coordinate_list
     
     def write_dyn0(self, dir):
-        dyn0_path = os.path.join(dir, self.system_name+".dyn0")
+        dyn0_path = os.path.join(dir, self._qe_inputpara.system_name+".dyn0")
         with open(dyn0_path, "w") as qe:
-            qe.write("{:<5} {:<5} {:<5}              \n".format(str(self.q1), str(self.q2), str(self.q3)))
-            qe.write("{}                             \n".format(str(len(self.q_list))))
-            for q in self.q_list:
+            qe.write("{:<5} {:<5} {:<5}              \n".format(str(self._qe_inputpara.q1), str(self._qe_inputpara.q2), str(self._qe_inputpara.q3)))
+            qe.write("{}                             \n".format(str(len(self._qe_inputpara.q_list))))
+            for q in self._qe_inputpara.q_list:
                 qe.write("{:<30}  {:<30}  {:<30}     \n".format(q[0], q[1], q[2]))
 
     # split mode1
     def write_split_ph_in_from_dyn0(self, many_split_ph_dirs, q3):
         split_ph = os.path.join(many_split_ph_dirs, "split_ph.in")
         with open(split_ph, "w") as qe:
-            qe.write("Electron-phonon coefficients for {}                \n".format(self.system_name))                                    
+            qe.write("Electron-phonon coefficients for {}                \n".format(self._qe_inputpara.system_name))                                    
             qe.write(" &inputph                                          \n")      
             qe.write("  tr2_ph=1.0d-16,                                  \n")              
-            qe.write("  prefix='{}',                                     \n".format(self.system_name))                
-            qe.write("  fildvscf='{}.dv',                                \n".format(self.system_name))                     
+            qe.write("  prefix='{}',                                     \n".format(self._qe_inputpara.system_name))                
+            qe.write("  fildvscf='{}.dv',                                \n".format(self._qe_inputpara.system_name))                     
             qe.write("  electron_phonon='interpolated',                  \n")                              
             qe.write("  el_ph_sigma=0.005,                               \n")                 
             qe.write("  el_ph_nsigma=10,                                 \n")
-            for i, species_name in enumerate(self.composition.keys()):
+            for i, species_name in enumerate(self._qe_inputpara.composition.keys()):
                 element      = Element(species_name)
                 species_mass = str(element.atomic_mass).strip("amu")
                 qe.write("  amass({})={},                                \n".format(i+1, species_mass))             
             qe.write("  outdir='./tmp',                                  \n")               
-            qe.write("  fildyn='{}.dyn',                                 \n".format(self.system_name))                    
+            qe.write("  fildyn='{}.dyn',                                 \n".format(self._qe_inputpara.system_name))                    
             qe.write("  trans=.true.,                                    \n")            
             qe.write("  ldisp=.false.,                                   \n")            
             qe.write("/                                                  \n")
@@ -279,53 +292,52 @@ class qe_writeinput:
     
     # split mode2
     def write_split_ph_in_set_startlast_q(self, dir, start_q, last_q):
-        
         split_ph_in = "split_ph" + str(start_q) + "-" + str(last_q) + ".in"
         split_ph_path = os.path.join(dir, split_ph_in)
         with open(split_ph_path, "w") as qe:
-            qe.write("Electron-phonon coefficients for {}                \n".format(self.system_name))                                    
+            qe.write("Electron-phonon coefficients for {}                \n".format(self._qe_inputpara.system_name))                                    
             qe.write(" &inputph                                          \n")      
             qe.write("  tr2_ph=1.0d-16,                                  \n")              
-            qe.write("  prefix='{}',                                     \n".format(self.system_name))                
-            qe.write("  fildvscf='{}.dv',                                \n".format(self.system_name))                     
+            qe.write("  prefix='{}',                                     \n".format(self._qe_inputpara.system_name))                
+            qe.write("  fildvscf='{}.dv',                                \n".format(self._qe_inputpara.system_name))                     
             qe.write("  electron_phonon='interpolated',                  \n")                              
             qe.write("  el_ph_sigma=0.005,                               \n")                 
             qe.write("  el_ph_nsigma=10,                                 \n")
-            for i, species_name in enumerate(self.composition.keys()):
+            for i, species_name in enumerate(self._qe_inputpara.composition.keys()):
                 element      = Element(species_name)
                 species_mass = str(element.atomic_mass).strip("amu")
                 qe.write("  amass({})={},                                \n".format(i+1, species_mass))             
             qe.write("  outdir='./tmp',                                  \n")               
-            qe.write("  fildyn='{}.dyn',                                 \n".format(self.system_name))                    
+            qe.write("  fildyn='{}.dyn',                                 \n".format(self._qe_inputpara.system_name))                    
             qe.write("  trans=.true.,                                    \n")            
             qe.write("  ldisp=.true.,                                    \n")
-            qe.write("  nq1={},nq2={},nq3={},                            \n".format(self.q1, self.q2, self.q3))                 
+            qe.write("  nq1={},nq2={},nq3={},                            \n".format(self._qe_inputpara.q1, self._qe_inputpara.q2, self._qe_inputpara.q3))                 
             qe.write("  start_q={}                                       \n".format(start_q)) 
             qe.write("  last_q={}                                        \n".format(last_q)) 
             qe.write("/                                                  \n")
 
  
     def write_q2r_in(self):
-        q2r_in = os.path.join(self.work_underpressure, "q2r.in")
+        q2r_in = os.path.join(self._qe_inputpara.work_underpressure, "q2r.in")
         with open(q2r_in, "w") as qe:
             qe.write("&input                      \n")             
             qe.write("  la2F = .true.,            \n")                       
             qe.write("  zasr = 'simple',          \n")                         
-            qe.write("  fildyn = '{}.dyn'         \n".format(self.system_name))                               
-            qe.write("  flfrc = '{}.fc',          \n".format(self.system_name))                              
+            qe.write("  fildyn = '{}.dyn'         \n".format(self._qe_inputpara.system_name))                               
+            qe.write("  flfrc = '{}.fc',          \n".format(self._qe_inputpara.system_name))                              
             qe.write("/                           \n")        
 
     def write_matdyn_in(self):
-        matdyn_in = os.path.join(self.work_underpressure, "matdyn.in")
+        matdyn_in = os.path.join(self._qe_inputpara.work_underpressure, "matdyn.in")
         with open(matdyn_in, "w") as qe:
             qe.write("&input                                             \n")               
             qe.write(" asr = 'simple',                                   \n")                        
-            for i, species_name in enumerate(self.composition.keys()):
+            for i, species_name in enumerate(self._qe_inputpara.composition.keys()):
                 element      = Element(species_name)
                 species_mass = str(element.atomic_mass).strip("amu")
                 qe.write(" amass({})={},                                 \n".format(i+1, species_mass))                                   
-            qe.write("  flfrc = '{}.fc',                                 \n".format(self.system_name))                              
-            qe.write("  flfrq='{}.freq',                                 \n".format(self.system_name))                              
+            qe.write("  flfrc = '{}.fc',                                 \n".format(self._qe_inputpara.system_name))                              
+            qe.write("  flfrq='{}.freq',                                 \n".format(self._qe_inputpara.system_name))                              
             qe.write("  la2F=.true.,                                     \n")                     
             qe.write("  dos=.flase.,                                     \n")                     
             qe.write("/                                                  \n")          
@@ -333,16 +345,16 @@ class qe_writeinput:
             qe.write("   0.000000   0.000000   0.000000   0.0            \n")
 
     def write_matdyn_dos_in(self):
-        matdyn_dos_in = os.path.join(self.work_underpressure, "matdyn.dos.in") 
+        matdyn_dos_in = os.path.join(self._qe_inputpara.work_underpressure, "matdyn.dos.in") 
         with open(matdyn_dos_in, "w") as qe:
             qe.write("&input                                             \n")
             qe.write("   asr = 'simple',                                 \n")                                 
-            for i, species_name in enumerate(self.composition.keys()):
+            for i, species_name in enumerate(self._qe_inputpara.composition.keys()):
                 element      = Element(species_name)
                 species_mass = str(element.atomic_mass).strip("amu")
                 qe.write(" amass({})={},                                 \n".format(i+1, species_mass))                                    
-            qe.write("   flfrc = '{}.fc',                                \n".format(self.system_name))                                                                                    
-            qe.write("   flfrq = '{}.freq',                              \n".format(self.system_name))                                         
+            qe.write("   flfrc = '{}.fc',                                \n".format(self._qe_inputpara.system_name))                                                                                    
+            qe.write("   flfrq = '{}.freq',                              \n".format(self._qe_inputpara.system_name))                                         
             qe.write("   la2F = .true.,                                  \n")                                
             qe.write("   dos = .true.,                                   \n")                               
             qe.write("   fldos = 'phonon.dos',                           \n")                                       
@@ -351,44 +363,47 @@ class qe_writeinput:
             qe.write("/                                                  \n")                                                                
 
     def write_lambda_in(self):
-        lambda_in      = os.path.join(self.work_underpressure, "lambda.in")
-        qlist_dat_path = os.path.join(self.work_underpressure, "qlist.dat")
-        nqs_dat_path   = os.path.join(self.work_underpressure, "nqs.dat")
-        elph_dir_path  = os.path.join(self.work_underpressure, "elph_dir")
-        if not os.path.exists(qlist_dat_path):
-            cwd = os.getcwd()
-            os.chdir(self.work_underpressure)
-            os.system("sed '1,2d' *.dyn0 > qlist.dat")
-            os.chdir(cwd)
-        if not os.path.exists(nqs_dat_path):
-            cwd = os.getcwd()
-            os.chdir(self.work_underpressure)
-            os.system("grep nqs q2r.out > nqs.dat")
-            os.chdir(cwd)
+        lambda_in      = os.path.join(self._qe_inputpara.work_underpressure, "lambda.in")
+        #qlist_dat_path = os.path.join(self._qe_inputpara.work_underpressure, "qlist.dat")
+        #nqs_dat_path   = os.path.join(self._qe_inputpara.work_underpressure, "nqs.dat")
+        elph_dir_path  = os.path.join(self._qe_inputpara.work_underpressure, "elph_dir")
+        #if not os.path.exists(qlist_dat_path):
+        #    cwd = os.getcwd()
+        #    os.chdir(self._qe_inputpara.work_underpressure)
+        #    os.system("sed '1,2d' *.dyn0 > qlist.dat")
+        #    os.chdir(cwd)
+        #if not os.path.exists(nqs_dat_path):
+        #    cwd = os.getcwd()
+        #    os.chdir(self._qe_inputpara.work_underpressure)
+        #    os.system("grep nqs q2r.out > nqs.dat")
+        #    os.chdir(cwd)
         if not os.path.exists(elph_dir_path):
             logger.warning("There is no directory elph_dir! So the lambda.in will not be created!!!")
         else:
             a2Fq2r_elphInpLambda = os.listdir(elph_dir_path)
             elphInpLambda = sorted(list(filter(lambda x: "elph.inp_lambda" in x, a2Fq2r_elphInpLambda)))
             # prepare input data
-            qlist_file = open(qlist_dat_path, "r").readlines()
-            nqs_file = open(nqs_dat_path, "r").readlines()
+            #qlist_file = open(qlist_dat_path, "r").readlines()
+            #nqs_file = open(nqs_dat_path, "r").readlines()
             emax = 10;  degauss = 0.12;  smearing_method = 1
             mu = 0.01
-            if len(qlist_file) == len(nqs_file) == len(elphInpLambda):
-                q_number = len(nqs_file)
+            if len(self._qe_inputpara.q_coordinate_list)        == \
+               len(self._qe_inputpara.q_weight_list)            == \
+               int(self._qe_inputpara.q_non_irreducible_amount) == \
+               len(elphInpLambda):
+                q_number = self._qe_inputpara.q_non_irreducible_amount
+                q_coords = self._qe_inputpara.q_coordinate_list
+                q_weight = self._qe_inputpara.q_weight_list
             else:
                 logger.error("q number is wrong. The q number in qlist.dat is not matched with nqs.dat")
             with open(lambda_in, "w") as qe:
-                qe.write("{:<10} {:<10} {:<10}                           \n".format(str(emax), str(degauss), str(smearing_method)))
-                qe.write("{:<10}                                         \n".format(str(q_number)))
-                for qlist, nq in zip(qlist_file, nqs_file):
-                    qlist = qlist.strip("\n")
-                    nq    =    nq.strip("\n").split("=")[-1]
-                    qe.write(" {}  {}                                    \n".format(str(qlist), str(nq)))
+                qe.write("{:<10} {:<10} {:<10}                 \n".format(str(emax), str(degauss), str(smearing_method)))
+                qe.write("{:<10}                               \n".format(str(q_number)))
+                for qcoord, nq in zip(q_coords, q_weight):
+                    qe.write(" {} {} {}  {}                    \n".format(str(qcoord[0]), str(qcoord[1]), str(qcoord[2]), str(nq)))
                 for elph in elphInpLambda:
-                    qe.write(" {}                                        \n".format(os.path.join("elph_dir", elph)))
-                qe.write("{}                                             \n".format(str(mu)))
+                    qe.write(" {}                              \n".format(os.path.join("elph_dir", elph)))
+                qe.write("{}                                   \n".format(str(mu)))
 
 
         

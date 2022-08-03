@@ -11,6 +11,7 @@ import os
 import re
 import shutil
 import logging
+from pathlib import Path
 
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from pymatgen.core.periodic_table import Element
@@ -36,6 +37,7 @@ class qe_inputpara:
         kpoints_dense: list[int],
         kpoints_sparse: list[int],
         qpoints: list[int],
+        run_mode: str,
         ):
         self.input_file_path      = input_file_path
         self.work_underpressure   = work_underpressure
@@ -44,12 +46,33 @@ class qe_inputpara:
         self.k1_dense , self.k2_dense , self.k3_dense  = kpoints_dense
         self.k1_sparse, self.k2_sparse, self.k3_sparse = kpoints_sparse
         self.q1,        self.q2,        self.q3        = qpoints
+        self.q_total_amount           = None
+        self.q_non_irreducible_amount = None 
+        self.q_coordinate_list        = []
+        self.q_weight_list            = [] 
+        self.run_mode = run_mode
         relax_ase   = read(self.input_file_path)
         self.struct = AseAtomsAdaptor.get_structure(relax_ase)
         self.get_struct_info(self.struct)
         # prepare the uspp file in pp directory
         self.get_USPP(self.workpath_pppath)
-        
+        # prepare q_total_amount, q_non_irreducible_amount, q_coordinate_list 
+
+        dyn0_names = list(Path(self.work_underpressure).glob("*.dyn0"))
+        if len(dyn0_names)==1:
+            dyn0_path = str(dyn0_names[0].absolute())
+        else:
+            logger.warning("No exist *.dyn0! ")
+
+        if self.run_mode == "merge":
+            self.get_q_from_dyn0(dyn0_path)
+            self.merge(self.work_underpressure)
+        if self.run_mode == "lambda":
+            q2r_out = list(Path(self.work_underpressure).glob("q2r.out"))
+            if q2r_out:
+                q2r_path = str(q2r_out[0].absolute()) 
+                self.get_q_from_dyn0(dyn0_path, q2r_path=q2r_path)
+
     def get_struct_info(self, struct):
         
         spa = SpacegroupAnalyzer(struct)
@@ -75,7 +98,9 @@ class qe_inputpara:
     def get_USPP(self, workpath_pppath):
         pp_files = os.listdir(workpath_pppath)
         if not pp_files:
-            qe_USPP = os.path.abspath("/public/home/mayuan/POT/qe-pp/all_pbe_UPF_v1.5")
+            #qe_USPP = os.path.abspath("/public/home/mayuan/POT/qe-pp/all_pbe_UPF_v1.5")
+            qe_USPP = os.path.abspath("/work/home/mayuan/POT/qe-pp/all_pbe_UPF_v1.5")
+
             self.final_choosed_pp = []
             for species in self.species:
                 species_name = species.name.lower()
@@ -119,7 +144,6 @@ class qe_inputpara:
         else:
             logger.warning("There is no any .in file!!!")
 
-    # not split mode
     def get_q_from_scfout(self, dir):
         if not os.path.exists(dir):
             raise FileExistsError ("scf.out didn't exist!")
@@ -127,11 +151,6 @@ class qe_inputpara:
         def find_k(item):
             if re.search(r"k\(\s*\d+\)\s*=\s*", item):
                 return item
-
-
-        self.q_coordinate_list = []
-        self.q_weight_list     = []
-        self.q_total_amount    = self.q1 * self.q2 * self.q3
 
         result = filter(find_k, content)
         for res in result:
@@ -147,7 +166,7 @@ class qe_inputpara:
         return self.q_total_amount,    self.q_non_irreducible_amount, \
                self.q_coordinate_list, self.q_weight_list
 
-    def get_q_from_dyn0(self, dir):
+    def get_q_from_dyn0(self, dir, q2r_path=None):
         if not os.path.exists(dir):
             raise FileExistsError ("dyn0 file doesn't exist!")
         content = open(dir, "r").readlines()
@@ -155,75 +174,35 @@ class qe_inputpara:
         q_total_amount  = list(map(int, _q_total_amount))
         if q_total_amount != [self.q1, self.q2, self.q3]:
             raise ValueError ("q points set wrong")
+
         def find_q(item):
             if re.search(r"E\+", item):
                 return item
+        def find_q_weight(item):
+            if re.search(r"nqs\=", item):
+                return item
+
         self.q_total_amount           = self.q1 * self.q2 * self.q3
         self.q_non_irreducible_amount = content[1]
         _q_coordinate_list            = list(filter(find_q, content))
         self.q_coordinate_list        = [q_string.strip("\n").split() for q_string in _q_coordinate_list]
-
-        return  self.q_total_amount, self.q_non_irreducible_amount, \
-                self.q_coordinate_list
-    
-   
-    # split mode1
-   
-        split_ph = os.path.join(many_split_ph_dirs, "split_ph.in")
-        with open(split_ph, "w") as qe:
-            qe.write("Electron-phonon coefficients for {}                \n".format(self.system_name))                                    
-            qe.write(" &inputph                                          \n")      
-            qe.write("  tr2_ph=1.0d-16,                                  \n")              
-            qe.write("  prefix='{}',                                     \n".format(self.system_name))                
-            qe.write("  fildvscf='{}.dv',                                \n".format(self.system_name))                     
-            qe.write("  electron_phonon='interpolated',                  \n")                              
-            qe.write("  el_ph_sigma=0.005,                               \n")                 
-            qe.write("  el_ph_nsigma=10,                                 \n")
-            for i, species_name in enumerate(self.composition.keys()):
-                element      = Element(species_name)
-                species_mass = str(element.atomic_mass).strip("amu")
-                qe.write("  amass({})={},                                \n".format(i+1, species_mass))             
-            qe.write("  outdir='./tmp',                                  \n")               
-            qe.write("  fildyn='{}.dyn',                                 \n".format(self.system_name))                    
-            qe.write("  trans=.true.,                                    \n")            
-            qe.write("  ldisp=.false.,                                   \n")            
-            qe.write("/                                                  \n")
-            qe.write(" {:<30} {:<30} {:<30}                              \n".format(q3[0], q3[1], q3[2]))
-    
-   
+        # get q_weigth_list
+        if q2r_path is not None:
+            q2r_out            = open(q2r_path, "r").readlines()
+            _q_weight_list     = list(filter(find_q_weight, q2r_out))
+            self.q_weight_list = [re.search(r"\d+", qwt).group() for qwt in _q_weight_list]
         
-        split_ph_in = "split_ph" + str(start_q) + "-" + str(last_q) + ".in"
-        split_ph_path = os.path.join(dir, split_ph_in)
-        with open(split_ph_path, "w") as qe:
-            qe.write("Electron-phonon coefficients for {}                \n".format(self.system_name))                                    
-            qe.write(" &inputph                                          \n")      
-            qe.write("  tr2_ph=1.0d-16,                                  \n")              
-            qe.write("  prefix='{}',                                     \n".format(self.system_name))                
-            qe.write("  fildvscf='{}.dv',                                \n".format(self.system_name))                     
-            qe.write("  electron_phonon='interpolated',                  \n")                              
-            qe.write("  el_ph_sigma=0.005,                               \n")                 
-            qe.write("  el_ph_nsigma=10,                                 \n")
-            for i, species_name in enumerate(self.composition.keys()):
-                element      = Element(species_name)
-                species_mass = str(element.atomic_mass).strip("amu")
-                qe.write("  amass({})={},                                \n".format(i+1, species_mass))             
-            qe.write("  outdir='./tmp',                                  \n")               
-            qe.write("  fildyn='{}.dyn',                                 \n".format(self.system_name))                    
-            qe.write("  trans=.true.,                                    \n")            
-            qe.write("  ldisp=.true.,                                    \n")
-            qe.write("  nq1={},nq2={},nq3={},                            \n".format(self.q1, self.q2, self.q3))                 
-            qe.write("  start_q={}                                       \n".format(start_q)) 
-            qe.write("  last_q={}                                        \n".format(last_q)) 
-            qe.write("/                                                  \n")
+        return  self.q_total_amount,    self.q_non_irreducible_amount, \
+                self.q_coordinate_list, self.q_weight_list
 
     def merge(self, dir):
         elph_dir_path = os.path.join(dir, "elph_dir")
         if not os.path.exists(elph_dir_path):
             os.makedirs(elph_dir_path)
-
+        
         for i in range(int(self.q_non_irreducible_amount)):
-            src_elph   = os.path.join(dir, str(i+1), elph_dir_path, "elph.inp_lambda.1"        )
-            dst_elph   = os.path.join(elph_dir_path,                "elph.inp_lambda."+str(i+1))
+            src_elph   = os.path.join(dir, str(i+1), "elph_dir", "elph.inp_lambda.1")
+            dst_elph   = os.path.join(elph_dir_path, "elph.inp_lambda."+str(i+1))
             shutil.copy(src_elph, dst_elph)
             logger.info(f"elph.inp_lambda.1 copy finished \n {dst_elph}")
 
@@ -233,8 +212,8 @@ class qe_inputpara:
             logger.info(f"{self.system_name}.dyn copy finished \n {dst_dyn}")
 
             for j in range(51, 61):
-                src_a2Fq2r = os.path.join(dir, str(i+1), elph_dir_path, "a2Fq2r."+str(j)+".1")
-                dst_a2Fq2r = os.path.join(elph_dir_path,                "a2Fq2r."+str(j)+"."+str(i+1))
+                src_a2Fq2r = os.path.join(dir, str(i+1), "elph_dir", "a2Fq2r."+str(j)+".1")
+                dst_a2Fq2r = os.path.join(elph_dir_path,             "a2Fq2r."+str(j)+"."+str(i+1))
                 shutil.copy(src_a2Fq2r, dst_a2Fq2r)
                 logger.info(f"a2Fq2r.{str(j)}.1 copy finished \n {dst_dyn}")
 

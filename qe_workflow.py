@@ -16,10 +16,18 @@ class qe_workflow:
         work_path: str,
         **kwargs: dict,
     ):
+        self.input_file_path     = input_file_path
         self.work_path           = work_path
         self.pressure            = None
         self.work_underpressure  = None
-        self.input_file_path     = input_file_path 
+        self.kpoints_dense       = [None, None, None]
+        self.kpoints_sparse      = [None, None, None] 
+        self.qpoints             = [None, None, None]
+        self.run_mode            = None
+        self.submit_job_system   = "slurm"
+        self.dyn0_flag           = False 
+        self.q_non_irreducible_amount = None
+
         if kwargs:
             for key, value in kwargs.items():
                 if key == "pressure":
@@ -41,10 +49,13 @@ class qe_workflow:
                     self.run_mode = value
                 if key == "submit_job_system":
                     self.submit_job_system = value
-                
+                if key == "dyn0_flag":
+                    self.dyn0_flag = value 
+                if key=="q_non_irreducible_amount":
+                    self.q_non_irreducible_amount = value
+
         if self.work_underpressure is None:
-            self.work_underpressure = self.work_path
-    
+            self.work_underpressure = self.work_path 
         ############################ prepare pp directory #########################
         logger.info(f"create pp dir in {self.work_underpressure}")
         if self.input_file_path is None:
@@ -62,23 +73,28 @@ class qe_workflow:
             workpath_pppath=self.workpath_pppath,
             kpoints_dense=self.kpoints_dense,
             kpoints_sparse=self.kpoints_sparse,
-            qpoints=self.qpoints, 
+            qpoints=self.qpoints,
+            run_mode=self.run_mode,
         )
 
         self.qe_writeinput = qe_writeinput(
             qe_input_object=self.qe_inputpara, 
             run_mode=self.run_mode,
+            q_non_irreducible_amount=self.q_non_irreducible_amount 
         )
         
         self.qe_writesubmit = qe_writesubmit(
             qe_input_object=self.qe_inputpara, 
             run_mode=self.run_mode,
             submit_job_system=self.submit_job_system,
+            q_non_irreducible_amount=self.q_non_irreducible_amount 
         )
 
         self.qe_submitjob = qe_submitjob(
             qe_input_object=self.qe_inputpara, 
             run_mode=self.run_mode,
             submit_job_system=self.submit_job_system,
+            dyn0_flag=self.dyn0_flag,
+            q_non_irreducible_amount=self.q_non_irreducible_amount 
         )
         
