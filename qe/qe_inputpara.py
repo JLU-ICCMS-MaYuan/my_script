@@ -95,13 +95,17 @@ class qe_inputpara:
     def get_USPP(self, workpath_pppath):
         pp_files = os.listdir(workpath_pppath)
         if len(pp_files) != len(self.species):
-            #qe_USPP = os.path.abspath("/public/home/mayuan/POT/qe-pp/all_pbe_UPF_v1.5")
-            qe_USPP = os.path.abspath("/work/home/mayuan/POT/qe-pp/all_pbe_UPF_v1.5")
-
+            qe_USPP1 = os.path.abspath("/work/home/mayuan/POT/qe-pp/all_pbe_UPF_v1.5")
+            qe_USPP2 = os.path.abspath("/public/home/mayuan/POT/qe-pp/all_pbe_UPF_v1.5")
+            if os.path.exists(qe_USPP1):
+                qe_USPP = qe_USPP1
+                ppfiles = os.listdir(qe_USPP1)
+            elif os.path.exists(qe_USPP2):
+                qe_USPP = qe_USPP2
+                ppfiles = os.listdir(qe_USPP2)
             self.final_choosed_pp = []
             for species in self.species:
                 species_name = species.name.lower()
-                ppfiles       = os.listdir(qe_USPP)
                 logger.info(f"species_name {species_name}")
                 targetppfiles = filter(lambda file: re.search(species_name+"\_", file.lower()), ppfiles)
                 targetppnames = [pp for pp in targetppfiles]

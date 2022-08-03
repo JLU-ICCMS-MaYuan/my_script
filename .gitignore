@@ -7,3 +7,8 @@
 /__pycache__
 /test
 /out
+
+#files
+PPOSCAR
+periodic_table.jpg
+periodic_table.svg
