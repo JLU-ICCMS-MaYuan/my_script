@@ -332,6 +332,8 @@ class qe_writeinput:
 
     def write_matdyn_in(self):
         matdyn_in = os.path.join(self._qe_inputpara.work_underpressure, "matdyn.in")
+        special_qpoints_number  = len(self._qe_inputpara.path_name_coords)
+        inserted_qpoints_number = self._qe_inputpara.inserted_points_num
         with open(matdyn_in, "w") as qe:
             qe.write("&input                                             \n")               
             qe.write(" asr = 'simple',                                   \n")                        
@@ -343,9 +345,12 @@ class qe_writeinput:
             qe.write("  flfrq='{}.freq',                                 \n".format(self._qe_inputpara.system_name))                              
             qe.write("  la2F=.true.,                                     \n")                     
             qe.write("  dos=.flase.,                                     \n")                     
+            qe.write("  q_in_band_form=.true.,                           \n")                                 
+            qe.write("  q_in_cryst_coord=.true.,                         \n") 
             qe.write("/                                                  \n")          
-            qe.write("221                                                \n")            
-            qe.write("   0.000000   0.000000   0.000000   0.0            \n")
+            qe.write("{}                                                 \n".format(special_qpoints_number))            
+            for name, coord in self._qe_inputpara.path_name_coords:
+                qe.write(" {:<15} {:<15} {:<15} {:<5}                   \n".format(str(coord[0]), str(coord[1]), str(coord[2]), str(inserted_qpoints_number)))
 
     def write_matdyn_dos_in(self):
         matdyn_dos_in = os.path.join(self._qe_inputpara.work_underpressure, "matdyn.dos.in") 
@@ -367,27 +372,13 @@ class qe_writeinput:
 
     def write_lambda_in(self):
         lambda_in      = os.path.join(self._qe_inputpara.work_underpressure, "lambda.in")
-        #qlist_dat_path = os.path.join(self._qe_inputpara.work_underpressure, "qlist.dat")
-        #nqs_dat_path   = os.path.join(self._qe_inputpara.work_underpressure, "nqs.dat")
         elph_dir_path  = os.path.join(self._qe_inputpara.work_underpressure, "elph_dir")
-        #if not os.path.exists(qlist_dat_path):
-        #    cwd = os.getcwd()
-        #    os.chdir(self._qe_inputpara.work_underpressure)
-        #    os.system("sed '1,2d' *.dyn0 > qlist.dat")
-        #    os.chdir(cwd)
-        #if not os.path.exists(nqs_dat_path):
-        #    cwd = os.getcwd()
-        #    os.chdir(self._qe_inputpara.work_underpressure)
-        #    os.system("grep nqs q2r.out > nqs.dat")
-        #    os.chdir(cwd)
         if not os.path.exists(elph_dir_path):
             logger.warning("There is no directory elph_dir! So the lambda.in will not be created!!!")
         else:
             a2Fq2r_elphInpLambda = os.listdir(elph_dir_path)
             elphInpLambda = sorted(list(filter(lambda x: "elph.inp_lambda" in x, a2Fq2r_elphInpLambda)))
             # prepare input data
-            #qlist_file = open(qlist_dat_path, "r").readlines()
-            #nqs_file = open(nqs_dat_path, "r").readlines()
             emax = 10;  degauss = 0.12;  smearing_method = 1
             mu = 0.01
             if len(self._qe_inputpara.q_coordinate_list)        == \

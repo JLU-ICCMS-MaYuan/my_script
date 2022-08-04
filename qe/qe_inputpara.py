@@ -9,6 +9,7 @@ import re
 import shutil
 import logging
 from pathlib import Path
+from itertools import chain
 
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from pymatgen.core.periodic_table import Element
@@ -34,6 +35,7 @@ class qe_inputpara:
         kpoints_dense: list[int],
         kpoints_sparse: list[int],
         qpoints: list[int],
+        inserted_points_num: int,
         run_mode: str,
         ):
         self.input_file_path      = input_file_path
@@ -44,12 +46,13 @@ class qe_inputpara:
         self.k1_sparse, self.k2_sparse, self.k3_sparse = kpoints_sparse
         self.q1,        self.q2,        self.q3        = qpoints
         self.q_total_amount           = None
-        self.q_non_irreducible_amount = None 
+        self.q_non_irreducible_amount = None
+        self.inserted_points_num      = None 
         self.q_coordinate_list        = []
         self.q_weight_list            = [] 
-        self.run_mode = run_mode
-        relax_ase   = read(self.input_file_path)
-        self.struct = AseAtomsAdaptor.get_structure(relax_ase)
+        self.run_mode                 = run_mode
+        self.relax_ase  = read(self.input_file_path)
+        self.struct     = AseAtomsAdaptor.get_structure(self.relax_ase)
         self.get_struct_info(self.struct)
         # prepare the uspp file in pp directory
         self.get_USPP(self.workpath_pppath)
@@ -69,6 +72,9 @@ class qe_inputpara:
             if q2r_out:
                 q2r_path = str(q2r_out[0].absolute()) 
                 self.get_q_from_dyn0(dyn0_path, q2r_path=q2r_path)
+        if self.run_mode == "matdyn":
+            self.inserted_points_num = inserted_points_num
+            self.path_name_coords    = self.get_hspp()
 
     def get_struct_info(self, struct):
         
@@ -219,7 +225,30 @@ class qe_inputpara:
                 shutil.copy(src_a2Fq2r, dst_a2Fq2r)
                 logger.info(f"a2Fq2r.{str(j)}.1 copy finished \n {dst_dyn}")
 
-        
-    
+    def get_hspp(self):
+        """
+        This method is to get high symmetry paths and points
+        """ 
+        lat             = self.relax_ase.cell.get_bravais_lattice()
+        path_name_string      = lat.special_path
 
-    
+        _path_name_list = [[ p for p in pp] for pp in path_name_string.split(",")]
+        logger.info(f"the high symmetry points path is {_path_name_list}")
+        high_symmetry_type = input("please input the mode you want: 'all_points', 'main_points', or Nothing to input\n\n")
+        if not high_symmetry_type:
+            high_symmetry_type = "all_points" # default
+        if "," in path_name_string:
+            if high_symmetry_type == "all_points":
+                path_name_list = list(chain.from_iterable(_path_name_list))
+                logger.info(f"the choosed high symmetry points path is \n {path_name_list}")
+            elif high_symmetry_type == "main_points":
+                path_name_list = max(_path_name_list, key=len)
+                logger.info(f"the choosed high symmetry points path is \n {path_name_list}")
+        else:
+            path_name_list = [ pp for pp in path_name_string]
+            logger.info(f"the choosed high symmetry points path is \n {path_name_list}")
+
+        special_points       = lat.get_special_points()
+        path_coords          = [list(special_points[point_name]) for point_name in path_name_list]
+        path_name_coords= list(zip(path_name_list, path_coords))
+        return path_name_coords 

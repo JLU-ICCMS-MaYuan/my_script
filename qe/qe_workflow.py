@@ -27,6 +27,7 @@ class qe_workflow:
         self.submit_job_system   = "slurm"
         self.dyn0_flag           = False 
         self.q_non_irreducible_amount = None
+        self.inserted_points_num = None
 
         if kwargs:
             for key, value in kwargs.items():
@@ -51,8 +52,10 @@ class qe_workflow:
                     self.submit_job_system = value
                 if key == "dyn0_flag":
                     self.dyn0_flag = value 
-                if key=="q_non_irreducible_amount":
+                if key== "q_non_irreducible_amount":
                     self.q_non_irreducible_amount = value
+                if key== "inserted_points_num":
+                    self.inserted_points_num = value
 
         if self.work_underpressure is None:
             self.work_underpressure = self.work_path 
@@ -74,6 +77,7 @@ class qe_workflow:
             kpoints_dense=self.kpoints_dense,
             kpoints_sparse=self.kpoints_sparse,
             qpoints=self.qpoints,
+            inserted_points_num=self.inserted_points_num,
             run_mode=self.run_mode,
         )
 

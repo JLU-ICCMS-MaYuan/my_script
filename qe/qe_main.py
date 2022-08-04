@@ -151,6 +151,15 @@ if __name__ == "__main__":
         dest='dyn0_flag',
         help="whether only get *.dyn0 or not",
     )
+    parser.add_argument(
+        '-insert',
+        '-inserted-points-num',
+        type=int,
+        action='store',
+        default=None,
+        dest='inserted_points_num',
+        help="please tell me the number of inserted points between high symmetry points!",
+    )   
     args = parser.parse_args()
     input_file_path       = args.input_file_path
     press                 = args.press
@@ -164,7 +173,7 @@ if __name__ == "__main__":
 
     dyn0_flag                = args.dyn0_flag
     q_non_irreducible_amount = args.q_non_irreducible_amount
-
+    inserted_points_num      = args.inserted_points_num
     # Running task types list
     run_mode_list = [
         "relax",                        # whether run relax.in or not
@@ -278,7 +287,7 @@ if __name__ == "__main__":
                 submit_job_system=submit_job_system,
             )
     
-    if run_mode=="matdyn" and work_path is not None:
+    if run_mode=="matdyn" and inserted_points_num is not None and work_path is not None:
         relax_out = list(Path(work_path).glob("relax.out"))
         if relax_out:
             relax_out_path = str(relax_out[0].absolute())
@@ -286,6 +295,7 @@ if __name__ == "__main__":
                 relax_out_path, 
                 work_path, 
                 qpoints=qpoints,
+                inserted_points_num=inserted_points_num,
                 run_mode=run_mode,
                 submit_job_system=submit_job_system,
             )
