@@ -82,12 +82,12 @@ class qe_submitjob:
                 else:
                     time.sleep(5)
                     self.dyn0_flag = True
-        if self.run_mode =="ph_split_form_dyn0":
+        if self.run_mode =="ph_split_from_dyn0":
             for root, dirs, files in os.walk(self._qe_inputpara.work_underpressure):
-                if "split_ph.in" in files and "scf.fit.in" in files and "scf.in" in files and "slurmph_split_form_dyn0.sh" in files:
+                if "split_ph.in" in files and "scf.fit.in" in files and "scf.in" in files and "slurmph_split_from_dyn0.sh" in files:
                     cwd = os.getcwd()
                     os.chdir(root)
-                    os.system("sbatch slurmph_split_form_dyn0.sh")
+                    os.system("sbatch slurmph_split_from_dyn0.sh")
                     os.chdir(cwd)
         if self.run_mode =="ph_split_set_startlast_q":
             split_ph_files = list(Path(self._qe_inputpara.work_underpressure).glob("split_ph*.in"))
@@ -192,12 +192,12 @@ class qe_submitjob:
                 else:
                     time.sleep(5)
                     self.dyn0_flag = True
-        if self.run_mode =="ph_split_form_dyn0":
+        if self.run_mode =="ph_split_from_dyn0":
             for root, dirs, files in os.walk(self._qe_inputpara.work_underpressure):
-                if "split_ph.in" in files and "scf.fit.in" in files and "scf.in" in files and "pbsph_split_form_dyn0.sh" in files:
+                if "split_ph.in" in files and "scf.fit.in" in files and "scf.in" in files and "pbsph_split_from_dyn0.sh" in files:
                     cwd = os.getcwd()
                     os.chdir(root)
-                    os.system("qsub pbsph_split_form_dyn0.sh")
+                    os.system("qsub pbsph_split_from_dyn0.sh")
                     os.chdir(cwd)
         if self.run_mode =="ph_split_set_startlast_q":
             split_ph_files = list(Path(self._qe_inputpara.work_underpressure).glob("split_ph*.in"))

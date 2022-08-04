@@ -5,6 +5,7 @@
 /useless-scripts
 /.vscode
 /__pycache__
+/qe/__pycache__
 /test
 /out
 

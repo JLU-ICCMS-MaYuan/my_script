@@ -15,14 +15,14 @@ pbs
 
     # spilit method 1
     qe_main.py -w ./test/out/150.0/ -q 4 4 4 -j pbs -mode ph_no_split -dyn0
-    qe_main.py -w ./test/out/150.0/ -q 4 4 4 -j pbs -mode ph_split_form_dyn0 
+    qe_main.py -w ./test/out/150.0/ -q 4 4 4 -j pbs -mode ph_split_from_dyn0 
     qe_main.py -w ./test/out/150.0/ -q 4 4 4 -mode merge
 
     # split method 2
     qe_main.py -w ./test/out/150.0/ -q 4 4 4 -j pbs -mode ph_split_set_startlast_q -q-no-irr-num 8
 
     qe_main.py -w ./test/out/150.0/ -j pbs -mode q2r 
-    qe_main.py -w ./test/out/150.0/ -j pbs -mode matdyn
+    qe_main.py -w ./test/out/150.0/ -j pbs -mode matdyn -insert 50
     qe_main.py -w ./test/out/150.0/ -j pbs -mode matdyn_dos
     qe_main.py -w ./test/out/150.0/ -j pbs -mode lambda -q 4 4 4
 
@@ -37,14 +37,14 @@ slurm
 
     # spilit method 1
     qe_main.py -w ./test/out/150.0/ -q 4 4 4 -j slurm -mode ph_no_split  -dyn0
-    qe_main.py -w ./test/out/150.0/ -q 4 4 4 -j slurm -mode ph_split_form_dyn0 
+    qe_main.py -w ./test/out/150.0/ -q 4 4 4 -j slurm -mode ph_split_from_dyn0 
     qe_main.py -w ./test/out/150.0/ -q 4 4 4 -mode merge
 
     # split method 2
     qe_main.py -w ./test/out/150.0/ -q 4 4 4 -j slurm -mode ph_split_set_startlast_q -q-no-irr-num 8
 
     qe_main.py -w ./test/out/150.0/ -j slurm -mode q2r 
-    qe_main.py -w ./test/out/150.0/ -j slurm -mode matdyn
+    qe_main.py -w ./test/out/150.0/ -j slurm -mode matdyn -insert 50
     qe_main.py -w ./test/out/150.0/ -j slurm -mode matdyn_dos
     qe_main.py -w ./test/out/150.0/ -j slurm -mode lambda -q 4 4 4
 """
@@ -181,7 +181,7 @@ if __name__ == "__main__":
         "scf",                          # whether run scf.in or not
         "ph_no_split",                  # whether run run_ph_no_split.in or not
         "dyn0_flag",                    # whether only get *.dyn0 or not
-        "ph_split_form_dyn0",           # whether run ph-split-from-dyn0.ph in the way1 or not
+        "ph_split_from_dyn0",           # whether run ph-split-from-dyn0.ph in the way1 or not
         "ph_split_set_startlast_q",     # whether run ph-split-startlastq.in in the way2 or not
         "q_non_irreducible_amount",     # non irreducible q amount you need input
         "merge",                        # whether run_merge or not
@@ -238,8 +238,8 @@ if __name__ == "__main__":
                 submit_job_system=submit_job_system,
                 dyn0_flag=dyn0_flag
                 )
-    # run_ph_split_form_dyn0
-    if run_mode=="ph_split_form_dyn0" and work_path is not None:
+    # run_ph_split_from_dyn0
+    if run_mode=="ph_split_from_dyn0" and work_path is not None:
         relax_out = list(Path(work_path).glob("relax.out"))
         if relax_out:
             relax_out_path = str(relax_out[0].absolute())

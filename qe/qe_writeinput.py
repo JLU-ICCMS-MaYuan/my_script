@@ -34,7 +34,7 @@ class qe_writeinput:
             self.write_scf_in(self._qe_inputpara.work_underpressure)
         if self.run_mode =="ph_no_split":
             self.write_ph_no_split_in()
-        if self.run_mode =="ph_split_form_dyn0":
+        if self.run_mode =="ph_split_from_dyn0":
             dyn0_names = list(Path(self._qe_inputpara.work_underpressure).glob("*.dyn0"))
             if len(dyn0_names)==1:
                 dyn0_path = str(dyn0_names[0].absolute())
@@ -169,7 +169,7 @@ class qe_writeinput:
                 for species_pseudo in self._qe_inputpara.final_choosed_pp:
                     match_res = re.search(species_name.lower()+"\_", species_pseudo)
                     if match_res is not None:
-                        logger.info(f"write USPP for species in relax.in: {match_res.group()}") 
+                        logger.info(f"write USPP for species in scf.fit.in: {match_res.group()}") 
                         element      = Element(species_name)
                         species_mass = str(element.atomic_mass).strip("amu")
                         qe.write(" {:<5}  {:<10}  {:<50} \n".format(species_name, species_mass, species_pseudo))
@@ -220,7 +220,7 @@ class qe_writeinput:
                 for species_pseudo in self._qe_inputpara.final_choosed_pp:
                     match_res = re.search(species_name.lower()+"\_", species_pseudo)
                     if match_res is not None:
-                        logger.info(f"write USPP for species in relax.in: {match_res.group()}") 
+                        logger.info(f"write USPP for species in scf.in: {match_res.group()}") 
                         element      = Element(species_name)
                         species_mass = str(element.atomic_mass).strip("amu")
                         qe.write(" {:<5}  {:<10}  {:<50} \n".format(species_name, species_mass, species_pseudo))

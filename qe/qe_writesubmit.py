@@ -35,7 +35,7 @@ class qe_writesubmit:
             self.slurmscf(self._qe_inputpara.work_underpressure)
         if self.run_mode =="ph_no_split":
             self.slurmph_no_split(self._qe_inputpara.work_underpressure)
-        if self.run_mode =="ph_split_form_dyn0":
+        if self.run_mode =="ph_split_from_dyn0":
             dyn0_names = list(Path(self._qe_inputpara.work_underpressure).glob("*.dyn0"))
             if len(dyn0_names)==1:
                 dyn0_path = str(dyn0_names[0].absolute())
@@ -46,7 +46,7 @@ class qe_writesubmit:
                 split_ph_dir = os.path.join(self._qe_inputpara.work_underpressure, str(i+1))
                 if not os.path.exists(split_ph_dir):
                     raise FileExistsError (f"There is no {split_ph_dir}")
-                self.slurmph_split_form_dyn0(split_ph_dir)
+                self.slurmph_split_from_dyn0(split_ph_dir)
                 logger.info(f"finish submit job script in {i+1}")
         if self.run_mode =="ph_split_set_startlast_q":
             split_ph_files = list(Path(self._qe_inputpara.work_underpressure).glob("split_ph*.in"))
@@ -72,7 +72,7 @@ class qe_writesubmit:
             self.pbsscf(self._qe_inputpara.work_underpressure)
         if self.run_mode =="ph_no_split":
             self.pbsph_no_split(self._qe_inputpara.work_underpressure)
-        if self.run_mode =="ph_split_form_dyn0":
+        if self.run_mode =="ph_split_from_dyn0":
             dyn0_names = list(Path(self._qe_inputpara.work_underpressure).glob("*.dyn0"))
             if len(dyn0_names)==1:
                 dyn0_path = str(dyn0_names[0].absolute())
@@ -83,7 +83,7 @@ class qe_writesubmit:
                 split_ph_dir = os.path.join(self._qe_inputpara.work_underpressure, str(i+1))
                 if not os.path.exists(split_ph_dir):
                     raise FileExistsError (f"There is no {split_ph_dir}")
-                self.pbsph_split_form_dyn0(split_ph_dir)
+                self.pbsph_split_from_dyn0(split_ph_dir)
                 logger.info(f"finish submit job script in {i+1}")
         if self.run_mode =="ph_split_set_startlast_q":
             split_ph_files = list(Path(self._qe_inputpara.work_underpressure).glob("split_ph*.in"))
@@ -177,8 +177,8 @@ class qe_writesubmit:
             slurm.write('\n\n                                                                                      \n')
             slurm.write('mpirun -n 48 /work/software/q-e-qe-6.8/bin/ph.x -npool 4 <ph_no_split.in> ph_no_split.out \n')
 
-    def slurmph_split_form_dyn0(self, slurm_dirpath):
-        slurm_script_filepath = os.path.join(slurm_dirpath, "slurmph_split_form_dyn0.sh")
+    def slurmph_split_from_dyn0(self, slurm_dirpath):
+        slurm_script_filepath = os.path.join(slurm_dirpath, "slurmph_split_from_dyn0.sh")
         with open(slurm_script_filepath, "w") as slurm:
             slurm.write('#!/bin/sh                                                                          \n')     
             slurm.write('#SBATCH  --job-name=ph_split                                                       \n')                         
@@ -365,8 +365,8 @@ class qe_writesubmit:
             pbs.write('\n\n                                                                     \n')
             pbs.write('mpirun -n 28 /public/home/mayuan/software/qe-7.1/bin/ph.x -npool 4 <ph_no_split.in> ph_no_split.out \n')
 
-    def pbsph_split_form_dyn0(self, pbs_dirpath):
-        pbs_script_filepath = os.path.join(pbs_dirpath, "pbsph_split_form_dyn0.sh")
+    def pbsph_split_from_dyn0(self, pbs_dirpath):
+        pbs_script_filepath = os.path.join(pbs_dirpath, "pbsph_split_from_dyn0.sh")
         with open(pbs_script_filepath, "w") as pbs:
             pbs.write('#!/bin/sh                                                                \n')     
             pbs.write('#PBS -N    split_ph                                                      \n')                         

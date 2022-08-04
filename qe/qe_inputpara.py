@@ -184,7 +184,7 @@ class qe_inputpara:
             raise ValueError ("q points set wrong")
 
         def find_q(item):
-            if re.search(r"E\+", item):
+            if re.search(r"E[\+|\-]", item):
                 return item
         def find_q_weight(item):
             if re.search(r"nqs\=", item):
