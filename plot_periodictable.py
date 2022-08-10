@@ -5,15 +5,26 @@ import matplotlib.patches as patches  # 导入Matplotlib形状绘制模块
 import matplotlib.pyplot as plt  # 导入Matplotlib绘图模块
 import mendeleev  # 导入元素周期表库（包含118种元素的基本性质）
 
-# 绘制热力图数据
-plot_data = {'O': 9, 'Te': 9, 'F': 9, 'S': 9, 'Na': 9, 'K': 9, 'N': 8, 'Li': 8,
-             'I': 8, 'Rb': 8, 'Si': 7, 'Cd': 7, 'Cl': 7, 'Zn': 7, 'H': 7,
-             'Bi': 7, 'Br': 7, 'P': 6, 'Sn': 6, 'Ca': 6, 'Au': 6, 'Al': 5,
-             'As': 5, 'Ga': 5, 'C': 5, 'Ge': 5, 'Sr': 5, 'Se': 5, 'Be': 5,
-             'B': 5, 'Cs': 5, 'Mg': 5, 'Ag': 5, 'Pb': 4, 'In': 4, 'Ti': 4,
-             'Cu': 4, 'Zr': 4, 'Sb': 4, 'Tl': 4, 'Sc': 4, 'Y': 4, 'Hg': 4,
-             'Ba': 4, 'La': 4, 'Hf': 4, 'Og': 1}
 
+from pymatgen.core.periodic_table import Element, Species
+# 绘制热力图数据
+plot_data = {
+    "La": round(float(str(Element("La").average_cationic_radius).split()[0]), 3),
+    "Ce": round(float(str(Element("Ce").average_cationic_radius).split()[0]), 3),
+    "Pr": round(float(str(Element("Pr").average_cationic_radius).split()[0]), 3),
+    "Nd": round(float(str(Element("Nd").average_cationic_radius).split()[0]), 3),
+    "Pm": round(float(str(Element("Pm").average_cationic_radius).split()[0]), 3),
+    "Sm": round(float(str(Element("Sm").average_cationic_radius).split()[0]), 3),
+    "Eu": round(float(str(Element("Eu").average_cationic_radius).split()[0]), 3),
+    "Gd": round(float(str(Element("Gd").average_cationic_radius).split()[0]), 3),
+    "Tb": round(float(str(Element("Tb").average_cationic_radius).split()[0]), 3),
+    "Dy": round(float(str(Element("Dy").average_cationic_radius).split()[0]), 3),
+    "Ho": round(float(str(Element("Ho").average_cationic_radius).split()[0]), 3),
+    "Er": round(float(str(Element("Er").average_cationic_radius).split()[0]), 3),
+    "Tm": round(float(str(Element("Tm").average_cationic_radius).split()[0]), 3),
+    "Yb": round(float(str(Element("Yb").average_cationic_radius).split()[0]), 3),
+    "Lu": round(float(str(Element("Lu").average_cationic_radius).split()[0]), 3),
+}
 # 元素周期表中cell的设置
 # cell的大小
 cell_length = 1
@@ -54,7 +65,7 @@ xy_length = (20, 11)
 # 获取YlOrRd颜色条
 my_cmap = cm.get_cmap('YlOrRd')
 # 将plot_data数据映射为颜色，根据实际情况调整
-norm = mpl.colors.Normalize(1, 10)
+norm = mpl.colors.Normalize(0.25, 3)
 # 设置超出颜色条下界限的颜色（None为不设置，即白色）
 my_cmap.set_under('None')
 # 关联颜色条和映射
@@ -93,17 +104,17 @@ for e in elements:
     plt.text(x + 0.04, y + 0.8,
              ele_number,
              va='center', ha='left',
-             fontdict={'size': 6, 'color': 'black', 'family': 'Helvetica'})
+             fontdict={'size': 6, 'color': 'black', 'family': 'DejaVu Serif'})
     # 在cell中添加元素符号
     plt.text(x + 0.5, y + 0.5,
              ele_symbol,
              va='center', ha='center',
-             fontdict={'size': 9, 'color': 'black', 'family': 'Helvetica', 'weight': 'bold'})
+             fontdict={'size': 9, 'color': 'black', 'family': 'DejaVu Serif', 'weight': 'bold'})
     # 在cell中添加热力值
     plt.text(x + 0.5, y + 0.12,
              ele_count,
              va='center', ha='center',
-             fontdict={'size': 6, 'color': 'black', 'family': 'Helvetica'})
+             fontdict={'size': 6, 'color': 'black', 'family': 'DejaVu Serif'})
 
 # x, y 轴设置等比例（1:1）（使cell看起来是正方形）
 plt.axis('equal')

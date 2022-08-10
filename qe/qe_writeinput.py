@@ -115,7 +115,7 @@ class qe_writeinput:
             qe.write("ATOMIC_SPECIES                   \n")
             for species_name in self._qe_inputpara.composition.keys():
                 for species_pseudo in self._qe_inputpara.final_choosed_pp:
-                    match_res = re.search(species_name.lower()+"\_", species_pseudo)
+                    match_res = re.search("^"+species_name.lower()+"\_", species_pseudo)
                     if match_res is not None:
                         logger.info(f"write USPP for species in relax.in: {match_res.group()}") 
                         element      = Element(species_name)
@@ -167,7 +167,7 @@ class qe_writeinput:
             qe.write("ATOMIC_SPECIES                   \n")
             for species_name in self._qe_inputpara.composition.keys():
                 for species_pseudo in self._qe_inputpara.final_choosed_pp:
-                    match_res = re.search(species_name.lower()+"\_", species_pseudo)
+                    match_res = re.search("^"+species_name.lower()+"\_", species_pseudo)
                     if match_res is not None:
                         logger.info(f"write USPP for species in scf.fit.in: {match_res.group()}") 
                         element      = Element(species_name)
@@ -218,7 +218,7 @@ class qe_writeinput:
             qe.write("ATOMIC_SPECIES                   \n")
             for species_name in self._qe_inputpara.composition.keys():
                 for species_pseudo in self._qe_inputpara.final_choosed_pp:
-                    match_res = re.search(species_name.lower()+"\_", species_pseudo)
+                    match_res = re.search("^"+species_name.lower()+"\_", species_pseudo)
                     if match_res is not None:
                         logger.info(f"write USPP for species in scf.in: {match_res.group()}") 
                         element      = Element(species_name)
