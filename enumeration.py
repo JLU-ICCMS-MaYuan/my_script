@@ -25,110 +25,95 @@ import itertools as it
 
 from argparse import ArgumentParser
 
+class CrystalSpecifyWyckoffs:
 
-def get_H(
-        H_occupied_wps,
-        H_permutation_combination_lower_limit,
-        H_permutation_combination_upper_limit
-        ):
-    """
-    获得氢原子的所有wp的占位的组合情况 以及 每种组合情况的原子数为多少
-    example: 1a, 2b, 3c
-        hydrogen_wps          = [['1a'], ['2b'], ['3c'], ['1a', '2b'], ['1a', '3c'], ['2b', '3c']]
-        hydrogen_atoms_number = [[ 1  ], [ 2  ], [ 3  ], [ 1,    2  ], [ 1,    3],   [ 2,    3  ]]
-    Notes: 不考虑氢占据所有wp这种组合情况，也就是说，不考虑["1a", "1b", "1c"]这种情况
-    Returns:  hydrogen_wps
-              hydrogen_atoms_number
-    """
-    if H_permutation_combination_upper_limit is None:
-        H_permutation_combination_upper_limit = len(H_occupied_wps)
+    def get_H(self, H_occupied_wps, h_lower, h_upper):
+        if h_upper < h_lower:
+            h_lower, h_upper = h_upper, h_lower
+        hydrogen_wps = []
+        for i in range(h_lower, h_upper + 1):
+            for e in product(H_occupied_wps, repeat=i):
+                e = sorted(list(e))
+                res = Counter(e)
+                if (np.array(list(res.values())) < 2).all():
+                    if not hydrogen_wps:
+                        hydrogen_wps.append(e)
+                    else:
+                        for h_wp in hydrogen_wps:
+                            h_wp = sorted(list(h_wp))
+                            if h_wp == e:
+                                break
+                        else:
+                            hydrogen_wps.append(e)
 
-    hydrogen_wps = []
-    for i in range(H_permutation_combination_lower_limit,
-                   H_permutation_combination_upper_limit+1):
-        for e in it.combinations(H_occupied_wps, i):
-            hydrogen_wps.append(list(e))
-    hydrogen_atoms_number = []
-    for wps_strings in hydrogen_wps:
-        atoms = []
-        for wp_multi in wps_strings:
-            atoms.extend(re.findall("\d+", wp_multi))
-        atoms = list(map(int, atoms))
-        hydrogen_atoms_number.append(sum(atoms))
+        hydrogen_atoms_number = []
+        for wps_strings in hydrogen_wps:
+            atoms = []
+            for wp_multi in wps_strings:
+                atoms.extend(re.findall(r"\d+", wp_multi))
+            atoms = list(map(int, atoms))
+            hydrogen_atoms_number.append(sum(atoms))
 
-    return hydrogen_wps, hydrogen_atoms_number
+        return hydrogen_wps, hydrogen_atoms_number
 
+    def get_M(self, X_occupied_wps, X_lower, X_upper):
+        if X_upper < X_lower:
+            X_lower, X_upper = X_upper, X_lower
+        X_wps = []
+        for i in range(X_lower, X_upper + 1):
+            for e in combinations(X_occupied_wps, i):
+                e = sorted(list(e))
+                X_wps.append(e)
+        X_atoms_number = []
+        for wps_strings in X_wps:
+            atoms = []
+            for wp_multi in wps_strings:
+                atoms.extend(re.findall(r"\d+", wp_multi))
+            atoms = list(map(int, atoms))
+            X_atoms_number.append(sum(atoms))
+        return X_wps, X_atoms_number
 
-def get_X(X_occupied_wps, X_permutation_combination):
-    """
-    获得氢原子的所有wp的占位的组合情况 以及 每种组合情况的原子数为多少
-    example: 1a, 2b, 3c
-        other_wps      = [['1a'], ['2b'], ['3c'], ['1a', '2b'], ['1a', '3c'], ['2b', '3c']]
-        X_atoms_number = [[ 1  ], [ 2  ], [ 3  ], [ 1,    2  ], [ 1,    3],   [ 2,    3  ]]
-    Notes: 不考虑氢占据所有wp这种组合情况，也就是说，不考虑["1a", "1b", "1c"]这种情况
-    Returns:  other_element_wps
-              X_atoms_number
-    """
-    X_wps = []
-    for i in range(X_permutation_combination, len(X_occupied_wps)+1):
-        for e in it.combinations(X_occupied_wps, i):
-            X_wps.append(list(e))
-    X_atoms_number = []
-    for wps_strings in X_wps:
-        atoms = []
-        for wp_multi in wps_strings:
-            atoms.extend(re.findall("\d+", wp_multi))
-        atoms = list(map(int, atoms))
-        X_atoms_number.append(sum(atoms))
-    return X_wps, X_atoms_number
+    def get_X(self, X, X_occupied_wps, X_lower, X_upper):
+        if X == 'H':
+            return self.get_H(X_occupied_wps, X_lower, X_upper)
+        else:
+            return self.get_M(X_occupied_wps, X_lower, X_upper)
 
 
-# def select_X_element(spg_number, X_occupied_numbers):
-#     """
-#     input:   输入一个数字 X_occupied_numbers，表示选定 该空间群的多重度按照从低到高顺序的 X_occupied_numbers个wp 被 X元素占据
-#     Returns: 返回两个列表, 第一个列表是X元素占据wp的列表，第二个列表是H元素占据wp的列表
-#     """
-#     gp = Group(spg_number)
-#     all_wps_list = gp.get_wp_list(reverse=True)
-#     wp_occupied_by_x = all_wps_list[:X_occupied_numbers]
-#     wp_occupied_by_h = all_wps_list[X_occupied_numbers:]
-#     return wp_occupied_by_x, wp_occupied_by_h
+    def creat_struct(spacegroup_number, H_wps, h_atoms_number, X_wps, X_atoms_number):
 
+        destination = os.path.join(str(spacegroup_number),  "struc")
+        if not os.path.exists(destination):
+            os.makedirs(destination)
 
-def creat_struct(spacegroup_number, H_wps, h_atoms_number, X_wps, X_atoms_number):
+        struc = pyxtal()
+        for wp_x, atoms_x_num in zip(X_wps, X_atoms_number):
+            x_species = ["Ca"]
+            for wp_h, atoms_h_num in zip(H_wps, h_atoms_number):
+                h_species = ["H"]
+                all_species = x_species + h_species
+                all_atoms = [atoms_x_num, atoms_h_num]
+                all_sites = [wp_x] + [wp_h]
+                # print(all_species, all_atoms, all_sites)
+                # my_lat = Lattice(ltype="Cubic", volume=27, PBC=[1, 1, 1])
+                struc.from_random(3,
+                                spacegroup_number,
+                                all_species,
+                                all_atoms,
+                                factor=1.0,
+                                sites=all_sites,
+                                # lattice=my_lat
+                                )
 
-    destination = os.path.join(str(spacegroup_number),  "struc")
-    if not os.path.exists(destination):
-        os.makedirs(destination)
+                struct_pymatgen = struc.to_pymatgen()
 
-    struc = pyxtal()
-    for wp_x, atoms_x_num in zip(X_wps, X_atoms_number):
-        x_species = ["Ca"]
-        for wp_h, atoms_h_num in zip(H_wps, h_atoms_number):
-            h_species = ["H"]
-            all_species = x_species + h_species
-            all_atoms = [atoms_x_num, atoms_h_num]
-            all_sites = [wp_x] + [wp_h]
-            # print(all_species, all_atoms, all_sites)
-            # my_lat = Lattice(ltype="Cubic", volume=27, PBC=[1, 1, 1])
-            struc.from_random(3,
-                              spacegroup_number,
-                              all_species,
-                              all_atoms,
-                              factor=1.0,
-                              sites=all_sites,
-                              # lattice=my_lat
-                              )
+                all_wp_name = ["X"] + wp_x + ["H"] + wp_h
+                wp_name = "_".join(all_wp_name)
 
-            struct_pymatgen = struc.to_pymatgen()
-
-            all_wp_name = ["X"] + wp_x + ["H"] + wp_h
-            wp_name = "_".join(all_wp_name)
-
-            struct_name = struct_pymatgen.composition.formula.replace(' ', '') + "---" + wp_name
-            print(struct_name)
-            filepath = os.path.join(destination, struct_name + ".vasp")
-            Poscar(struct_pymatgen).write_file(filepath)
+                struct_name = struct_pymatgen.composition.formula.replace(' ', '') + "---" + wp_name
+                print(struct_name)
+                filepath = os.path.join(destination, struct_name + ".vasp")
+                Poscar(struct_pymatgen).write_file(filepath)
 
 
 if __name__ == "__main__":
