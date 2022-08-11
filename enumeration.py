@@ -14,18 +14,42 @@
 """
 
 
-from pyxtal import pyxtal
-# from pyxtal.lattice import Lattice
-from pyxtal.symmetry import Group
-from pymatgen.io.vasp import Poscar
-
 import re
 import os
-import itertools as it
-
+import random
+import logging
+from itertools import product, combinations, chain
+from collections import Counter, defaultdict
 from argparse import ArgumentParser
+from pprint import pprint
+
+import numpy as np
+from pyxtal.symmetry import Group
+from pyxtal import pyxtal
+from pymatgen.io.vasp import Poscar
+from ase.formula import Formula
+
+logger = logging.getLogger("GENERATOR")
 
 class CrystalSpecifyWyckoffs:
+
+    def __init__(
+        self              ,
+        spacegroup_number ,
+        nameofatoms       , 
+        optionalsites     , 
+        sitesoccupiedrange,        
+        ):
+        
+        self.SpaceGroupNumber   = spacegroup_number
+        self.nameofatoms        = nameofatoms
+        self.optionalsites      = optionalsites
+        self.sitesoccupiedrange = sitesoccupiedrange
+        self._group             = self.get_group(self.optionalsites, self.sitesoccupiedrange)
+        pprint(self._group); input()
+        
+        for _ in range(50):
+            self.__rand_gen()
 
     def get_H(self, H_occupied_wps, h_lower, h_upper):
         if h_upper < h_lower:
@@ -79,31 +103,80 @@ class CrystalSpecifyWyckoffs:
         else:
             return self.get_M(X_occupied_wps, X_lower, X_upper)
 
+    def get_group(self, optionalsites, sitesoccupiedrange) -> dict:
+        """
+        Function
 
-    def creat_struct(spacegroup_number, H_wps, h_atoms_number, X_wps, X_atoms_number):
+        Args:
+            optional_sites (List[List[str]]):
+                optional wyckoff positions of each elements,
+                e.g. [['4a', "6b", "8c"],['12g', '12h', "16g"]],
+                     ['12m', '16g'].
+            sitesoccupiedrange (List[List[int]]):
+                repeat range of each wyckoff position,
+                e.g. [[1, 3], [2, 6], [2, 6]].
 
-        destination = os.path.join(str(spacegroup_number),  "struc")
-        if not os.path.exists(destination):
-            os.makedirs(destination)
+            Returns:
+            dict: {'formula0': [amount, wyck], ...}
+        """
+        elems = self.nameofatoms  # ['H', 'Ca', 'C']
+        _group = defaultdict(list)
+        wyck_list, nelems_list = [], []
+        for elem, opt_sites, sites_range in zip(
+            elems, optionalsites, sitesoccupiedrange
+        ):
+            wyck, nelems = self.get_X(elem, opt_sites, *sites_range)
+            wyck_list.append(
+                wyck
+            )  # [A, B, C]: [[['4b'], ['4d', '4f']], [['4b'], ['4d', '4f'], ...]
+            nelems_list.append(
+                nelems
+            )  # [A, B, C]: [[4, 8], [4, 8], ...]
+        nelems_comb = product(*nelems_list)  # generator
+        wyck_comb = product(*wyck_list)
+        for nelems, wyck in zip(nelems_comb, wyck_comb):
+            formula = ''.join(map(str, chain.from_iterable(zip(elems, nelems))))
+            formula = Formula(formula).format("metal")
+            _group[formula].append([nelems, wyck])
+        _group = dict(_group)
+        return _group
+    
+        def __rand_gen(self):
+        '''
+        create struct by choosing wyckoff positions
+        '''
+        spespacegroup = self.SpaceGroupNumber
+            name_of_atoms = self.nameofatoms
+        fomula = random.choice(list(self._group.keys()))
+        species_amounts_sites = random.choice(self._group[fomula])
+
+            amounts = species_amounts_sites[0]
+        wyck = species_amounts_sites[1]
 
         struc = pyxtal()
-        for wp_x, atoms_x_num in zip(X_wps, X_atoms_number):
-            x_species = ["Ca"]
-            for wp_h, atoms_h_num in zip(H_wps, h_atoms_number):
-                h_species = ["H"]
-                all_species = x_species + h_species
-                all_atoms = [atoms_x_num, atoms_h_num]
-                all_sites = [wp_x] + [wp_h]
-                # print(all_species, all_atoms, all_sites)
-                # my_lat = Lattice(ltype="Cubic", volume=27, PBC=[1, 1, 1])
-                struc.from_random(3,
-                                spacegroup_number,
-                                all_species,
-                                all_atoms,
-                                factor=1.0,
-                                sites=all_sites,
-                                # lattice=my_lat
-                                )
+        for i in range(10):
+            logger.info("begin creating")
+            try:
+                print(
+                    name_of_atoms,
+                    amounts,
+                    wyck,
+                )
+                struc.from_random(
+                    3,
+                    spespacegroup,
+                    name_of_atoms,
+                    amounts,
+                    factor=1.0,
+                    sites=wyck,
+                    # lattice=my_lat
+                )
+                _random_atoms = struc.to_ase()
+            except Exception as e:
+                logger.debug(f"except {e}")
+                continue 
+        else:
+            logger.warning("this structure may not be physical")
 
                 struct_pymatgen = struc.to_pymatgen()
 
@@ -127,42 +200,28 @@ if __name__ == "__main__":
         help="请输入一个空间群号, 例如: 45, 93, 230"
     )
     parser.add_argument(
-        "-xwp",
-        "--x-wyckoff-positions",
-        dest="X_occupied_wps",
-        action="store",
+        "-n",
+        "--nameofatoms",
         default=None,
         type=str,
-        nargs='+',
-        help="请输入非氢元素占据wps"
+        nargs="+",
+        help="请输入元素种类"
     )
     parser.add_argument(
-        "-xpc",
-        "--xwps-permutation_combination",
-        dest="X_permutation_combination",
-        default=1,
-        type=int,
-        help="对所有 非氢元素的wps 进行排列组合"
-    )
-    parser.add_argument(
-        "-hwp",
-        "--hydrogen-wyckoff-positions",
-        dest="H_occupied_wps",
-        action="store",
+        "-o",
+        "--optionalsites",
         default=None,
         type=str,
-        nargs='+',
-        help="请输入氢元素占据wps"
+        nargs="+",
+        help="请输入每种元素可以选择的位置"
     )
     parser.add_argument(
-        "-hpc",
-        "--hwps-permutation-combination",
-        dest="H_permutation_combination",
-        default=[None, None],
-        nargs='+',
-        action="store",
-        type=int,
-        help="对所有 氢元素的wps 进行排列组合, 至少选取hpcl个进行排列组合，至多选取hpcu个进行排列组合"
+        "-r",
+        "--sitesoccupiedrange",
+        default=None,
+        type=str,
+        nargs="+",
+        help="请输入每种元素占据的wyckoff postion的范围"
     )
     parser.add_argument(
         "-e",
@@ -180,21 +239,30 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
+    spacegroup_number  = args.SpaceGroupNumber
+    nameofatoms        = args.nameofatoms
+    optionalsites      = args.optionalsites
+    sitesoccupiedrange = args.sitesoccupiedrange
+    WriteWorkLog       = args.WriteWorkLog
+    enumeration        = args.enumeration
 
-    spacegroup_number         = args.SpaceGroupNumber
-    X_occupied_wps            = args.X_occupied_wps
-    X_permutation_combination = args.X_permutation_combination
-    H_occupied_wps            = args.H_occupied_wps
-    hpc_lower, hpc_upper      = args.H_permutation_combination
-    WriteWorkLog              = args.WriteWorkLog
-    enumeration               = args.enumeration
-    # wps_occupied_by_X, wp_occupied_by_H = select_X_element(spacegroup_number, X_occupied_wp_number)
-    X_wps, X_atoms_number = get_X(X_occupied_wps, X_permutation_combination)
-    H_wps, h_atoms_number = get_H(H_occupied_wps, hpc_lower, hpc_upper)
-
-
-    if enumeration:
-        creat_struct(spacegroup_number, H_wps, h_atoms_number, X_wps, X_atoms_number)
+    spacegroup_number = 229
+    nameofatoms = ["Ca", "Sr", "H"]
+    optionalsites = [['2a', '6b'],
+                     ['8c','12d'],
+                     ['12e', '16f', '24g', '24h', '48i', '48j', '48k']]
+    sitesoccupiedrange =[
+        [1,2],
+        [1,2],
+        [1,3],
+    ]
+    if enumeration: 
+        wyck_crys = CrystalSpecifyWyckoffs(
+            spacegroup_number ,
+            nameofatoms       , 
+            optionalsites     , 
+            sitesoccupiedrange, 
+            )
 
     if WriteWorkLog:
         if os.path.exists(str(spacegroup_number)):
