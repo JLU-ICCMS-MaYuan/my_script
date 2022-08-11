@@ -113,7 +113,7 @@ class qe_inputpara:
             for species in self.species:
                 species_name = species.name.lower()
                 logger.info(f"species_name {species_name}")
-                targetppfiles = filter(lambda file: re.search(species_name+"\_", file.lower()), ppfiles)
+                targetppfiles = filter(lambda file: re.search("^"+species_name+"\_", file.lower()), ppfiles)
                 targetppnames = [pp for pp in targetppfiles]
                 choosed_flag  = False
                 while not choosed_flag:
