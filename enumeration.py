@@ -171,7 +171,9 @@ class CrystalSpecifyWyckoffs:
                     sites=wyck,
                     # lattice=my_lat
                 )
+                print("try successfully!")
                 _random_atoms = struc.to_ase()
+                break
             except Exception as e:
                 logger.debug(f"except {e}")
                 continue 

@@ -8,7 +8,7 @@
 /qe/__pycache__
 /test
 /out
-
+/vasp/__pycache__
 #files
 PPOSCAR
 periodic_table.jpg
