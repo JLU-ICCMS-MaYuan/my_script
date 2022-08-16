@@ -9,6 +9,7 @@
 /test
 /out
 /vasp/__pycache__
+/.idea
 #files
 PPOSCAR
 periodic_table.jpg
