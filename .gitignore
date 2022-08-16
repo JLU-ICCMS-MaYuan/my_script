@@ -8,6 +8,8 @@
 /qe/__pycache__
 /test
 /out
+/.ipynb_checkpoints
+/.idea
 #files
 / calypso/.idea/inspectionProfiles/Project_Default.xml
 /calypso/.idea/inspectionProfiles/profiles_settings.xml
