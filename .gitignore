@@ -8,6 +8,8 @@
 /qe/__pycache__
 /test
 /out
+/.idea
+/vasp/__pycache__
 
 #files
 / calypso/.idea/inspectionProfiles/Project_Default.xml
