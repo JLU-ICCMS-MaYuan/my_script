@@ -8,9 +8,11 @@
 /qe/__pycache__
 /test
 /out
-/vasp/__pycache__
-/.idea
+
 #files
+/ calypso/.idea/inspectionProfiles/Project_Default.xml
+/calypso/.idea/inspectionProfiles/profiles_settings.xml
+/calypso/.idea/vcs.xml
 PPOSCAR
 periodic_table.jpg
 periodic_table.svg

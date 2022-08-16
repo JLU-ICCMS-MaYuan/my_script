@@ -116,7 +116,7 @@ class CrystalSpecifyWyckoffs:
                 repeat range of each wyckoff position,
                 e.g. [[1, 3], [2, 6], [2, 6]].
 
-        Returns:
+            Returns:
             dict: {'formula0': [amount, wyck], ...}
         """
         elems = self.nameofatoms  # ['H', 'Ca', 'C']
@@ -141,16 +141,16 @@ class CrystalSpecifyWyckoffs:
         _group = dict(_group)
         return _group
     
-    def __rand_gen(self):
+        def __rand_gen(self):
         '''
         create struct by choosing wyckoff positions
         '''
         spespacegroup = self.SpaceGroupNumber
-        name_of_atoms = self.nameofatoms
+            name_of_atoms = self.nameofatoms
         fomula = random.choice(list(self._group.keys()))
         species_amounts_sites = random.choice(self._group[fomula])
 
-        amounts = species_amounts_sites[0]
+            amounts = species_amounts_sites[0]
         wyck = species_amounts_sites[1]
 
         struc = pyxtal()
@@ -180,7 +180,15 @@ class CrystalSpecifyWyckoffs:
         else:
             logger.warning("this structure may not be physical")
 
-        return _random_atoms
+                struct_pymatgen = struc.to_pymatgen()
+
+                all_wp_name = ["X"] + wp_x + ["H"] + wp_h
+                wp_name = "_".join(all_wp_name)
+
+                struct_name = struct_pymatgen.composition.formula.replace(' ', '') + "---" + wp_name
+                print(struct_name)
+                filepath = os.path.join(destination, struct_name + ".vasp")
+                Poscar(struct_pymatgen).write_file(filepath)
 
 
 if __name__ == "__main__":
