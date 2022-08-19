@@ -1,0 +1,274 @@
+import os
+
+from vasp_inputpara import vasp_inputpara
+
+class vasp_writesubmit:
+    
+    def __init__(
+        self, 
+        work_underpressure: str, 
+        submit_job_system: str, 
+        mode: str,
+        ):
+        self.work_underpressure = work_underpressure
+        self.submit_job_system = submit_job_system
+        self.mode = mode
+
+        if self.submit_job_system == 'slurm':
+            self.slurm_job_system()
+        elif self.submit_job_system == 'pbs':
+            self.pbs_job_system()
+
+    @classmethod
+    def init_from_relaxinput(cls, other_class: vasp_inputpara):
+        
+        self = cls(
+            work_underpressure=other_class.work_underpressure,
+            submit_job_system=other_class.submit_job_system,
+            mode=other_class.mode,
+        )
+        
+        return self
+    
+    @classmethod
+    def init_from_phonoinput(cls, other_class: vasp_inputpara):
+
+        self = cls(
+            work_underpressure=other_class.work_underpressure,
+            submit_job_system=other_class.submit_job_system,
+            mode=other_class.mode,
+        )
+        
+        return self
+
+    def slurm_job_system(self):
+
+        if self.mode == 'rvf':
+            self.slurmFopt(self.work_underpressure)
+        elif self.mode == 'rv3':
+            self.slurm3opt(self.work_underpressure)
+        elif self.mode == 'disp':
+            self.slurmdisp(self.work_underpressure)
+        elif self.mode == 'dfpt':
+            self.slurmdfpt(self.work_underpressure)
+
+    def pbs_job_system(self):
+        
+        if self.mode == 'rvf':
+            self.pbsFopt(self.work_underpressure)
+        elif self.mode == 'rv3':
+            self.pbs3opt(self.work_underpressure)
+        elif self.mode == 'disp':
+            self.pbsdisp(self.work_underpressure)
+        elif self.mode == 'dfpt':
+            self.pbsdfpt(self.work_underpressure)
+
+    # slurm job scripts
+    def slurmFopt(self, slurm_dirpath):
+        slurm_script_filepath = os.path.join(slurm_dirpath, "slurmFopt.sh")
+        with open(slurm_script_filepath, "w") as slurm:
+            slurm.write('#!/bin/sh                                                                \n')     
+            slurm.write('#SBATCH  --job-name=opt_fine                                             \n')                         
+            slurm.write('#SBATCH  --output=opt_fine.out.%j                                        \n')                       
+            slurm.write('#SBATCH  --error=opt_fine.err.%j                                         \n')                      
+            slurm.write('#SBATCH  --partition=lhy                                               \n')    # lhy lbt is both ok                
+            slurm.write('#SBATCH  --nodes=1                                                       \n')             
+            slurm.write('#SBATCH  --ntasks=48                                                     \n')               
+            slurm.write('#SBATCH  --ntasks-per-node=48                                            \n')                        
+            slurm.write('#SBATCH  --cpus-per-task=1                                               \n')                     
+            slurm.write('\n\n                                                                     \n')
+            slurm.write('source /work/env/intel2018                                               \n')
+            slurm.write('ulimit -s unlimited                                                      \n')
+            slurm.write('export I_MPI_ADJUST_REDUCE=3                                             \n')
+            slurm.write('export MPIR_CVAR_COLL_ALIAS_CHECK=0                                      \n')
+            slurm.write('\n\n                                                                     \n')
+            slurm.write('cp INCAR_fine INCAR                                                      \n')                    
+            slurm.write('num=0                                                                    \n')                                                                               
+            slurm.write('while true;do                                                            \n')              
+            slurm.write('        let num+=1                                                       \n')                   
+            slurm.write('        echo "run fine vasp opt-$num"                                    \n')                                      
+            slurm.write('        mpirun -n 48 /work/software/vasp.6.1.0/vasp_std  > vasp.log 2>&1 \n')                                                                         
+            slurm.write('        cp -f CONTCAR CONTCAR-fine &&  cp -f CONTCAR POSCAR              \n')                                                            
+            slurm.write("        rows=`sed -n '/F\=/p' OSZICAR | wc -l`                           \n")                                               
+            slurm.write('        echo "rows-$rows"                                                \n')                           
+            slurm.write('        if [ "$rows" -eq "1" ];then                                      \n')                                    
+            slurm.write('                break                                                    \n')                      
+            slurm.write('        fi                                                               \n')           
+            slurm.write('done                                                                     \n')  
+
+    def slurm3opt(self, slurm_dirpath):
+        slurm_script_filepath = os.path.join(slurm_dirpath, "slurm3opt.sh")
+        with open(slurm_script_filepath, "w") as slurm:
+            slurm.write("#!/bin/sh                            \n")     
+            slurm.write("#SBATCH  --job-name=opt3steps        \n")                         
+            slurm.write("#SBATCH  --output=opt3steps.out.%j   \n")                       
+            slurm.write("#SBATCH  --error=opt3steps.err.%j    \n")                      
+            slurm.write("#SBATCH  --partition=lhy           \n")                   
+            slurm.write("#SBATCH  --nodes=1                   \n")             
+            slurm.write("#SBATCH  --ntasks=48                 \n")               
+            slurm.write("#SBATCH  --ntasks-per-node=48        \n")                        
+            slurm.write("#SBATCH  --cpus-per-task=1           \n")                     
+            slurm.write("\n\n")
+            slurm.write("source /work/env/intel2018           \n")  
+            slurm.write("\n\n")
+            slurm.write('cp INCAR_1 INCAR                                                 \n')       
+            slurm.write('cp POSCAR POSCAR-0                                               \n')         
+            slurm.write('mpirun -n 48 /work/software/vasp.6.1.0/vasp_std  > vasp.log 2>&1 \n')                        
+            slurm.write('cp -f CONTCAR CONTCAR-1 &&  cp -f CONTCAR POSCAR                 \n')
+            slurm.write('echo "opt 1 finished"\n')                                                                          
+            slurm.write('cp INCAR_2 INCAR                                                 \n')       
+            slurm.write('mpirun -n 48 /work/software/vasp.6.1.0/vasp_std  > vasp.log 2>&1 \n')                        
+            slurm.write('cp -f CONTCAR CONTCAR-2 &&  cp -f CONTCAR POSCAR                 \n')                                                                           
+            slurm.write('echo "opt 2 finished"\n') 
+            slurm.write('cp INCAR_3 INCAR                                                 \n')       
+            slurm.write('mpirun -n 48 /work/software/vasp.6.1.0/vasp_std  > vasp.log 2>&1 \n')                        
+            slurm.write('cp -f CONTCAR CONTCAR-3 &&  cp -f CONTCAR POSCAR                 \n')                                       
+            slurm.write('echo "opt 3 finished"\n')
+
+    def slurmdfpt(self, slurm_dirpath):
+        slurm_script_filepath = os.path.join(slurm_dirpath, "slurmdfpt.sh")
+        with open(slurm_script_filepath, "w") as slurm:
+            slurm.write("#!/bin/sh                           \n")     
+            slurm.write("#SBATCH  --job-name=dfpt              \n")                         
+            slurm.write("#SBATCH  --output=dfpt.out.%j       \n")                       
+            slurm.write("#SBATCH  --error=dfpt.err.%j        \n")                      
+            slurm.write("#SBATCH  --partition=lhy          \n")    # lhy lbt is both ok                
+            slurm.write("#SBATCH  --nodes=1                  \n")             
+            slurm.write("#SBATCH  --ntasks=48                \n")               
+            slurm.write("#SBATCH  --ntasks-per-node=48       \n")                        
+            slurm.write("#SBATCH  --cpus-per-task=1          \n")                     
+            slurm.write("                                  \n\n")
+            slurm.write("source /work/env/intel2018          \n")  
+            slurm.write("ulimit -s unlimited                 \n")
+            slurm.write("export I_MPI_ADJUST_REDUCE=3        \n")
+            slurm.write("export MPIR_CVAR_COLL_ALIAS_CHECK=0 \n")
+            slurm.write("                                  \n\n")
+            slurm.write('echo "run fine DFPT"                                              \n')
+            slurm.write('cp -f INCAR_DFPT INCAR                                            \n')
+            slurm.write('cp -f SPOSCAR POSCAR                                              \n')
+            slurm.write('mpirun -np 48 /work/software/vasp.6.1.0/vasp_std > vasp.log 2>&1  \n')                        
+
+    def slurmdisp(self, slurm_dirpath):
+        slurm_script_filepath = os.path.join(slurm_dirpath, "slurmdisp.sh")
+        print(slurm_script_filepath)
+        with open(slurm_script_filepath, "w") as slurm:
+            slurm.write("#!/bin/sh                           \n")     
+            slurm.write("#SBATCH  --job-name=disp            \n")                         
+            slurm.write("#SBATCH  --output=disp.out.%j       \n")                       
+            slurm.write("#SBATCH  --error=disp.err.%j        \n")                      
+            slurm.write("#SBATCH  --partition=lhy            \n")    # lhy lbt is both ok                
+            slurm.write("#SBATCH  --nodes=1                  \n")             
+            slurm.write("#SBATCH  --ntasks=48                \n")               
+            slurm.write("#SBATCH  --ntasks-per-node=48       \n")                        
+            slurm.write("#SBATCH  --cpus-per-task=1          \n")                     
+            slurm.write("                                  \n\n")
+            slurm.write("source /work/env/intel2018          \n")
+            slurm.write("ulimit -s unlimited                 \n")
+            slurm.write("export I_MPI_ADJUST_REDUCE=3        \n")
+            slurm.write("export MPIR_CVAR_COLL_ALIAS_CHECK=0 \n")
+            slurm.write("                                  \n\n")
+            slurm.write('echo "run Displacement" && pwd      \n')
+            slurm.write('mpirun -np 48 /work/software/vasp.6.1.0/vasp_std > vasp.log 2>&1  \n')   
+
+
+    # pbs job scripts
+    def pbsFopt(self, pbs_dirpath):
+        pbs_script_filepath = os.path.join(pbs_dirpath, "pbsFopt.sh")
+        with open(pbs_script_filepath, "w") as pbs:
+            pbs.write('#!/bin/sh                                                                           \n')     
+            pbs.write('#PBS -N    Fopt                                                                     \n')                         
+            pbs.write('#PBS -q    liuhy                                                                    \n')    # lhy lbt is both ok                
+            pbs.write('#PBS -l    nodes=1:ppn=28                                                           \n')             
+            pbs.write('#PBS -j    oe                                                                       \n')                        
+            pbs.write('#PBS -V                                                                             \n')                     
+            pbs.write('\n\n                                                                                \n')
+            pbs.write('source /public/home/mayuan/intel/oneapi/setvars.sh                                  \n')
+            pbs.write('ulimit -s unlimited                                                                 \n')
+            pbs.write('cd $PBS_O_WORKDIR                                                                   \n')
+            pbs.write('killall -9 pw.x                                                                     \n')
+            pbs.write('\n\n                                                                                  ')
+            pbs.write('cp INCAR_fine INCAR                                                      \n')                    
+            pbs.write('num=0                                                                    \n')                                                                               
+            pbs.write('while true;do                                                            \n')              
+            pbs.write('        let num+=1                                                       \n')                   
+            pbs.write('        echo "run fine vasp opt-$num"                                    \n')                                      
+            pbs.write('        mpirun -n 28 /public/home/mayuan/software/vasp.6.1.0/bin/vasp_std  > vasp.log 2>&1  \n')                        
+            pbs.write('        cp -f CONTCAR CONTCAR-fine &&  cp -f CONTCAR POSCAR              \n')                                                            
+            pbs.write("        rows=`sed -n '/F\=/p' OSZICAR | wc -l`                           \n")                                               
+            pbs.write('        echo "rows-$rows"                                                \n')                           
+            pbs.write('        if [ "$rows" -eq "1" ];then                                      \n')                                    
+            pbs.write('                break                                                    \n')                      
+            pbs.write('        fi                                                               \n')           
+            pbs.write('done                                                                     \n')  
+
+    def pbs3opt(self, pbs_dirpath):
+        pbs_script_filepath = os.path.join(pbs_dirpath, "pbs3opt.sh")
+        with open(pbs_script_filepath, "w") as pbs:
+            pbs.write('#!/bin/sh                                                                           \n')     
+            pbs.write('#PBS -N    3opt                                                                     \n')                         
+            pbs.write('#PBS -q    liuhy                                                                    \n')    # lhy lbt is both ok                
+            pbs.write('#PBS -l    nodes=1:ppn=28                                                           \n')             
+            pbs.write('#PBS -j    oe                                                                       \n')                        
+            pbs.write('#PBS -V                                                                             \n')                     
+            pbs.write('\n\n                                                                                \n')
+            pbs.write('source /public/home/mayuan/intel/oneapi/setvars.sh                                  \n')
+            pbs.write('ulimit -s unlimited                                                                 \n')
+            pbs.write('cd $PBS_O_WORKDIR                                                                   \n')
+            pbs.write('killall -9 pw.x                                                                     \n')
+            pbs.write('\n\n                                                                                  ')
+            pbs.write('cp INCAR_1 INCAR                                                                    \n')       
+            pbs.write('cp POSCAR POSCAR-0                                                                  \n')         
+            pbs.write('mpirun -n 28 /public/home/mayuan/software/vasp.6.1.0/bin/vasp_std  > vasp.log 2>&1  \n')                        
+            pbs.write('cp -f CONTCAR CONTCAR-1 &&  cp -f CONTCAR POSCAR                                    \n')
+            pbs.write('echo "opt 1 finished"                                                               \n')                                                                                  
+            pbs.write('cp INCAR_2 INCAR                                                                    \n')       
+            pbs.write('mpirun -n 28 /public/home/mayuan/software/vasp.6.1.0/bin/vasp_std  > vasp.log 2>&1  \n')                        
+            pbs.write('cp -f CONTCAR CONTCAR-2 &&  cp -f CONTCAR POSCAR                                    \n')                                                                           
+            pbs.write('echo "opt 2 finished"                                                               \n') 
+            pbs.write('cp INCAR_3 INCAR                                                                    \n')       
+            pbs.write('mpirun -n 28 /public/home/mayuan/software/vasp.6.1.0/bin/vasp_std  > vasp.log 2>&1  \n')                        
+            pbs.write('cp -f CONTCAR CONTCAR-3 &&  cp -f CONTCAR POSCAR                                    \n')                                       
+            pbs.write('echo "opt 3 finished"                                                               \n')
+
+    def pbsdfpt(self, pbs_dirpath):
+        pbs_script_filepath = os.path.join(pbs_dirpath, "pbsdfpt.sh")
+        with open(pbs_script_filepath, "w") as pbs:
+            pbs.write('#!/bin/sh                                                                           \n')     
+            pbs.write('#PBS -N    dfpt                                                                     \n')                         
+            pbs.write('#PBS -q    liuhy                                                                    \n')    # lhy lbt is both ok                
+            pbs.write('#PBS -l    nodes=1:ppn=28                                                           \n')             
+            pbs.write('#PBS -j    oe                                                                       \n')                        
+            pbs.write('#PBS -V                                                                             \n')                     
+            pbs.write('\n\n                                                                                \n')
+            pbs.write('source /public/home/mayuan/intel/oneapi/setvars.sh                                  \n')
+            pbs.write('ulimit -s unlimited                                                                 \n')
+            pbs.write('cd $PBS_O_WORKDIR                                                                   \n')
+            pbs.write('killall -9 pw.x                                                                     \n')
+            pbs.write('\n\n                                                                                  ')
+            pbs.write('echo "run fine DFPT"                                                                \n')
+            pbs.write('cp -f INCAR_dfpt INCAR                                                              \n')
+            pbs.write('cp -f SPOSCAR POSCAR                                                                \n')
+            pbs.write('mpirun -n 28 /public/home/mayuan/software/vasp.6.1.0/bin/vasp_std  > vasp.log 2>&1  \n')                        
+
+    def pbsdisp(self, pbs_dirpath):
+        pbs_script_filepath = os.path.join(pbs_dirpath, "pbsdisp.sh")
+        with open(pbs_script_filepath, "w") as pbs:
+            pbs.write('#!/bin/sh                                                                           \n')     
+            pbs.write('#PBS -N    disp                                                                     \n')                         
+            pbs.write('#PBS -q    liuhy                                                                    \n')    # lhy lbt is both ok                
+            pbs.write('#PBS -l    nodes=1:ppn=28                                                           \n')             
+            pbs.write('#PBS -j    oe                                                                       \n')                        
+            pbs.write('#PBS -V                                                                             \n')                     
+            pbs.write('\n\n                                                                                \n')
+            pbs.write('source /public/home/mayuan/intel/oneapi/setvars.sh                                  \n')
+            pbs.write('ulimit -s unlimited                                                                 \n')
+            pbs.write('cd $PBS_O_WORKDIR                                                                   \n')
+            pbs.write('killall -9 pw.x                                                                     \n')
+            pbs.write('\n\n                                                                                  ')
+            pbs.write('echo "run Displacement" && pwd                                                      \n')
+            pbs.write('mpirun -n 28 /public/home/mayuan/software/vasp.6.1.0/bin/vasp_std  > vasp.log 2>&1  \n')                        
+
+
+
+
+

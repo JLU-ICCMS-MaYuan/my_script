@@ -1,3 +1,4 @@
+#!/public/home/mayuan/miniconda3/envs/cage/bin/python3
 #!/work/home/mayuan/miniconda3/envs/cage/bin/python3
 from pymatgen.analysis.phase_diagram import PDEntry, PhaseDiagram, PDPlotter
 from pymatgen.core.composition import Composition

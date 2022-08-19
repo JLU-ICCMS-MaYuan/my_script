@@ -2,8 +2,20 @@
 #!/work/home/mayuan/miniconda3/envs/cage/bin/python3
 
 '''
-vasp_main.py -i ./test/POSCAR -w ./test/ -p 200 -j slurm relax -m encut=400 kspacing=0.3 
-vasp_main.py -i ./test/POSCAR -w ./test/ -p 200 -j slurm phono -m encut=400 kspacing=0.3 
+vasp_main.py -i ./test/POSCAR -w ./test/ -j pbs relax -m encut=400 kspacing=0.3 mode=rv3
+vasp_main.py -i ./test/POSCAR -w ./test/ -j pbs relax -m encut=400 kspacing=0.3 mode=rvf
+vasp_main.py -i ./test/POSCAR -w ./test/ -j pbs phono -m supercell=[2,2,2] kpoints=[40,40,40] mode=disp   
+vasp_main.py -i ./test/POSCAR -w ./test/ -j pbs phono -m supercell=[2,2,2] kpoints=[40,40,40] mode=dfpt
+vasp_main.py -i ./test/0.0/POSCAR-init -w ./test/ phono -m mode=dispprog supercell=[2,2,2]
+vasp_main.py -i ./test/0.0/POSCAR-init -w ./test/ phono -m mode=dfptprog supercell=[2,2,2]
+
+vasp_main.py -i ./test/POSCAR -w ./test/ -j slurm relax -m encut=400 kspacing=0.3 mode=rv3
+vasp_main.py -i ./test/POSCAR -w ./test/ -j slurm relax -m encut=400 kspacing=0.3 mode=rvf
+vasp_main.py -i ./test/POSCAR -w ./test/ -j slurm phono -m supercell=[2,2,2] kpoints=[40,40,40] mode=disp  
+vasp_main.py -i ./test/POSCAR -w ./test/ -j slurm phono -m supercell=[2,2,2] kpoints=[40,40,40] mode=dfpt
+vasp_main.py -i ./test/0.0/POSCAR-init -w ./test/ phono -m mode=dispprog supercell=[2,2,2]
+vasp_main.py -i ./test/0.0/POSCAR-init -w ./test/ phono -m mode=dfptprog supercell=[2,2,2]
+
 '''
 
 import os

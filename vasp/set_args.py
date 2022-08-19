@@ -1,7 +1,6 @@
 from argparse import ArgumentParser
 
-from relax import relax
-from phono import phono
+from vasp_run import vasp_relax, vasp_phono
 
 def set_more_args(parser: ArgumentParser):
 
@@ -52,7 +51,7 @@ def set_more_args(parser: ArgumentParser):
         nargs='+',
         help="输入更多关于结构弛豫的参数"
     )
-    parser_relax.set_defaults(vasp_workflow=relax)
+    parser_relax.set_defaults(vasp_workflow=vasp_relax)
 
     # 计算声子谱
     parser_phono = subparsers.add_parser("phono")
@@ -64,7 +63,7 @@ def set_more_args(parser: ArgumentParser):
         nargs='+',
         help="输入更多关于结构弛豫的参数"
     )
-    parser_phono.set_defaults(vasp_workflow=phono) 
+    parser_phono.set_defaults(vasp_workflow=vasp_phono) 
     
     args = parser.parse_args()
 

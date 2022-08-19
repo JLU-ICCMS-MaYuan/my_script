@@ -17,21 +17,25 @@ logger = logging.getLogger("vaspbase")
 class vaspbase:
 
     def __init__(self, args) -> None:
-        _config = config(args).read_config()
+        self._config = config(args).read_config()
 
-        self.work_path         = _config['work_path']
-        self.press             = _config["press"]          
+        self.work_path         = self._config['work_path']
+        self.press             = self._config["press"]          
         self.work_underpressure     = Path(self.work_path).joinpath(str(self.press))
         if not self.work_underpressure.exists():
             self.work_underpressure.mkdir()
-        self.input_file_path   = _config["input_file_path"]
-        self.ase_type          = read(self.input_file_path)
-        self.struct_type       = AseAtomsAdaptor.get_structure(self.ase_type)
-        self.get_struct_info(self.struct_type)
-        self.work_path         = _config["work_path"]      
-        self.submit_job_system = _config["submit_job_system"]
-        if "workpath_pppath" in _config: 
-            self.workpath_pppath   = _config["workpath_pppath"]
+        if "input_file_path" in self._config:
+            self.input_file_path   = self._config["input_file_path"]
+            self.ase_type          = read(self.input_file_path)
+            self.struct_type       = AseAtomsAdaptor.get_structure(self.ase_type)
+            self.get_struct_info(self.struct_type)
+        else:
+            logger.warning("you didn't specify the inputfile")
+        self.work_path         = self._config["work_path"]      
+        self.submit_job_system = self._config["submit_job_system"]
+        
+        if "workpath_pppath" in self._config: 
+            self.workpath_pppath   = self._config["workpath_pppath"]
         else:
             self.workpath_pppath   = None
 
