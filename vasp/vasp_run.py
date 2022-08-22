@@ -1,12 +1,11 @@
 import os
 import logging
+from argparse import ArgumentParser
 from pathlib import Path
 from itertools import chain
 
-from ase.io import read
-from pymatgen.io.ase import AseAtomsAdaptor
-
-from vasp_inputpara import vasp_inputpara 
+from config import config
+from vasp_inputpara import vasp_inputpara, vaspbatch_inputpara
 from vasp_writeincar import vasp_writeincar
 from vasp_writekpoints import vasp_writekpoints
 from vasp_writesubmit import vasp_writesubmit
@@ -16,10 +15,13 @@ logger = logging.getLogger("vasp_run")
 
 class vasp_relax:
 
-    def __init__(self, args) -> None:
+    def __init__(self, args: ArgumentParser) -> None:
+
+        # read input para
+        self._config = config(args).read_config()
 
         # prepare the POSCAR POTCAR  
-        self.relax_inputpara   = vasp_inputpara(args)
+        self.relax_inputpara   = vasp_inputpara.init_from_config(self._config)
 
         # init the INCAR
         self.vasp_writeincar  = vasp_writeincar.init_from_relaxinput(self.relax_inputpara)
@@ -30,9 +32,39 @@ class vasp_relax:
         # submit the job
         self.vasp_submitjob   = vasp_submitjob.init_from_relaxinput(self.relax_inputpara)
 
+
+class vaspbatch_relax:
+
+    def __init__(self, args: ArgumentParser) -> None:
+
+        self._config = config(args).read_config()
+
+        if Path(self._config.input_file_path).is_dir():
+            self.input_files_path = list(self.input_file_path.glob("*"))
+            for input_file_path in self.input_files_path:
+
+                # prepare the POSCAR POTCAR  
+                self.relax_inputpara  = vasp_inputpara(
+                    work_path=self._config['work_path'],
+                    press=self._config['press'],
+                    submit_job_system=self._config['submit_job_system'],
+                    input_file_path=input_file_path,
+                    **self._config
+                )
+
+                # init the INCAR
+                self.vasp_writeincar  = vasp_writeincar.init_from_relaxinput(self.relax_inputpara)
+
+                # init the submit job script
+                self.vasp_writesubmit = vasp_writesubmit.init_from_relaxinput(self.relax_inputpara)
+
+                # submit the job
+                self.vasp_submitjob   = vasp_submitjob.init_from_relaxinput(self.relax_inputpara)
+
+
 class vasp_phono:
 
-    def __init__(self, args) -> None:
+    def __init__(self, args: ArgumentParser) -> None:
 
         # prepare the POSCAR POTCAR  
         self.phono_inputpara  = vasp_inputpara(args)

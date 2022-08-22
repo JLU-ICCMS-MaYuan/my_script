@@ -1,3 +1,4 @@
+from argparse import ArgumentParser
 import os
 import re
 import logging
@@ -14,51 +15,57 @@ from config import config
 
 logger = logging.getLogger("vaspbase")
 
-class vaspbase:
+class vasp_base:
+    """
+    Read the basic information from ARGS. The basic information includes:
+        work_path
+        press
+        input_file_path
+        submit_job_system
+    create pressure directory (named work_underpressure) on the basis of work_path and press
+    Create pseudopotential directory (named workpath_pppath) in the work_underpressure
+    """
+    def __init__(
+        self,
+        work_path: str,
+        press: int,
+        submit_job_system: str,
+        input_file_path: str,
+    ) -> None:
 
-    def __init__(self, args) -> None:
-        self._config = config(args).read_config()
+        self.work_path         = config['work_path']
+        self.press             = config["press"]          
+        self.submit_job_system = config["submit_job_system"]
+        if "input_file_path" in config:
+            self.input_file_path  = Path(config["input_file_path"])
+            self.input_file_name  = self.input_file_path.name.split(".")[0]
+        else:
+            logger.warning("you didn't specify the inputfile")     
 
-        self.work_path         = self._config['work_path']
-        self.press             = self._config["press"]          
-        self.work_underpressure     = Path(self.work_path).joinpath(str(self.press))
+        self.work_underpressure= Path(self.work_path).joinpath(self.input_file_name, str(self.press))
         if not self.work_underpressure.exists():
-            self.work_underpressure.mkdir()
-        if "input_file_path" in self._config:
-            self.input_file_path   = self._config["input_file_path"]
-            self.ase_type          = read(self.input_file_path)
-            self.struct_type       = AseAtomsAdaptor.get_structure(self.ase_type)
-            self.get_struct_info(self.struct_type)
-        else:
-            logger.warning("you didn't specify the inputfile")
-        self.work_path         = self._config["work_path"]      
-        self.submit_job_system = self._config["submit_job_system"]
+            self.work_underpressure.mkdir(parents=True)
+
+        self.ase_type          = read(self.input_file_path)
+        self.struct_type       = AseAtomsAdaptor.get_structure(self.ase_type)
+        self.get_struct_info(self.struct_type, self.work_underpressure)
         
-        if "workpath_pppath" in self._config: 
-            self.workpath_pppath   = self._config["workpath_pppath"]
-        else:
-            self.workpath_pppath   = None
 
-
-        if self.input_file_path is None:
-            logger.error("please specify the inputfile *.vasp or POSCAR")
-            raise ValueError ("please specify the inputfile *.vasp or POSCAR")
         ############################ prepare pp directory #########################
-        logger.info(f"create potcar dir in {self.work_underpressure}")
-        if self.workpath_pppath is None:
-            self.workpath_pppath = Path(self.work_underpressure).joinpath("potcar_lib")
+        logger.info(f"create potcar dir in {self.work_path}")
+        self.workpath_pppath = Path(self.work_path).joinpath("potcar_lib")
         if not self.workpath_pppath.exists():
             self.workpath_pppath.mkdir()
         # 准备赝势 
-        self.get_potcar()   
+        self.get_potcar(self.work_underpressure)   
         ############################# done pp directory ##########################
 
-    def get_struct_info(self, struct):
+    def get_struct_info(self, struct, output_poscar):
         
         spa = SpacegroupAnalyzer(struct)
         # bstruct = spa.get_conventional_standard_structure()
         pstruct = spa.get_primitive_standard_structure()
-        Poscar(pstruct).write_file(self.work_underpressure.joinpath("POSCAR"))
+        Poscar(pstruct).write_file(output_poscar.joinpath("POSCAR"))
 
         # 处理PPOSCAR的pymatgen对象
         # 获得元素名称 和 每种元素的原子个数
@@ -75,7 +82,7 @@ class vaspbase:
         # 获得原子分数坐标
         self.fractional_sites   = pstruct.sites
 
-    def get_potcar(self):
+    def get_potcar(self, dst_potcar_dir: Path):
 
         # 准备分离的赝势
         potlib_files = os.listdir(self.workpath_pppath)
@@ -125,7 +132,7 @@ class vaspbase:
                         if src_potcar.exists():  
                             src_potcar_path_list.append(src_potcar)
             logger.info(f"{src_potcar_path_list}")
-            dst_potcar = self.work_underpressure.joinpath("POTCAR")
+            dst_potcar = dst_potcar_dir.joinpath("POTCAR")
             # 将多个POTCAR写入总的POTCAR中
             f = open(dst_potcar, "w")
             for potcar_indi in src_potcar_path_list:
@@ -136,11 +143,3 @@ class vaspbase:
             print("完成了一个POTCAR\n\n\n")
         else:
             print("POSCAR not exist")
-
-
-
-
-        
-        
-         
-

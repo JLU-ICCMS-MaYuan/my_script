@@ -7,69 +7,73 @@ from argparse import ArgumentParser
 from ase.io import read
 from pymatgen.io.ase import AseAtomsAdaptor
 
-from vasp_base import vaspbase
+from config import config
+from vasp_base import vasp_base, vaspbatch_base
 
-class vasp_inputpara(vaspbase):
-
+class vasp_inputpara(vasp_base):
+    """
+    Preparing the Input File: POSCAR, POTCAR and many parameters of INCAR for single structure.
+    It inherits the vaspBase class.
+    It can't prepare the input file for batch computing.
+    """
     def __init__(
-        self, 
-        args: ArgumentParser,
-        ) -> None:
-        super().__init__(args)
+        self,
+        work_path: str,
+        press: int,
+        submit_job_system: str,
+        input_file_path: str,
+        **kwargs: dict,
+        ):
+        super(vasp_inputpara, self).__init__(
+            work_path, 
+            press, 
+            submit_job_system, 
+            input_file_path
+            )
 
-        if 'encut' in self._config:
-            self.encut = self._config['encut']
-        else:
+        for key, value in kwargs.items():
+            if key != "work_path" and \
+               key != "press" and \
+               key != "submit_job_system" and \
+               key !="input_file_path":
+               
+                setattr(self, key, value)
+
+        if not hasattr(self, "encut"):
             self.encut = 600
         
-        if 'kspacing' in self._config:
-            self.kspacing = self._config['kspacing']
-        else:
+        if not hasattr(self, "kspacing"):
             self.kspacing = 0.3
 
-        if 'kpoints' in self._config:
-            _kpoints = re.findall(r"\d+", self._config['kpoints'])
+        if hasattr(self, "kpoints"):
+            _kpoints = re.findall(r"\d+", config['kpoints'])
             self.kpoints = list(map(int, _kpoints))
         else:
             self.kpoints = [None, None, None]
 
-        if 'ismear' in self._config:
-            self.ismear = self._config['ismear']
-        else:
+        if not hasattr(self, "ismear"):
             self.ismear = 0
 
-        if 'sigma' in self._config:
-            self.sigma = self._config['sigma']
-        else:
+        if not hasattr(self, "sigma"):
             self.sigma = 0.02
 
-        if 'ediff' in self._config:
-            self.ediff = self._config['ediff']
-        else:
+        if not hasattr(self, "ediff"):
             self.ediff = 1e-8
 
-        if 'ibrion' in self._config:
-            self.ibrion = self._config['ibrion']
-        else:
+        if not hasattr(self, "ibrion"):
             self.ibrion = 2
 
-        if 'isif' in self._config:
-            self.isif = self._config['isif']
-        else:
+        if not hasattr(self, "isif"):
             self.isif = 3
 
-        if 'optim' in self._config:
-            self.optim = self._config['optim']
-        else:
+        if not hasattr(self, "optim"):
             self.optim = 0.1
         
-        if 'mode'  in self._config:
-            self.mode = self._config['mode']
-        else:
+        if not hasattr(self, "mode"):
             self.mode = None 
         
-        if 'supercell' in self._config:
-            _supercell = re.findall(r"\d+", self._config['supercell'])
+        if hasattr(self, "supercell"):
+            _supercell = re.findall(r"\d+", config['supercell'])
             self.supercell = list(map(int, _supercell))
         else:
             self.supercell = [1, 1, 1]
@@ -96,3 +100,16 @@ class vasp_inputpara(vaspbase):
 
         if self.mode == "dfptprog":
             pass
+
+    @classmethod
+    def init_from_config(cls, config: dict):
+
+        self = cls(
+            work_path=config['work_path'],
+            press=config['press'],
+            submit_job_system=config['submit_job_system'],
+            input_file_path=config['input_file_path'],
+            **config,
+        )
+        
+        return self
