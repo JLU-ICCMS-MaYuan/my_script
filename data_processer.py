@@ -16,15 +16,8 @@ for temp in tot_list.split('\n'):
 
 NullNum = list(map(int, NullNum))
 
-df2 = pd.DataFrame({'Number': NullNum})
-df2.drop_duplicates(subset='Number', keep='first', inplace=True)
-print(df2)
-df1 = pd.read_csv('convexhull.csv', index_col=False)
+df1 = pd.read_csv('convexhull.csv', index_col=False) # 强制pandas不使用第一列作为索引（行名）
 df1.drop_duplicates(subset='Number', keep='first', inplace=True)
-print(df1)
-df3 = df1.append(df2)
-df3.drop_duplicates(subset='Number', keep=False, inplace=True)
-df3.dropna(axis=0, inplace=True)
-print(df3)
-df3.to_csv('nnconvexhull.csv', index=False)
+df1.dropna(axis=0, inplace=True) # 处理有NaN这样缺失值的行, inplace表示直接在原DataFrame修改 
+df1.to_csv('nnconvexhull.csv', index=False)
 
