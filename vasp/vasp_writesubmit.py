@@ -9,10 +9,12 @@ class vasp_writesubmit:
         work_underpressure: str, 
         submit_job_system: str, 
         mode: str,
+        queue: str,
         ):
         self.work_underpressure = work_underpressure
         self.submit_job_system = submit_job_system
         self.mode = mode
+        self.queue = queue
 
         if self.submit_job_system == 'slurm':
             self.slurm_job_system()
@@ -26,6 +28,7 @@ class vasp_writesubmit:
             work_underpressure=other_class.work_underpressure,
             submit_job_system=other_class.submit_job_system,
             mode=other_class.mode,
+            queue=other_class.queue,
         )
         
         return self
@@ -67,26 +70,26 @@ class vasp_writesubmit:
     def slurmFopt(self, slurm_dirpath):
         slurm_script_filepath = os.path.join(slurm_dirpath, "slurmFopt.sh")
         with open(slurm_script_filepath, "w") as slurm:
-            slurm.write('#!/bin/sh                                                                \n')     
-            slurm.write('#SBATCH  --job-name=opt_fine                                             \n')                         
-            slurm.write('#SBATCH  --output=opt_fine.out.%j                                        \n')                       
-            slurm.write('#SBATCH  --error=opt_fine.err.%j                                         \n')                      
-            slurm.write('#SBATCH  --partition=lhy                                               \n')    # lhy lbt is both ok                
-            slurm.write('#SBATCH  --nodes=1                                                       \n')             
-            slurm.write('#SBATCH  --ntasks=48                                                     \n')               
-            slurm.write('#SBATCH  --ntasks-per-node=48                                            \n')                        
-            slurm.write('#SBATCH  --cpus-per-task=1                                               \n')                     
-            slurm.write('\n\n                                                                     \n')
-            slurm.write('source /work/env/intel2018                                               \n')
-            slurm.write('ulimit -s unlimited                                                      \n')
-            slurm.write('export I_MPI_ADJUST_REDUCE=3                                             \n')
-            slurm.write('export MPIR_CVAR_COLL_ALIAS_CHECK=0                                      \n')
-            slurm.write('\n\n                                                                     \n')
-            slurm.write('cp INCAR_fine INCAR                                                      \n')                    
-            slurm.write('num=0                                                                    \n')                                                                               
-            slurm.write('while true;do                                                            \n')              
-            slurm.write('        let num+=1                                                       \n')                   
-            slurm.write('        echo "run fine vasp opt-$num"                                    \n')                                      
+            slurm.write('#!/bin/sh                                     \n')     
+            slurm.write('#SBATCH  --job-name=opt_fine                  \n')                         
+            slurm.write('#SBATCH  --output=opt_fine.out.%j             \n')                       
+            slurm.write('#SBATCH  --error=opt_fine.err.%j              \n')                      
+            slurm.write('#SBATCH  --partition={}                       \n'.format(self.queue))    # lhy lbt is both ok                
+            slurm.write('#SBATCH  --nodes=1                            \n')             
+            slurm.write('#SBATCH  --ntasks=48                          \n')               
+            slurm.write('#SBATCH  --ntasks-per-node=48                 \n')                        
+            slurm.write('#SBATCH  --cpus-per-task=1                    \n')                     
+            slurm.write('\n\n                                          \n')
+            slurm.write('source /work/env/intel2018                    \n')
+            slurm.write('ulimit -s unlimited                           \n')
+            slurm.write('export I_MPI_ADJUST_REDUCE=3                  \n')
+            slurm.write('export MPIR_CVAR_COLL_ALIAS_CHECK=0           \n')
+            slurm.write('\n\n                                          \n')
+            slurm.write('cp INCAR_fine INCAR                           \n')                    
+            slurm.write('num=0                                         \n')                                                                               
+            slurm.write('while true;do                                 \n')              
+            slurm.write('        let num+=1                            \n')                   
+            slurm.write('        echo "run fine vasp opt-$num"         \n')                                      
             slurm.write('        mpirun -n 48 /work/software/vasp.6.1.0/vasp_std  > vasp.log 2>&1 \n')                                                                         
             slurm.write('        cp -f CONTCAR CONTCAR-fine &&  cp -f CONTCAR POSCAR              \n')                                                            
             slurm.write("        rows=`sed -n '/F\=/p' OSZICAR | wc -l`                           \n")                                               
@@ -103,7 +106,7 @@ class vasp_writesubmit:
             slurm.write("#SBATCH  --job-name=opt3steps        \n")                         
             slurm.write("#SBATCH  --output=opt3steps.out.%j   \n")                       
             slurm.write("#SBATCH  --error=opt3steps.err.%j    \n")                      
-            slurm.write("#SBATCH  --partition=lhy           \n")                   
+            slurm.write("#SBATCH  --partition={}              \n".format(self.queue))                   
             slurm.write("#SBATCH  --nodes=1                   \n")             
             slurm.write("#SBATCH  --ntasks=48                 \n")               
             slurm.write("#SBATCH  --ntasks-per-node=48        \n")                        
@@ -129,10 +132,10 @@ class vasp_writesubmit:
         slurm_script_filepath = os.path.join(slurm_dirpath, "slurmdfpt.sh")
         with open(slurm_script_filepath, "w") as slurm:
             slurm.write("#!/bin/sh                           \n")     
-            slurm.write("#SBATCH  --job-name=dfpt              \n")                         
+            slurm.write("#SBATCH  --job-name=dfpt            \n")                         
             slurm.write("#SBATCH  --output=dfpt.out.%j       \n")                       
             slurm.write("#SBATCH  --error=dfpt.err.%j        \n")                      
-            slurm.write("#SBATCH  --partition=lhy          \n")    # lhy lbt is both ok                
+            slurm.write("#SBATCH  --partition={}             \n".format(self.queue))    # lhy lbt is both ok                
             slurm.write("#SBATCH  --nodes=1                  \n")             
             slurm.write("#SBATCH  --ntasks=48                \n")               
             slurm.write("#SBATCH  --ntasks-per-node=48       \n")                        
@@ -156,7 +159,7 @@ class vasp_writesubmit:
             slurm.write("#SBATCH  --job-name=disp            \n")                         
             slurm.write("#SBATCH  --output=disp.out.%j       \n")                       
             slurm.write("#SBATCH  --error=disp.err.%j        \n")                      
-            slurm.write("#SBATCH  --partition=lhy            \n")    # lhy lbt is both ok                
+            slurm.write("#SBATCH  --partition={}             \n".format(self.queue))    # lhy lbt is both ok                
             slurm.write("#SBATCH  --nodes=1                  \n")             
             slurm.write("#SBATCH  --ntasks=48                \n")               
             slurm.write("#SBATCH  --ntasks-per-node=48       \n")                        

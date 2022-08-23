@@ -71,6 +71,9 @@ class vasp_inputpara(vasp_base):
         if not hasattr(self, "mode"):
             self.mode = None 
         
+        if not hasattr(self, "queue"):
+            self.queue = "xieyu"
+
         if hasattr(self, "supercell"):
             _supercell = re.findall(r"\d+", config['supercell'])
             self.supercell = list(map(int, _supercell))
