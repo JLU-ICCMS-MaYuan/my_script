@@ -8,7 +8,7 @@ from ase.io import read
 from pymatgen.io.ase import AseAtomsAdaptor
 
 from config import config
-from vasp_base import vasp_base, vaspbatch_base
+from vasp_base import vasp_base 
 
 class vasp_inputpara(vasp_base):
     """
@@ -36,7 +36,6 @@ class vasp_inputpara(vasp_base):
                key != "press" and \
                key != "submit_job_system" and \
                key !="input_file_path":
-               
                 setattr(self, key, value)
 
         if not hasattr(self, "encut"):
@@ -102,14 +101,33 @@ class vasp_inputpara(vasp_base):
             pass
 
     @classmethod
-    def init_from_config(cls, config: dict):
+    def init_from_config1(cls, config: dict):
 
+        work_path         = config['work_path']            ; del config['work_path']
+        press             = config['press']                ; del config['press']
+        submit_job_system = config['submit_job_system']    ; del config['submit_job_system']
+        input_file_path   = Path(config['input_file_path']); del config['input_file_path']
         self = cls(
-            work_path=config['work_path'],
-            press=config['press'],
-            submit_job_system=config['submit_job_system'],
-            input_file_path=config['input_file_path'],
+            work_path=work_path,
+            press=press,
+            submit_job_system=submit_job_system,
+            input_file_path=input_file_path,
             **config,
         )
-        
+        return self
+
+    @classmethod
+    def init_from_config2(cls, input_file_path, config: dict):
+
+        work_path         = config['work_path']            ; del config['work_path']
+        press             = config['press']                ; del config['press']
+        submit_job_system = config['submit_job_system']    ; del config['submit_job_system']
+        pass                                               ; del config['input_file_path']
+        self = cls(
+            work_path=work_path,
+            press=press,
+            submit_job_system=submit_job_system,
+            input_file_path=input_file_path,
+            **config,
+        )
         return self

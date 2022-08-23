@@ -5,7 +5,7 @@ from pathlib import Path
 from itertools import chain
 
 from config import config
-from vasp_inputpara import vasp_inputpara, vaspbatch_inputpara
+from vasp_inputpara import vasp_inputpara 
 from vasp_writeincar import vasp_writeincar
 from vasp_writekpoints import vasp_writekpoints
 from vasp_writesubmit import vasp_writesubmit
@@ -21,7 +21,7 @@ class vasp_relax:
         self._config = config(args).read_config()
 
         # prepare the POSCAR POTCAR  
-        self.relax_inputpara   = vasp_inputpara.init_from_config(self._config)
+        self.relax_inputpara  = vasp_inputpara.init_from_config1(self._config)
 
         # init the INCAR
         self.vasp_writeincar  = vasp_writeincar.init_from_relaxinput(self.relax_inputpara)
@@ -38,19 +38,12 @@ class vaspbatch_relax:
     def __init__(self, args: ArgumentParser) -> None:
 
         self._config = config(args).read_config()
-
-        if Path(self._config.input_file_path).is_dir():
-            self.input_files_path = list(self.input_file_path.glob("*"))
+        self.input_dir_path = Path(self._config['input_file_path'])
+        if self.input_dir_path.is_dir():
+            self.input_files_path = list(self.input_dir_path.glob("*.vasp"))
             for input_file_path in self.input_files_path:
-
                 # prepare the POSCAR POTCAR  
-                self.relax_inputpara  = vasp_inputpara(
-                    work_path=self._config['work_path'],
-                    press=self._config['press'],
-                    submit_job_system=self._config['submit_job_system'],
-                    input_file_path=input_file_path,
-                    **self._config
-                )
+                self.relax_inputpara  = vasp_inputpara.init_from_config2(input_file_path, self._config)
 
                 # init the INCAR
                 self.vasp_writeincar  = vasp_writeincar.init_from_relaxinput(self.relax_inputpara)
@@ -66,8 +59,11 @@ class vasp_phono:
 
     def __init__(self, args: ArgumentParser) -> None:
 
+        # read input para
+        self._config = config(args).read_config()
+
         # prepare the POSCAR POTCAR  
-        self.phono_inputpara  = vasp_inputpara(args)
+        self.relax_inputpara  = vasp_inputpara.init_from_config1(self._config)
 
         # init the INCAR
         self.vasp_writeincar  = vasp_writeincar.init_from_phonoinput(self.phono_inputpara)
@@ -87,7 +83,6 @@ class vasp_phono:
             self.post_progress(
                 self.phono_inputpara.mode
             )
-
 
     def post_progress(
         self, 
@@ -209,3 +204,34 @@ class vasp_phono:
             f.write("BAND={}                 \n".format(' '.join(path_coords)))
 
 
+class vaspbatch_phono(vasp_phono):
+
+    def __init__(self, args: ArgumentParser) -> None:
+        
+        self._config = config(args).read_config()
+        self.input_dir_path = Path(self._config['input_file_path'])
+        if self.input_dir_path.is_dir():
+            self.input_files_path = list(self.input_dir_path.glob("*.vasp"))
+            for input_file_path in self.input_files_path:
+
+                # prepare the POSCAR POTCAR  
+                self.relax_inputpara  = vasp_inputpara.init_from_config2(input_file_path, self._config)
+
+                # init the INCAR
+                self.vasp_writeincar  = vasp_writeincar.init_from_phonoinput(self.phono_inputpara)
+
+                # init the KPOINTS
+                if self.phono_inputpara.kpoints != [None, None, None]:
+                    self.vasp_kpoints     = vasp_writekpoints.init_from_inputpara(self.phono_inputpara)
+
+                # init the submit job script
+                self.vasp_writesubmit = vasp_writesubmit.init_from_phonoinput(self.phono_inputpara)
+
+                # submit the job
+                self.vasp_submitjob   = vasp_submitjob.init_from_phonoinput(self.phono_inputpara)
+
+                if  self.phono_inputpara.mode == "dispprog" or\
+                    self.phono_inputpara.mode == "dfptprog":
+                    self.post_progress(
+                        self.phono_inputpara.mode
+                    )

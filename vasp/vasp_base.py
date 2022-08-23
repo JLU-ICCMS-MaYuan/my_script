@@ -30,17 +30,14 @@ class vasp_base:
         work_path: str,
         press: int,
         submit_job_system: str,
-        input_file_path: str,
+        input_file_path: Path,
     ) -> None:
 
-        self.work_path         = config['work_path']
-        self.press             = config["press"]          
-        self.submit_job_system = config["submit_job_system"]
-        if "input_file_path" in config:
-            self.input_file_path  = Path(config["input_file_path"])
-            self.input_file_name  = self.input_file_path.name.split(".")[0]
-        else:
-            logger.warning("you didn't specify the inputfile")     
+        self.work_path         = work_path
+        self.press             = press          
+        self.submit_job_system = submit_job_system
+        self.input_file_path   = input_file_path
+        self.input_file_name   = self.input_file_path.name.split(".")[0]
 
         self.work_underpressure= Path(self.work_path).joinpath(self.input_file_name, str(self.press))
         if not self.work_underpressure.exists():
@@ -50,7 +47,6 @@ class vasp_base:
         self.struct_type       = AseAtomsAdaptor.get_structure(self.ase_type)
         self.get_struct_info(self.struct_type, self.work_underpressure)
         
-
         ############################ prepare pp directory #########################
         logger.info(f"create potcar dir in {self.work_path}")
         self.workpath_pppath = Path(self.work_path).joinpath("potcar_lib")
