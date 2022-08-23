@@ -41,9 +41,19 @@ class vaspbatch_relax:
         self.input_dir_path = Path(self._config['input_file_path'])
         if self.input_dir_path.is_dir():
             self.input_files_path = list(self.input_dir_path.glob("*.vasp"))
+            work_path         = self._config['work_path']        ; del self._config['work_path']
+            press             = self._config['press']            ; del self._config['press']
+            submit_job_system = self._config['submit_job_system']; del self._config['submit_job_system']
+            pass                                                 ; del self._config['input_file_path']
             for input_file_path in self.input_files_path:
                 # prepare the POSCAR POTCAR  
-                self.relax_inputpara  = vasp_inputpara.init_from_config2(input_file_path, self._config)
+                self.relax_inputpara  = vasp_inputpara(
+                    work_path=work_path,
+                    press=press,
+                    submit_job_system=submit_job_system,
+                    input_file_path=input_file_path,
+                    **self._config
+                    )
 
                 # init the INCAR
                 self.vasp_writeincar  = vasp_writeincar.init_from_relaxinput(self.relax_inputpara)

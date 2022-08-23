@@ -122,10 +122,6 @@ class vasp_inputpara(vasp_base):
     @classmethod
     def init_from_config2(cls, input_file_path, config: dict):
 
-        work_path         = config['work_path']            ; del config['work_path']
-        press             = config['press']                ; del config['press']
-        submit_job_system = config['submit_job_system']    ; del config['submit_job_system']
-        pass                                               ; del config['input_file_path']
         self = cls(
             work_path=work_path,
             press=press,

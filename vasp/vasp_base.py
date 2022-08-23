@@ -78,57 +78,88 @@ class vasp_base:
         # 获得原子分数坐标
         self.fractional_sites   = pstruct.sites
 
-    def get_potcar(self, dst_potcar_dir: Path):
+    def get_potcar(self, dst_potcar_path: Path):
 
         # 准备分离的赝势
         potlib_files = os.listdir(self.workpath_pppath)
-        if len(potlib_files) != len(self.species):
-            potcar_dir1 = os.path.abspath("/work/home/may/POT/vasp_pot1/potpaw_PBE54")
-            potcar_dir2 = os.path.abspath("/public/home/mayuan/POT/vasp_pot1/potpaw_PBE54")
-            if os.path.exists(potcar_dir1):
-                potcar_dir = potcar_dir1
-                potcarfiles = os.listdir(potcar_dir1)
-            elif os.path.exists(potcar_dir2):
-                potcar_dir = potcar_dir2
-                potcarfiles = os.listdir(potcar_dir2)
-            self.final_choosed_potcar = []
-            for species in self.species:
-                species_name = species.name
-                logger.info(f"species_name {species_name}")
-                targetpotcarfiles = filter(lambda file: re.search("^"+species_name, file), potcarfiles)
-                targetpotcarnames = [pp for pp in targetpotcarfiles]
-                choosed_flag  = False
-                while not choosed_flag:
-                    choosed_pot = input(f"{targetpotcarnames}, \nplease input you want one\n")
-                    if choosed_pot in targetpotcarnames:
-                        src_pp = os.path.join(potcar_dir, choosed_pot , "POTCAR")
-                        dst_pp = os.path.join(self.workpath_pppath, "POTCAR-"+choosed_pot)
-                        shutil.copy(src_pp, dst_pp)
-                        choosed_flag = True
-                        self.final_choosed_potcar.append("POTCAR-"+choosed_pot)
-                    else:
-                        choosed_flag = False
-        else:
-            self.final_choosed_potcar = potlib_files
-
+        self.final_choosed_potcar = []
+        for species in self.species:
+            species_name = species.name
+            dst_pps = list(self.workpath_pppath.glob(f"POTCAR-*{species_name}*"))
+            if len(dst_pps) == 1:
+                self.final_choosed_potcar.append(dst_pps[0])
+            elif len(dst_pps) == 0:
+                logger.info(f"to prepare {species_name} POTCAR! ")
+                dst_pp = self.get_single_potcar(species_name)
+                self.final_choosed_potcar.append(dst_pp)
+            else:
+                logger.error(f"find many POTCARs {dst_pps}")
         logger.info(f"the choosed pp is {self.final_choosed_potcar}")
+        if len(self.final_choosed_potcar) == len(self.species):
+            self.merge_potcar(dst_potcar_path, self.final_choosed_potcar)
 
+    def get_single_potcar(self, species_name):
+        """
+        according to the given name of element, copy the POTCAR to the potcar_lib
+        input:
+            species_name
+        rerutn:
+            the class Path of POTCAR of the given element.
+        """
+        potcar_dir1 = os.path.abspath("/work/home/may/POT/vasp_pot1/potpaw_PBE54")
+        potcar_dir2 = os.path.abspath("/public/home/mayuan/POT/vasp_pot1/potpaw_PBE54")
+        potcar_dir3 = os.path.abspath("/work/home/mayuan/POT/vasp_pot1/potpaw_PBE54")
+        if os.path.exists(potcar_dir1):
+            potcar_dir = potcar_dir1
+            potcarfiles = os.listdir(potcar_dir1)
+        elif os.path.exists(potcar_dir2):
+            potcar_dir = potcar_dir2
+            potcarfiles = os.listdir(potcar_dir2)
+        elif os.path.exists(potcar_dir3):
+            potcar_dir = potcar_dir3
+            potcarfiles = os.listdir(potcar_dir3)
+        targetpotcarfiles = filter(lambda file: re.search("^"+species_name, file), potcarfiles)
+        targetpotcarnames = [pp for pp in targetpotcarfiles]
+        choosed_flag  = False
+        while not choosed_flag:
+            choosed_pot = input(f"{targetpotcarnames}, \nplease input you want one\n")
+            if choosed_pot in targetpotcarnames:
+                src_pp = Path(potcar_dir).joinpath(choosed_pot , "POTCAR")
+                dst_pp = Path(self.workpath_pppath).joinpath("POTCAR-"+choosed_pot)
+                shutil.copy(src_pp, dst_pp)
+                choosed_flag = True
+            else:
+                choosed_flag = False
+        
+        return dst_pp
+
+    def merge_potcar(
+        self, 
+        dst_potcar_path: Path,
+        final_choosed_potcar: list[Path],
+        ):
+        """
+        dst_potcar_path: specify the path of  merged POTCAR
+        final_choosed_potcar: a list that saves all potcars that will be merged
+        """
         # 合并分立的POTCAR
+        # 第一步：判断potcar_lib是否存在
+        # 第二步：找到目标POSCAR，并读取其元素组成放在 src_potcar_path_list
+        # 第三步：将完成的POTCAR合并出来，并且合并到目标POSCAR所在的目录
         if not os.path.exists(self.workpath_pppath):
             raise FileExistsError("potcar_lib doesn't exist!")
         if self.work_underpressure.joinpath("POSCAR").exists():
             src_poscar = self.work_underpressure.joinpath("POSCAR") 
             elements = open(src_poscar, "r").readlines()[5].split()
-            logger.info("element {}".format(elements))
+            logger.info("The program will merge the POTCAR of element {}".format(elements))
             src_potcar_path_list = []
             for ele in elements:
-                for pot in self.final_choosed_potcar:
-                    if ele in pot:
-                        src_potcar = self.workpath_pppath.joinpath(pot)
-                        if src_potcar.exists():  
-                            src_potcar_path_list.append(src_potcar)
-            logger.info(f"{src_potcar_path_list}")
-            dst_potcar = dst_potcar_dir.joinpath("POTCAR")
+                for pot in final_choosed_potcar:
+                    if ele in pot.name:
+                        if pot.exists():  
+                            src_potcar_path_list.append(pot)
+            dst_potcar = dst_potcar_path.joinpath("POTCAR")
+            logger.info(f"POTCAR merge order is: {src_potcar_path_list}")
             # 将多个POTCAR写入总的POTCAR中
             f = open(dst_potcar, "w")
             for potcar_indi in src_potcar_path_list:
