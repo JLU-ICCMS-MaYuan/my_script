@@ -17,6 +17,7 @@ from pymatgen.io.vasp import Poscar
 from pymatgen.io.ase import AseAtomsAdaptor
 from ase.io import read
 
+from qe_base import qe_base
 
 logging.basicConfig(
     level = logging.INFO, 
@@ -24,111 +25,101 @@ logging.basicConfig(
     )
 logger = logging.getLogger(__name__)
 
-class qe_inputpara:
+class qe_inputpara(qe_base):
 
     def __init__(
         self,
+        work_path: str,
+        press: int,
+        submit_job_system: str,
         input_file_path: str,
-        work_underpressure: str,
-        workpath_pppath: str,
-        pressure: int,
-        kpoints_dense: list[int],
-        kpoints_sparse: list[int],
-        qpoints: list[int],
-        inserted_points_num: int,
-        run_mode: str,
+        **kwargs: dict,
         ):
-        self.input_file_path      = input_file_path
-        self.work_underpressure   = work_underpressure
-        self.workpath_pppath      = workpath_pppath
-        self.pressure             = pressure
-        self.k1_dense , self.k2_dense , self.k3_dense  = kpoints_dense
-        self.k1_sparse, self.k2_sparse, self.k3_sparse = kpoints_sparse
-        self.q1,        self.q2,        self.q3        = qpoints
-        self.q_total_amount           = None
-        self.q_non_irreducible_amount = None
-        self.inserted_points_num      = None 
-        self.q_coordinate_list        = []
-        self.q_weight_list            = [] 
-        self.run_mode                 = run_mode
-        self.relax_ase  = read(self.input_file_path)
-        self.struct     = AseAtomsAdaptor.get_structure(self.relax_ase)
-        self.get_struct_info(self.struct)
-        # prepare the uspp file in pp directory
-        self.get_USPP(self.workpath_pppath)
-        # prepare q_total_amount, q_non_irreducible_amount, q_coordinate_list 
+        super(qe_inputpara, self).__init__(
+            work_path,
+            press,
+            submit_job_system,
+            input_file_path
+        )
 
-        dyn0_names = list(Path(self.work_underpressure).glob("*.dyn0"))
-        if len(dyn0_names)==1:
-            dyn0_path = str(dyn0_names[0].absolute())
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+
+        if not hasattr(self, "qe_workflow"):
+            raise AttributeError("there is no attribution of qe_workflow")
+
+        if not hasattr(self, "mode"):
+            raise AttributeError("there is no attribution of mode")
+
+        if not hasattr(self, "kpoints_dense"):
+            self.kpoints_dense   = [16,16,16]
+            self.kpoints_sparse = [kp/2 for kp in self.kpoints_dense]
+            self.qpoints        = [kp/4 for kp in self.kpoints_dense]
         else:
-            logger.warning("No exist *.dyn0! ")
+            self.kpoints_sparse = [kp/2 for kp in self.kpoints_dense]
+            self.qpoints        = [kp/4 for kp in self.kpoints_dense]           
 
-        if self.run_mode == "merge":
-            self.get_q_from_dyn0(dyn0_path)
-            self.merge(self.work_underpressure)
-        if self.run_mode == "lambda":
-            q2r_out = list(Path(self.work_underpressure).glob("q2r.out"))
-            if q2r_out:
-                q2r_path = str(q2r_out[0].absolute()) 
-                self.get_q_from_dyn0(dyn0_path, q2r_path=q2r_path)
-        if self.run_mode == "matdyn":
-            self.inserted_points_num = inserted_points_num
-            self.path_name_coords    = self.get_hspp()
+        if not hasattr(self, "kpoints_sparse"):
+            self.kpoints_sparse = [8,8,8]
+            self.kpoints_dense  = [kp*2 for kp in self.kpoints_sparse]
+            self.qpoints        = [kp/2 for kp in self.kpoints_sparse]
+        else:
+            self.kpoints_dense  = [kp*2 for kp in self.kpoints_sparse]
+            self.qpoints        = [kp/2 for kp in self.kpoints_sparse]
 
-    def get_struct_info(self, struct):
+        if not hasattr(self, "qpoints"):
+            self.qpoints = [4,4,4]
+            self.kpoints_dense  = [kp*4 for kp in self.qpoints]
+            self.kpoints_sparse = [kp*2 for kp in self.qpoints]
+        else:
+            self.kpoints_dense  = [kp*4 for kp in self.qpoints]
+            self.kpoints_sparse = [kp*2 for kp in self.qpoints]
+
+        if not hasattr(self, "qtot"):
+            self.qtot = None
         
-        spa = SpacegroupAnalyzer(struct)
-        # bstruct = spa.get_conventional_standard_structure()
-        pstruct = spa.get_primitive_standard_structure()
-        Poscar(pstruct).write_file("PPOSCAR")
+        if not hasattr(self, "qirreduced"):
+            self.qirreduced = None
 
-        # 处理PPOSCAR的pymatgen对象
-        # 获得元素名称 和 每种元素的原子个数
-        self.composition        = pstruct.composition.get_el_amt_dict()
-        self.species            = pstruct.composition.elements
-        # 获得体系的 化学配比
-        self.system_name        = pstruct.composition.formula.replace(" ", "")
-        # 获得元素种类的个数
-        self.species_quantity   = len(self.composition)
-        # 获得每种元素的相对原子质量
-        self.all_atoms_quantity = int(sum(self.composition.values()))
-        # 获得晶格矩阵
-        self.cell_parameters    = pstruct.lattice.matrix
-        # 获得原子分数坐标
-        self.fractional_sites   = pstruct.sites
+        if not hasattr(self, "qinserted"):
+            self.qinserted = None
 
-    def get_USPP(self, workpath_pppath):
-        pp_files = os.listdir(workpath_pppath)
-        if len(pp_files) != len(self.species):
-            qe_USPP1 = os.path.abspath("/work/home/mayuan/POT/qe-pp/all_pbe_UPF_v1.5")
-            qe_USPP2 = os.path.abspath("/public/home/mayuan/POT/qe-pp/all_pbe_UPF_v1.5")
-            if os.path.exists(qe_USPP1):
-                qe_USPP = qe_USPP1
-                ppfiles = os.listdir(qe_USPP1)
-            elif os.path.exists(qe_USPP2):
-                qe_USPP = qe_USPP2
-                ppfiles = os.listdir(qe_USPP2)
-            self.final_choosed_pp = []
-            for species in self.species:
-                species_name = species.name.lower()
-                logger.info(f"species_name {species_name}")
-                targetppfiles = filter(lambda file: re.search("^"+species_name+"\_", file.lower()), ppfiles)
-                targetppnames = [pp for pp in targetppfiles]
-                choosed_flag  = False
-                while not choosed_flag:
-                    choosed_pp = input(f"{targetppnames}, \nplease input you want one\n")
-                    if choosed_pp in targetppnames:
-                        src_pp = os.path.join(qe_USPP,        choosed_pp)
-                        dst_pp = os.path.join(workpath_pppath, choosed_pp)
-                        shutil.copy(src_pp, dst_pp)
-                        choosed_flag = True
-                        self.final_choosed_pp.append(choosed_pp)
-                    else:
-                        choosed_flag = False
-        else:
-            self.final_choosed_pp = pp_files
-        logger.info(f"the choosed pp is {self.final_choosed_pp}")
+        
+
+        #dyn0_names = list(Path(self.work_underpressure).glob("*.dyn0"))
+        #if len(dyn0_names)==1:
+            #dyn0_path = str(dyn0_names[0].absolute())
+        #else:
+            #logger.warning("No exist *.dyn0! ")
+
+        #if self.run_mode == "merge":
+            #self.get_q_from_dyn0(dyn0_path)
+            #self.merge(self.work_underpressure)
+        #if self.run_mode == "lambda":
+            #q2r_out = list(Path(self.work_underpressure).glob("q2r.out"))
+            #if q2r_out:
+                #q2r_path = str(q2r_out[0].absolute()) 
+                #self.get_q_from_dyn0(dyn0_path, q2r_path=q2r_path)
+        #if self.run_mode == "matdyn":
+            #self.inserted_points_num = inserted_points_num
+            #self.path_name_coords    = self.get_hspp()
+
+    @classmethod
+    def init_from_config1(cls, config: dict):
+
+        work_path         = config['work_path']            ; del config['work_path']
+        press             = config['press']                ; del config['press']
+        submit_job_system = config['submit_job_system']    ; del config['submit_job_system']
+        input_file_path   = Path(config['input_file_path']); del config['input_file_path']
+        
+        self = cls(
+            work_path=work_path,
+            press=press,
+            submit_job_system=submit_job_system,
+            input_file_path=input_file_path,
+            **config,
+        )
+        return self
 
     def checkfile(self):
         if "pp" not in os.listdir(self.work_path):
@@ -165,13 +156,13 @@ class qe_inputpara:
             ks  = re.findall(r"\-?\d+\.\d+", res.split(",")[0])
             self.q_coordinate_list.append(ks)
             wp = re.findall(r"\-?\d+\.\d+", res.split(",")[1])
-            nqs = float(wp[0]) * self.q_total_amount / 2
+            nqs = float(wp[0]) * self.qtot / 2
             self.q_weight_list.append(nqs)
 
-        self.q_total_amount           = self.q1 * self.q2 * self.q3
+        self.qtot           = self.q1 * self.q2 * self.q3
         self.q_non_irreducible_amount = len(self.q_coordinate_list)
 
-        return self.q_total_amount,    self.q_non_irreducible_amount, \
+        return self.qtot,    self.q_non_irreducible_amount, \
                self.q_coordinate_list, self.q_weight_list
 
     def get_q_from_dyn0(self, dir, q2r_path=None):
@@ -179,8 +170,8 @@ class qe_inputpara:
             raise FileExistsError ("dyn0 file doesn't exist!")
         content = open(dir, "r").readlines()
         _q_total_amount = content[0].strip("\n").split()
-        q_total_amount  = list(map(int, _q_total_amount))
-        if q_total_amount != [self.q1, self.q2, self.q3]:
+        qtot  = list(map(int, _q_total_amount))
+        if qtot != [self.q1, self.q2, self.q3]:
             raise ValueError ("q points set wrong")
 
         def find_q(item):
@@ -190,7 +181,7 @@ class qe_inputpara:
             if re.search(r"nqs\=", item):
                 return item
 
-        self.q_total_amount           = self.q1 * self.q2 * self.q3
+        self.qtot           = self.q1 * self.q2 * self.q3
         self.q_non_irreducible_amount = content[1]
         _q_coordinate_list            = list(filter(find_q, content))
         self.q_coordinate_list        = [q_string.strip("\n").split() for q_string in _q_coordinate_list]
@@ -200,7 +191,7 @@ class qe_inputpara:
             _q_weight_list     = list(filter(find_q_weight, q2r_out))
             self.q_weight_list = [re.search(r"\d+", qwt).group() for qwt in _q_weight_list]
         
-        return  self.q_total_amount,    self.q_non_irreducible_amount, \
+        return  self.qtot,    self.q_non_irreducible_amount, \
                 self.q_coordinate_list, self.q_weight_list
 
     def merge(self, dir):
