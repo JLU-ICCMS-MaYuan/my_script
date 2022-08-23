@@ -63,4 +63,17 @@ def set_more_args(parser: ArgumentParser):
     parser_relax.set_defaults(qe_workflow=qe_scf)
     args = parser.parse_args()
 
+   # 声子计算
+    parser_relax = subparsers.add_parser("phono")
+    parser_relax.add_argument(
+        '-m',
+        '--more-argments-about-relax',
+        type=str,
+        dest='more_args',
+        nargs='+',
+        help="输入更多关于结构弛豫的参数"
+    )
+    parser_relax.set_defaults(qe_workflow=qe_phono)
+    args = parser.parse_args()
+
     return args

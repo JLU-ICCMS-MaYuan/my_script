@@ -10,7 +10,7 @@ pbs
     qe_main.py -i ./CaH6.vasp -w ./test/    -p 200 -j pbs scf   -m mode=scf
 
     # no split method
-    qe_main.py -w ./test/out/150.0/ -q 4 4 4 -j pbs -mode ph_no_split 
+    qe_main.py -i CaH6.vasp  -w test/ -q 4 4 4 -j pbs phono -m mode=nosplit
     qe_main.py -w ./test/out/150.0/ -q 4 4 4 -j pbs -mode ph_no_split -dyn0
 
     # spilit method 1

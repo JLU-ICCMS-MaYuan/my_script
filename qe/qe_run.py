@@ -48,3 +48,23 @@ class qe_scf:
 
         # submit the job
         self.qe_submitjob   = qe_submitjob.init_from_scfinput(self.scf_inputpara)
+
+
+class qe_phono:
+
+    def __init__(self, args: ArgumentParser) -> None:
+
+        # read input para
+        self._config = config(args).read_config()
+
+        # prepare the POSCAR POTCAR  
+        self.phono_inputpara  = qe_inputpara.init_from_config1(self._config)
+
+        # init the INCAR
+        self.qe_writeincar  = qe_writeinput.init_from_phonoinput(self.phono_inputpara)
+
+        # init the submit job script
+        self.qe_writesubmit = qe_writesubmit.init_from_phonoinput(self.phono_inputpara)
+
+        # submit the job
+        self.qe_submitjob   = qe_submitjob.init_from_phonoinput(self.phono_inputpara)

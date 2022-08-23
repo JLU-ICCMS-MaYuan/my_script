@@ -72,6 +72,27 @@ class qe_writeinput:
         )
         return self
 
+    @classmethod
+    def init_from_phonoinput(cls, other_class: qe_inputpara):
+        
+        self = cls(
+            work_underpressure=other_class.work_underpressure,
+            workpath_pppath=other_class.workpath_pppath,
+            press=other_class.press,
+            qe_workflow=other_class.qe_workflow,
+            mode=other_class.mode,
+            system_name=other_class.system_name,
+            all_atoms_quantity=other_class.all_atoms_quantity,
+            species_quantity=other_class.species_quantity,
+            composition=other_class.composition,
+            final_choosed_pp=other_class.final_choosed_pp,
+            cell_parameters=other_class.cell_parameters,
+            fractional_sites=other_class.fractional_sites,
+            kpoints_dense=other_class.kpoints_dense,
+            kpoints_sparse=other_class.kpoints_sparse,
+        )
+        return self
+
     def writeinput(self):
         if self.mode == "relax-vc":
             self.write_relax_in()
