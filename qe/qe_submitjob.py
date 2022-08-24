@@ -301,3 +301,12 @@ class qe_submitjob:
                     os.system("qsub pbslambda.sh")
                     logger.info("qe lambda is running")
                     os.chdir(cwd)
+        if self.mode =="eliashberg":   
+            dst_files = list(Path(self.work_underpressure).glob("ALPHA2F.OUT"))
+            if len(dst_files) == 1:
+                cwd = dst_files[0].cwd()
+                dst_dir = dst_files[0].parent.absolute()
+                os.chdir(dst_dir)
+                os.system("qsub pbseliashberg.sh")
+                logger.info("qe lambda is running")
+                os.chdir(cwd)

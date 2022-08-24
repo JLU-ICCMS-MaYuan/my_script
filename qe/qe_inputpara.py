@@ -5,12 +5,14 @@ qeSuperconductTc.py -pos scripts_tests/POSCAR -caldir scripts_tests/out
 '''
 
 from builtins import hasattr
+from curses.ascii import isdigit
 import os
 import re
 import shutil
 import logging
 from pathlib import Path
 from itertools import chain
+from math import ceil
 
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from pymatgen.core.periodic_table import Element
@@ -112,6 +114,9 @@ class qephono_inputpara(qe_inputpara):
             self.kpoints_sparse= [kp*2 for kp in self.qpoints]
             self.kpoints_dense = [kp*4 for kp in self.qpoints]
 
+        if not hasattr(self, "el_ph_nsigma"):
+            self.el_ph_nsigma = 50
+
         if not hasattr(self, "dyn0_flag"):
             self.dyn0_flag = False
         else:
@@ -120,7 +125,7 @@ class qephono_inputpara(qe_inputpara):
         dyn0_names = list(Path(self.work_underpressure).glob("*.dyn0"))
         if len(dyn0_names)==1:
             dyn0_path = str(dyn0_names[0].absolute())
-            self.get_q_from_dyn0(dyn0_path=dyn0_path) 
+            self.qtot, self.qirreduced, self.qirreduced_coords= self.get_q_from_dyn0(dyn0_path=dyn0_path) 
             # 获得 self.qtot, self.qirreduced, self.qirreduced_coords, self.qweights 
         else:
             raise FileExistsError("No exist *.dyn0! ")
@@ -178,6 +183,7 @@ class qephono_inputpara(qe_inputpara):
         if not os.path.exists(dyn0_path):
             raise FileExistsError ("dyn0 file doesn't exist!")
         content = open(dyn0_path, "r").readlines()
+        # check qtot is right or not! 
         _q_total_amount = content[0].strip("\n").split()
         qtot  = list(map(int, _q_total_amount))
         if qtot != self.qpoints:
@@ -189,11 +195,12 @@ class qephono_inputpara(qe_inputpara):
             if re.search(r"E[\+|\-]", item):
                 return item
 
-        self.qtot = qtot
-        self.qirreduced = int(content[1])
+        qirreduced = int(content[1])
         _q_coordinate_list     = list(filter(find_q, content))
-        self.qirreduced_coords = [q_string.strip("\n").split() for q_string in _q_coordinate_list]
+        qirreduced_coords = [q_string.strip("\n").split() for q_string in _q_coordinate_list]
         
+        return qtot, qirreduced, qirreduced_coords
+
     def get_q_from_q2r(self, q2r_path):
         """
         input:  q2r_path   q2r.out文件的路径
@@ -205,7 +212,9 @@ class qephono_inputpara(qe_inputpara):
                 return item
         q2r_out        = open(q2r_path, "r").readlines()
         _q_weight_list = list(filter(find_q_weight, q2r_out))
-        self.qweights  = [re.search(r"\d+", qwt).group() for qwt in _q_weight_list]
+        qweights  = [re.search(r"\d+", qwt).group() for qwt in _q_weight_list]
+        
+        return qweights
 
     def merge(self, dir):
         elph_dir_path = os.path.join(dir, "elph_dir")
@@ -257,6 +266,18 @@ class qephono_inputpara(qe_inputpara):
         path_name_coords= list(zip(path_name_list, path_coords))
         return path_name_coords 
 
+    def get_top_freq(self, phonondos_path):
+        phonon_dos = open(phonondos_path, "r").readlines()
+        frequents = []
+        for id, line in enumerate(phonon_dos):
+            if id != 0:
+                linelist = line.split()
+                frequents.append(float(linelist[0]))
+        # convert cm-1 to Thz
+        frequents = map(lambda x:x/33.3, frequents)
+        top_freq  = ceil(max(frequents))
+        return top_freq
+
 
 class qesc_inputpara(qephono_inputpara):
 
@@ -276,25 +297,45 @@ class qesc_inputpara(qephono_inputpara):
             **kwargs
             )
         
-        if not hasattr(self, "top_freq"):
-            raise ValueError("you have to specify the top_freq !")
+        # Mc-A-D and Eliashberg
+        if not hasattr(self, "screen_constant"):
+            logger.warning("you have to specify the temperature_points ! The program will set default 0.13")
+            self.screen_constant = 0.13
+
+        # Mc-A-D
+        q2r_names = list(Path(self.work_underpressure).glob("q2r.out"))
+        if len(q2r_names)==1:
+            q2r_path = q2r_names[0]
+            self.qweights = self.get_q_from_q2r(q2r_path=q2r_path)
+            # 获得 self.qtot, self.qirreduced, self.qirreduced_coords, self.qweights 
+        else:
+            raise FileExistsError("No exist *.dyn0! ") 
         
+        # Mc-A-D
+        if not hasattr(self, "top_freq"):
+            phonondos_names = list(Path(self.work_underpressure).glob("phonon.dos"))
+            if len(phonondos_names) == 1:
+                phonondos_path = phonondos_names[0]
+                self.top_freq = self.get_top_freq(phonondos_path=phonondos_path)
+        
+        # Mc-A-D
         if not hasattr(self, "deguass"):
             logger.warning("you have to specify the deguass ! The program will set default 0.12")
             self.deguass = 0.12
 
+        # Mc-A-D
         if not hasattr(self, "smearing_method"):
             logger.warning("you have to specify the smearing_method ! The program will set default 1")
             self.smearing_method = 1
+        
+        # Eliashberg
+        if not hasattr(self, "temperature_points"):
+            logger.warning("you have to specify the temperature_points ! The program will set default 0.12")
+            self.temperature_points = 5000
+        
+        # Eliashberg
+        if not hasattr(self, "a2f_dos"):
+            logger.warning("you didn't specify the a2f.dos* ! Please specify it !")
+            self.a2f_dos = None
 
-        if not hasattr(self, "screen_constant"):
-            raise ValueError("you have to specify the screen_constant !")
-
-        if self.mode == "McAD":
-            q2r_names = list(Path(self.work_underpressure).glob("q2r.out"))
-            if len(q2r_names)==1:
-                q2r_path = str(q2r_names[0].absolute())
-                self.get_q_from_q2r(q2r_path=q2r_path)
-                # 获得 self.qtot, self.qirreduced, self.qirreduced_coords, self.qweights 
-            else:
-                raise FileExistsError("No exist *.dyn0! ") 
+            

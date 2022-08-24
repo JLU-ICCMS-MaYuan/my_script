@@ -22,34 +22,16 @@ pbs
     # split method 2
     qe_main.py -i ./relax.out -w ./ -p 0.0  -j pbs phono -m mode=split_specify_q
 
+    # 声子计算其它可使用的参数
+    el_ph_nsigma=50  
+
     qe_main.py -i ./relax.out -w ./ -p 0.0  -j pbs phono -m mode=q2r
     qe_main.py -i ./relax.out -w ./ -p 0.0  -j pbs phono -m mode=matdyn qinserted=50
     qe_main.py -i ./relax.out -w ./ -p 0.0  -j pbs phono -m mode=matdyn_dos
 
-    qe_main.py -i ./relax.out -w ./ -p 0.0  -j pbs superconduct -m mode=McAD top_freq=80 deguass=0.13 screen_constant=0.1
+    qe_main.py -i ./relax.out -w ./ -p 0.0  -j pbs superconduct -m mode=McAD       top_freq=80 deguass=0.5 screen_constant=0.1
+    qe_main.py -i ./relax.out -w ./ -p 0.0  -j pbs superconduct -m mode=eliashberg temperature_points=10000 a2f_dos=a2F.dos3
 
-
-slurm
-    qe_main.py -i ./test/POSCAR -w ./test/out -kd 16 16 16 -p 150 -mode relax -j slurm
-    qe_main.py -w ./test/out/150.0/  -kd 16 16 16 -mode scffit -j slurm
-    qe_main.py -w ./test/out/150.0/  -ks 8 8 8 -mode scf -j slurm
-
-    # no split method
-    qe_main.py -w ./test/out/150.0/ -mode ph_no_split -q 8 8 8 -j slurm
-    qe_main.py -w ./test/out/150.0/ -mode ph_no_split -q 8 8 8 -j slurm -dyn0
-
-    # spilit method 1
-    qe_main.py -w ./test/out/150.0/ -q 4 4 4 -j slurm -mode ph_no_split  -dyn0
-    qe_main.py -w ./test/out/150.0/ -q 4 4 4 -j slurm -mode ph_split_from_dyn0 
-    qe_main.py -w ./test/out/150.0/ -q 4 4 4 -mode merge
-
-    # split method 2
-    qe_main.py -w ./test/out/150.0/ -q 4 4 4 -j slurm -mode ph_split_set_startlast_q -q-no-irr-num 8
-
-    qe_main.py -w ./test/out/150.0/ -j slurm -mode q2r 
-    qe_main.py -w ./test/out/150.0/ -j slurm -mode matdyn -insert 50
-    qe_main.py -w ./test/out/150.0/ -j slurm -mode matdyn_dos
-    qe_main.py -w ./test/out/150.0/ -j slurm -mode lambda -q 4 4 4
 """
 import logging
 from argparse import ArgumentParser

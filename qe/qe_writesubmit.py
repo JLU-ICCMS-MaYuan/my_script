@@ -135,6 +135,8 @@ class qe_writesubmit:
             self.pbsmatdyn_dos(self.work_underpressure)
         if self.mode =="McAD":
             self.pbslambda(self.work_underpressure)
+        if self.mode =="eliashberg":
+            self.pbseliashberg(self.work_underpressure)
 
 
 
@@ -510,5 +512,22 @@ class qe_writesubmit:
             pbs.write('killall -9 pw.x                                                          \n')
             pbs.write('\n\n                                                                       \n')
             pbs.write('mpirun -n 28 /public/home/mayuan/software/qe-7.1/bin/lambda.x <lambda.in> lambda.out \n')  
+
+    def pbseliashberg(self, pbs_dirpath):
+        pbs_script_filepath = os.path.join(pbs_dirpath, "pbseliashberg.sh")
+        with open(pbs_script_filepath, "w") as pbs:
+            pbs.write('#!/bin/sh                                                                \n')     
+            pbs.write('#PBS -N    eliashberg                                                    \n')                         
+            pbs.write('#PBS -q    liuhy                                                         \n')    # lhy lbt is both ok                
+            pbs.write('#PBS -l    nodes=1:ppn=28                                                \n')             
+            pbs.write('#PBS -j    oe                                                            \n')                        
+            pbs.write('#PBS -V                                                                  \n')                     
+            pbs.write('\n\n                                                                     \n')
+            pbs.write('source /public/home/mayuan/intel/oneapi/setvars.sh                       \n')
+            pbs.write('ulimit -s unlimited                                                      \n')
+            pbs.write('cd $PBS_O_WORKDIR                                                        \n')
+            pbs.write('killall -9 pw.x                                                          \n')
+            pbs.write('\n\n                                                                     \n')
+            pbs.write('time /public/home/mayuan/code/my_script/qe/eliashberg/eliashberg.x > eliashberg.log 2>&1  \n')  
         
 

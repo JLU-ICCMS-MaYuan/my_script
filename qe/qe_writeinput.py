@@ -1,6 +1,7 @@
 import os
 import re
 import logging
+import subprocess
 from pathlib import Path
 
 from qe_inputpara import qe_inputpara
@@ -92,6 +93,7 @@ class qe_writeinput:
             kpoints_dense=other_class.kpoints_dense,
             kpoints_sparse=other_class.kpoints_sparse,
             qpoints=other_class.qpoints,
+            el_ph_nsigma=other_class.el_ph_nsigma,
 
             qtot=other_class.qtot,
             qirreduced=other_class.qirreduced,
@@ -114,10 +116,13 @@ class qe_writeinput:
             qirreduced=other_class.qirreduced,
             qirreduced_coords=other_class.qirreduced_coords,
             qweights=other_class.qweights,
+
+            screen_constant=other_class.screen_constant,
             top_freq=other_class.top_freq,
             deguass=other_class.deguass,
             smearing_method=other_class.smearing_method,
-            screen_constant=other_class.screen_constant
+            temperature_points=other_class.temperature_points,
+            a2f_dos=other_class.a2f_dos
         )
         return self
 
@@ -155,6 +160,9 @@ class qe_writeinput:
             self.write_matdyn_dos_in()
         if self.mode =="McAD":
             self.write_lambda_in()
+        if self.mode =="eliashberg":
+            self.write_eliashberg_in()
+            self.write_alpha2f_out()
 
     def write_relax_in(self):
         relax_in = os.path.join(self.work_underpressure, "relax.in")
@@ -338,7 +346,7 @@ class qe_writeinput:
             qe.write("  fildvscf='{}.dv',                                \n".format(self.system_name))                     
             qe.write("  electron_phonon='interpolated',                  \n")                              
             qe.write("  el_ph_sigma=0.005,                               \n")                 
-            qe.write("  el_ph_nsigma=10,                                 \n")
+            qe.write("  el_ph_nsigma=50,                                 \n".format(str(self.el_ph_nsigma)))
             qe.write("  alpha_mix(1)=0.5,                                \n")  # 可以修改的更小一些, 如果用vasp计算声子谱稳定, 可以修改为0.3
             for i, species_name in enumerate(self.composition.keys()):
                 element      = Element(species_name)
@@ -371,7 +379,7 @@ class qe_writeinput:
             qe.write("  fildvscf='{}.dv',                                \n".format(self.system_name))                     
             qe.write("  electron_phonon='interpolated',                  \n")                              
             qe.write("  el_ph_sigma=0.005,                               \n")                 
-            qe.write("  el_ph_nsigma=10,                                 \n")
+            qe.write("  el_ph_nsigma={},                                 \n".format(str(self.el_ph_nsigma)))
             for i, species_name in enumerate(self.composition.keys()):
                 element      = Element(species_name)
                 species_mass = str(element.atomic_mass).strip("amu")
@@ -395,7 +403,7 @@ class qe_writeinput:
             qe.write("  fildvscf='{}.dv',                                \n".format(self.system_name))                     
             qe.write("  electron_phonon='interpolated',                  \n")                              
             qe.write("  el_ph_sigma=0.005,                               \n")                 
-            qe.write("  el_ph_nsigma=10,                                 \n")
+            qe.write("  el_ph_nsigma={},                                 \n".format(str(self.el_ph_nsigma)))
             for i, species_name in enumerate(self.composition.keys()):
                 element      = Element(species_name)
                 species_mass = str(element.atomic_mass).strip("amu")
@@ -490,6 +498,29 @@ class qe_writeinput:
                 for elph in elphInpLambda:
                     qe.write(" {}                              \n".format(os.path.join("elph_dir", elph)))
                 qe.write("{}                                   \n".format(str(screen_constant)))
+
+    def write_eliashberg_in(self):
+
+        screen_constant = self.screen_constant
+        temperature_points = self.temperature_points
+
+        eliashberg_in = os.path.join(self.work_underpressure, "INPUT")
+        with open(eliashberg_in, "w") as qe:
+            qe.write("{:<10} {:<10}".format(screen_constant, temperature_points))
+
+    def write_alpha2f_out(self):
+        alpha2f_out = Path(self.work_underpressure).joinpath("ALPHA2F.out").absolute()
+        if self.a2f_dos is not None:
+            a2f_dos_path = Path(self.work_underpressure).joinpath(self.a2f_dos).absolute()
+            if not a2f_dos_path.exists():
+                raise FileExistsError(f"{self.a2f_dos} doesn't exist !")
+
+        a2f_dos_path = str(a2f_dos_path)
+        alpha2f_out = str(alpha2f_out)
+        os.system(f"sed '1,5d' {a2f_dos_path} | sed '/lambda/d' | awk '{'{print $1/2, $2}'}' > ALPHA2F.OUT")
+
+
+
 
 
         
