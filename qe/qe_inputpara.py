@@ -4,6 +4,7 @@ qeSuperconductTc.py -pos scripts_tests/POSCAR -caldir scripts_tests/out
 -caldir scripts_tests/out
 '''
 
+from builtins import hasattr
 import os
 import re
 import shutil
@@ -16,6 +17,8 @@ from pymatgen.core.periodic_table import Element
 from pymatgen.io.vasp import Poscar
 from pymatgen.io.ase import AseAtomsAdaptor
 from ase.io import read
+
+from config import config
 
 from qe_base import qe_base
 
@@ -51,61 +54,20 @@ class qe_inputpara(qe_base):
         if not hasattr(self, "mode"):
             raise AttributeError("there is no attribution of mode")
 
-        if not hasattr(self, "kpoints_dense"):
-            self.kpoints_dense   = [16,16,16]
-            self.kpoints_sparse = [kp/2 for kp in self.kpoints_dense]
-            self.qpoints        = [kp/4 for kp in self.kpoints_dense]
+        if hasattr(self, "kpoints_dense"):
+            _kpoints_dense = re.findall(r"\d+", self.kpoints_dense)
+            self.kpoints_dense = list(map(int, _kpoints_dense))
         else:
-            self.kpoints_sparse = [kp/2 for kp in self.kpoints_dense]
-            self.qpoints        = [kp/4 for kp in self.kpoints_dense]           
+            self.kpoints_dense = [16, 16, 16]    
 
-        if not hasattr(self, "kpoints_sparse"):
-            self.kpoints_sparse = [8,8,8]
-            self.kpoints_dense  = [kp*2 for kp in self.kpoints_sparse]
-            self.qpoints        = [kp/2 for kp in self.kpoints_sparse]
+        if hasattr(self, "kpoints_sparse"):
+            _kpoints_sparse = re.findall(r"\d+", self.kpoints_sparse)
+            self.kpoints_sparse = list(map(int, _kpoints_sparse))
         else:
-            self.kpoints_dense  = [kp*2 for kp in self.kpoints_sparse]
-            self.qpoints        = [kp/2 for kp in self.kpoints_sparse]
-
-        if not hasattr(self, "qpoints"):
-            self.qpoints = [4,4,4]
-            self.kpoints_dense  = [kp*4 for kp in self.qpoints]
-            self.kpoints_sparse = [kp*2 for kp in self.qpoints]
-        else:
-            self.kpoints_dense  = [kp*4 for kp in self.qpoints]
-            self.kpoints_sparse = [kp*2 for kp in self.qpoints]
-
-        if not hasattr(self, "qtot"):
-            self.qtot = None
-        
-        if not hasattr(self, "qirreduced"):
-            self.qirreduced = None
-
-        if not hasattr(self, "qinserted"):
-            self.qinserted = None
-
-        
-
-        #dyn0_names = list(Path(self.work_underpressure).glob("*.dyn0"))
-        #if len(dyn0_names)==1:
-            #dyn0_path = str(dyn0_names[0].absolute())
-        #else:
-            #logger.warning("No exist *.dyn0! ")
-
-        #if self.run_mode == "merge":
-            #self.get_q_from_dyn0(dyn0_path)
-            #self.merge(self.work_underpressure)
-        #if self.run_mode == "lambda":
-            #q2r_out = list(Path(self.work_underpressure).glob("q2r.out"))
-            #if q2r_out:
-                #q2r_path = str(q2r_out[0].absolute()) 
-                #self.get_q_from_dyn0(dyn0_path, q2r_path=q2r_path)
-        #if self.run_mode == "matdyn":
-            #self.inserted_points_num = inserted_points_num
-            #self.path_name_coords    = self.get_hspp()
+            self.kpoints_sparse = [8, 8, 8]    
 
     @classmethod
-    def init_from_config1(cls, config: dict):
+    def init_from_config(cls, config: dict):
 
         work_path         = config['work_path']            ; del config['work_path']
         press             = config['press']                ; del config['press']
@@ -121,27 +83,67 @@ class qe_inputpara(qe_base):
         )
         return self
 
-    def checkfile(self):
-        if "pp" not in os.listdir(self.work_path):
-            logger.warning(f"please prepare pp directory!")
-        filesordirs = os.listdir(self.work_underpressure)
-        if filesordirs:
-            if "scf.fit.in" not in filesordirs:
-                logger.warning(f"please prepare the scf.fit.in")
-            if "scf.in" not in filesordirs:
-                logger.warning(f"please prepare the scf.in")
-            if "no_split_ph.in" not in filesordirs:
-                logger.warning(f"please prepare the no_split_ph.in")
-            if "q2r.in" not in filesordirs:
-                logger.warning(f"please prepare the q2r.in")
-            if "matdyn.in" not in filesordirs:
-                logger.warning(f"please prepare the matdyn.in")
-            if "matdyn.dos.in" not in filesordirs:
-                logger.warning(f"please prepare the matdyn.dos.in")
-            if "lambda.in" not in filesordirs:
-                logger.warning(f"please prepare the lambda.in")
+
+class qephono_inputpara(qe_inputpara):
+
+    def __init__(
+        self, 
+        work_path: str, 
+        press: int, 
+        submit_job_system: str, 
+        input_file_path: str, 
+        **kwargs: dict
+        ):
+        super(qephono_inputpara, self).__init__(
+            work_path, 
+            press, 
+            submit_job_system, 
+            input_file_path, 
+            **kwargs
+            )
+        
+        if hasattr(self, "qpoints"):
+            _qpoints = re.findall(r"\d+", self.qpoints)
+            self.qpoints = list(map(int, _qpoints))
+            self.kpoints_sparse= [kp*2 for kp in self.qpoints]
+            self.kpoints_dense = [kp*4 for kp in self.qpoints]
         else:
-            logger.warning("There is no any .in file!!!")
+            self.qpoints = [8, 8, 8]
+            self.kpoints_sparse= [kp*2 for kp in self.qpoints]
+            self.kpoints_dense = [kp*4 for kp in self.qpoints]
+
+        if not hasattr(self, "dyn0_flag"):
+            self.dyn0_flag = False
+        else:
+            self.dyn0_flag = bool(self.dyn0_flag)
+
+        dyn0_names = list(Path(self.work_underpressure).glob("*.dyn0"))
+        if len(dyn0_names)==1:
+            dyn0_path = str(dyn0_names[0].absolute())
+            self.get_q_from_dyn0(dyn0_path=dyn0_path) 
+            # 获得 self.qtot, self.qirreduced, self.qirreduced_coords, self.qweights 
+        else:
+            raise FileExistsError("No exist *.dyn0! ")
+
+        if not hasattr(self, "qtot"):
+            self.qtot = None
+        
+        if not hasattr(self, "qirreduced"):
+            self.qirreduced = None
+
+        if not hasattr(self, "qinserted"):
+            self.qinserted = None
+        else:
+            self.qinserted = int(self.qinserted)
+
+        if not hasattr(self, "path_name_coords"):
+            self.path_name_coords = None
+
+        if self.mode == "merge":
+            self.merge(self.work_underpressure)
+        
+        if self.mode == "matdyn":
+            self.path_name_coords = self.get_hspp()
 
     def get_q_from_scfout(self, dir):
         if not os.path.exists(dir):
@@ -165,45 +167,56 @@ class qe_inputpara(qe_base):
         return self.qtot,    self.q_non_irreducible_amount, \
                self.q_coordinate_list, self.q_weight_list
 
-    def get_q_from_dyn0(self, dir, q2r_path=None):
-        if not os.path.exists(dir):
+    def get_q_from_dyn0(self, dyn0_path):
+        '''
+        input  : dir        dyn0文件的路径
+                 
+        return : self.qtot 总q点数
+                 self.qirreduced 不可约q点数
+                 self.qirreduced_coords 不可约q点坐标
+        '''
+        if not os.path.exists(dyn0_path):
             raise FileExistsError ("dyn0 file doesn't exist!")
-        content = open(dir, "r").readlines()
+        content = open(dyn0_path, "r").readlines()
         _q_total_amount = content[0].strip("\n").split()
         qtot  = list(map(int, _q_total_amount))
-        if qtot != [self.q1, self.q2, self.q3]:
+        if qtot != self.qpoints:
+            print("qtot", qtot)
+            print("self.qpoints", self.qpoints)
             raise ValueError ("q points set wrong")
 
         def find_q(item):
             if re.search(r"E[\+|\-]", item):
                 return item
+
+        self.qtot = qtot
+        self.qirreduced = int(content[1])
+        _q_coordinate_list     = list(filter(find_q, content))
+        self.qirreduced_coords = [q_string.strip("\n").split() for q_string in _q_coordinate_list]
+        
+    def get_q_from_q2r(self, q2r_path):
+        """
+        input:  q2r_path   q2r.out文件的路径
+        
+        return:  self.qweights 不可约q点权重
+        """
         def find_q_weight(item):
             if re.search(r"nqs\=", item):
                 return item
-
-        self.qtot           = self.q1 * self.q2 * self.q3
-        self.q_non_irreducible_amount = content[1]
-        _q_coordinate_list            = list(filter(find_q, content))
-        self.q_coordinate_list        = [q_string.strip("\n").split() for q_string in _q_coordinate_list]
-        # get q_weigth_list
-        if q2r_path is not None:
-            q2r_out            = open(q2r_path, "r").readlines()
-            _q_weight_list     = list(filter(find_q_weight, q2r_out))
-            self.q_weight_list = [re.search(r"\d+", qwt).group() for qwt in _q_weight_list]
-        
-        return  self.qtot,    self.q_non_irreducible_amount, \
-                self.q_coordinate_list, self.q_weight_list
+        q2r_out        = open(q2r_path, "r").readlines()
+        _q_weight_list = list(filter(find_q_weight, q2r_out))
+        self.qweights  = [re.search(r"\d+", qwt).group() for qwt in _q_weight_list]
 
     def merge(self, dir):
         elph_dir_path = os.path.join(dir, "elph_dir")
         if not os.path.exists(elph_dir_path):
             os.makedirs(elph_dir_path)
         
-        for i in range(int(self.q_non_irreducible_amount)):
+        for i in range(self.qirreduced):
             src_elph   = os.path.join(dir, str(i+1), "elph_dir", "elph.inp_lambda.1")
             dst_elph   = os.path.join(elph_dir_path, "elph.inp_lambda."+str(i+1))
             shutil.copy(src_elph, dst_elph)
-            logger.info(f"elph.inp_lambda.1 copy finished \n {dst_elph}")
+            logger.info(f"elph.inp_.1 copy finished \n {dst_elph}")
 
             src_dyn    = os.path.join(dir, str(i+1), self.system_name+".dyn")
             dst_dyn    = os.path.join(dir,           self.system_name+".dyn"+str(i+1))
@@ -220,8 +233,8 @@ class qe_inputpara(qe_base):
         """
         This method is to get high symmetry paths and points
         """ 
-        lat             = self.relax_ase.cell.get_bravais_lattice()
-        path_name_string      = lat.special_path
+        lat             = self.ase_type.cell.get_bravais_lattice()
+        path_name_string= lat.special_path
 
         _path_name_list = [[ p for p in pp] for pp in path_name_string.split(",")]
         logger.info(f"the high symmetry points path is {_path_name_list}")
@@ -243,3 +256,45 @@ class qe_inputpara(qe_base):
         path_coords          = [list(special_points[point_name]) for point_name in path_name_list]
         path_name_coords= list(zip(path_name_list, path_coords))
         return path_name_coords 
+
+
+class qesc_inputpara(qephono_inputpara):
+
+    def __init__(
+        self, 
+        work_path: str, 
+        press: int, 
+        submit_job_system: str, 
+        input_file_path: str, 
+        **kwargs: dict
+    ):
+        super(qesc_inputpara, self).__init__(
+            work_path, 
+            press, 
+            submit_job_system, 
+            input_file_path, 
+            **kwargs
+            )
+        
+        if not hasattr(self, "top_freq"):
+            raise ValueError("you have to specify the top_freq !")
+        
+        if not hasattr(self, "deguass"):
+            logger.warning("you have to specify the deguass ! The program will set default 0.12")
+            self.deguass = 0.12
+
+        if not hasattr(self, "smearing_method"):
+            logger.warning("you have to specify the smearing_method ! The program will set default 1")
+            self.smearing_method = 1
+
+        if not hasattr(self, "screen_constant"):
+            raise ValueError("you have to specify the screen_constant !")
+
+        if self.mode == "McAD":
+            q2r_names = list(Path(self.work_underpressure).glob("q2r.out"))
+            if len(q2r_names)==1:
+                q2r_path = str(q2r_names[0].absolute())
+                self.get_q_from_q2r(q2r_path=q2r_path)
+                # 获得 self.qtot, self.qirreduced, self.qirreduced_coords, self.qweights 
+            else:
+                raise FileExistsError("No exist *.dyn0! ") 

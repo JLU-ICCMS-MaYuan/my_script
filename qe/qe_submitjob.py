@@ -32,6 +32,7 @@ class qe_submitjob:
             self.pbs_submitjob()
 
 
+
     @classmethod
     def init_from_relaxinput(cls, other_class: qe_inputpara):
         
@@ -53,7 +54,34 @@ class qe_submitjob:
         )
 
         return self
+
+    @classmethod
+    def init_from_phonoinput(cls, other_class: qe_inputpara):
         
+        self = cls(
+            work_underpressure=other_class.work_underpressure,
+            submit_job_system=other_class.submit_job_system,
+            mode=other_class.mode,
+            dyn0_flag=other_class.dyn0_flag,
+            system_name=other_class.system_name,
+            qirreduced=other_class.qirreduced,
+        )
+
+        return self 
+
+    @classmethod
+    def init_from_scinput(cls, other_class: qe_inputpara):
+        
+        self = cls(
+            work_underpressure=other_class.work_underpressure,
+            submit_job_system=other_class.submit_job_system,
+            mode=other_class.mode,
+        )
+
+        return self 
+
+
+
     def slurm_submitjob(self):
         if self.mode == "relax-vc":
             dst_files = Path(self.work_underpressure).glob("relax.in")
@@ -85,7 +113,7 @@ class qe_submitjob:
                     os.system("sbatch slurmscf.sh")
                     logger.info("qe scf is running")
                     os.chdir(cwd)
-        if self.mode =="ph_no_split":
+        if self.mode =="nosplit":
             dst_files = Path(self.work_underpressure).glob("ph_no_split.in")
             for dst_file in dst_files:
                 if dst_file.exists():
@@ -106,16 +134,16 @@ class qe_submitjob:
                 else:
                     time.sleep(5)
                     self.dyn0_flag = True
-        if self.mode =="ph_split_from_dyn0":
+        if self.mode =="split_from_dyn0":
             for root, dirs, files in os.walk(self.work_underpressure):
                 if "split_ph.in" in files and "scf.fit.in" in files and "scf.in" in files and "slurmph_split_from_dyn0.sh" in files:
                     cwd = os.getcwd()
                     os.chdir(root)
                     os.system("sbatch slurmph_split_from_dyn0.sh")
                     os.chdir(cwd)
-        if self.mode =="ph_split_set_startlast_q":
+        if self.mode =="split_specify_q":
             split_ph_files = list(Path(self.work_underpressure).glob("split_ph*.in"))
-            if len(split_ph_files)==self.q_non_irreducible_amount:
+            if len(split_ph_files)==self.qirreduced:
                 for split_ph_file in split_ph_files:
                     split_ph_name = re.split(r"[\/.]" ,str(split_ph_file))[-2]
                     cwd = os.getcwd()
@@ -153,7 +181,7 @@ class qe_submitjob:
                     os.system("sbatch slurmmatdyn_dos.sh")
                     logger.info("qe matdyn_dos is running")
                     os.chdir(cwd)
-        if self.mode =="lambda":
+        if self.mode =="McAD":
             dst_files = Path(self.work_underpressure).glob("lambda.in")
             for dst_file in dst_files:
                 if dst_file.exists():
@@ -195,7 +223,7 @@ class qe_submitjob:
                     os.system("qsub pbsscf.sh")
                     logger.info("qe scf is running")
                     os.chdir(cwd)
-        if self.mode =="ph_no_split":
+        if self.mode =="nosplit":
             dst_files = Path(self.work_underpressure).glob("ph_no_split.in")
             for dst_file in dst_files:
                 if dst_file.exists():
@@ -216,16 +244,16 @@ class qe_submitjob:
                 else:
                     time.sleep(5)
                     self.dyn0_flag = True
-        if self.mode =="ph_split_from_dyn0":
+        if self.mode =="split_from_dyn0":
             for root, dirs, files in os.walk(self.work_underpressure):
                 if "split_ph.in" in files and "scf.fit.in" in files and "scf.in" in files and "pbsph_split_from_dyn0.sh" in files:
                     cwd = os.getcwd()
                     os.chdir(root)
                     os.system("qsub pbsph_split_from_dyn0.sh")
                     os.chdir(cwd)
-        if self.mode =="ph_split_set_startlast_q":
+        if self.mode =="split_specify_q":
             split_ph_files = list(Path(self.work_underpressure).glob("split_ph*.in"))
-            if len(split_ph_files)==self.q_non_irreducible_amount:
+            if len(split_ph_files)==self.qirreduced:
                 for split_ph_file in split_ph_files:
                     split_ph_name = re.split(r"[\/.]" ,str(split_ph_file))[-2]
                     cwd = os.getcwd()
@@ -263,7 +291,7 @@ class qe_submitjob:
                     os.system("qsub pbsmatdyn_dos.sh")
                     logger.info("qe matdyn_dos is running")
                     os.chdir(cwd)
-        if self.mode =="lambda":
+        if self.mode =="McAD":
             dst_files = Path(self.work_underpressure).glob("lambda.in")
             for dst_file in dst_files:
                 if dst_file.exists():

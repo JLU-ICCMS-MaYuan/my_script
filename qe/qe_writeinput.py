@@ -81,6 +81,7 @@ class qe_writeinput:
             press=other_class.press,
             qe_workflow=other_class.qe_workflow,
             mode=other_class.mode,
+            
             system_name=other_class.system_name,
             all_atoms_quantity=other_class.all_atoms_quantity,
             species_quantity=other_class.species_quantity,
@@ -90,6 +91,33 @@ class qe_writeinput:
             fractional_sites=other_class.fractional_sites,
             kpoints_dense=other_class.kpoints_dense,
             kpoints_sparse=other_class.kpoints_sparse,
+            qpoints=other_class.qpoints,
+
+            qtot=other_class.qtot,
+            qirreduced=other_class.qirreduced,
+            qirreduced_coords=other_class.qirreduced_coords,
+            qinserted=other_class.qinserted,
+            path_name_coords=other_class.path_name_coords,
+        )
+        return self
+
+    @classmethod
+    def init_from_scinput(cls, other_class: qe_inputpara):
+
+        self = cls(
+            work_underpressure=other_class.work_underpressure,
+            workpath_pppath=other_class.workpath_pppath,
+            press=other_class.press,
+            qe_workflow=other_class.qe_workflow,
+            mode=other_class.mode,
+
+            qirreduced=other_class.qirreduced,
+            qirreduced_coords=other_class.qirreduced_coords,
+            qweights=other_class.qweights,
+            top_freq=other_class.top_freq,
+            deguass=other_class.deguass,
+            smearing_method=other_class.smearing_method,
+            screen_constant=other_class.screen_constant
         )
         return self
 
@@ -100,16 +128,10 @@ class qe_writeinput:
             self.write_scf_fit_in(self.work_underpressure)
         if self.mode == "scf":
             self.write_scf_in(self.work_underpressure)
-        if self.mode =="ph_no_split":
+        if self.mode =="nosplit":
             self.write_ph_no_split_in()
-        if self.mode =="ph_split_from_dyn0":
-            dyn0_names = list(Path(self.work_underpressure).glob("*.dyn0"))
-            if len(dyn0_names)==1:
-                dyn0_path = str(dyn0_names[0].absolute())
-            else:
-                raise FileExistsError ("exist many *.dyn0 files or no *.dyn0")
-            _, _, q_coordinate_list, _ = self.get_q_from_dyn0(dyn0_path)
-            for i, q3 in enumerate(q_coordinate_list):
+        if self.mode =="split_from_dyn0":
+            for i, q3 in enumerate(self.qirreduced_coords):
                 split_ph_dir = os.path.join(self.work_underpressure, str(i+1))
                 if not os.path.exists(split_ph_dir):
                     os.makedirs(split_ph_dir)
@@ -117,9 +139,9 @@ class qe_writeinput:
                 self.write_scf_fit_in(split_ph_dir)
                 self.write_scf_in(split_ph_dir)
                 logger.info(f"finish input files in {i+1}")
-        if self.mode =="ph_split_set_startlast_q":
-            if self.q_non_irreducible_amount is not None:
-                for i in range(self.q_non_irreducible_amount):
+        if self.mode =="split_specify_q":
+            if self.qirreduced is not None:
+                for i in range(int(self.qirreduced)):
                     self.write_split_ph_in_set_startlast_q(
                         self.work_underpressure, 
                         i+1, 
@@ -131,7 +153,7 @@ class qe_writeinput:
             self.write_matdyn_in()
         if self.mode =="matdyn_dos":
             self.write_matdyn_dos_in()
-        if self.mode =="lambda":
+        if self.mode =="McAD":
             self.write_lambda_in()
 
     def write_relax_in(self):
@@ -326,7 +348,7 @@ class qe_writeinput:
             qe.write("  fildyn='{}.dyn',                                 \n".format(self.system_name))                    
             qe.write("  trans=.true.,                                    \n")            
             qe.write("  ldisp=.true.,                                    \n")            
-            qe.write("  nq1={},nq2={},nq3={},                            \n".format(self.q1, self.q2, self.q3 ))                 
+            qe.write("  nq1={},nq2={},nq3={},                            \n".format(self.qpoints[0], self.qpoints[1], self.qpoints[2]))                 
             qe.write("/                                                  \n")
     
     
@@ -382,7 +404,7 @@ class qe_writeinput:
             qe.write("  fildyn='{}.dyn',                                 \n".format(self.system_name))                    
             qe.write("  trans=.true.,                                    \n")            
             qe.write("  ldisp=.true.,                                    \n")
-            qe.write("  nq1={},nq2={},nq3={},                            \n".format(self.q1, self.q2, self.q3))                 
+            qe.write("  nq1={},nq2={},nq3={},                            \n".format(self.qpoints[0], self.qpoints[1], self.qpoints[2]))                 
             qe.write("  start_q={}                                       \n".format(start_q)) 
             qe.write("  last_q={}                                        \n".format(last_q)) 
             qe.write("/                                                  \n")
@@ -401,7 +423,7 @@ class qe_writeinput:
     def write_matdyn_in(self):
         matdyn_in = os.path.join(self.work_underpressure, "matdyn.in")
         special_qpoints_number  = len(self.path_name_coords)
-        inserted_qpoints_number = self.inserted_points_num
+        inserted_qpoints_number = self.qinserted
         with open(matdyn_in, "w") as qe:
             qe.write("&input                                             \n")               
             qe.write(" asr = 'simple',                                   \n")                        
@@ -447,25 +469,27 @@ class qe_writeinput:
             a2Fq2r_elphInpLambda = os.listdir(elph_dir_path)
             elphInpLambda = sorted(list(filter(lambda x: "elph.inp_lambda" in x, a2Fq2r_elphInpLambda)))
             # prepare input data
-            emax = 10;  degauss = 0.12;  smearing_method = 1
-            mu = 0.01
-            if len(self.q_coordinate_list)        == \
-               len(self.q_weight_list)            == \
-               int(self.q_non_irreducible_amount) == \
+            top_freq        = self.top_freq
+            deguass         = self.deguass
+            smearing_method = self.smearing_method
+            screen_constant = self.screen_constant
+            if len(self.qirreduced_coords)        == \
+               len(self.qweights)            == \
+               int(self.qirreduced) == \
                len(elphInpLambda):
-                q_number = self.q_non_irreducible_amount
-                q_coords = self.q_coordinate_list
-                q_weight = self.q_weight_list
+                q_number = self.qirreduced
+                q_coords = self.qirreduced_coords
+                q_weight = self.qweights
             else:
                 logger.error("q number is wrong. The q number in qlist.dat is not matched with nqs.dat")
             with open(lambda_in, "w") as qe:
-                qe.write("{:<10} {:<10} {:<10}                 \n".format(str(emax), str(degauss), str(smearing_method)))
+                qe.write("{:<10} {:<10} {:<10}                 \n".format(str(top_freq), str(deguass), str(smearing_method)))
                 qe.write("{:<10}                               \n".format(str(q_number)))
                 for qcoord, nq in zip(q_coords, q_weight):
                     qe.write(" {} {} {}  {}                    \n".format(str(qcoord[0]), str(qcoord[1]), str(qcoord[2]), str(nq)))
                 for elph in elphInpLambda:
                     qe.write(" {}                              \n".format(os.path.join("elph_dir", elph)))
-                qe.write("{}                                   \n".format(str(mu)))
+                qe.write("{}                                   \n".format(str(screen_constant)))
 
 
         

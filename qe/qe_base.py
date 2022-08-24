@@ -23,19 +23,36 @@ class qe_base:
         submit_job_system: str,
         input_file_path: Path,
     ) -> None:
+        '''
+        initial the qe_base, only different quantity the parameters
+        work_path: decide two thing:
+            1. the position directory filename/press
+            2. the position of ppdirectory
 
+        input_file_path:
+            1. if .vasp: then the program will create directory filename/press,
+               it will be named work_underpressure
+
+            2. if relax.out: then the program will not create directory filename/press under the work_path,
+               the parents of input_file_path will be work_underpressure
+
+        if you do "relax":
+            you must specify: 1. work_path, 2. press, 3. submit_job_system, 4. input_file_path
+        if you do "scf":
+            you must specify: 1. work_path,           3. submit_job_system  4. input_file_path
+        '''
         self.work_path         = work_path
         self.press             = press          
         self.submit_job_system = submit_job_system
         self.input_file_path   = Path(input_file_path)
-        if "." in self.input_file_path.name:
+        
+        if ".vasp" in self.input_file_path.name:
             self.input_file_name = self.input_file_path.name.split(".")[0]
-        else:
-            self.input_file_name = self.input_file_path.name
-
-        self.work_underpressure= Path(self.work_path).joinpath(self.input_file_name, str(self.press))
-        if not self.work_underpressure.exists():
-            self.work_underpressure.mkdir(parents=True, exist_ok=True)
+            self.work_underpressure= Path(self.work_path).joinpath(self.input_file_name, str(self.press))
+            if not self.work_underpressure.exists():
+                self.work_underpressure.mkdir(parents=True, exist_ok=True)
+        elif "relax.out" in self.input_file_path.name:
+            self.work_underpressure= Path(self.input_file_path).parent
 
         self.ase_type          = read(self.input_file_path)
         self.struct_type       = AseAtomsAdaptor.get_structure(self.ase_type)
@@ -89,7 +106,6 @@ class qe_base:
             else:
                 logger.error(f"find many POTCARs {dst_pps}")
             logger.info(f"species_name {species_name}")
-
 
     def get_single_uspp(self, species_name, workpath_pppath):
 
