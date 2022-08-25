@@ -8,6 +8,8 @@ pbs
     qe_main.py -i ./CaH6.vasp -w ./test/ -p 200 -j pbs relax -m mode=relax-vc 
     qe_main.py -i ./CaH6.vasp -w ./test/ -p 200 -j pbs scf   -m mode=scffit
     qe_main.py -i ./CaH6.vasp -w ./test/ -p 200 -j pbs scf   -m mode=scf
+    # 非自洽计算: 用于计算dos, 使用四面体方法, 可以获得没有展宽的dos结果, 更加准确
+    qe_main.py -i ./relax.out -w ./test  -p 200 -j pbs scf   -m mode=nscf kpoints_dense=[20,20,20]
 
     # no split method
     # 进行不分q点计算

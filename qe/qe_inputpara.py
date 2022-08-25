@@ -56,6 +56,9 @@ class qe_inputpara(qe_base):
         if not hasattr(self, "mode"):
             raise AttributeError("there is no attribution of mode")
 
+        if not hasattr(self, "queue"):
+            self.queue = "xieyu"
+
         if hasattr(self, "kpoints_dense"):
             _kpoints_dense = re.findall(r"\d+", self.kpoints_dense)
             self.kpoints_dense = list(map(int, _kpoints_dense))

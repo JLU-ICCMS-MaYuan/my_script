@@ -35,7 +35,8 @@ class qe_writesubmit:
         self = cls(
             work_underpressure=other_class.work_underpressure,
             submit_job_system=other_class.submit_job_system,
-            mode=other_class.mode
+            mode=other_class.mode,
+            queue=other_class.queue,
         )
         return self
 
@@ -45,7 +46,8 @@ class qe_writesubmit:
         self = cls(
             work_underpressure=other_class.work_underpressure,
             submit_job_system=other_class.submit_job_system,
-            mode=other_class.mode
+            mode=other_class.mode,
+            queue=other_class.queue,
         )
         return self
     
@@ -56,6 +58,7 @@ class qe_writesubmit:
             work_underpressure=other_class.work_underpressure,
             submit_job_system=other_class.submit_job_system,
             mode=other_class.mode,
+            queue=other_class.queue,
             qirreduced=other_class.qirreduced,
             qirreduced_coords=other_class.qirreduced_coords,
 
@@ -69,6 +72,7 @@ class qe_writesubmit:
             work_underpressure=other_class.work_underpressure,
             submit_job_system=other_class.submit_job_system,
             mode=other_class.mode,
+            queue=other_class.queue,
         )
         return self
 
@@ -104,6 +108,8 @@ class qe_writesubmit:
             self.slurmmatdyn_dos(self.work_underpressure)
         if self.mode =="McAD":
             self.slurmlambda(self.work_underpressure)
+        if self.mode =="eliashberg":
+            self.slurmeliashberg(self.work_underpressure)
 
     def pbs_job_system(self):
         if self.mode == "relax-vc":
@@ -145,10 +151,10 @@ class qe_writesubmit:
         slurm_script_filepath = os.path.join(slurm_dirpath, "slurmrelax.sh")
         with open(slurm_script_filepath, "w") as slurm:
             slurm.write('#!/bin/sh                                                                \n')     
-            slurm.write('#SBATCH  --job-name=relax                                             \n')                         
-            slurm.write('#SBATCH  --output=log.relax.out                                      \n')                       
-            slurm.write('#SBATCH  --error=log.relax.err                                       \n')                      
-            slurm.write('#SBATCH  --partition=xieyu                                               \n')    # lhy lbt is both ok                
+            slurm.write('#SBATCH  --job-name=relax                                                \n')                         
+            slurm.write('#SBATCH  --output=log.relax.out                                          \n')                       
+            slurm.write('#SBATCH  --error=log.relax.err                                           \n')                      
+            slurm.write('#SBATCH  --partition={}                                                  \n'.format(self.queue))    # lhy lbt is both ok                
             slurm.write('#SBATCH  --nodes=1                                                       \n')             
             slurm.write('#SBATCH  --ntasks=48                                                     \n')               
             slurm.write('#SBATCH  --ntasks-per-node=48                                            \n')                        
@@ -169,7 +175,7 @@ class qe_writesubmit:
             slurm.write('#SBATCH  --job-name=scf.fit                                             \n')                         
             slurm.write('#SBATCH  --output=log.scf.fit.out                                      \n')                       
             slurm.write('#SBATCH  --error=log.scf.fit.err                                       \n')                      
-            slurm.write('#SBATCH  --partition=xieyu                                               \n')    # lhy lbt is both ok                
+            slurm.write('#SBATCH  --partition={}                                                  \n'.format(self.queue))    # lhy lbt is both ok                
             slurm.write('#SBATCH  --nodes=1                                                       \n')             
             slurm.write('#SBATCH  --ntasks=48                                                     \n')               
             slurm.write('#SBATCH  --ntasks-per-node=48                                            \n')                        
@@ -187,7 +193,7 @@ class qe_writesubmit:
             slurm.write('#SBATCH  --job-name=scf                                                  \n')                         
             slurm.write('#SBATCH  --output=log.scf.out                                           \n')                       
             slurm.write('#SBATCH  --error=log.scf.err                                            \n')                      
-            slurm.write('#SBATCH  --partition=xieyu                                               \n')    # lhy lbt is both ok                
+            slurm.write('#SBATCH  --partition={}                                                  \n'.format(self.queue))    # lhy lbt is both ok                
             slurm.write('#SBATCH  --nodes=1                                                       \n')             
             slurm.write('#SBATCH  --ntasks=48                                                     \n')               
             slurm.write('#SBATCH  --ntasks-per-node=48                                            \n')                        
@@ -198,6 +204,24 @@ class qe_writesubmit:
             slurm.write('\n\n                                                                     \n')
             slurm.write('mpirun -n 48 /work/software/q-e-qe-6.8/bin/pw.x -npool 4 <scf.in> scf.out\n')   
 
+    def slurmnscf(self, slurm_dirpath):
+        slurm_script_filepath = os.path.join(slurm_dirpath, "slurmnscf.sh")
+        with open(slurm_script_filepath, "w") as slurm:
+            slurm.write('#!/bin/sh                                                                \n')     
+            slurm.write('#SBATCH  --job-name=nscf                                                 \n')                         
+            slurm.write('#SBATCH  --output=log.nscf.out                                           \n')                       
+            slurm.write('#SBATCH  --error=log.nscf.err                                            \n')                      
+            slurm.write('#SBATCH  --partition={}                                                  \n'.format(self.queue))    # lhy lbt is both ok                
+            slurm.write('#SBATCH  --nodes=1                                                       \n')             
+            slurm.write('#SBATCH  --ntasks=48                                                     \n')               
+            slurm.write('#SBATCH  --ntasks-per-node=48                                            \n')                        
+            slurm.write('#SBATCH  --cpus-per-task=1                                               \n')                     
+            slurm.write('\n\n                                                                     \n')
+            slurm.write('source /work/env/intel2018                                               \n')
+            slurm.write('ulimit -s unlimited                                                      \n')
+            slurm.write('\n\n                                                                     \n')
+            slurm.write('mpirun -n 48 /work/software/q-e-qe-6.8/bin/pw.x -npool 4 <nscf.in> nscf.out\n')   
+
     def slurmph_no_split(self, slurm_dirpath):
         slurm_script_filepath = os.path.join(slurm_dirpath, "slurmph_no_split.sh")
         with open(slurm_script_filepath, "w") as slurm:
@@ -205,7 +229,7 @@ class qe_writesubmit:
             slurm.write('#SBATCH  --job-name=ph_no_split                                                           \n')                         
             slurm.write('#SBATCH  --output=log.ph_no_split.out                                                     \n')                       
             slurm.write('#SBATCH  --error=log.ph_no_split.err                                                      \n')                      
-            slurm.write('#SBATCH  --partition=xieyu                                                                \n')    # lhy lbt is both ok                
+            slurm.write('#SBATCH  --partition={}                                                                   \n'.format(self.queue))    # lhy lbt is both ok                
             slurm.write('#SBATCH  --nodes=1                                                                        \n')             
             slurm.write('#SBATCH  --ntasks=48                                                                      \n')               
             slurm.write('#SBATCH  --ntasks-per-node=48                                                             \n')                        
@@ -223,7 +247,7 @@ class qe_writesubmit:
             slurm.write('#SBATCH  --job-name=ph_split                                                       \n')                         
             slurm.write('#SBATCH  --output=log.ph_split.out                                                 \n')                       
             slurm.write('#SBATCH  --error=log.ph_split.err                                                  \n')                      
-            slurm.write('#SBATCH  --partition=xieyu                                                         \n')    # lhy lbt is both ok                
+            slurm.write('#SBATCH  --partition={}                                                            \n'.format(self.queue))    # lhy lbt is both ok                
             slurm.write('#SBATCH  --nodes=1                                                                 \n')             
             slurm.write('#SBATCH  --ntasks=48                                                               \n')               
             slurm.write('#SBATCH  --ntasks-per-node=48                                                      \n')                        
@@ -246,7 +270,7 @@ class qe_writesubmit:
             slurm.write('#SBATCH  --job-name={}                                                             \n'.format(split_ph_name))                         
             slurm.write('#SBATCH  --output=log.{}.out                                                       \n'.format(split_ph_name))                       
             slurm.write('#SBATCH  --error=log.{}.err                                                        \n'.format(split_ph_name))                      
-            slurm.write('#SBATCH  --partition=xieyu                                                         \n')    # lhy lbt is both ok                
+            slurm.write('#SBATCH  --partition={}                                                            \n'.format(self.queue))    # lhy lbt is both ok                
             slurm.write('#SBATCH  --nodes=1                                                                 \n')             
             slurm.write('#SBATCH  --ntasks=48                                                               \n')               
             slurm.write('#SBATCH  --ntasks-per-node=48                                                      \n')                        
@@ -263,9 +287,9 @@ class qe_writesubmit:
         with open(slurm_script_filepath, "w") as slurm:
             slurm.write('#!/bin/sh                                                                  \n')     
             slurm.write('#SBATCH  --job-name=q2r                                                    \n')                         
-            slurm.write('#SBATCH  --output=log.q2r.out                                         \n')                       
-            slurm.write('#SBATCH  --error=log.q2r.err                                          \n')                      
-            slurm.write('#SBATCH  --partition=xieyu                                                 \n')    # lhy lbt is both ok                
+            slurm.write('#SBATCH  --output=log.q2r.out                                              \n')                       
+            slurm.write('#SBATCH  --error=log.q2r.err                                               \n')                      
+            slurm.write('#SBATCH  --partition={}                                                    \n'.format(self.queue))    # lhy lbt is both ok                
             slurm.write('#SBATCH  --nodes=1                                                         \n')             
             slurm.write('#SBATCH  --ntasks=48                                                       \n')               
             slurm.write('#SBATCH  --ntasks-per-node=48                                              \n')                        
@@ -282,9 +306,9 @@ class qe_writesubmit:
         with open(slurm_script_filepath, "w") as slurm:
             slurm.write('#!/bin/sh                                                                \n')     
             slurm.write('#SBATCH  --job-name=matgen                                               \n')                         
-            slurm.write('#SBATCH  --output=log.matgen.out                                    \n')                       
-            slurm.write('#SBATCH  --error=log.matgen.err                                     \n')                      
-            slurm.write('#SBATCH  --partition=xieyu                                               \n')    # lhy lbt is both ok                
+            slurm.write('#SBATCH  --output=log.matgen.out                                         \n')                       
+            slurm.write('#SBATCH  --error=log.matgen.err                                          \n')                      
+            slurm.write('#SBATCH  --partition={}                                                  \n'.format(self.queue))    # lhy lbt is both ok                
             slurm.write('#SBATCH  --nodes=1                                                       \n')             
             slurm.write('#SBATCH  --ntasks=48                                                     \n')               
             slurm.write('#SBATCH  --ntasks-per-node=48                                            \n')                        
@@ -300,9 +324,9 @@ class qe_writesubmit:
         with open(slurm_script_filepath, "w") as slurm:
             slurm.write('#!/bin/sh                                                                \n')     
             slurm.write('#SBATCH  --job-name=matgen_dos                                           \n')                         
-            slurm.write('#SBATCH  --output=log.matgen_dos.out                                    \n')                       
-            slurm.write('#SBATCH  --error=log.matgen_dos.err                                     \n')                      
-            slurm.write('#SBATCH  --partition=xieyu                                               \n')    # lhy lbt is both ok                
+            slurm.write('#SBATCH  --output=log.matgen_dos.out                                     \n')                       
+            slurm.write('#SBATCH  --error=log.matgen_dos.err                                      \n')                      
+            slurm.write('#SBATCH  --partition={}                                                  \n'.format(self.queue))    # lhy lbt is both ok                
             slurm.write('#SBATCH  --nodes=1                                                       \n')             
             slurm.write('#SBATCH  --ntasks=48                                                     \n')               
             slurm.write('#SBATCH  --ntasks-per-node=48                                            \n')                        
@@ -317,10 +341,10 @@ class qe_writesubmit:
         slurm_script_filepath = os.path.join(slurm_dirpath, "slurmlambda.sh")
         with open(slurm_script_filepath, "w") as slurm:
             slurm.write('#!/bin/sh                                                                \n')     
-            slurm.write('#SBATCH  --job-name=lambda                                           \n')                         
-            slurm.write('#SBATCH  --output=log.lambda.out                                    \n')                       
-            slurm.write('#SBATCH  --error=log.lambda.err                                     \n')                      
-            slurm.write('#SBATCH  --partition=xieyu                                               \n')    # lhy lbt is both ok                
+            slurm.write('#SBATCH  --job-name=lambda                                               \n')                         
+            slurm.write('#SBATCH  --output=log.lambda.out                                         \n')                       
+            slurm.write('#SBATCH  --error=log.lambda.err                                          \n')                      
+            slurm.write('#SBATCH  --partition={}                                                  \n'.format(self.queue))    # lhy lbt is both ok                
             slurm.write('#SBATCH  --nodes=1                                                       \n')             
             slurm.write('#SBATCH  --ntasks=48                                                     \n')               
             slurm.write('#SBATCH  --ntasks-per-node=48                                            \n')                        
@@ -330,6 +354,28 @@ class qe_writesubmit:
             slurm.write('ulimit -s unlimited                                                      \n')
             slurm.write('\n\n                                                                     \n')
             slurm.write('mpirun -n 48 /work/software/q-e-qe-6.8/bin/lambda.x <lambda.in> lambda.out \n')  
+
+    def slurmeliashberg(self, slurm_dirpath):
+        slurm_script_filepath = os.path.join(slurm_dirpath, "pbseliashberg.sh")
+        with open(slurm_script_filepath, "w") as slurm:
+            slurm.write('#!/bin/sh                                                                \n')     
+            slurm.write('#SBATCH  --job-name=eliashberg                                           \n')                         
+            slurm.write('#SBATCH  --output=log.eliashberg.out                                     \n')                       
+            slurm.write('#SBATCH  --error=log.eliashberg.err                                      \n')                      
+            slurm.write('#SBATCH  --partition={}                                                  \n'.format(self.queue))    # lhy lbt is both ok                
+            slurm.write('#SBATCH  --nodes=1                                                       \n')             
+            slurm.write('#SBATCH  --ntasks=48                                                     \n')               
+            slurm.write('#SBATCH  --ntasks-per-node=48                                            \n')                        
+            slurm.write('#SBATCH  --cpus-per-task=1                                               \n')                     
+            slurm.write('\n\n                                                                     \n')
+            slurm.write('\n\n                                                                     \n')
+            slurm.write(' source /work/home/mayuan/intel/oneapi/setvars.sh --force                \n')
+            slurm.write('ulimit -s unlimited                                                      \n')
+            slurm.write('cd $PBS_O_WORKDIR                                                        \n')
+            slurm.write('killall -9 pw.x                                                          \n')
+            slurm.write('\n\n                                                                     \n')
+            slurm.write('time /work/home/mayuan/code/my_script/qe/eliashberg/eliashberg.x > eliashberg.log 2>&1  \n')  
+        
 
 
     # pbs job scripts
@@ -386,6 +432,23 @@ class qe_writesubmit:
             pbs.write('killall -9 pw.x                                                          \n')
             pbs.write('\n\n                                                                     \n')
             pbs.write('mpirun -n 28 /public/home/mayuan/software/qe-7.1/bin/pw.x -npool 4 <scf.in> scf.out\n')   
+
+    def pbsnscf(self, pbs_dirpath):
+        pbs_script_filepath = os.path.join(pbs_dirpath, "pbsnscf.sh")
+        with open(pbs_script_filepath, "w") as pbs:
+            pbs.write('#!/bin/sh                                                                \n')     
+            pbs.write('#PBS -N    nscf                                                          \n')                         
+            pbs.write('#PBS -q    liuhy                                                         \n')    # lhy lbt is both ok                
+            pbs.write('#PBS -l    nodes=1:ppn=28                                                \n')             
+            pbs.write('#PBS -j    oe                                                            \n')                        
+            pbs.write('#PBS -V                                                                  \n')                     
+            pbs.write('\n\n                                                                     \n')
+            pbs.write('source /public/home/mayuan/intel/oneapi/setvars.sh                       \n')
+            pbs.write('ulimit -s unlimited                                                      \n')
+            pbs.write('cd $PBS_O_WORKDIR                                                        \n')
+            pbs.write('killall -9 pw.x                                                          \n')
+            pbs.write('\n\n                                                                     \n')
+            pbs.write('mpirun -n 28 /public/home/mayuan/software/qe-7.1/bin/pw.x -npool 4 <nscf.in> nscf.out\n')   
 
     def pbsph_no_split(self, pbs_dirpath):
         pbs_script_filepath = os.path.join(pbs_dirpath, "pbsph_no_split.sh")

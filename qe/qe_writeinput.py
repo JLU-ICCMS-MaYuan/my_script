@@ -133,6 +133,8 @@ class qe_writeinput:
             self.write_scf_fit_in(self.work_underpressure)
         if self.mode == "scf":
             self.write_scf_in(self.work_underpressure)
+        if self.mode == "nscf":
+            self.write_nscf_in(self.work_underpressure)
         if self.mode =="nosplit":
             self.write_ph_no_split_in()
         if self.mode =="split_from_dyn0":
@@ -334,6 +336,59 @@ class qe_writeinput:
                 qe.write("{:<5} {:<30} {:<30} {:<30} \n".format(name, coord[0], coord[1], coord[2]))
             qe.write("K_POINTS {automatic}             \n")
             qe.write(" {} {} {} 0 0 0                  \n".format(self.kpoints_sparse[0], self.kpoints_sparse[1], self.kpoints_sparse[2]))  
+
+    def write_nscf_in(self, dir):
+        nscf_in = os.path.join(dir, "nscf.in")
+        with open(nscf_in, "w") as qe:
+            qe.write("&CONTROL\n")
+            qe.write(" calculation='nscf',             \n")
+            qe.write(" prefix='{}',                    \n".format(self.system_name))
+            qe.write(" pseudo_dir='{}',                \n".format(self.workpath_pppath))
+            qe.write(" outdir='./tmp',                 \n")
+            qe.write(" forc_conv_thr = 1.0d-3,         \n")
+            qe.write(" etot_conv_thr = 1.0d-4,         \n")
+            qe.write(" wf_collect=.true.,              \n")
+            qe.write(" tprnfor=.true.,                 \n")
+            qe.write(" tstress=.true.,                 \n")
+            qe.write("/\n")
+
+            qe.write("&SYSTEM\n")
+            qe.write(" ibrav=0,                        \n")  # 设置ibrav=0，这时需要在输入文件中写入CELL_PARAMETERS，即CELL的基矢量. alat bohr angstrom alat 由 celldm(1)或A定义的晶格常数单位
+            qe.write(" nat={},                         \n".format(self.all_atoms_quantity))
+            qe.write(" ntyp={},                        \n".format(self.species_quantity))
+            qe.write(" occupations = 'tetrahedra',     \n")
+            qe.write(" ecutwfc = 60,                   \n")
+            qe.write(" ecutrho = 720,                  \n")
+            qe.write("/\n")
+
+            qe.write("&ELECTRONS\n")
+            qe.write(" conv_thr = 1.0d-12,             \n")
+            qe.write(" diagonalization='divid,         \n")
+            qe.write(" mixing_mode = 'plain',          \n")
+            qe.write(" mixing_beta = 0.8d0,            \n")
+            qe.write("/\n")
+
+            qe.write("ATOMIC_SPECIES                   \n")
+            for species_name in self.composition.keys():
+                for species_pseudo in self.final_choosed_pp:
+                    match_res = re.search("^"+species_name.lower()+"\_", species_pseudo)
+                    if match_res is not None:
+                        logger.info(f"write USPP for species in scf.in: {match_res.group()}") 
+                        element      = Element(species_name)
+                        species_mass = str(element.atomic_mass).strip("amu")
+                        qe.write(" {:<5}  {:<10}  {:<50} \n".format(species_name, species_mass, species_pseudo))
+            qe.write("CELL_PARAMETERS {angstrom}        \n")  # 如果选择angstrom单未，原子坐标选择分数坐标，即，ATOMIC_POSITIONS (crystal), 且不设置celldm(1). 这时alat和celldm(1)设置成v1的长度
+            for cell_p in self.cell_parameters:
+                cell_p = list(map(str, cell_p))
+                qe.write("{:>25} {:>25} {:>25} \n".format(cell_p[0], cell_p[1], cell_p[2]))
+            qe.write("ATOMIC_POSITIONS (crystal)       \n")
+            for site in self.fractional_sites:
+                coord = list(map(str, site.frac_coords))
+                name  = re.search(r"[A-Za-z]+", str(site.species)).group()
+                # 左对齐5个字符，左对齐30个字符
+                qe.write("{:<5} {:<30} {:<30} {:<30} \n".format(name, coord[0], coord[1], coord[2]))
+            qe.write("K_POINTS {automatic}             \n")
+            qe.write(" {} {} {} 0 0 0                  \n".format(self.kpoints_dense[0], self.kpoints_dense[1], self.kpoints_dense[2]))   
 
     # not split mode
     def write_ph_no_split_in(self):

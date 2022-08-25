@@ -113,6 +113,16 @@ class qe_submitjob:
                     os.system("sbatch slurmscf.sh")
                     logger.info("qe scf is running")
                     os.chdir(cwd)
+        if self.mode == "nscf":
+            dst_files = Path(self.work_underpressure).glob("nscf.in")
+            for dst_file in dst_files:
+                if dst_file.exists():
+                    cwd = dst_file.cwd()
+                    dst_dir = dst_file.parent.absolute()
+                    os.chdir(dst_dir)
+                    os.system("sbatch slurmnscf.sh")
+                    logger.info("qe nscf is running")
+                    os.chdir(cwd)
         if self.mode =="nosplit":
             dst_files = Path(self.work_underpressure).glob("ph_no_split.in")
             for dst_file in dst_files:
@@ -191,6 +201,15 @@ class qe_submitjob:
                     os.system("sbatch slurmlambda.sh")
                     logger.info("qe lambda is running")
                     os.chdir(cwd)
+        if self.mode =="eliashberg":   
+            dst_files = list(Path(self.work_underpressure).glob("ALPHA2F.OUT"))
+            if len(dst_files) == 1:
+                cwd = dst_files[0].cwd()
+                dst_dir = dst_files[0].parent.absolute()
+                os.chdir(dst_dir)
+                os.system("sbatch slurmeliashberg.sh")
+                logger.info("qe lambda is running")
+                os.chdir(cwd)
 
     def pbs_submitjob(self):
         if self.mode == "relax-vc":
@@ -222,6 +241,16 @@ class qe_submitjob:
                     os.chdir(dst_dir)
                     os.system("qsub pbsscf.sh")
                     logger.info("qe scf is running")
+                    os.chdir(cwd)
+        if self.mode == "nscf":
+            dst_files = Path(self.work_underpressure).glob("nscf.in")
+            for dst_file in dst_files:
+                if dst_file.exists():
+                    cwd = dst_file.cwd()
+                    dst_dir = dst_file.parent.absolute()
+                    os.chdir(dst_dir)
+                    os.system("qsub pbsnscf.sh")
+                    logger.info("qe nscf is running")
                     os.chdir(cwd)
         if self.mode =="nosplit":
             dst_files = Path(self.work_underpressure).glob("ph_no_split.in")

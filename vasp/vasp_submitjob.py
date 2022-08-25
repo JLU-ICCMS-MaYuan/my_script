@@ -1,3 +1,4 @@
+from asyncio.log import logger
 import os
 import re
 import shutil
@@ -83,12 +84,14 @@ class vasp_submitjob:
             cwd = os.getcwd()
             os.chdir(self.work_underpressure)
             os.system("qsub pbsFopt.sh")
+            logger.info(" vasp optfine is running.")
             os.chdir(cwd)
         elif self.mode == "rv3":
             cwd = os.getcwd()
             os.chdir(self.work_underpressure)
             os.system("qsub pbs3opt.sh")
             os.chdir(cwd)
+            logger.info(" vasp opt3 is running.")
         elif self.mode == "disp":
             patter = re.compile(r"POSCAR\-[0-9]{3}")
             poscar_files = os.listdir(self.work_underpressure)
@@ -105,9 +108,11 @@ class vasp_submitjob:
                 cwd = os.getcwd()
                 os.chdir(dst_number_dir)
                 os.system("qsub pbsdisp.sh")
+                logger.info(" vasp phono-disp is running.")
                 os.chdir(cwd) 
         elif self.mode == "dfpt":
             cwd = os.getcwd()
             os.chdir(self.work_underpressure)
             os.system("qsub pbsdfpt.sh")
+            logger.info(" vasp phono-dfpt is running.")
             os.chdir(cwd) 
