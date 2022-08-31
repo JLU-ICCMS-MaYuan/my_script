@@ -5,13 +5,16 @@ generator_main.py -w ./Kr-Ne-H-spg229-500/ -i ./input.ini method -m mode=specify
 input.ini的内容
 [base]
 spacegroup_number = 229 
-nameofatoms = ["Kr", "Ne", "H"] 
+nameofatoms = ["Ar", "Ne", "H"] 
 optionalsites = [['2a', '6b'], 
                  ['8c','12d'], 
                  ['12e', '16f', '24g', '24h', '48i', '48j', '48k']] 
 sitesoccupiedrange=[[1,2], 
-                     [1,2], 
-                     [1,3],] 
+                    [1,2], 
+                    [1,3],] 
+distancematrix=[[],
+                [],
+                [],]
 popsize=300 
 maxlimit=150
 """
@@ -32,5 +35,5 @@ if __name__ == "__main__":
     parser = ArgumentParser(prog="generators")
     args = set_more_args(parser)
 
-    pprint(f"{args} \n")
+    #logger.info(f"{args} \n")
     generator_res = args.generator(args)

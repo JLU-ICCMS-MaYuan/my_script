@@ -2,15 +2,14 @@
 #!/work/home/mayuan/miniconda3/envs/cage/bin/python3
 
 '''
-展示画图结果, 可动态调节:
-    plot_convexhull.py 指定csv文件路径 show
-    plot_convexhull.py ./B-H.csv show
-保存画图结果,
-    plot_convexhull.py 指定csv文件路径 save 
-    plot_convexhull.py ./B-H.csv save
-将落在convex hull上的稳定结构拿出来放在目录stable_structs中
-    plot_convexhull.py 指定csv文件路径 collect
-    plot_convexhull.py nnconvexhull.csv collect
+输出origin绘制convex hull 的数据
+plot_convexhull.py -i ./nnconvexhull.csv -hand Mg B H
+保存图片
+plot_convexhull.py -i ./nnconvexhull.csv -save
+展示图片
+plot_convexhull.py -i ./nnconvexhull.csv -show
+回收所有稳定结构
+plot_convexhull.py -i ./nnconvexhull.csv -collect
 '''
 
 import sys
@@ -18,27 +17,65 @@ import os
 import re
 import shutil
 from pathlib import Path
+from argparse import ArgumentParser
 
 import pandas as pd
 from pymatgen.analysis.phase_diagram import PDEntry, PhaseDiagram, PDPlotter
 from pymatgen.core.composition import Composition
-from pymatgen.core.periodic_table import DummySpecies, Element
 
-input_csv = sys.argv[1]; input_csv_path = Path(input_csv)
-convexhull_data = pd.read_csv(input_csv_path, header=0, sep=',')
-if "save" in sys.argv:
-    save_pnd = True
-else:
-    save_pnd = False
-if "show" in sys.argv:
-    show_pnd = True
-else:
-    show_pnd = False
-if "collect" in sys.argv:
-    collect_stable = True
-else:
-    collect_stable = False
 
+parser = ArgumentParser()
+parser.add_argument(
+    "-i",
+    "--input",
+    type=str,
+    default="./",
+    dest="input_csv_path",
+    help="请输入csv文件路径",
+)
+parser.add_argument(
+    "-save",
+    "--save-png",
+    action="store_true",
+    default=False,
+    dest="save_png",
+    help="是否保存图片",
+)
+parser.add_argument(
+    "-show",
+    "--show-png",
+    action="store_true",
+    default=False,
+    dest="show_png",
+    help="是否展示图片",
+)
+parser.add_argument(
+    "-collect",
+    "--collect",
+    action="store_true",
+    default=False,
+    dest="collect_stable",
+    help="是否收集数据",
+)
+parser.add_argument(
+    "-hand",
+    "-hand-plot-dat",
+    action="store",
+    default=None,
+    dest="hand_plot_dat",
+    nargs="+",
+    help="导出精细的数据方便origin绘制",
+)
+args = parser.parse_args()
+
+input_csv_path = args.input_csv_path
+save_pnd = args.save_png
+show_pnd = args.show_png
+collect_stable = args.collect_stable
+hand_plot_dat = args.hand_plot_dat
+
+# 生成 凸包图对象
+convexhull_data = pd.read_csv(input_csv_path, header=0, sep=',') #  header表示第一行为标题行
 ini_entries = []
 for idx, row in convexhull_data.iterrows():
     comp = Composition(row['formula'])
@@ -47,32 +84,52 @@ for idx, row in convexhull_data.iterrows():
     _entry = PDEntry(comp, enth)
     _entry.entry_id = entry_id
     ini_entries.append(_entry)
-
 ini_pd = PhaseDiagram(ini_entries)
+
+# 输出参考单质或化合物
 print(f" reference material {ini_pd.el_refs}\n");
-#获得落在convex hull上的结构的化学式配比, 编号(编号用来索引搜索到的结构)
+
+
+
+# 获得 落在convex hull上的稳定结构的 化学式配比, 编号, 形成焓(编号用来索引搜索到的结构)
+# 获得 落在convex hull 上稳定结构的 csv 文件
+stable_list = []
 stable_structs_amount = 0
-for ent in ini_pd.stable_entries:
-    form_energy = ini_pd.get_form_energy(ent)
-    print("stoichiometry: {:<10}  No.{:<10}, its form energy is {:<10}".format(
-        ent.name, 
-        ent.entry_id,
-        form_energy,
-        ))
+for entry in ini_pd.stable_entries:
+    stable_dict = {}
+    form_energy = ini_pd.get_form_energy(entry)
+    stable_dict["Number"] = entry.entry_id
+    stable_dict["formula"] = entry.name
+    stable_dict["enthalpy"] = 0.0
+    stable_list.append(stable_dict)
     stable_structs_amount += 1
-
-
 print(f"stable structures on the convex hull is {stable_structs_amount - len(ini_pd.el_refs)}\n")
+stable_pd = pd.DataFrame(stable_list)
 
-for ent in ini_entries:
-    ehull       = ini_pd.get_e_above_hull(ent)*1000
-    form_energy = ini_pd.get_form_energy(ent)
-    if 0.0< ehull <= 1:
+
+
+# 获得 高于convex hull  60mev 上稳定结构的 csv 文件
+unstable_list = []
+unstable_structs_amount = 0
+for entry in ini_entries:
+    unstable_dict = {}
+    energy_above_hull = ini_pd.get_e_above_hull(entry)*1000
+    form_energy = ini_pd.get_form_energy(entry)
+    if 0.0 < energy_above_hull <= 60.0: # 这里取高于convex hull 能量在0~60个meV范围内的亚稳结构
         print("stoichiometry: {:<10}  No.{:<10} is above convell hull {:<10}".format(
-            ent.name, 
-            ent.entry_id,
-            ehull,
+            entry.name, 
+            entry.entry_id,
+            energy_above_hull,"meV",
             ))
+        unstable_dict["Number"]   = entry.entry_id
+        unstable_dict["formula"]  = entry.name
+        #!!!!!!!!!!!!!!!!!特别注意这里的单位是meV!!!!!!!!!!!!!!!!!!!!!!!
+        unstable_dict["enthalpy"] = ini_pd.get_e_above_hull(entry) 
+        unstable_list.append(unstable_dict)
+        unstable_structs_amount += 1
+print(f"unstable structures above the convex hull is {unstable_structs_amount}\n")
+unstable_pd = pd.DataFrame(unstable_list)
+unstable_pd.to_csv("unstable.csv", index=False)
 
 if save_pnd:
     plotter = PDPlotter(ini_pd, show_unstable=0.2, backend='matplotlib')
@@ -84,14 +141,15 @@ if show_pnd:
 
 print("\n")
 
+# 收集所有的稳定结构
 if collect_stable:
-    stable_structs = Path(input_csv_path.parent).joinpath("stable_structs")
+    stable_structs = Path(input_csv_path).parent.joinpath("stable_structs")
     if not stable_structs.exists():
         stable_structs.mkdir()
 
     for ent in ini_pd.stable_entries:
         print(f"look for the position of N0.{ent.entry_id} structure!")
-        for ana_out_dat in input_csv_path.parent.rglob("Analysis_Output.dat"):
+        for ana_out_dat in Path(input_csv_path).parent.rglob("Analysis_Output.dat"):
             f = open(ana_out_dat).readlines()
             for line in f:
                 patter = re.compile(r"\d+\s\(\s*%s\)" %ent.entry_id)
@@ -105,6 +163,37 @@ if collect_stable:
                     shutil.copy(src_vaspfile, dst_vaspfile)
                     print(src_vaspfile)
                     break
+
+
+if hand_plot_dat:
+
+    
+    for ele in hand_plot_dat:
+        stable_pd.insert(2, ele, 0)
+    for idx, row in stable_pd.iterrows():
+        entry_id = row['Number']
+        comp = Composition(row['formula']) 
+        for ele in comp.elements:
+            ele_name = ele.name
+            atoms_num= comp.to_reduced_dict[ele_name]
+            stable_pd.loc[idx, ele_name] = atoms_num
+    stable_pd.to_csv("stable.csv", index=False)
+
+    for ele in hand_plot_dat:
+        unstable_pd.insert(2, ele, 0)
+    for idx, row in unstable_pd.iterrows():
+        entry_id = row['Number']
+        comp = Composition(row['formula']) 
+        for ele in comp.elements:
+            ele_name = ele.name
+            atoms_num= comp.to_reduced_dict[ele_name]
+            unstable_pd.loc[idx, ele_name] = atoms_num
+    unstable_pd.to_csv("unstable.csv", index=False)
+
+
+    total_pd = pd.concat((stable_pd, unstable_pd), axis=0)
+    #total_pd = total_pd.drop(columns=['Number', 'formula']) # 删除列
+    total_pd.to_csv("for_origin_plot.csv", index=False)
 
 
 

@@ -4,13 +4,13 @@
 /.ipynb_checkpoints
 /useless-scripts
 /.vscode
-/__pycache__
-/qe/__pycache__
 /test
 /out
 /.idea
+/__pycache__
+/qe/__pycache__
 /vasp/__pycache__
-
+/structuregenerator/__pycache__
 #files
 / calypso/.idea/inspectionProfiles/Project_Default.xml
 /calypso/.idea/inspectionProfiles/profiles_settings.xml
@@ -18,3 +18,5 @@
 PPOSCAR
 periodic_table.jpg
 periodic_table.svg
+*.csv
+

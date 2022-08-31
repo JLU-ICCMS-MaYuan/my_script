@@ -10,8 +10,6 @@
                                     at most get 3 wps to permutation and combination
 """
 
-
-import imp
 import re
 import os
 import random
@@ -19,13 +17,43 @@ import logging
 from itertools import product, combinations, chain
 from collections import Counter, defaultdict
 from pathlib import Path
+import signal
+import time
 
 import numpy as np
 from pyxtal import pyxtal
+from pyxtal.tolerance import Tol_matrix
 from pymatgen.io.vasp import Poscar
+from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
+
 from ase.formula import Formula
 
+
 logger = logging.getLogger("GENERATOR")
+
+def handle(timeout, frame):  # 收到信号 SIGALRM 后的回调函数，第一个参数是信号的数字，第二个参数是the interrupted stack frame.
+    print("bad structure")
+    raise RuntimeError("run error")
+
+def set_timeout(timeout, callback):
+    def wrap(func):
+        def inner(*args, **kwargs):
+            try:
+                signal.signal(signal.SIGALRM, handle)  # 设置信号和回调函数
+                signal.alarm(timeout)  # 设置 num 秒的闹钟
+                print('start alarm signal.')
+                r = func(*args, **kwargs)
+                print('close alarm signal.')
+                signal.alarm(0)  # 关闭闹钟
+                return r
+            except RuntimeError as e:
+                callback()
+        return inner
+    return wrap
+
+def after_timeout():  # 超时后的处理函数
+    print("Time out!")
+
 
 class specify_wyckoffs:
 
@@ -37,24 +65,35 @@ class specify_wyckoffs:
         sitesoccupiedrange: list[int],
         work_path: Path,
         popsize: int,
-        maxlimit: int,   
+        maxlimit: int,
+        distancematrix: list[list[float]]
         ):
         
-        self.SpaceGroupNumber   = spacegroup_number
+        self.spacegroup_number   = spacegroup_number
         self.nameofatoms        = nameofatoms
         self.optionalsites      = optionalsites
         self.sitesoccupiedrange = sitesoccupiedrange
         self.work_path          = work_path
         self.popsize            = popsize
         self.maxlimit           = maxlimit
+        self.distancematrix     = np.array(distancematrix)
 
         self._group             = self.get_group(self.optionalsites, self.sitesoccupiedrange)
         
-        for num in range(1, self.popsize+1):
-            self.struct = self.__rand_gen()
-            logger.info(f"try successfully create No.{num} !")
-            filepath = os.path.join(self.work_path, "POSCAR_" + str(num))
-            Poscar(self.struct).write_file(filepath)
+        self.structs = []
+        while len(self.structs) < self.popsize:
+            struct = self.__rand_gen()
+            if hasattr(struct, "is_ordered"): # 判断结构是否是分数占据的无序结构
+                pstruct = SpacegroupAnalyzer(struct).get_primitive_standard_structure()
+                self.structs.append(pstruct)
+                logger.info(f"new you have successfully create {len(self.structs)} structures !")
+
+        if len(self.structs) == self.popsize:
+            for i, struct in enumerate(self.structs):
+                logger.info(f"try successfully write POSCAR_{i+1} !")
+                filepath = os.path.join(self.work_path, "POSCAR_" + str(i+1))
+                Poscar(struct).write_file(filepath)
+                
 
     def get_H(self, H_occupied_wps, h_lower, h_upper):
         if h_upper < h_lower:
@@ -146,11 +185,12 @@ class specify_wyckoffs:
         _group = dict(_group)
         return _group
     
+    @set_timeout(10, after_timeout)
     def __rand_gen(self):
         '''
         create struct by choosing wyckoff positions
         '''
-        spespacegroup = self.SpaceGroupNumber
+        spacegroup_number = self.spacegroup_number
         name_of_atoms = self.nameofatoms
         fomula = random.choice(list(self._group.keys()))
         species_amounts_sites = random.choice(self._group[fomula])
@@ -158,31 +198,28 @@ class specify_wyckoffs:
         amounts = species_amounts_sites[0]
         wyck = species_amounts_sites[1]
 
+        species_radius = list(zip(name_of_atoms, self.distancematrix.diagonal()/2.0))
+
+        tm = Tol_matrix()
+        for ele_r1, ele_r2 in combinations(species_radius, 2):
+            tm.set_tol(ele_r1[0], ele_r2[0], ele_r1[1]+ele_r2[1])
+
         struc = pyxtal()
-        for _ in range(100):
-            try:
-                #print(
-                    #name_of_atoms,
-                    #amounts,
-                    #wyck,
-                #)
-                struc.from_random(
-                    3,
-                    spespacegroup,
-                    name_of_atoms,
-                    amounts,
-                    factor=1.0,
-                    sites=wyck,
-                    # lattice=my_lat
-                )
-                struct_pymatgen = struc.to_pymatgen()
-                if struct_pymatgen.composition.num_atoms < float(self.maxlimit):
-                    return struct_pymatgen
-            except Exception as e:
-                logger.debug(f"except {e}")
-                continue 
-        else:
-            logger.warning("this structure may not be physical")
+        try:
+            struc.from_random(
+                3,
+                spacegroup_number,
+                name_of_atoms,
+                amounts,
+                factor=2.0,
+                sites=wyck,
+                tm=tm
+            )
+            struct_pymatgen = struc.to_pymatgen()
+            if struct_pymatgen.composition.num_atoms < float(self.maxlimit):
+                return struct_pymatgen
+        except Exception as e:
+            logger.debug(f"except {e}")
 
     @classmethod
     def init_from_config(cls, config_d: dict):
@@ -195,10 +232,6 @@ class specify_wyckoffs:
             work_path=config_d["work_path"],
             popsize=config_d["popsize"],    
             maxlimit=config_d["maxlimit"],
+            distancematrix=config_d["distancematrix"],
         )
-
         return self
-
-
-
-
