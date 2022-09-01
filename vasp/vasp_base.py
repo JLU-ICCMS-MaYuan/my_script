@@ -80,22 +80,29 @@ class vasp_base:
 
     def get_potcar(self, dst_potcar_path: Path):
 
+
         # 准备分离的赝势
-        potlib_files = os.listdir(self.workpath_pppath)
         self.final_choosed_potcar = []
         for species in self.species:
             species_name = species.name
-            dst_pps = list(self.workpath_pppath.glob(f"POTCAR-*{species_name}*"))
+            potlib_files = os.listdir(self.workpath_pppath)
+            patter = re.compile(r"^{}$".format(species_name))
+            dst_pps = list(filter(lambda file: re.search(patter, file), potlib_files))
             if len(dst_pps) == 1:
-                self.final_choosed_potcar.append(dst_pps[0])
+                dst_pp = Path(self.workpath_pppath).joinpath(dst_pps[0])
+                self.final_choosed_potcar.append(dst_pp)
             elif len(dst_pps) == 0:
                 logger.info(f"to prepare {species_name} POTCAR! ")
                 dst_pp = self.get_single_potcar(species_name)
                 self.final_choosed_potcar.append(dst_pp)
             else:
                 logger.error(f"find many POTCARs {dst_pps}")
-        logger.info(f"the choosed pp is {self.final_choosed_potcar}")
+
+        for pp in self.final_choosed_potcar:
+            logger.info(f"the choosed pp is {pp}")
+
         if len(self.final_choosed_potcar) == len(self.species):
+            logger.info("merge")
             self.merge_potcar(dst_potcar_path, self.final_choosed_potcar)
 
     def get_single_potcar(self, species_name):
@@ -125,12 +132,13 @@ class vasp_base:
             choosed_pot = input(f"{targetpotcarnames}, \nplease input you want one\n")
             if choosed_pot in targetpotcarnames:
                 src_pp = Path(potcar_dir).joinpath(choosed_pot , "POTCAR")
-                dst_pp = Path(self.workpath_pppath).joinpath("POTCAR-"+choosed_pot)
+                dst_pp = Path(self.workpath_pppath).joinpath(species_name)
                 shutil.copy(src_pp, dst_pp)
+                with open(Path(self.workpath_pppath).joinpath("potcar.log"), "a") as log:
+                    log.write("{:<5}  {:<15} \n".format(species_name, choosed_pot))
                 choosed_flag = True
             else:
                 choosed_flag = False
-        
         return dst_pp
 
     def merge_potcar(

@@ -1,6 +1,10 @@
+import logging
 from pathlib import Path
 from configparser import ConfigParser
 from argparse import ArgumentParser
+
+
+logger = logging.getLogger(__name__)
 
 class config:
     def __init__(self, args: ArgumentParser) -> None:
@@ -26,11 +30,16 @@ class config:
         config_inputini      = ConfigParser()
         config_inputini.read(self.config_d["input_file_path"])
 
-        config_base = config_inputini._sections["base"]
-        for key, value in config_base.items():
-            try:
-                self.config_d[key] = eval(value)
-            except (NameError, SyntaxError):
-                pass
-
+        if "specifywps" in config_inputini.sections():
+            for key, value in config_inputini.items("specifywps"):
+                try:
+                    self.config_d[key] = eval(value)
+                except (NameError, SyntaxError):
+                    pass
+        if "substitution" in config_inputini.sections():
+            for key, value in config_inputini.items("substitution"):
+                try:
+                    self.config_d[key] = eval(value)
+                except (NameError, SyntaxError):
+                    logger.error("there is no {}".format(key))
         

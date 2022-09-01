@@ -56,7 +56,7 @@ class vasp_writeincar:
         with open(incar_filepath, "w") as incar:
             incar.write("ISTART   = 0    \n")   
             incar.write("ICHARG   = 2    \n")   
-            incar.write("ENCUT    = {}   \n".format(str(self.encut)))
+            incar.write("ENCUT    = 350  \n")
             incar.write("PREC     = LOW  \n") 
             incar.write("NCORE    = 4    \n")         
             incar.write("KSPACING = 0.8  \n")            
@@ -64,11 +64,12 @@ class vasp_writeincar:
             incar.write("SIGMA    = 0.2  \n")   
             incar.write("NELM     = 90   \n")   
             incar.write("NELMIN   = 6    \n")   
-            incar.write("EDIFF    = 1e-2 \n")
-            incar.write("EDIFFG   = -0.5 \n") 
+            incar.write("EDIFF    = 1e-3 \n")
+ 
             incar.write("NSW      = 200  \n")   
             incar.write("IBRION   = 2    \n")   
-            incar.write("ISIF     = 2    \n")   
+            incar.write("ISIF     = 2    \n")
+            incar.write("OPTIM    = 0.3  \n")
             incar.write("PSTRESS  = {}0  \n".format(str(self.press)))   
 
     def opt_incar2(self, incar_dirpath):
@@ -76,7 +77,7 @@ class vasp_writeincar:
         with open(incar_filepath, "w") as incar:
             incar.write("ISTART   = 0    \n")   
             incar.write("ICHARG   = 2    \n")   
-            incar.write("ENCUT    = {}   \n".format(str(self.encut)))        
+            incar.write("ENCUT    = 400  \n")        
             incar.write("PREC     = Normal\n") 
             incar.write("NCORE    = 4    \n")         
             incar.write("KSPACING = 0.5  \n")
@@ -85,11 +86,11 @@ class vasp_writeincar:
             incar.write("NELM     = 90   \n" )   
             incar.write("NELMIN   = 6    \n" )   
             incar.write("EDIFF    = 1e-4 \n" )
-            incar.write("EDIFFG   = -0.1 \n" )  
-            incar.write("NSW      = 200  \n" )   
+            incar.write("EDIFFG   = -0.2 \n" )  
+            incar.write("NSW      = 400  \n" )   
             incar.write("IBRION   = 2    \n" )   
             incar.write("ISIF     = 4    \n" )   
-            incar.write("POTIM    = 0.50 \n" )        
+            incar.write("OPTIM    = 0.3  \n")
             incar.write("PSTRESS  = {}0  \n".format(str(self.press)) )   
 
     def opt_incar3(self, incar_dirpath):
@@ -97,20 +98,20 @@ class vasp_writeincar:
         with open(incar_filepath, "w") as incar:
             incar.write("ISTART   = 0    \n")   
             incar.write("ICHARG   = 2    \n")   
-            incar.write("ENCUT    = {}   \n".format(str(self.encut)))        
+            incar.write("ENCUT    = 500  \n")        
             incar.write("PREC     = A    \n")
             incar.write("NCORE    = 4    \n")         
-            incar.write("KSPACING = 0.20 \n")            
+            incar.write("KSPACING = 0.30 \n")            
             incar.write("ISMEAR   = 1    \n")   
-            incar.write("SIGMA    = 0.01 \n")   
+            incar.write("SIGMA    = 0.05 \n")   
             incar.write("NELM     = 90   \n")   
             incar.write("NELMIN   = 6    \n")   
-            incar.write("EDIFF    = 1e-8 \n")
+            incar.write("EDIFF    = 1e-6 \n")
             incar.write("EDIFFG   = -0.001\n")
-            incar.write("NSW      = 200  \n")   
+            incar.write("NSW      = 500  \n")   
             incar.write("IBRION   = 2    \n")   
             incar.write("ISIF     = 3    \n")        
-            incar.write("OPTIM    = 0.1  \n ")
+            incar.write("OPTIM    = 0.05  \n ")
             incar.write("PSTRESS  = {}0  \n".format(str(self.press)))    
 
     def opt_fine_incar(self, incar_dirpath):

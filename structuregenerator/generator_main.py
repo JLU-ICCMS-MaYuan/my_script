@@ -1,9 +1,10 @@
 #!/public/home/mayuan/miniconda3/envs/cage/bin/python3
 """
+# 指定wyckoff position产生结构
 generator_main.py -w ./Kr-Ne-H-spg229-500/ -i ./input.ini method -m mode=specifywps
 
-input.ini的内容
-[base]
+input.ini的内容: 
+[specifywps]
 spacegroup_number = 229 
 nameofatoms = ["Ar", "Ne", "H"] 
 optionalsites = [['2a', '6b'], 
@@ -17,10 +18,20 @@ distancematrix=[[],
                 [],]
 popsize=300 
 maxlimit=150
+
+
+
+# 指定初始结构原型进行结构替换
+generator_main.py -i ./input.ini -w ./ method -m mode=substitution
+
+input.ini的内容: 
+[substitution]
+prototype_path = "/public/home/mayuan/code/my_script/test/Mg1B3H20.vasp" # 结构原型的路径
+replacement = [["Mg", "Ca", "Sr", "Ba"], # 第一个元素必须是结构原型中的元素
+               ["B", "Li", "Na", "K", "Ru", "Cs"]]  # 第一个元素必须是结构原型中的元素
 """
 import logging
 from argparse import ArgumentParser
-from pprint import pprint
 
 from set_args import set_more_args
 
