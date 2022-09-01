@@ -89,7 +89,7 @@ class vasp_base:
             patter = re.compile(r"^{}$".format(species_name))
             dst_pps = list(filter(lambda file: re.search(patter, file), potlib_files))
             if len(dst_pps) == 1:
-                dst_pp = Path(self.workpath_pppath)
+                dst_pp = Path(self.workpath_pppath).joinpath(dst_pps[0])
                 self.final_choosed_potcar.append(dst_pp)
             elif len(dst_pps) == 0:
                 logger.info(f"to prepare {species_name} POTCAR! ")
