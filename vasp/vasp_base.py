@@ -89,7 +89,7 @@ class vasp_base:
             patter = re.compile(r"^{}$".format(species_name))
             dst_pps = list(filter(lambda file: re.search(patter, file), potlib_files))
             if len(dst_pps) == 1:
-                dst_pp = Path(self.workpath_pppath).joinpath(dst_pps[0])
+                dst_pp = Path(self.workpath_pppath)
                 self.final_choosed_potcar.append(dst_pp)
             elif len(dst_pps) == 0:
                 logger.info(f"to prepare {species_name} POTCAR! ")
@@ -97,10 +97,7 @@ class vasp_base:
                 self.final_choosed_potcar.append(dst_pp)
             else:
                 logger.error(f"find many POTCARs {dst_pps}")
-
-        for pp in self.final_choosed_potcar:
-            logger.info(f"the choosed pp is {pp}")
-
+        logger.info(f"the choosed pp is {self.final_choosed_potcar}")
         if len(self.final_choosed_potcar) == len(self.species):
             logger.info("merge")
             self.merge_potcar(dst_potcar_path, self.final_choosed_potcar)
@@ -135,7 +132,7 @@ class vasp_base:
                 dst_pp = Path(self.workpath_pppath).joinpath(species_name)
                 shutil.copy(src_pp, dst_pp)
                 with open(Path(self.workpath_pppath).joinpath("potcar.log"), "a") as log:
-                    log.write("{:<5}  {:<15} \n".format(species_name, choosed_pot))
+                    log.write("{:<5}  {:<5}".format(species_name, choosed_pot))
                 choosed_flag = True
             else:
                 choosed_flag = False

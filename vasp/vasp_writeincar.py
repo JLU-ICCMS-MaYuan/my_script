@@ -70,7 +70,7 @@ class vasp_writeincar:
             incar.write("IBRION   = 2    \n")   
             incar.write("ISIF     = 2    \n")
             incar.write("OPTIM    = 0.3  \n")
-            incar.write("PSTRESS  = {}0  \n".format(str(self.press)))   
+            incar.write("PSTRESS  = {}   \n".format(str(float(self.press)*10)))   
 
     def opt_incar2(self, incar_dirpath):
         incar_filepath = os.path.join(incar_dirpath, "INCAR_2")
@@ -91,7 +91,7 @@ class vasp_writeincar:
             incar.write("IBRION   = 2    \n" )   
             incar.write("ISIF     = 4    \n" )   
             incar.write("OPTIM    = 0.3  \n")
-            incar.write("PSTRESS  = {}0  \n".format(str(self.press)) )   
+            incar.write("PSTRESS  = {}   \n".format(str(float(self.press)*10)) )   
 
     def opt_incar3(self, incar_dirpath):
         incar_filepath = os.path.join(incar_dirpath, "INCAR_3")
@@ -111,8 +111,8 @@ class vasp_writeincar:
             incar.write("NSW      = 500  \n")   
             incar.write("IBRION   = 2    \n")   
             incar.write("ISIF     = 3    \n")        
-            incar.write("OPTIM    = 0.05  \n ")
-            incar.write("PSTRESS  = {}0  \n".format(str(self.press)))    
+            incar.write("OPTIM    = 0.05 \n ")
+            incar.write("PSTRESS  = {}   \n".format(str(float(self.press)*10)))    
 
     def opt_fine_incar(self, incar_dirpath):
         incar_filepath = os.path.join(incar_dirpath, "INCAR_fine")
@@ -132,7 +132,7 @@ class vasp_writeincar:
             incar.write("IBRION   = {}   \n".format(str(self.ibrion)))   
             incar.write("ISIF     = {}   \n".format(str(self.isif)))    
             incar.write("OPTIM    = {}   \n".format(str(self.optim)))
-            incar.write("PSTRESS  = {}0  \n".format(str(self.press)))    
+            incar.write("PSTRESS  = {}   \n".format(str(float(self.press)*10)))    
             
     def disp_incar(self, incar_dirpath):
         incar_filepath = os.path.join(incar_dirpath, "INCAR_disp")

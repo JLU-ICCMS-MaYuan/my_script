@@ -8,6 +8,7 @@ from pprint import pprint
 from config import config
 from specify_wyckoffs import specify_wyckoffs
 from substitution import substitution
+from pso import pso
 
 class generator_methods:
 
@@ -20,3 +21,6 @@ class generator_methods:
 
         if self.config_d["mode"] == "substitution":
             substitution.init_from_config(self.config_d)
+
+        if self.config_d["mode"] == "pso":
+            pso.init_from_config(self.config_d)
