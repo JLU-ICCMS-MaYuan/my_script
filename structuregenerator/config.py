@@ -43,3 +43,10 @@ class config:
                 except (NameError, SyntaxError):
                     logger.error("there is no {}".format(key))
         
+        if "pso" in config_inputini.sections():
+            for key, value in config_inputini.items("pso"):
+                try:
+                    self.config_d[key] = eval(value)
+                except (NameError, SyntaxError):
+                    logger.error("there is no {}".format(key))
+        

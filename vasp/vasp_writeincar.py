@@ -32,7 +32,7 @@ class vasp_writeincar:
             ediff=other_class.ediff,
             ibrion=other_class.ibrion,
             isif=other_class.isif,
-            optim=other_class.optim,
+            potim=other_class.potim,
             press=other_class.press,
             mode=other_class.mode,
         )
@@ -46,7 +46,7 @@ class vasp_writeincar:
             ismear=other_class.ismear,
             sigma=other_class.sigma,
             ediff=other_class.ediff,
-            optim=other_class.optim,
+            potim=other_class.potim,
             mode=other_class.mode,
         )
         return self
@@ -62,14 +62,14 @@ class vasp_writeincar:
             incar.write("KSPACING = 0.8  \n")            
             incar.write("ISMEAR   = 1    \n")   
             incar.write("SIGMA    = 0.2  \n")   
-            incar.write("NELM     = 90   \n")   
+            incar.write("NELM     = 200   \n")   
             incar.write("NELMIN   = 6    \n")   
             incar.write("EDIFF    = 1e-3 \n")
  
             incar.write("NSW      = 200  \n")   
             incar.write("IBRION   = 2    \n")   
             incar.write("ISIF     = 2    \n")
-            incar.write("OPTIM    = 0.3  \n")
+            incar.write("POTIM    = 0.3  \n")
             incar.write("PSTRESS  = {}   \n".format(str(float(self.press)*10)))   
 
     def opt_incar2(self, incar_dirpath):
@@ -83,14 +83,14 @@ class vasp_writeincar:
             incar.write("KSPACING = 0.5  \n")
             incar.write("ISMEAR   = 1    \n")   
             incar.write("SIGMA    = 0.2  \n")   
-            incar.write("NELM     = 90   \n")   
+            incar.write("NELM     = 200   \n")   
             incar.write("NELMIN   = 6    \n")   
             incar.write("EDIFF    = 1e-4 \n")
             incar.write("EDIFFG   = -0.2 \n")  
             incar.write("NSW      = 400  \n")   
             incar.write("IBRION   = 2    \n")   
             incar.write("ISIF     = 4    \n")   
-            incar.write("OPTIM    = 0.1  \n")
+            incar.write("POTIM    = 0.1  \n")
             incar.write("PSTRESS  = {}   \n".format(str(float(self.press)*10)) )   
 
     def opt_incar3(self, incar_dirpath):
@@ -111,7 +111,7 @@ class vasp_writeincar:
             incar.write("NSW      = 500  \n")   
             incar.write("IBRION   = 2    \n")   
             incar.write("ISIF     = 3    \n")        
-            incar.write("OPTIM    = 0.05 \n")
+            incar.write("POTIM    = 0.05 \n")
             incar.write("PSTRESS  = {}   \n".format(str(float(self.press)*10)))    
 
     def opt_fine_incar(self, incar_dirpath):
@@ -131,7 +131,7 @@ class vasp_writeincar:
             incar.write("NSW      = 300  \n")   
             incar.write("IBRION   = {}   \n".format(str(self.ibrion)))   
             incar.write("ISIF     = {}   \n".format(str(self.isif)))    
-            incar.write("OPTIM    = {}   \n".format(str(self.optim)))
+            incar.write("POTIM    = {}   \n".format(str(self.potim)))
             incar.write("PSTRESS  = {}   \n".format(str(float(self.press)*10)))    
             
     def disp_incar(self, incar_dirpath):

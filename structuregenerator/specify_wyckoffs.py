@@ -29,7 +29,7 @@ from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from ase.formula import Formula
 
 
-logger = logging.getLogger("GENERATOR")
+logger = logging.getLogger(__name__)
 
 def handle(timeout, frame):  # 收到信号 SIGALRM 后的回调函数，第一个参数是信号的数字，第二个参数是the interrupted stack frame.
     print("bad structure")
@@ -59,11 +59,11 @@ class specify_wyckoffs:
 
     def __init__(
         self              ,
+        work_path: Path,
         spacegroup_number: int,
         nameofatoms: list[str], 
         optionalsites: list[list[str]], 
         sitesoccupiedrange: list[int],
-        work_path: Path,
         popsize: int,
         maxlimit: int,
         distancematrix: list[list[float]]
@@ -93,7 +93,7 @@ class specify_wyckoffs:
                 logger.info(f"try successfully write POSCAR_{i+1} !")
                 filepath = os.path.join(self.work_path, "POSCAR_" + str(i+1))
                 Poscar(struct).write_file(filepath)
-                
+
 
     def get_H(self, H_occupied_wps, h_lower, h_upper):
         if h_upper < h_lower:
@@ -225,11 +225,11 @@ class specify_wyckoffs:
     def init_from_config(cls, config_d: dict):
 
         self = cls(
+            work_path=config_d["work_path"],
             spacegroup_number=config_d["spacegroup_number"],
             nameofatoms=config_d["nameofatoms"], 
             optionalsites=config_d["optionalsites"], 
             sitesoccupiedrange=config_d["sitesoccupiedrange"],
-            work_path=config_d["work_path"],
             popsize=config_d["popsize"],    
             maxlimit=config_d["maxlimit"],
             distancematrix=config_d["distancematrix"],

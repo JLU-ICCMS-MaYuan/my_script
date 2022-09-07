@@ -65,8 +65,8 @@ class vasp_inputpara(vasp_base):
         if not hasattr(self, "isif"):
             self.isif = 3
 
-        if not hasattr(self, "optim"):
-            self.optim = 0.1
+        if not hasattr(self, "potim"):
+            self.potim = 0.1
         
         if not hasattr(self, "mode"):
             self.mode = None 

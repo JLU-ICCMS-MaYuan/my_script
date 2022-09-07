@@ -1,0 +1,27 @@
+{
+    "real": {
+        "": "double",
+        "8": "double",
+        "*8": "double",
+        "q2": "double",
+        "sp": "double",
+        "dp": "double"
+    },
+    "complex": {
+        "": "complex_double",
+        "8": "complex_double",
+        "q2": "complex_double",
+        "dp": "complex_double",
+        "dcp": "complex_double"
+    },
+    "integer": {
+        "": "int",
+        "bit_32": "int",
+        "bit_64": "long_long",
+        "8": "long_long",
+        "q2": "long_long",
+        "I4B": "int",
+        "i4b": "int",
+        "4": "int"
+    }
+}
