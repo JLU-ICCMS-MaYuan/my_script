@@ -1,5 +1,4 @@
-#!/public/home/mayuan/miniconda3/envs/cage/bin/python3
-#!/work/home/mayuan/miniconda3/envs/cage/bin/python3
+#!/usr/bin/env python
 
 '''
 vasp_main.py -i ./test/POSCAR          -w ./test/ -j pbs relax -m encut=400 kspacing=0.3 mode=rv3
