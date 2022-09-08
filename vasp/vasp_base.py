@@ -31,15 +31,18 @@ class vasp_base:
         press: int,
         submit_job_system: str,
         input_file_path: Path,
+        mode: str,
     ) -> None:
 
         self.work_path         = work_path
         self.press             = press          
         self.submit_job_system = submit_job_system
         self.input_file_path   = input_file_path
+        self.mode              = mode
+        
         self.input_file_name   = self.input_file_path.name.split(".")[0]
 
-        self.work_underpressure= Path(self.work_path).joinpath(self.input_file_name, str(self.press))
+        self.work_underpressure= Path(self.work_path).joinpath(self.input_file_name+"-"+self.mode, str(self.press))
         if not self.work_underpressure.exists():
             self.work_underpressure.mkdir(parents=True)
 

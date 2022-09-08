@@ -23,13 +23,15 @@ class vasp_inputpara(vasp_base):
         press: int,
         submit_job_system: str,
         input_file_path: str,
+        mode: str,
         **kwargs: dict,
         ):
         super(vasp_inputpara, self).__init__(
             work_path, 
             press, 
             submit_job_system, 
-            input_file_path
+            input_file_path,
+            mode,
             )
 
         for key, value in kwargs.items():
@@ -116,23 +118,13 @@ class vasp_inputpara(vasp_base):
         press             = config['press']                ; del config['press']
         submit_job_system = config['submit_job_system']    ; del config['submit_job_system']
         input_file_path   = Path(config['input_file_path']); del config['input_file_path']
+        mode              = config['mode']                 ; del config['mode']
         self = cls(
             work_path=work_path,
             press=press,
             submit_job_system=submit_job_system,
             input_file_path=input_file_path,
-            **config,
-        )
-        return self
-
-    @classmethod
-    def init_from_config2(cls, input_file_path, config: dict):
-
-        self = cls(
-            work_path=input_file_path,
-            press=press,
-            submit_job_system=submit_job_system,
-            input_file_path=input_file_path,
+            mode=mode,
             **config,
         )
         return self
