@@ -15,9 +15,10 @@ vasp_main.py -i ./test/POSCAR -w ./test/ -j slurm relax -m encut=400 kspacing=0.
 vasp_main.py -i ./test/POSCAR -w ./test/ -j slurm relax -m encut=400 kspacing=0.3 mode=rvf queue=xieyu
 vasp_main.py -i ./test/POSCAR -w ./test/ -j slurm phono -m supercell=[2,2,2] kpoints=[40,40,40] mode=disp  
 vasp_main.py -i ./test/POSCAR -w ./test/ -j slurm phono -m supercell=[2,2,2] kpoints=[40,40,40] mode=dfpt
-vasp_main.py -i ./test/0.0/POSCAR-init -w ./test/ phono -m mode=dispprog supercell=[2,2,2]
-vasp_main.py -i ./test/0.0/POSCAR-init -w ./test/ phono -m mode=dfptprog supercell=[2,2,2]
 
+-i 指定poscar-init的路径
+-w 指定到压强那一级的路径
+vasp_main.py -i ./CONTCAR/210.0/POSCAR-init -w ./CONTCAR/210.0/ data -m mode=dispprog supercell=[2,2,2]
 '''
 
 import os

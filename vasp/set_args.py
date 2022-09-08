@@ -1,6 +1,6 @@
 from argparse import ArgumentParser
 
-from vasp_run import vasp_relax, vasp_phono, vaspbatch_relax
+from vasp_run import vasp_relax, vasp_phono, vaspbatch_relax, vaspbatch_phono, vasp_processdata
 
 def set_more_args(parser: ArgumentParser):
 
@@ -75,10 +75,38 @@ def set_more_args(parser: ArgumentParser):
         type=str,
         dest='more_args',
         nargs='+',
-        help="输入更多关于结构弛豫的参数"
+        help="输入更多关于批量结构弛豫的参数"
     )
     parser_batch_relax.set_defaults(vasp_workflow=vaspbatch_relax) 
 
-    args = parser.parse_args()
+    # 批量声子谱
+    parser_batch_relax = subparsers.add_parser("batchphono")
+    parser_batch_relax.add_argument(
+        '-m',
+        '--more-argments-about-batch-relax',
+        type=str,
+        dest='more_args',
+        nargs='+',
+        help="输入更多关于批量声子计算参数"
+    )
+    parser_batch_relax.set_defaults(vasp_workflow=vaspbatch_phono) 
 
+    # 处理数据 
+    parser_batch_relax = subparsers.add_parser("data")
+    parser_batch_relax.add_argument(
+        '-m',
+        '--more-argments-about-batch-relax',
+        type=str,
+        dest='more_args',
+        nargs='+',
+        help="输入更多关于结构弛豫的参数"
+    )
+    parser_batch_relax.set_defaults(vasp_workflow=vasp_processdata) 
+
+
+
+
+
+
+    args = parser.parse_args()
     return args

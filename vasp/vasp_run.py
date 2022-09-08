@@ -1,10 +1,15 @@
 import os
+import re
 import logging
 from argparse import ArgumentParser
 from pathlib import Path
 from itertools import chain
 
+from ase.io import read
+from pymatgen.io.ase import AseAtomsAdaptor
+
 from config import config
+from vasp_base import vasp_base
 from vasp_inputpara import vasp_inputpara 
 from vasp_writeincar import vasp_writeincar
 from vasp_writekpoints import vasp_writekpoints
@@ -90,69 +95,134 @@ class vasp_phono:
         # submit the job
         self.vasp_submitjob   = vasp_submitjob.init_from_phonoinput(self.phono_inputpara)
 
-        if  self.phono_inputpara.mode == "dispprog" or\
-            self.phono_inputpara.mode == "dfptprog":
-            self.post_progress(
-                self.phono_inputpara.mode
-            )
+
+class vaspbatch_phono(vasp_phono):
+
+    def __init__(self, args: ArgumentParser) -> None:
+
+        self._config = config(args).read_config()
+        self.input_dir_path = Path(self._config['input_file_path'])
+        if self.input_dir_path.is_dir():
+            self.input_files_path = list(self.input_dir_path.glob("*.vasp"))
+            work_path         = self._config['work_path']        ; del self._config['work_path']
+            press             = self._config['press']            ; del self._config['press']
+            submit_job_system = self._config['submit_job_system']; del self._config['submit_job_system']
+            pass                                                 ; del self._config['input_file_path']
+            mode              = self._config['mode']             ; del self._config['mode']
+            for input_file_path in self.input_files_path:
+                # prepare the POSCAR POTCAR  
+                self.relax_inputpara  = vasp_inputpara(
+                    work_path=work_path,
+                    press=press,
+                    submit_job_system=submit_job_system,
+                    input_file_path=input_file_path,
+                    mode=mode,
+                    **self._config
+                    )
+
+                # init the INCAR
+                self.vasp_writeincar  = vasp_writeincar.init_from_phonoinput(self.phono_inputpara)
+
+                # init the KPOINTS
+                if self.phono_inputpara.kpoints != [None, None, None]:
+                    self.vasp_kpoints     = vasp_writekpoints.init_from_inputpara(self.phono_inputpara)
+
+                # init the submit job script
+                self.vasp_writesubmit = vasp_writesubmit.init_from_phonoinput(self.phono_inputpara)
+
+                # submit the job
+                self.vasp_submitjob   = vasp_submitjob.init_from_phonoinput(self.phono_inputpara)
+
+
+class vasp_processdata(vasp_base):
+
+    def __init__(self, args: ArgumentParser) -> None:
+
+        # read input para
+        self._config = config(args).read_config()
+        self.input_file_path = self._config['input_file_path']
+        self.work_path       = Path(self._config['work_path'])
+        self.mode            = self._config['mode']
+
+        self.ase_type          = read(self.input_file_path)
+        self.struct_type       = AseAtomsAdaptor.get_structure(self.ase_type)
+        self.get_struct_info(self.struct_type, self.work_path)
+        
+        if "supercell" in self._config:
+            _supercell = re.findall(r"\d+", self._config['supercell'])
+            self.supercell = list(map(int, _supercell))
+        else:
+            raise ValueError("you have to specify the supercell=[?,?,?]")
+
+        self.post_progress()
 
     def post_progress(
         self, 
-        mode,
         ):
 
-        if mode == "dispprog":
+        if self.mode == "dispprog":
 
-            _disp_num = len(list(Path(self.phono_inputpara.work_underpressure).glob("disp-*")))
+            _disp_num = len(list(Path(self.work_path).glob("disp-*")))
             disp_num = str(_disp_num).rjust(3, '0')
 
             cwd = os.getcwd()
-            os.chdir(self.phono_inputpara.work_underpressure)
+            os.chdir(self.work_path)
             os.system("phonopy -f disp-{001..%s}/vasprun.xml" %(disp_num))
             os.chdir(cwd) 
+            special_points, path_coords = self.get_hspp()
 
-            self.write_Disp_band_conf(
-                self.phono_inputpara.work_underpressure, 
-                self.phono_inputpara.species, 
-                self.phono_inputpara.supercell, 
+            self.write_disp_band_conf(
+                self.work_path, 
+                self.species, 
+                self.supercell, 
                 special_points,
                 path_coords
-                )     
-        elif mode == "dfptprog":
+                )
+            
+            cwd = os.getcwd()
+            os.chdir(self.work_path)
+            os.system("phonopy -p -s band.conf -c POSCAR-init")
+            os.system("phonopy-bandplot  --gnuplot> band.dat")
+            os.chdir(cwd)
+
+        elif self.mode == "dfptprog":
 
             cwd = os.getcwd()
-            os.chdir(self.phono_inputpara.work_underpressure)
+            os.chdir(self.work_path)
             os.system("phonopy --fc vasprun.xml")
             os.chdir(cwd)
             special_points, path_coords = self.get_hspp()
             
             self.write_dfpt_band_conf(
-                self.phono_inputpara.work_underpressure, 
-                self.phono_inputpara.species, 
-                self.phono_inputpara.supercell, 
+                self.work_path, 
+                self.species, 
+                self.supercell, 
                 special_points,
                 path_coords
                 )     
 
             cwd = os.getcwd()
-            os.chdir(self.phono_inputpara.work_underpressure)
+            os.chdir(self.work_path)
             os.system("phonopy -p -s band.conf -c POSCAR-init")
             os.system("phonopy-bandplot  --gnuplot> band.dat")
             os.chdir(cwd)
-    
+
     def get_hspp(self):
 
-        ltype   = self.phono_inputpara.ase_type.cell.get_bravais_lattice()
+        ltype   = self.ase_type.cell.get_bravais_lattice()
         pstring = ltype.special_path
         _plist  = [[ p for p in pp] for pp in pstring.split(",")]
 
         logger.info(f"the high symmetry points path is {_plist}")
 
-        high_symmetry_type = input(
+        print(
             "please input the mode you want\n",
             "'all_points'\n",
             "'main_points'\n",
-            "Nothing to input\n")
+            "Nothing to input\n"
+            )
+        high_symmetry_type = input()
+
         if not high_symmetry_type:
             high_symmetry_type = "all_points" # default
         if "," in pstring:
@@ -214,47 +284,3 @@ class vasp_phono:
             f.write("BAND_LABELS={}          \n".format(' '.join(special_points)))
             path_coords = list(chain.from_iterable(path_coords)); path_coords=list(map(str, path_coords))
             f.write("BAND={}                 \n".format(' '.join(path_coords)))
-
-
-class vaspbatch_phono(vasp_phono):
-
-    def __init__(self, args: ArgumentParser) -> None:
-
-        self._config = config(args).read_config()
-        self.input_dir_path = Path(self._config['input_file_path'])
-        if self.input_dir_path.is_dir():
-            self.input_files_path = list(self.input_dir_path.glob("*.vasp"))
-            work_path         = self._config['work_path']        ; del self._config['work_path']
-            press             = self._config['press']            ; del self._config['press']
-            submit_job_system = self._config['submit_job_system']; del self._config['submit_job_system']
-            pass                                                 ; del self._config['input_file_path']
-            mode              = self._config['mode']             ; del self._config['mode']
-            for input_file_path in self.input_files_path:
-                # prepare the POSCAR POTCAR  
-                self.relax_inputpara  = vasp_inputpara(
-                    work_path=work_path,
-                    press=press,
-                    submit_job_system=submit_job_system,
-                    input_file_path=input_file_path,
-                    mode=mode,
-                    **self._config
-                    )
-
-                # init the INCAR
-                self.vasp_writeincar  = vasp_writeincar.init_from_phonoinput(self.phono_inputpara)
-
-                # init the KPOINTS
-                if self.phono_inputpara.kpoints != [None, None, None]:
-                    self.vasp_kpoints     = vasp_writekpoints.init_from_inputpara(self.phono_inputpara)
-
-                # init the submit job script
-                self.vasp_writesubmit = vasp_writesubmit.init_from_phonoinput(self.phono_inputpara)
-
-                # submit the job
-                self.vasp_submitjob   = vasp_submitjob.init_from_phonoinput(self.phono_inputpara)
-
-                if  self.phono_inputpara.mode == "dispprog" or\
-                    self.phono_inputpara.mode == "dfptprog":
-                    self.post_progress(
-                        self.phono_inputpara.mode
-                    )
