@@ -3,6 +3,7 @@ import re
 import shutil
 from pathlib import Path
 from argparse import ArgumentParser
+from turtle import pos
 
 from ase.io import read
 from pymatgen.io.ase import AseAtomsAdaptor
@@ -45,7 +46,7 @@ class vasp_inputpara(vasp_base):
             self.kspacing = 0.3
 
         if hasattr(self, "kpoints"):
-            _kpoints = re.findall(r"\d+", config['kpoints'])
+            _kpoints = re.findall(r"\d+", kwargs['kpoints'])
             self.kpoints = list(map(int, _kpoints))
         else:
             self.kpoints = [None, None, None]
@@ -75,7 +76,7 @@ class vasp_inputpara(vasp_base):
             self.queue = "xieyu"
 
         if hasattr(self, "supercell"):
-            _supercell = re.findall(r"\d+", config['supercell'])
+            _supercell = re.findall(r"\d+", kwargs['supercell'])
             self.supercell = list(map(int, _supercell))
         else:
             self.supercell = [1, 1, 1]
@@ -95,8 +96,13 @@ class vasp_inputpara(vasp_base):
             sposcar_file= Path(self.work_underpressure).joinpath("SPOSCAR")
             self.sposcar_ase_type    = read(sposcar_file)
             self.sposcar_struct_type = AseAtomsAdaptor.get_structure(self.sposcar_ase_type) 
-            shutil.copy(poscar_file, poscar_init) 
-        
+            if self.mode == 'dfpt':
+                shutil.move(poscar_file, poscar_init) 
+                shutil.copy(sposcar_file, poscar_file)
+            elif self.mode == 'disp':
+                shutil.copy(poscar_file, poscar_init)
+                
+
         if self.mode == "dispprog":
             pass
 

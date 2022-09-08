@@ -1,5 +1,5 @@
-#!/public/home/mayuan/miniconda3/envs/cage/bin/python3
 #!/work/home/mayuan/miniconda3/envs/cage/bin/python3
+#!/public/home/mayuan/miniconda3/envs/cage/bin/python3
 # -*- coding: utf-8 -*-
 #
 # This file is part of CALYPSO PACKAGE.

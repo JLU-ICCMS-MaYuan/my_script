@@ -40,6 +40,7 @@ class vasp_writesubmit:
             work_underpressure=other_class.work_underpressure,
             submit_job_system=other_class.submit_job_system,
             mode=other_class.mode,
+            queue=other_class.queue,
         )
         
         return self

@@ -71,9 +71,9 @@ class vasp_phono:
 
         # read input para
         self._config = config(args).read_config()
-
+        
         # prepare the POSCAR POTCAR  
-        self.relax_inputpara  = vasp_inputpara.init_from_config1(self._config)
+        self.phono_inputpara  = vasp_inputpara.init_from_config1(self._config)
 
         # init the INCAR
         self.vasp_writeincar  = vasp_writeincar.init_from_phonoinput(self.phono_inputpara)
