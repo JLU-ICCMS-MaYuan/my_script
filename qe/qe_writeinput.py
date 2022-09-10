@@ -23,7 +23,7 @@ class qe_writeinput:
         ):
 
         self.work_underpressure = work_underpressure
-        self.workpath_pppath = workpath_pppath
+        self.workpath_pppath = Path(workpath_pppath)
         self.press = press
         self.qe_workflow = qe_workflow
         self.mode = mode
@@ -173,7 +173,7 @@ class qe_writeinput:
             qe.write(" calculation='vc-relax',         \n")
             qe.write(" restart_mode='from_scratch',    \n")
             qe.write(" prefix='{}',                    \n".format(self.system_name))
-            qe.write(" pseudo_dir='{}',                \n".format(self.workpath_pppath))
+            qe.write(" pseudo_dir='{}',                \n".format(str(self.workpath_pppath.absolute())))
             qe.write(" verbosity = 'high',             \n")  
             qe.write(" outdir='./tmp',                 \n")
             qe.write(" forc_conv_thr = 1.0d-5,         \n")
@@ -241,7 +241,7 @@ class qe_writeinput:
             qe.write(" calculation='scf',              \n")
             qe.write(" restart_mode='from_scratch',    \n")
             qe.write(" prefix='{}',                    \n".format(self.system_name))
-            qe.write(" pseudo_dir='{}',                \n".format(self.workpath_pppath))
+            qe.write(" pseudo_dir='{}',                \n".format(str(self.workpath_pppath.absolute())))
             qe.write(" outdir='./tmp',                 \n")
             qe.write(" forc_conv_thr = 1.0d-3,         \n")
             qe.write(" etot_conv_thr = 1.0d-4,         \n")
@@ -293,7 +293,7 @@ class qe_writeinput:
             qe.write(" calculation='scf',              \n")
             qe.write(" restart_mode='from_scratch',    \n")
             qe.write(" prefix='{}',                    \n".format(self.system_name))
-            qe.write(" pseudo_dir='{}',                \n".format(self.workpath_pppath))
+            qe.write(" pseudo_dir='{}',                \n".format(str(self.workpath_pppath.absolute())))
             qe.write(" outdir='./tmp',                 \n")
             qe.write(" forc_conv_thr = 1.0d-3,         \n")
             qe.write(" etot_conv_thr = 1.0d-4,         \n")
@@ -343,7 +343,7 @@ class qe_writeinput:
             qe.write("&CONTROL\n")
             qe.write(" calculation='nscf',             \n")
             qe.write(" prefix='{}',                    \n".format(self.system_name))
-            qe.write(" pseudo_dir='{}',                \n".format(self.workpath_pppath))
+            qe.write(" pseudo_dir='{}',                \n".format(str(self.workpath_pppath.absolute())))
             qe.write(" outdir='./tmp',                 \n")
             qe.write(" forc_conv_thr = 1.0d-3,         \n")
             qe.write(" etot_conv_thr = 1.0d-4,         \n")

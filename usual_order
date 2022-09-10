@@ -1,1 +1,0 @@
-vasp_main.py -i ./La2Lu6H46_755/CONTCAR-rvf/200.0/CONTCAR  -w ./La2Lu6H46_755 -j slurm -p 300 phono -m supercell=[2,2,2] kpoints=[20,20,20] ismear=1 mode=disp

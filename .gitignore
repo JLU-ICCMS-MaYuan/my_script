@@ -10,6 +10,7 @@
 /__pycache__
 /qe/__pycache__
 /vasp/__pycache__
+/vasp/vasptools/__pycache__/
 /structuregenerator/__pycache__
 /structuregenerator/psolib/__pycache__
 /structuregenerator/psolib/finger/__pycache__
