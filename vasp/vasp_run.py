@@ -10,7 +10,7 @@ from pymatgen.io.ase import AseAtomsAdaptor
 
 from config import config
 from vasp_base import vasp_base
-from vasp_inputpara import vasp_inputpara 
+from vasp_inputpara import vasp_inputpara, vasp_phonopara 
 from vasp_writeincar import vasp_writeincar
 from vasp_writekpoints import vasp_writekpoints
 from vasp_writesubmit import vasp_writesubmit
@@ -80,7 +80,7 @@ class vasp_phono:
         self._config = config(args).read_config()
         
         # prepare the POSCAR POTCAR  
-        self.phono_inputpara  = vasp_inputpara.init_from_config1(self._config)
+        self.phono_inputpara  = vasp_phonopara.init_from_config1(self._config)
 
         # init the INCAR
         self.vasp_writeincar  = vasp_writeincar.init_from_phonoinput(self.phono_inputpara)
@@ -111,7 +111,7 @@ class vaspbatch_phono(vasp_phono):
             mode              = self._config['mode']             ; del self._config['mode']
             for input_file_path in self.input_files_path:
                 # prepare the POSCAR POTCAR  
-                self.relax_inputpara  = vasp_inputpara(
+                self.phono_inputpara  = vasp_phonopara(
                     work_path=work_path,
                     press=press,
                     submit_job_system=submit_job_system,
