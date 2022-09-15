@@ -7,3 +7,11 @@ vasp_main.py -i CONTCAR-rvf/200.0/CONTCAR -w ./ -j slurm -p 200 phono -m mode=di
 ```shell
 vasp_main.py -i ./POSCAR-init -w ./ data -m mode=dispprog supercell=[2,2,2]
 ```
+
+mytoolkit 命令
+
+将 cif 转化为 vasp
+```shell
+tool_main.py -i Ba3Si23.cif -w ./ convert -m vasp
+```
+
