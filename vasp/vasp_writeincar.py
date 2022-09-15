@@ -30,9 +30,14 @@ class vasp_writeincar:
             ismear=other_class.ismear,
             sigma=other_class.sigma,
             ediff=other_class.ediff,
+            ediffg=other_class.ediffg,
             ibrion=other_class.ibrion,
             isif=other_class.isif,
             potim=other_class.potim,
+            nelm=other_class.nelm,
+            ncore=other_class.ncore,
+            lreal=other_class.lreal,
+            
             press=other_class.press,
             mode=other_class.mode,
         )
@@ -46,7 +51,11 @@ class vasp_writeincar:
             ismear=other_class.ismear,
             sigma=other_class.sigma,
             ediff=other_class.ediff,
+            ediffg=other_class.ediffg,
             potim=other_class.potim,
+            nelm=other_class.nelm,
+            ncore=other_class.ncore,
+            lreal=other_class.lreal,
             mode=other_class.mode,
         )
         return self
@@ -125,7 +134,7 @@ class vasp_writeincar:
             incar.write("KSPACING = {}   \n".format(str(self.kspacing))) 
             incar.write("ISMEAR   = {}   \n".format(str(self.ismear)))   
             incar.write("SIGMA    = {}   \n".format(str(self.sigma)))   
-            incar.write("NELM     = 100  \n")   
+            incar.write("NELM     = {}   \n".format(str(self.nelm)))   
             incar.write("NELMIN   = 6    \n")   
             incar.write("EDIFF    = {}   \n".format(str(self.ediff)))
             incar.write("NSW      = 300  \n")   

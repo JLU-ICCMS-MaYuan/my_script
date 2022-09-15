@@ -56,6 +56,9 @@ class vasp_inputpara(vasp_base):
         if not hasattr(self, "ediff"):
             self.ediff = 1e-8
 
+        if not hasattr(self, "ediffg"):
+            self.ediffg = -0.01
+
         if not hasattr(self, "ibrion"):
             self.ibrion = 2
 
