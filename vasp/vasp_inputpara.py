@@ -75,9 +75,7 @@ class vasp_inputpara(vasp_base):
             self.ncore = 1
 
         if not hasattr(self, "lreal"):
-            self.lreal = ".FALSE."
-        else:
-            self.lreal = ".TRUE."
+            self.lreal = "Auto"
         
         if not hasattr(self, "mode"):
             self.mode = None 

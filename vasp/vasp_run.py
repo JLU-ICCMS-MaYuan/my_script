@@ -87,7 +87,7 @@ class vasp_phono:
 
         # init the KPOINTS
         if self.phono_inputpara.kpoints != [None, None, None]:
-            self.vasp_kpoints     = vasp_writekpoints.init_from_inputpara(self.phono_inputpara)
+            self.vasp_kpoints = vasp_writekpoints.init_from_inputpara(self.phono_inputpara)
 
         # init the submit job script
         self.vasp_writesubmit = vasp_writesubmit.init_from_phonoinput(self.phono_inputpara)
