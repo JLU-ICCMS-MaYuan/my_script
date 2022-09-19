@@ -25,7 +25,7 @@ class qe_base:
     ) -> None:
         '''
         initial the qe_base, only different quantity the parameters
-        work_path: decide two thing:
+        work_path: decide 3 thing:
             1. the position directory filename/press
             2. the position of ppdirectory
 
@@ -53,6 +53,10 @@ class qe_base:
                 self.work_underpressure.mkdir(parents=True, exist_ok=True)
         elif "relax.out" in self.input_file_path.name:
             self.work_underpressure= Path(self.input_file_path).parent
+        else:
+            self.work_underpressure= Path(self.work_path).joinpath(str(self.press))
+            if not self.work_underpressure.exists():
+                self.work_underpressure.mkdir(parents=True, exist_ok=True)
 
         self.ase_type          = read(self.input_file_path)
         self.struct_type       = AseAtomsAdaptor.get_structure(self.ase_type)
@@ -68,7 +72,13 @@ class qe_base:
         ############################# done pp directory ##########################        
         
     def get_struct_info(self, struct, output_poscar):
-        
+        '''
+        input parameter:
+            struct:         pymatgen class structure
+            output_poscar:  the output path of primitive cell
+        return:
+            None
+        '''
         spa = SpacegroupAnalyzer(struct)
         # bstruct = spa.get_conventional_standard_structure()
         pstruct = spa.get_primitive_standard_structure()
@@ -90,6 +100,16 @@ class qe_base:
         self.fractional_sites   = pstruct.sites
 
     def get_USPP(self, workpath_pppath):
+        '''
+        input parameter:
+            pseudopotention path 
+        
+        function(功能):
+            if the target uspp doesn't exist:
+                copy the target uspp that is in the potlib to custom potlib
+            else:
+                add the path of target uspp to the `self.final_choosed_pp`
+        '''
         pp_files = os.listdir(workpath_pppath)
         self.final_choosed_pp = []
         for species in self.species:
@@ -108,15 +128,25 @@ class qe_base:
             logger.info(f"species_name {species_name}")
 
     def get_single_uspp(self, species_name, workpath_pppath):
-
+        '''
+        function:
+            obtain a single uspp 
+        input:
+            species_name: element name from pymatgen.composition.species.name
+            workpath_pppath: 
+        '''
         qe_USPP1 = os.path.abspath("/work/home/mayuan/POT/qe-pp/all_pbe_UPF_v1.5")
         qe_USPP2 = os.path.abspath("/public/home/mayuan/POT/qe-pp/all_pbe_UPF_v1.5")
+        qe_USPP3 = os.path.abspath("/work/home/may/POT/qe-pp/all_pbe_UPF_v1.5")
         if os.path.exists(qe_USPP1):
             qe_USPP = qe_USPP1
             ppfiles = os.listdir(qe_USPP1)
         elif os.path.exists(qe_USPP2):
             qe_USPP = qe_USPP2
             ppfiles = os.listdir(qe_USPP2)
+        elif os.path.exists(qe_USPP3):
+            qe_USPP = qe_USPP3
+            ppfiles = os.listdir(qe_USPP3)
         targetppfiles = filter(lambda file: re.search("^"+species_name+"\_", file.lower()), ppfiles)
         targetppnames = [pp for pp in targetppfiles]
         choosed_flag  = False
