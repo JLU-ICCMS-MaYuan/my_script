@@ -10,7 +10,8 @@ def set_more_args(parser: ArgumentParser):
         type=str,
         default=None,
         dest='input_file_path',
-        help="please tell me your POSCAR path, please notice your file format had better to be ***.vasp",
+        help="please tell me your POSCAR path, please notice your file format had better to be ***.vasp.\n"
+            "the input-file-path format is free, such as: *.vasp, *cif, POSCAR, CONTCAR, relax.out.... \n"
     )
     parser.add_argument(
         '-p',
@@ -18,7 +19,7 @@ def set_more_args(parser: ArgumentParser):
         type=float,
         default=0.0,
         dest='press',
-        help="please tell me your press which you were on",
+        help="please tell me your press where you will calculate",
     )
     parser.add_argument(
         '-w',
@@ -26,7 +27,17 @@ def set_more_args(parser: ArgumentParser):
         type=str,
         default=None,
         dest='work_path',
-        help="please tell me your calculated directory, I will put all file there",
+        help="please tell me your calculated directory\n"
+            "   1. if input-file-path is ended with `xxx.vasp`,\n" 
+            "       the program will create the directory `xxx/press/`, \n"
+            "       the work_underpressure will be work_path/xxx/press/\n"
+            "   2. if input-file-path is ended with `relax.out`,\n"
+            "       the program will not create any the directory,\n"
+            "       the parent path of input_file_path will be the work_underpressure.\n"
+            "       such as input-file-path is `home/mayuan/substitute/relax.out`, so the parent path is `home/mayuan/substitute/`\n"
+            "       At the moment the work_path is invalid !!! So you don't need to set `-w` parameter\n"
+            "   3. if input-file-path is ended with other formats(such as POSCAR CONTCAR xxx.cif),\n"
+            "       the program will only create the directory `/press`, the work_underpressure will be `work_path/press/`\n"
     )
     parser.add_argument(
         '-j',
@@ -34,7 +45,8 @@ def set_more_args(parser: ArgumentParser):
         type=str,
         default="slurm",
         dest='submit_job_system',
-        help="please tell me your job submition system, eg: slurm, pbs",
+        help="please tell me your job submition system, \n"
+             "such as, slurm, pbs\n"
     ) 
     subparsers = parser.add_subparsers(help="subparsers")
 

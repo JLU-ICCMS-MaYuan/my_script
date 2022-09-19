@@ -3,6 +3,7 @@ import re
 import logging
 from pathlib import Path
 from qe_inputpara import qe_inputpara
+from qebin import qebin_path, eliashberg_x_path
 
 logger = logging.getLogger("qe_writesubmit")
 
@@ -163,7 +164,7 @@ class qe_writesubmit:
             slurm.write('source /work/env/intel2018                                               \n')
             slurm.write('ulimit -s unlimited                                                      \n')
             slurm.write('\n\n                                                                     \n')
-            slurm.write('mpirun -n 48 /work/software/q-e-qe-6.8/bin/pw.x -npool 4 <relax.in> relax.out \n')
+            slurm.write('mpirun -n 48 {}pw.x -npool 4 <relax.in> relax.out                        \n'.format(qebin_path))
             slurm.write('check symmetry ops is consistent or not after vc-relax                   \n')
             slurm.write('grep "Sym. Ops." relax.out                                               \n')
             slurm.write("awk '/Begin final coordinates/,/End final coordinates/{print $0}' relax.out \n")
@@ -172,9 +173,9 @@ class qe_writesubmit:
         slurm_script_filepath = os.path.join(slurm_dirpath, "slurmscffit.sh")
         with open(slurm_script_filepath, "w") as slurm:
             slurm.write('#!/bin/sh                                                                \n')     
-            slurm.write('#SBATCH  --job-name=scf.fit                                             \n')                         
-            slurm.write('#SBATCH  --output=log.scf.fit.out                                      \n')                       
-            slurm.write('#SBATCH  --error=log.scf.fit.err                                       \n')                      
+            slurm.write('#SBATCH  --job-name=scf.fit                                              \n')                         
+            slurm.write('#SBATCH  --output=log.scf.fit.out                                        \n')                       
+            slurm.write('#SBATCH  --error=log.scf.fit.err                                         \n')                      
             slurm.write('#SBATCH  --partition={}                                                  \n'.format(self.queue))    # lhy lbt is both ok                
             slurm.write('#SBATCH  --nodes=1                                                       \n')             
             slurm.write('#SBATCH  --ntasks=48                                                     \n')               
@@ -184,15 +185,15 @@ class qe_writesubmit:
             slurm.write('source /work/env/intel2018                                               \n')
             slurm.write('ulimit -s unlimited                                                      \n')
             slurm.write('\n\n                                                                     \n')
-            slurm.write('mpirun -n 48 /work/software/q-e-qe-6.8/bin/pw.x -npool 4 <scf.fit.in> scf.fit.out \n')                                                                         
+            slurm.write('mpirun -n 48 {}pw.x -npool 4 <scf.fit.in> scf.fit.out                    \n'.format(qebin_path))                                                                         
 
     def slurmscf(self, slurm_dirpath):
         slurm_script_filepath = os.path.join(slurm_dirpath, "slurmscf.sh")
         with open(slurm_script_filepath, "w") as slurm:
             slurm.write('#!/bin/sh                                                                \n')     
             slurm.write('#SBATCH  --job-name=scf                                                  \n')                         
-            slurm.write('#SBATCH  --output=log.scf.out                                           \n')                       
-            slurm.write('#SBATCH  --error=log.scf.err                                            \n')                      
+            slurm.write('#SBATCH  --output=log.scf.out                                            \n')                       
+            slurm.write('#SBATCH  --error=log.scf.err                                             \n')                      
             slurm.write('#SBATCH  --partition={}                                                  \n'.format(self.queue))    # lhy lbt is both ok                
             slurm.write('#SBATCH  --nodes=1                                                       \n')             
             slurm.write('#SBATCH  --ntasks=48                                                     \n')               
@@ -202,7 +203,7 @@ class qe_writesubmit:
             slurm.write('source /work/env/intel2018                                               \n')
             slurm.write('ulimit -s unlimited                                                      \n')
             slurm.write('\n\n                                                                     \n')
-            slurm.write('mpirun -n 48 /work/software/q-e-qe-6.8/bin/pw.x -npool 4 <scf.in> scf.out\n')   
+            slurm.write('mpirun -n 48 {}pw.x -npool 4 <scf.in> scf.out                            \n'.format(qebin_path))   
 
     def slurmnscf(self, slurm_dirpath):
         slurm_script_filepath = os.path.join(slurm_dirpath, "slurmnscf.sh")
@@ -220,86 +221,86 @@ class qe_writesubmit:
             slurm.write('source /work/env/intel2018                                               \n')
             slurm.write('ulimit -s unlimited                                                      \n')
             slurm.write('\n\n                                                                     \n')
-            slurm.write('mpirun -n 48 /work/software/q-e-qe-6.8/bin/pw.x -npool 4 <nscf.in> nscf.out\n')   
+            slurm.write('mpirun -n 48 {}pw.x -npool 4 <nscf.in> nscf.out                          \n'.format(qebin_path))   
 
     def slurmph_no_split(self, slurm_dirpath):
         slurm_script_filepath = os.path.join(slurm_dirpath, "slurmph_no_split.sh")
         with open(slurm_script_filepath, "w") as slurm:
-            slurm.write('#!/bin/sh                                                                                 \n')     
-            slurm.write('#SBATCH  --job-name=ph_no_split                                                           \n')                         
-            slurm.write('#SBATCH  --output=log.ph_no_split.out                                                     \n')                       
-            slurm.write('#SBATCH  --error=log.ph_no_split.err                                                      \n')                      
-            slurm.write('#SBATCH  --partition={}                                                                   \n'.format(self.queue))    # lhy lbt is both ok                
-            slurm.write('#SBATCH  --nodes=1                                                                        \n')             
-            slurm.write('#SBATCH  --ntasks=48                                                                      \n')               
-            slurm.write('#SBATCH  --ntasks-per-node=48                                                             \n')                        
-            slurm.write('#SBATCH  --cpus-per-task=1                                                                \n')                     
-            slurm.write('\n\n                                                                                      \n')
-            slurm.write('source /work/env/intel2018                                                                \n')
-            slurm.write('ulimit -s unlimited                                                                       \n')
-            slurm.write('\n\n                                                                                      \n')
-            slurm.write('mpirun -n 48 /work/software/q-e-qe-6.8/bin/ph.x -npool 4 <ph_no_split.in> ph_no_split.out \n')
+            slurm.write('#!/bin/sh                                                                \n')     
+            slurm.write('#SBATCH  --job-name=ph_no_split                                          \n')                         
+            slurm.write('#SBATCH  --output=log.ph_no_split.out                                    \n')                       
+            slurm.write('#SBATCH  --error=log.ph_no_split.err                                     \n')                      
+            slurm.write('#SBATCH  --partition={}                                                  \n'.format(self.queue))    # lhy lbt is both ok                
+            slurm.write('#SBATCH  --nodes=1                                                       \n')             
+            slurm.write('#SBATCH  --ntasks=48                                                     \n')               
+            slurm.write('#SBATCH  --ntasks-per-node=48                                            \n')                        
+            slurm.write('#SBATCH  --cpus-per-task=1                                               \n')                     
+            slurm.write('\n\n                                                                     \n')
+            slurm.write('source /work/env/intel2018                                               \n')
+            slurm.write('ulimit -s unlimited                                                      \n')
+            slurm.write('\n\n                                                                     \n')
+            slurm.write('mpirun -n 48 {}ph.x -npool 4 <ph_no_split.in> ph_no_split.out            \n'.format(qebin_path))
 
     def slurmph_split_from_dyn0(self, slurm_dirpath):
         slurm_script_filepath = os.path.join(slurm_dirpath, "slurmph_split_from_dyn0.sh")
         with open(slurm_script_filepath, "w") as slurm:
-            slurm.write('#!/bin/sh                                                                          \n')     
-            slurm.write('#SBATCH  --job-name=ph_split                                                       \n')                         
-            slurm.write('#SBATCH  --output=log.ph_split.out                                                 \n')                       
-            slurm.write('#SBATCH  --error=log.ph_split.err                                                  \n')                      
-            slurm.write('#SBATCH  --partition={}                                                            \n'.format(self.queue))    # lhy lbt is both ok                
-            slurm.write('#SBATCH  --nodes=1                                                                 \n')             
-            slurm.write('#SBATCH  --ntasks=48                                                               \n')               
-            slurm.write('#SBATCH  --ntasks-per-node=48                                                      \n')                        
-            slurm.write('#SBATCH  --cpus-per-task=1                                                         \n')                     
-            slurm.write('\n\n                                                                               \n')
-            slurm.write('source /work/env/intel2018                                                         \n')
-            slurm.write('ulimit -s unlimited                                                                \n')
-            slurm.write('\n\n                                                                               \n')
-            slurm.write('echo "run scf.fit"                                                                 \n')
-            slurm.write('mpirun -n 48 /work/software/q-e-qe-6.8/bin/pw.x -npool 4 <scf.fit.in> scf.fit.out  \n')
-            slurm.write('echo "run scf"                                                                     \n')
-            slurm.write('mpirun -n 48 /work/software/q-e-qe-6.8/bin/pw.x -npool 4 <scf.in> scf.out          \n')
-            slurm.write('echo "run split_ph"                                                                \n')
-            slurm.write('mpirun -n 48 /work/software/q-e-qe-6.8/bin/ph.x -npool 4 <split_ph.in> split_ph.out\n')   
+            slurm.write('#!/bin/sh                                                                \n')     
+            slurm.write('#SBATCH  --job-name=ph_split                                             \n')                         
+            slurm.write('#SBATCH  --output=log.ph_split.out                                       \n')                       
+            slurm.write('#SBATCH  --error=log.ph_split.err                                        \n')                      
+            slurm.write('#SBATCH  --partition={}                                                  \n'.format(self.queue))    # lhy lbt is both ok                
+            slurm.write('#SBATCH  --nodes=1                                                       \n')             
+            slurm.write('#SBATCH  --ntasks=48                                                     \n')               
+            slurm.write('#SBATCH  --ntasks-per-node=48                                            \n')                        
+            slurm.write('#SBATCH  --cpus-per-task=1                                               \n')                     
+            slurm.write('\n\n                                                                     \n')
+            slurm.write('source /work/env/intel2018                                               \n')
+            slurm.write('ulimit -s unlimited                                                      \n')
+            slurm.write('\n\n                                                                     \n')
+            slurm.write('echo "run scf.fit"                                                       \n')
+            slurm.write('mpirun -n 48 {}pw.x -npool 4 <scf.fit.in> scf.fit.out                    \n'.format(qebin_path))
+            slurm.write('echo "run scf"                                                           \n')
+            slurm.write('mpirun -n 48 {}pw.x -npool 4 <scf.in> scf.out                            \n'.format(qebin_path))
+            slurm.write('echo "run split_ph"                                                      \n')
+            slurm.write('mpirun -n 48 {}ph.x -npool 4 <split_ph.in> split_ph.out                  \n'.format(qebin_path))   
 
     def slurmph_split_set_startlast_q(self, slurm_dirpath, split_ph_name):
         slurm_script_filepath = os.path.join(slurm_dirpath, "slurm_"+split_ph_name+".sh")
         with open(slurm_script_filepath, "w") as slurm:
-            slurm.write('#!/bin/sh                                                                          \n')     
-            slurm.write('#SBATCH  --job-name={}                                                             \n'.format(split_ph_name))                         
-            slurm.write('#SBATCH  --output=log.{}.out                                                       \n'.format(split_ph_name))                       
-            slurm.write('#SBATCH  --error=log.{}.err                                                        \n'.format(split_ph_name))                      
-            slurm.write('#SBATCH  --partition={}                                                            \n'.format(self.queue))    # lhy lbt is both ok                
-            slurm.write('#SBATCH  --nodes=1                                                                 \n')             
-            slurm.write('#SBATCH  --ntasks=48                                                               \n')               
-            slurm.write('#SBATCH  --ntasks-per-node=48                                                      \n')                        
-            slurm.write('#SBATCH  --cpus-per-task=1                                                         \n')                     
-            slurm.write('\n\n                                                                               \n')
-            slurm.write('source /work/env/intel2018                                                         \n')
-            slurm.write('ulimit -s unlimited                                                                \n')
-            slurm.write('\n\n                                                                               \n')
+            slurm.write('#!/bin/sh                                                                 \n')     
+            slurm.write('#SBATCH  --job-name={}                                                    \n'.format(split_ph_name))                         
+            slurm.write('#SBATCH  --output=log.{}.out                                              \n'.format(split_ph_name))                       
+            slurm.write('#SBATCH  --error=log.{}.err                                               \n'.format(split_ph_name))                      
+            slurm.write('#SBATCH  --partition={}                                                   \n'.format(self.queue))    # lhy lbt is both ok                
+            slurm.write('#SBATCH  --nodes=1                                                        \n')             
+            slurm.write('#SBATCH  --ntasks=48                                                      \n')               
+            slurm.write('#SBATCH  --ntasks-per-node=48                                             \n')                        
+            slurm.write('#SBATCH  --cpus-per-task=1                                                \n')                     
+            slurm.write('\n\n                                                                      \n')
+            slurm.write('source /work/env/intel2018                                                \n')
+            slurm.write('ulimit -s unlimited                                                       \n')
+            slurm.write('\n\n                                                                      \n')
             # TODO 
-            slurm.write('mpirun -n 48 /work/software/q-e-qe-6.8/bin/ph.x -npool 4 <{}.in> {}.out            \n'.format(split_ph_name, split_ph_name))
+            slurm.write('mpirun -n 48 {}ph.x -npool 4 <{}.in> {}.out                               \n'.format(qebin_path ,split_ph_name, split_ph_name))
 
     def slurmq2r(self, slurm_dirpath):
         slurm_script_filepath = os.path.join(slurm_dirpath, "slurmq2r.sh")
         with open(slurm_script_filepath, "w") as slurm:
-            slurm.write('#!/bin/sh                                                                  \n')     
-            slurm.write('#SBATCH  --job-name=q2r                                                    \n')                         
-            slurm.write('#SBATCH  --output=log.q2r.out                                              \n')                       
-            slurm.write('#SBATCH  --error=log.q2r.err                                               \n')                      
-            slurm.write('#SBATCH  --partition={}                                                    \n'.format(self.queue))    # lhy lbt is both ok                
-            slurm.write('#SBATCH  --nodes=1                                                         \n')             
-            slurm.write('#SBATCH  --ntasks=48                                                       \n')               
-            slurm.write('#SBATCH  --ntasks-per-node=48                                              \n')                        
-            slurm.write('#SBATCH  --cpus-per-task=1                                                 \n')                     
-            slurm.write('\n\n                                                                       \n')
-            slurm.write('source /work/env/intel2018                                                 \n')
-            slurm.write('ulimit -s unlimited                                                        \n')
-            slurm.write('\n\n                                                                       \n')
-            slurm.write('mpirun -n 48 /work/software/q-e-qe-6.8/bin/q2r.x -npool 4 <q2r.in> q2r.out \n')
-            slurm.write('grep nqs q2r.out > nqs                                                     \n')  
+            slurm.write('#!/bin/sh                                                                \n')     
+            slurm.write('#SBATCH  --job-name=q2r                                                  \n')                         
+            slurm.write('#SBATCH  --output=log.q2r.out                                            \n')                       
+            slurm.write('#SBATCH  --error=log.q2r.err                                             \n')                      
+            slurm.write('#SBATCH  --partition={}                                                  \n'.format(self.queue))    # lhy lbt is both ok                
+            slurm.write('#SBATCH  --nodes=1                                                       \n')             
+            slurm.write('#SBATCH  --ntasks=48                                                     \n')               
+            slurm.write('#SBATCH  --ntasks-per-node=48                                            \n')                        
+            slurm.write('#SBATCH  --cpus-per-task=1                                               \n')                     
+            slurm.write('\n\n                                                                     \n')
+            slurm.write('source /work/env/intel2018                                               \n')
+            slurm.write('ulimit -s unlimited                                                      \n')
+            slurm.write('\n\n                                                                     \n')
+            slurm.write('mpirun -n 48 {}q2r.x -npool 4 <q2r.in> q2r.out                           \n'.format(qebin_path))
+            slurm.write('grep nqs q2r.out > nqs                                                   \n')  
 
     def slurmmatdyn(self, slurm_dirpath):
         slurm_script_filepath = os.path.join(slurm_dirpath, "slurmmatdyn.sh")
@@ -317,7 +318,7 @@ class qe_writesubmit:
             slurm.write('source /work/env/intel2018                                               \n')
             slurm.write('ulimit -s unlimited                                                      \n')
             slurm.write('\n\n                                                                     \n')
-            slurm.write('mpirun -n 48 /work/software/q-e-qe-6.8/bin/matdyn.x -npool 4 <matdyn.in> matdyn.out \n')  
+            slurm.write('mpirun -n 48 {}matdyn.x -npool 4 <matdyn.in> matdyn.out                  \n'.format(qebin_path))  
 
     def slurmmatdyn_dos(self, slurm_dirpath):
         slurm_script_filepath = os.path.join(slurm_dirpath, "slurmmatdyn_dos.sh")
@@ -335,7 +336,7 @@ class qe_writesubmit:
             slurm.write('source /work/env/intel2018                                               \n')
             slurm.write('ulimit -s unlimited                                                      \n')
             slurm.write('\n\n                                                                     \n')
-            slurm.write('mpirun -n 48 /work/software/q-e-qe-6.8/bin/matdyn.x -npool 4 <matdyn.dos.in> matdyn.dos.out \n')  
+            slurm.write('mpirun -n 48 {}matdyn.x -npool 4 <matdyn.dos.in> matdyn.dos.out          \n'.format(qebin_path))  
 
     def slurmlambda(self, slurm_dirpath):
         slurm_script_filepath = os.path.join(slurm_dirpath, "slurmlambda.sh")
@@ -353,7 +354,7 @@ class qe_writesubmit:
             slurm.write('source /work/env/intel2018                                               \n')
             slurm.write('ulimit -s unlimited                                                      \n')
             slurm.write('\n\n                                                                     \n')
-            slurm.write('mpirun -n 48 /work/software/q-e-qe-6.8/bin/lambda.x <lambda.in> lambda.out \n')  
+            slurm.write('mpirun -n 48 {}lambda.x <lambda.in> lambda.out                           \n'.format(qebin_path))  
 
     def slurmeliashberg(self, slurm_dirpath):
         slurm_script_filepath = os.path.join(slurm_dirpath, "pbseliashberg.sh")
@@ -374,7 +375,8 @@ class qe_writesubmit:
             slurm.write('cd $PBS_O_WORKDIR                                                        \n')
             slurm.write('killall -9 pw.x                                                          \n')
             slurm.write('\n\n                                                                     \n')
-            slurm.write('time /work/home/mayuan/code/my_script/qe/eliashberg/eliashberg.x > eliashberg.log 2>&1  \n')  
+            slurm.write('time {} > eliashberg.log 2>&1                                            \n'.format(eliashberg_x_path))  
+
         
 
 
@@ -394,7 +396,7 @@ class qe_writesubmit:
             pbs.write('cd $PBS_O_WORKDIR                                                        \n')
             pbs.write('killall -9 pw.x                                                          \n')
             pbs.write('\n\n                                                                     \n')
-            pbs.write('mpirun -np 28 /public/home/mayuan/software/qe-7.1/bin/pw.x -npool 4 <relax.in> relax.out \n')
+            pbs.write('mpirun -np 28 {}pw.x -npool 4 <relax.in> relax.out                       \n'.format(qebin_path))
             pbs.write('check symmetry ops is consistent or not after vc-relax                   \n')
             pbs.write('grep "Sym. Ops." relax.out                                               \n')
             pbs.write("awk '/Begin final coordinates/,/End final coordinates/{print $0}' relax.out \n")
@@ -403,7 +405,7 @@ class qe_writesubmit:
         pbs_script_filepath = os.path.join(pbs_dirpath, "pbsscffit.sh")
         with open(pbs_script_filepath, "w") as pbs:
             pbs.write('#!/bin/sh                                                                \n')     
-            pbs.write('#PBS -N    scffit                                                         \n')                         
+            pbs.write('#PBS -N    scffit                                                        \n')                         
             pbs.write('#PBS -q    liuhy                                                         \n')    # lhy lbt is both ok                
             pbs.write('#PBS -l    nodes=1:ppn=28                                                \n')             
             pbs.write('#PBS -j    oe                                                            \n')                        
@@ -414,13 +416,13 @@ class qe_writesubmit:
             pbs.write('cd $PBS_O_WORKDIR                                                        \n')
             pbs.write('killall -9 pw.x                                                          \n')
             pbs.write('\n\n                                                                     \n')
-            pbs.write('mpirun -np 28 /public/home/mayuan/software/qe-7.1/bin/pw.x -npool 4 <scf.fit.in> scf.fit.out \n')
+            pbs.write('mpirun -np 28 {}pw.x -npool 4 <scf.fit.in> scf.fit.out                   \n'.format(qebin_path))
 
     def pbsscf(self, pbs_dirpath):
         pbs_script_filepath = os.path.join(pbs_dirpath, "pbsscf.sh")
         with open(pbs_script_filepath, "w") as pbs:
             pbs.write('#!/bin/sh                                                                \n')     
-            pbs.write('#PBS -N    scf                                                         \n')                         
+            pbs.write('#PBS -N    scf                                                           \n')                         
             pbs.write('#PBS -q    liuhy                                                         \n')    # lhy lbt is both ok                
             pbs.write('#PBS -l    nodes=1:ppn=28                                                \n')             
             pbs.write('#PBS -j    oe                                                            \n')                        
@@ -431,7 +433,7 @@ class qe_writesubmit:
             pbs.write('cd $PBS_O_WORKDIR                                                        \n')
             pbs.write('killall -9 pw.x                                                          \n')
             pbs.write('\n\n                                                                     \n')
-            pbs.write('mpirun -n 28 /public/home/mayuan/software/qe-7.1/bin/pw.x -npool 4 <scf.in> scf.out\n')   
+            pbs.write('mpirun -n 28 {}pw.x -npool 4 <scf.in> scf.out                            \n'.format(qebin_path))   
 
     def pbsnscf(self, pbs_dirpath):
         pbs_script_filepath = os.path.join(pbs_dirpath, "pbsnscf.sh")
@@ -448,13 +450,13 @@ class qe_writesubmit:
             pbs.write('cd $PBS_O_WORKDIR                                                        \n')
             pbs.write('killall -9 pw.x                                                          \n')
             pbs.write('\n\n                                                                     \n')
-            pbs.write('mpirun -n 28 /public/home/mayuan/software/qe-7.1/bin/pw.x -npool 4 <nscf.in> nscf.out\n')   
+            pbs.write('mpirun -n 28 {}pw.x -npool 4 <nscf.in> nscf.out                          \n'.format(qebin_path))   
 
     def pbsph_no_split(self, pbs_dirpath):
         pbs_script_filepath = os.path.join(pbs_dirpath, "pbsph_no_split.sh")
         with open(pbs_script_filepath, "w") as pbs:
             pbs.write('#!/bin/sh                                                                \n')     
-            pbs.write('#PBS -N    ph_no_split                                                         \n')                         
+            pbs.write('#PBS -N    ph_no_split                                                   \n')                         
             pbs.write('#PBS -q    liuhy                                                         \n')    # lhy lbt is both ok                
             pbs.write('#PBS -l    nodes=1:ppn=28                                                \n')             
             pbs.write('#PBS -j    oe                                                            \n')                        
@@ -465,7 +467,7 @@ class qe_writesubmit:
             pbs.write('cd $PBS_O_WORKDIR                                                        \n')
             pbs.write('killall -9 pw.x                                                          \n')
             pbs.write('\n\n                                                                     \n')
-            pbs.write('mpirun -n 28 /public/home/mayuan/software/qe-7.1/bin/ph.x -npool 4 <ph_no_split.in> ph_no_split.out \n')
+            pbs.write('mpirun -n 28 {}ph.x -npool 4 <ph_no_split.in> ph_no_split.out            \n'.format(qebin_path))
 
     def pbsph_split_from_dyn0(self, pbs_dirpath):
         pbs_script_filepath = os.path.join(pbs_dirpath, "pbsph_split_from_dyn0.sh")
@@ -482,12 +484,12 @@ class qe_writesubmit:
             pbs.write('cd $PBS_O_WORKDIR                                                        \n')
             pbs.write('killall -9 pw.x                                                          \n')
             pbs.write('\n\n                                                                     \n')
-            pbs.write('echo "run scf.fit"                                                                 \n')
-            pbs.write('mpirun -n 28 /public/home/mayuan/software/qe-7.1/bin/pw.x -npool 4 <scf.fit.in> scf.fit.out  \n')
-            pbs.write('echo "run scf"                                                                     \n')
-            pbs.write('mpirun -n 28 /public/home/mayuan/software/qe-7.1/bin/pw.x -npool 4 <scf.in> scf.out          \n')
-            pbs.write('echo "run split_ph"                                                                \n')
-            pbs.write('mpirun -n 28 /public/home/mayuan/software/qe-7.1/bin/ph.x -npool 4 <split_ph.in> split_ph.out\n')   
+            pbs.write('echo "run scf.fit"                                                       \n')
+            pbs.write('mpirun -n 28 {}pw.x -npool 4 <scf.fit.in> scf.fit.out                    \n'.format(qebin_path))
+            pbs.write('echo "run scf"                                                           \n')
+            pbs.write('mpirun -n 28 {}pw.x -npool 4 <scf.in> scf.out                            \n'.format(qebin_path))
+            pbs.write('echo "run split_ph"                                                      \n')
+            pbs.write('mpirun -n 28 {}ph.x -npool 4 <split_ph.in> split_ph.out                  \n'.format(qebin_path))   
 
     def pbsph_split_set_startlast_q(self, pbs_dirpath, split_ph_name):
         pbs_script_filepath = os.path.join(pbs_dirpath, "pbs_"+split_ph_name+".sh")
@@ -505,7 +507,7 @@ class qe_writesubmit:
             pbs.write('killall -9 pw.x                                                          \n')
             pbs.write('\n\n                                                                     \n')
             # TODO 
-            pbs.write('mpirun -n 28 /public/home/mayuan/software/qe-7.1/bin/ph.x -npool 4 <{}.in> {}.out            \n'.format(split_ph_name, split_ph_name))
+            pbs.write('mpirun -n 28 {}ph.x -npool 4 <{}.in> {}.out                              \n'.format(qebin_path, split_ph_name, split_ph_name))
 
     def pbsq2r(self, pbs_dirpath):
         pbs_script_filepath = os.path.join(pbs_dirpath, "pbsq2r.sh")
@@ -521,15 +523,15 @@ class qe_writesubmit:
             pbs.write('ulimit -s unlimited                                                      \n')
             pbs.write('cd $PBS_O_WORKDIR                                                        \n')
             pbs.write('killall -9 pw.x                                                          \n')
-            pbs.write('\n\n                                                                       \n')
-            pbs.write('mpirun -n 28 /public/home/mayuan/software/qe-7.1/bin/q2r.x -npool 4 <q2r.in> q2r.out \n')
-            pbs.write('grep nqs q2r.out > nqs                                                     \n')  
+            pbs.write('\n\n                                                                     \n')
+            pbs.write('mpirun -n 28 {}q2r.x -npool 4 <q2r.in> q2r.out                           \n'.format(qebin_path))
+            pbs.write('grep nqs q2r.out > nqs                                                   \n')  
 
     def pbsmatdyn(self, pbs_dirpath):
         pbs_script_filepath = os.path.join(pbs_dirpath, "pbsmatdyn.sh")
         with open(pbs_script_filepath, "w") as pbs:
             pbs.write('#!/bin/sh                                                                \n')     
-            pbs.write('#PBS -N    matdyn                                                         \n')                         
+            pbs.write('#PBS -N    matdyn                                                        \n')                         
             pbs.write('#PBS -q    liuhy                                                         \n')    # lhy lbt is both ok                
             pbs.write('#PBS -l    nodes=1:ppn=28                                                \n')             
             pbs.write('#PBS -j    oe                                                            \n')                        
@@ -539,14 +541,14 @@ class qe_writesubmit:
             pbs.write('ulimit -s unlimited                                                      \n')
             pbs.write('cd $PBS_O_WORKDIR                                                        \n')
             pbs.write('killall -9 pw.x                                                          \n')
-            pbs.write('\n\n                                                                       \n')
-            pbs.write('mpirun -n 28 /public/home/mayuan/software/qe-7.1/bin/matdyn.x -npool 4 <matdyn.in> matdyn.out \n')  
+            pbs.write('\n\n                                                                     \n')
+            pbs.write('mpirun -n 28 {}matdyn.x -npool 4 <matdyn.in> matdyn.out                  \n'.format(qebin_path))  
 
     def pbsmatdyn_dos(self, pbs_dirpath):
         pbs_script_filepath = os.path.join(pbs_dirpath, "pbsmatdyn_dos.sh")
         with open(pbs_script_filepath, "w") as pbs:
             pbs.write('#!/bin/sh                                                                \n')     
-            pbs.write('#PBS -N    matdyn_dos                                                         \n')                         
+            pbs.write('#PBS -N    matdyn_dos                                                    \n')                         
             pbs.write('#PBS -q    liuhy                                                         \n')    # lhy lbt is both ok                
             pbs.write('#PBS -l    nodes=1:ppn=28                                                \n')             
             pbs.write('#PBS -j    oe                                                            \n')                        
@@ -556,8 +558,8 @@ class qe_writesubmit:
             pbs.write('ulimit -s unlimited                                                      \n')
             pbs.write('cd $PBS_O_WORKDIR                                                        \n')
             pbs.write('killall -9 pw.x                                                          \n')
-            pbs.write('\n\n                                                                       \n')
-            pbs.write('mpirun -n 28 /public/home/mayuan/software/qe-7.1/bin/matdyn.x -npool 4 <matdyn.dos.in> matdyn.dos.out \n')  
+            pbs.write('\n\n                                                                     \n')
+            pbs.write('mpirun -n 28 {}matdyn.x -npool 4 <matdyn.dos.in> matdyn.dos.out          \n'.format(qebin_path))  
 
     def pbslambda(self, pbs_dirpath):
         pbs_script_filepath = os.path.join(pbs_dirpath, "pbslambda.sh")
@@ -573,8 +575,8 @@ class qe_writesubmit:
             pbs.write('ulimit -s unlimited                                                      \n')
             pbs.write('cd $PBS_O_WORKDIR                                                        \n')
             pbs.write('killall -9 pw.x                                                          \n')
-            pbs.write('\n\n                                                                       \n')
-            pbs.write('mpirun -n 28 /public/home/mayuan/software/qe-7.1/bin/lambda.x <lambda.in> lambda.out \n')  
+            pbs.write('\n\n                                                                     \n')
+            pbs.write('mpirun -n 28 {}lambda.x <lambda.in> lambda.out                           \n'.format(qebin_path))  
 
     def pbseliashberg(self, pbs_dirpath):
         pbs_script_filepath = os.path.join(pbs_dirpath, "pbseliashberg.sh")
@@ -591,6 +593,6 @@ class qe_writesubmit:
             pbs.write('cd $PBS_O_WORKDIR                                                        \n')
             pbs.write('killall -9 pw.x                                                          \n')
             pbs.write('\n\n                                                                     \n')
-            pbs.write('time /public/home/mayuan/code/my_script/qe/eliashberg/eliashberg.x > eliashberg.log 2>&1  \n')  
+            pbs.write('time {} > eliashberg.log 2>&1                                            \n'.format(eliashberg_x_path))  
         
 

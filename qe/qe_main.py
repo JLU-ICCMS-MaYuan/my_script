@@ -36,6 +36,7 @@ pbs
 """
 import logging
 from argparse import ArgumentParser
+from argparse import RawTextHelpFormatter
 
 from set_args import set_more_args
 
@@ -47,7 +48,7 @@ if __name__ == "__main__":
 
     logger.info("Start qe calculate")
 
-    parser = ArgumentParser(prog="run_vasp")
+    parser = ArgumentParser(prog="run_vasp", formatter_class=RawTextHelpFormatter)
     args = set_more_args(parser)
 
     logger.info(f"{args} \n")
