@@ -169,13 +169,13 @@ class vasp_processdata(vasp_base):
             os.chdir(self.work_path)
             os.system("phonopy -f disp-{001..%s}/vasprun.xml" %(disp_num))
             os.chdir(cwd) 
-            special_points, path_coords = self.get_hspp()
+            path_name_list, path_coords = self.get_hspp()
 
             self.write_disp_band_conf(
                 self.work_path, 
                 self.species, 
                 self.supercell, 
-                special_points,
+                path_name_list,
                 path_coords
                 )
             
@@ -227,26 +227,28 @@ class vasp_processdata(vasp_base):
             high_symmetry_type = "all_points" # default
         if "," in pstring:
             if high_symmetry_type == "all_points":
-                plist = list(chain.from_iterable(_plist))
-                logger.info(f"the choosed high symmetry points path is \n {plist}")
+                path_name_list = list(chain.from_iterable(_plist))
+                logger.info(f"the choosed high symmetry points path is \n {path_name_list}")
             elif high_symmetry_type == "main_points":
-                plist = max(_plist, key=len)
-                logger.info(f"the choosed high symmetry points path is \n {plist}")
+                path_name_list = max(_plist, key=len)
+                logger.info(f"the choosed high symmetry points path is \n {path_name_list}")
         else:
-            plist = [ pp for pp in pstring]
-            logger.info(f"the choosed high symmetry points path is \n {plist}")
-
+            path_name_list = [ pp for pp in pstring]
+            logger.info(f"the choosed high symmetry points path is \n {path_name_list}")
+        
+        # 这里的高对称点是指：这个倒空间的布里渊区有几种高对称点，并不是某一个路径的高对称点的列表。
+        # 如果想获得某一个路径下高对称点的坐标，需要按照path_name_list的顺序依次获得相应的坐标。
         special_points   = ltype.get_special_points()
-        path_coords      = [list(special_points[pname]) for pname in plist]
+        path_coords      = [list(special_points[pname]) for pname in path_name_list]
 
-        return special_points, path_coords
+        return path_name_list, path_coords
         
     def write_disp_band_conf(
         self, 
         band_conf_dirpath, 
         species, 
         supercell, 
-        special_points, 
+        path_name_list, 
         path_coords
         ):
         __species = [spe.name for spe in species]
@@ -258,7 +260,7 @@ class vasp_processdata(vasp_base):
             f.write("DIM={}                  \n".format(' '.join(__supercell)))
             f.write("NPOINTS=101             \n")
             f.write("EIGENVECTORS=.TRUE.     \n")
-            f.write("BAND_LABELS={}          \n".format(' '.join(special_points)))
+            f.write("BAND_LABELS={}          \n".format(' '.join(path_name_list)))
             path_coords = list(chain.from_iterable(path_coords)); path_coords=list(map(str, path_coords))
             f.write("BAND={}                 \n".format(' '.join(path_coords)))  
 
