@@ -59,14 +59,40 @@ class qe_inputpara(qe_base):
         if not hasattr(self, "queue"):
             self.queue = "xieyu"
 
+        # qe 设置的一些基本参数
+        if not hasattr(self, "forc_conv_thr"):
+            self.forc_conv_thr = "1.0d-5"
+        if not hasattr(self, "etot_conv_thr"):
+            self.etot_conv_thr = "1.0d-7"
+        if not hasattr(self, "smearing"):
+            self.smearing = "gauss"
+            # self.smearing = methfessel-paxton 做scffit 和 scf 时候用这个参数
+        if not hasattr(self, "degauss"):
+            self.degauss = "0.005"
+        if not hasattr(self, "ecutwfc"):
+            self.ecutwfc = "60"
+        if not hasattr(self, "ecutrho"):
+            self.ecutrho = "720"
+        if not hasattr(self, "diagonalization"):
+            self.diagonalization = "david"
+        if not hasattr(self, "conv_thr"):
+            self.conv_thr = "1.0d-8"
+            #  做结构弛豫 1.0-d8
+            #  做scffit 和 scf 时候用1.0d-9
+        if not hasattr(self, "mixing_beta"):
+            self.mixing_beta = "0.7"
+            #  做scffit 和 scf 时候用0.8
+        if not hasattr(self, "press_conv_thr"):
+            self.press_conv_thr = "0.01"
+
         if hasattr(self, "kpoints_dense"):
-            _kpoints_dense = re.findall(r"\d+", self.kpoints_dense)
+            _kpoints_dense = self.kpoints_dense.split()
             self.kpoints_dense = list(map(int, _kpoints_dense))
         else:
             self.kpoints_dense = [16, 16, 16]    
 
         if hasattr(self, "kpoints_sparse"):
-            _kpoints_sparse = re.findall(r"\d+", self.kpoints_sparse)
+            _kpoints_sparse = self.kpoints_sparse.split()
             self.kpoints_sparse = list(map(int, _kpoints_sparse))
         else:
             self.kpoints_sparse = [8, 8, 8]    
@@ -108,17 +134,22 @@ class qephono_inputpara(qe_inputpara):
             )
         
         if hasattr(self, "qpoints"):
-            _qpoints = re.findall(r"\d+", self.qpoints)
+            _qpoints = self.qpoints.split()
             self.qpoints = list(map(int, _qpoints))
             self.kpoints_sparse= [kp*2 for kp in self.qpoints]
             self.kpoints_dense = [kp*4 for kp in self.qpoints]
         else:
-            self.qpoints = [8, 8, 8]
+            self.qpoints = [4,4,4]
             self.kpoints_sparse= [kp*2 for kp in self.qpoints]
             self.kpoints_dense = [kp*4 for kp in self.qpoints]
-
+        if not hasattr(self, "tr2_ph"):
+            self.tr2_ph = "1.0d-16"
         if not hasattr(self, "el_ph_nsigma"):
-            self.el_ph_nsigma = 50
+            self.el_ph_nsigma = "50"
+        if not hasattr(self, "el_ph_sigma"):
+            self.el_ph_sigma = "0.005"
+        if not hasattr(self, "alpha_mix"):
+            self.alpha_mix = "0.5"
 
         if not hasattr(self, "dyn0_flag"):
             self.dyn0_flag = False
@@ -169,7 +200,7 @@ class qephono_inputpara(qe_inputpara):
             nqs = float(wp[0]) * self.qtot / 2
             self.q_weight_list.append(nqs)
 
-        self.qtot           = self.q1 * self.q2 * self.q3
+        self.qtot           = self.qpoints[0] * self.qpoints[1] * self.qpoints[2] 
         self.q_non_irreducible_amount = len(self.q_coordinate_list)
 
         return self.qtot,    self.q_non_irreducible_amount, \

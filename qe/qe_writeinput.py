@@ -49,6 +49,18 @@ class qe_writeinput:
             cell_parameters=other_class.cell_parameters,
             fractional_sites=other_class.fractional_sites,
             kpoints_dense=other_class.kpoints_dense,
+
+            # basic parameter of control precision
+            forc_conv_thr=other_class.forc_conv_thr,
+            etot_conv_thr=other_class.etot_conv_thr,
+            smearing=other_class.smearing,
+            degauss=other_class.degauss,
+            ecutwfc=other_class.ecutwfc,
+            ecutrho=other_class.ecutrho,
+            diagonalization=other_class.diagonalization,
+            conv_thr=other_class.conv_thr,
+            mixing_beta=other_class.mixing_beta,
+            press_conv_thr=other_class.press_conv_thr,
         )
         return self
 
@@ -70,6 +82,18 @@ class qe_writeinput:
             fractional_sites=other_class.fractional_sites,
             kpoints_dense=other_class.kpoints_dense,
             kpoints_sparse=other_class.kpoints_sparse,
+
+            # basic parameter of control precision
+            forc_conv_thr=other_class.forc_conv_thr,
+            etot_conv_thr=other_class.etot_conv_thr,
+            smearing=other_class.smearing,
+            degauss=other_class.degauss,
+            ecutwfc=other_class.ecutwfc,
+            ecutrho=other_class.ecutrho,
+            diagonalization=other_class.diagonalization,
+            conv_thr=other_class.conv_thr,
+            mixing_beta=other_class.mixing_beta,
+            press_conv_thr=other_class.press_conv_thr,
         )
         return self
 
@@ -90,10 +114,14 @@ class qe_writeinput:
             final_choosed_pp=other_class.final_choosed_pp,
             cell_parameters=other_class.cell_parameters,
             fractional_sites=other_class.fractional_sites,
+
+            tr2_ph=other_class.tr2_ph,
+            el_ph_nsigma=other_class.el_ph_nsigma,
+            el_ph_sigma=other_class.el_ph_sigma,
+            alpha_mix=other_class.alpha_mix,
             kpoints_dense=other_class.kpoints_dense,
             kpoints_sparse=other_class.kpoints_sparse,
             qpoints=other_class.qpoints,
-            el_ph_nsigma=other_class.el_ph_nsigma,
 
             qtot=other_class.qtot,
             qirreduced=other_class.qirreduced,
@@ -122,7 +150,20 @@ class qe_writeinput:
             deguass=other_class.deguass,
             smearing_method=other_class.smearing_method,
             temperature_points=other_class.temperature_points,
-            a2f_dos=other_class.a2f_dos
+            a2f_dos=other_class.a2f_dos,
+
+            # basic parameter of control precision
+            forc_conv_thr=other_class.forc_conv_thr,
+            etot_conv_thr=other_class.etot_conv_thr,
+            smearing=other_class.smearing,
+            degauss=other_class.degauss,
+            ecutwfc=other_class.ecutwfc,
+            ecutrho=other_class.ecutrho,
+            diagonalization=other_class.diagonalization,
+            conv_thr=other_class.conv_thr,
+            mixing_beta=other_class.mixing_beta,
+            press_conv_thr=other_class.press_conv_thr,
+
         )
         return self
 
@@ -176,8 +217,8 @@ class qe_writeinput:
             qe.write(" pseudo_dir='{}',                \n".format(str(self.workpath_pppath.absolute())))
             qe.write(" verbosity = 'high',             \n")  
             qe.write(" outdir='./tmp',                 \n")
-            qe.write(" forc_conv_thr = 1.0d-5,         \n")
-            qe.write(" etot_conv_thr = 1.0d-7,         \n")
+            qe.write(" forc_conv_thr = {},             \n".format(self.forc_conv_thr))
+            qe.write(" etot_conv_thr = {},             \n".format(self.etot_conv_thr))
             qe.write(" wf_collect = .true.,            \n")
             qe.write(" tstress = .true.,               \n")
             qe.write(" tprnfor = .true.,               \n")
@@ -190,16 +231,16 @@ class qe_writeinput:
             qe.write(" ntyp={},                        \n".format(self.species_quantity))
             qe.write(" occupations = 'smearing',       \n")
             # qe.write(" smearing = 'methfessel-paxton'  \n")
-            qe.write(" smearing = 'gauss',             \n ")
-            qe.write(" degauss = 0.005                 \n")
-            qe.write(" ecutwfc = 60,                   \n")
-            qe.write(" ecutrho = 720,                  \n")
+            qe.write(" smearing = '{}',                \n".format(self.smearing))
+            qe.write(" degauss = {}                    \n".format(self.degauss))
+            qe.write(" ecutwfc = {},                   \n".format(self.ecutwfc))
+            qe.write(" ecutrho = {},                   \n".format(self.ecutrho))
             qe.write("/\n")
 
             qe.write("&ELECTRONS\n")
-            qe.write(" diagonalization = 'david'       \n")
-            qe.write(" conv_thr = 1.0d-8,              \n")
-            qe.write(" mixing_beta = 0.7,              \n")
+            qe.write(" diagonalization = '{}'          \n".format(self.diagonalization))
+            qe.write(" conv_thr = {},                  \n".format(self.conv_thr))
+            qe.write(" mixing_beta = {},               \n".format(self.mixing_beta))
             qe.write("/\n")
 
             qe.write("&ions                            \n")
@@ -209,7 +250,7 @@ class qe_writeinput:
             qe.write("&cell                            \n")
             qe.write(" cell_dynamics = 'bfgs',         \n")
             qe.write(" press = {},                     \n".format(self.press*10))
-            qe.write(" press_conv_thr = 0.01,          \n")
+            qe.write(" press_conv_thr = {},            \n".format(self.press_conv_thr))
             qe.write("/\n")
 
             qe.write("ATOMIC_SPECIES                   \n")
@@ -243,8 +284,8 @@ class qe_writeinput:
             qe.write(" prefix='{}',                    \n".format(self.system_name))
             qe.write(" pseudo_dir='{}',                \n".format(str(self.workpath_pppath.absolute())))
             qe.write(" outdir='./tmp',                 \n")
-            qe.write(" forc_conv_thr = 1.0d-3,         \n")
-            qe.write(" etot_conv_thr = 1.0d-4,         \n")
+            qe.write(" forc_conv_thr = {},             \n".format(self.forc_conv_thr))
+            qe.write(" etot_conv_thr = {},             \n".format(self.etot_conv_thr))
             qe.write("/\n")
 
             qe.write("&SYSTEM\n")
@@ -252,16 +293,16 @@ class qe_writeinput:
             qe.write(" nat={},                         \n".format(self.all_atoms_quantity))
             qe.write(" ntyp={},                        \n".format(self.species_quantity))
             qe.write(" occupations = 'smearing',       \n")
-            qe.write(" smearing = 'methfessel-paxton'  \n")
-            qe.write(" degauss = 0.02                  \n")
-            qe.write(" ecutwfc = 60,                   \n")
-            qe.write(" ecutrho = 720,                  \n")
+            qe.write(" smearing = '{}',                \n".format(self.smearing))
+            qe.write(" degauss = {}                    \n".format(self.degauss))
+            qe.write(" ecutwfc = {},                   \n".format(self.ecutwfc))
+            qe.write(" ecutrho = {},                   \n".format(self.ecutrho))
             qe.write(" la2F = .true.,                  \n")
             qe.write("/\n")
 
             qe.write("&ELECTRONS\n")
-            qe.write(" conv_thr = 1.0d-9,              \n")
-            qe.write(" mixing_beta = 0.8d0,            \n")
+            qe.write(" conv_thr = {},                  \n".format(self.conv_thr))
+            qe.write(" mixing_beta = {},               \n".format(self.mixing_beta))
             qe.write("/\n")
 
             qe.write("ATOMIC_SPECIES                   \n")
@@ -295,8 +336,8 @@ class qe_writeinput:
             qe.write(" prefix='{}',                    \n".format(self.system_name))
             qe.write(" pseudo_dir='{}',                \n".format(str(self.workpath_pppath.absolute())))
             qe.write(" outdir='./tmp',                 \n")
-            qe.write(" forc_conv_thr = 1.0d-3,         \n")
-            qe.write(" etot_conv_thr = 1.0d-4,         \n")
+            qe.write(" forc_conv_thr = {},             \n".format(self.forc_conv_thr))
+            qe.write(" etot_conv_thr = {},             \n".format(self.etot_conv_thr))
             qe.write("/\n")
 
             qe.write("&SYSTEM\n")
@@ -304,15 +345,15 @@ class qe_writeinput:
             qe.write(" nat={},                         \n".format(self.all_atoms_quantity))
             qe.write(" ntyp={},                        \n".format(self.species_quantity))
             qe.write(" occupations = 'smearing',       \n")
-            qe.write(" smearing = 'methfessel-paxton'  \n")
-            qe.write(" degauss = 0.02                  \n")
-            qe.write(" ecutwfc = 60,                   \n")
-            qe.write(" ecutrho = 720,                  \n")
+            qe.write(" smearing = '{}',                \n".format(self.smearing))
+            qe.write(" degauss = {}                    \n".format(self.degauss))
+            qe.write(" ecutwfc = {},                   \n".format(self.ecutwfc))
+            qe.write(" ecutrho = {},                   \n".format(self.ecutrho))
             qe.write("/\n")
 
             qe.write("&ELECTRONS\n")
-            qe.write(" conv_thr = 1.0d-9,              \n")
-            qe.write(" mixing_beta = 0.8d0,            \n")
+            qe.write(" conv_thr = {},                  \n".format(self.conv_thr))
+            qe.write(" mixing_beta = {},               \n".format(self.mixing_beta))
             qe.write("/\n")
 
             qe.write("ATOMIC_SPECIES                   \n")
@@ -345,8 +386,8 @@ class qe_writeinput:
             qe.write(" prefix='{}',                    \n".format(self.system_name))
             qe.write(" pseudo_dir='{}',                \n".format(str(self.workpath_pppath.absolute())))
             qe.write(" outdir='./tmp',                 \n")
-            qe.write(" forc_conv_thr = 1.0d-3,         \n")
-            qe.write(" etot_conv_thr = 1.0d-4,         \n")
+            qe.write(" forc_conv_thr = {},             \n".format(self.forc_conv_thr))
+            qe.write(" etot_conv_thr = {},             \n".format(self.etot_conv_thr))
             qe.write(" wf_collect=.true.,              \n")
             qe.write(" tprnfor=.true.,                 \n")
             qe.write(" tstress=.true.,                 \n")
@@ -357,8 +398,8 @@ class qe_writeinput:
             qe.write(" nat={},                         \n".format(self.all_atoms_quantity))
             qe.write(" ntyp={},                        \n".format(self.species_quantity))
             qe.write(" occupations = 'tetrahedra',     \n")
-            qe.write(" ecutwfc = 60,                   \n")
-            qe.write(" ecutrho = 720,                  \n")
+            qe.write(" ecutwfc = {},                   \n".format(self.ecutwfc))
+            qe.write(" ecutrho = {},                   \n".format(self.ecutrho))
             qe.write("/\n")
 
             qe.write("&ELECTRONS\n")
@@ -396,13 +437,13 @@ class qe_writeinput:
         with open(ph_in, "w") as qe:
             qe.write("Electron-phonon coefficients for {}                \n".format(self.system_name))                                    
             qe.write(" &inputph                                          \n")      
-            qe.write("  tr2_ph=1.0d-16,                                  \n")              
+            qe.write("  tr2_ph={},                                       \n".format(str(self.tr2_ph)))              
             qe.write("  prefix='{}',                                     \n".format(self.system_name))                
             qe.write("  fildvscf='{}.dv',                                \n".format(self.system_name))                     
             qe.write("  electron_phonon='interpolated',                  \n")                              
-            qe.write("  el_ph_sigma=0.005,                               \n")                 
-            qe.write("  el_ph_nsigma=50,                                 \n".format(str(self.el_ph_nsigma)))
-            qe.write("  alpha_mix(1)=0.5,                                \n")  # 可以修改的更小一些, 如果用vasp计算声子谱稳定, 可以修改为0.3
+            qe.write("  el_ph_sigma={},                                  \n".format(str(self.el_ph_sigma)))                
+            qe.write("  el_ph_nsigma={},                                 \n".format(str(self.el_ph_nsigma)))
+            qe.write("  alpha_mix(1)={},                                 \n".format(str(self.alpha_mix)))  # 可以修改的更小一些, 如果用vasp计算声子谱稳定, 可以修改为0.3
             for i, species_name in enumerate(self.composition.keys()):
                 element      = Element(species_name)
                 species_mass = str(element.atomic_mass).strip("amu")
@@ -429,12 +470,13 @@ class qe_writeinput:
         with open(split_ph, "w") as qe:
             qe.write("Electron-phonon coefficients for {}                \n".format(self.system_name))                                    
             qe.write(" &inputph                                          \n")      
-            qe.write("  tr2_ph=1.0d-16,                                  \n")              
+            qe.write("  tr2_ph={},                                       \n".format(str(self.tr2_ph)))              
             qe.write("  prefix='{}',                                     \n".format(self.system_name))                
             qe.write("  fildvscf='{}.dv',                                \n".format(self.system_name))                     
             qe.write("  electron_phonon='interpolated',                  \n")                              
-            qe.write("  el_ph_sigma=0.005,                               \n")                 
+            qe.write("  el_ph_sigma={},                                  \n".format(str(self.el_ph_sigma)))                
             qe.write("  el_ph_nsigma={},                                 \n".format(str(self.el_ph_nsigma)))
+            qe.write("  alpha_mix(1)={},                                 \n".format(str(self.alpha_mix)))  # 可以修改的更小一些, 如果用vasp计算声子谱稳定, 可以修改为0.3
             for i, species_name in enumerate(self.composition.keys()):
                 element      = Element(species_name)
                 species_mass = str(element.atomic_mass).strip("amu")
@@ -453,12 +495,13 @@ class qe_writeinput:
         with open(split_ph_path, "w") as qe:
             qe.write("Electron-phonon coefficients for {}                \n".format(self.system_name))                                    
             qe.write(" &inputph                                          \n")      
-            qe.write("  tr2_ph=1.0d-16,                                  \n")              
+            qe.write("  tr2_ph={},                                       \n".format(str(self.tr2_ph)))              
             qe.write("  prefix='{}',                                     \n".format(self.system_name))                
             qe.write("  fildvscf='{}.dv',                                \n".format(self.system_name))                     
             qe.write("  electron_phonon='interpolated',                  \n")                              
             qe.write("  el_ph_sigma=0.005,                               \n")                 
             qe.write("  el_ph_nsigma={},                                 \n".format(str(self.el_ph_nsigma)))
+            qe.write("  alpha_mix(1)={},                                 \n".format(str(self.alpha_mix)))  # 可以修改的更小一些, 如果用vasp计算声子谱稳定, 可以修改为0.3
             for i, species_name in enumerate(self.composition.keys()):
                 element      = Element(species_name)
                 species_mass = str(element.atomic_mass).strip("amu")

@@ -140,25 +140,42 @@ class vasp_processdata(vasp_base):
 
         # read input para
         self._config = config(args).read_config()
-        self.input_file_path = self._config['input_file_path']
+        self.input_file_path = Path(self._config['input_file_path'])
         self.work_path       = Path(self._config['work_path'])
         self.mode            = self._config['mode']
+        self.spectrum        = eval(self._config['spectrum'])
+        self.dos             = eval(self._config['dos'])
 
         self.ase_type          = read(self.input_file_path)
         self.struct_type       = AseAtomsAdaptor.get_structure(self.ase_type)
         self.get_struct_info(self.struct_type, self.work_path)
         
         if "supercell" in self._config:
-            _supercell = re.findall(r"\d+", self._config['supercell'])
+            _supercell = self._config['supercell'].split()
             self.supercell = list(map(int, _supercell))
         else:
             raise ValueError("you have to specify the supercell=[?,?,?]")
 
-        self.post_progress()
+        if "mp" in self._config:
+            _mp = self._config['mp'].split()
+            self.mp = list(map(int, _mp))
+        else:
+            self.mp = [8,8,8]
+            logger.warning("you didn't specify the mp=[?,?,?], the program will set default mp=[8,8,8]")
 
-    def post_progress(
-        self, 
-        ):
+        if "pdos" in self._config:
+            self.pdos = self._config['pdos']
+        else:
+            self.pdos = "AUTO"
+
+        if self.spectrum:
+            self.post_progress_phono_spectrum()
+        if self.dos:
+            self.post_progress_phono_dos()
+
+
+
+    def post_progress_phono_spectrum(self):
 
         if self.mode == "dispprog":
 
@@ -286,3 +303,136 @@ class vasp_processdata(vasp_base):
             f.write("BAND_LABELS={}          \n".format(' '.join(special_points)))
             path_coords = list(chain.from_iterable(path_coords)); path_coords=list(map(str, path_coords))
             f.write("BAND={}                 \n".format(' '.join(path_coords)))
+
+
+
+    def post_progress_phono_dos(self):
+
+        if self.mode == "dispprog": 
+            # 获得total_dos.dat
+            self.write_disp_mesh_conf(
+                self.work_path, 
+                self.species, 
+                self.supercell, 
+                self.mp,
+            )
+            cwd = os.getcwd()
+            os.chdir(self.work_path)
+            os.system("phonopy -p -t mesh.conf") # -p: dos plot   -t: thermal properties print
+            os.system("phonopy -p mesh.conf -c {}".format(self.input_file_path.name)) # 获得 total_dos.dat
+            os.chdir(cwd)
+
+            # 获得pdos.dat
+            self.write_disp_pdos_conf(
+                self.work_path, 
+                self.species, 
+                self.supercell, 
+                self.mp,
+                self.pdos,
+            )
+            cwd = os.getcwd()
+            os.chdir(self.work_path)
+            os.system("phonopy -p pdos.conf -c {}".format(self.input_file_path.name)) # 获得 total_dos.dat
+            os.chdir(cwd)
+
+        elif self.mode == "dfptprog":
+            # 获得total_dos.dat
+            self.write_dfpt_mesh_conf(
+                self.work_path, 
+                self.species, 
+                self.supercell, 
+                self.mp,
+            )
+            cwd = os.getcwd()
+            os.chdir(self.work_path)
+            os.system("phonopy -p -t mesh.conf") # -p: dos plot   -t: thermal properties print
+            os.system("phonopy -p mesh.conf -c {}".format(self.input_file_name.name)) # 获得 total_dos.dat
+            os.chdir(cwd)
+
+            # 获得pdos.dat
+            self.write_dfpt_pdos_conf(
+                self.work_path, 
+                self.species, 
+                self.supercell, 
+                self.mp,
+                self.pdos,
+            )
+            cwd = os.getcwd()
+            os.chdir(self.work_path)
+            os.system("phonopy -p pdos.conf -c {}".format(self.input_file_name.name)) # 获得 total_dos.dat
+            os.chdir(cwd)
+    
+    # 创建mesh.conf  目的为了获得 total dos 
+    def write_disp_mesh_conf(
+        self,
+        mesh_conf_dirpath, 
+        species, 
+        supercell,
+        mp,
+        ): 
+
+        __species = [spe.name for spe in species]
+        __supercell = list(map(str, supercell))
+        __mp = list(map(str, mp))
+        mesh_conf_filepath = os.path.join(mesh_conf_dirpath, "mesh.conf")
+        with open(mesh_conf_filepath, "w") as f:
+            f.write("ATOM_NAME={}            \n".format(' '.join(__species)))
+            f.write("DIM={}                  \n".format(' '.join(__supercell)))
+            f.write("MP ={}                  \n".format(' '.join(__mp)))
+    # 创建mesh.conf  目的为了获得 total dos  
+    def write_dfpt_mesh_conf(
+        self,
+        mesh_conf_dirpath, 
+        species, 
+        supercell,
+        mp,
+        ): 
+
+        __species = [spe.name for spe in species]
+        __supercell = list(map(str, supercell))
+        __mp = list(map(str, mp))
+        mesh_conf_filepath = os.path.join(mesh_conf_dirpath, "mesh.conf")
+        with open(mesh_conf_filepath, "w") as f:
+            f.write("ATOM_NAME={}            \n".format(' '.join(__species)))
+            f.write("DIM={}                  \n".format(' '.join(__supercell)))
+            f.write("MP ={}                  \n".format(' '.join(__mp)))
+            f.write("FORCE_CONSTANTS = READ  \n")
+    # 创建pdos.conf  目的为了获得 pdos 
+    def write_disp_pdos_conf(
+        self,
+        pdos_conf_dirpath, 
+        species, 
+        supercell,
+        mp,
+        pdos,
+        ): 
+
+        __species = [spe.name for spe in species]
+        __supercell = list(map(str, supercell))
+        __mp = list(map(str, mp))
+        pdos_conf_filepath = os.path.join(pdos_conf_dirpath, "pdos.conf")
+        with open(pdos_conf_filepath, "w") as f:
+            f.write("ATOM_NAME={}            \n".format(' '.join(__species)))
+            f.write("DIM={}                  \n".format(' '.join(__supercell)))
+            f.write("MP ={}                  \n".format(' '.join(__mp)))
+            f.write("PDOS = {}               \n".format(pdos))
+    # 创建pdos.conf  目的为了获得 pdos 
+    def write_dfpt_mesh_conf(
+        self,
+        pdos_conf_dirpath, 
+        species, 
+        supercell,
+        mp,
+        pdos,
+        ): 
+
+        __species = [spe.name for spe in species]
+        __supercell = list(map(str, supercell))
+        __mp = list(map(str, mp))
+        pdos_conf_filepath = os.path.join(pdos_conf_dirpath, "pdos.conf")
+        with open(pdos_conf_filepath, "w") as f:
+            f.write("ATOM_NAME={}            \n".format(' '.join(__species)))
+            f.write("DIM={}                  \n".format(' '.join(__supercell)))
+            f.write("MP ={}                  \n".format(' '.join(__mp)))
+            f.write("FORCE_CONSTANTS = READ  \n")
+            f.write("PDOS = {}               \n".format(pdos))

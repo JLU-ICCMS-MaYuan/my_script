@@ -2,13 +2,12 @@ import os
 import re
 import shutil
 from pathlib import Path
-from argparse import ArgumentParser
-from turtle import pos
+
 
 from ase.io import read
 from pymatgen.io.ase import AseAtomsAdaptor
 
-from config import config
+
 from vasp_base import vasp_base 
 
 class vasp_inputpara(vasp_base):
@@ -133,7 +132,7 @@ class vasp_phonopara(vasp_inputpara):
             )
    
         if hasattr(self, "kpoints"):
-            _kpoints = re.findall(r"\d+", kwargs['kpoints'])
+            _kpoints = kwargs['kpoints'].split()
             self.kpoints = list(map(int, _kpoints))
         else:
             self.kpoints = [None, None, None]
