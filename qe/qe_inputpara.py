@@ -154,7 +154,7 @@ class qephono_inputpara(qe_inputpara):
         if not hasattr(self, "dyn0_flag"):
             self.dyn0_flag = False
         else:
-            self.dyn0_flag = bool(self.dyn0_flag)
+            self.dyn0_flag = eval(self.dyn0_flag)
 
         dyn0_names = list(Path(self.work_underpressure).glob("*.dyn0"))
         if len(dyn0_names)==1:
@@ -162,7 +162,7 @@ class qephono_inputpara(qe_inputpara):
             self.qtot, self.qirreduced, self.qirreduced_coords= self.get_q_from_dyn0(dyn0_path=dyn0_path) 
             # 获得 self.qtot, self.qirreduced, self.qirreduced_coords, self.qweights 
         else:
-            raise FileExistsError("No exist *.dyn0! ")
+            logger.warning("No exist *.dyn0! ")
 
         if not hasattr(self, "qtot"):
             self.qtot = None
@@ -174,6 +174,9 @@ class qephono_inputpara(qe_inputpara):
             self.qinserted = None
         else:
             self.qinserted = int(self.qinserted)
+
+        if not hasattr(self, "qirreduced_coords"):
+            self.qirreduced_coords = None
 
         if not hasattr(self, "path_name_coords"):
             self.path_name_coords = None

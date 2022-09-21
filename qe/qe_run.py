@@ -58,7 +58,8 @@ class qe_phono:
         self._config = config(args).read_config()
 
         # prepare the POSCAR POTCAR  
-        self.phono_inputpara  = qephono_inputpara.init_from_config(self._config)
+        self.phono_inputpara = qephono_inputpara.init_from_config(self._config)
+
         # init the INCAR
         self.qe_writeincar  = qe_writeinput.init_from_phonoinput(self.phono_inputpara)
 
