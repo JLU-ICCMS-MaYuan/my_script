@@ -4,13 +4,13 @@ import re
 import logging
 import shutil
 from pathlib import Path
-from pprint import pprint
 
 from ase.io import read
 from pymatgen.io.ase import AseAtomsAdaptor
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from pymatgen.io.vasp import Poscar
 
+from vaspbin import potcar_source_libs
 from config import config
 
 logger = logging.getLogger("vaspbase")
@@ -42,7 +42,7 @@ class vasp_base:
         
         self.input_file_name   = self.input_file_path.name.split(".")[0]
 
-        self.work_underpressure= Path(self.work_path).joinpath(self.input_file_name+"-"+self.mode, str(self.press))
+        self.work_underpressure= Path(self.work_path).joinpath(self.input_file_name +"-"+ self.mode +"-"+ str(self.press))
         if not self.work_underpressure.exists():
             self.work_underpressure.mkdir(parents=True)
 
@@ -82,8 +82,12 @@ class vasp_base:
         self.fractional_sites   = pstruct.sites
 
     def get_potcar(self, dst_potcar_path: Path):
-
-
+        """
+        prepare your every single potcar, and then merge all potcars to a complete potcar
+        input parameter:
+            dst_potcar_path: it determines the directory position of the final complete potcar,
+                            please note it's not the self.workpath_pppath
+        """
         # 准备分离的赝势
         self.final_choosed_potcar = []
         for species in self.species:
@@ -113,18 +117,11 @@ class vasp_base:
         rerutn:
             the class Path of POTCAR of the given element.
         """
-        potcar_dir1 = os.path.abspath("/work/home/may/POT/vasp_pot1/potpaw_PBE54")
-        potcar_dir2 = os.path.abspath("/public/home/mayuan/POT/vasp_pot1/potpaw_PBE54")
-        potcar_dir3 = os.path.abspath("/work/home/mayuan/POT/vasp_pot1/potpaw_PBE54")
-        if os.path.exists(potcar_dir1):
-            potcar_dir = potcar_dir1
-            potcarfiles = os.listdir(potcar_dir1)
-        elif os.path.exists(potcar_dir2):
-            potcar_dir = potcar_dir2
-            potcarfiles = os.listdir(potcar_dir2)
-        elif os.path.exists(potcar_dir3):
-            potcar_dir = potcar_dir3
-            potcarfiles = os.listdir(potcar_dir3)
+        potcar_dir = os.path.abspath(potcar_source_libs)
+        if os.path.exists(potcar_dir):
+            potcarfiles = os.listdir(potcar_dir)
+        else:
+            raise FileExistsError("You may not set the potcar_source_libs, you can set it in `vaspbin.py` ")
         targetpotcarfiles = filter(lambda file: re.search("^"+species_name, file), potcarfiles)
         targetpotcarnames = [pp for pp in targetpotcarfiles]
         choosed_flag  = False

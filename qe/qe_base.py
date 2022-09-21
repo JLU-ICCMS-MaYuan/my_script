@@ -2,7 +2,6 @@ import os
 import re
 import shutil
 from pathlib import Path
-from pprint import pprint
 import logging
 from argparse import ArgumentParser
 
@@ -11,6 +10,7 @@ from pymatgen.io.ase import AseAtomsAdaptor
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from pymatgen.io.vasp import Poscar
 
+from qebin import qe_source_libs
 from config import config
 
 logger = logging.getLogger("qe_base")
@@ -135,18 +135,11 @@ class qe_base:
             species_name: element name from pymatgen.composition.species.name
             workpath_pppath: 
         '''
-        qe_USPP1 = os.path.abspath("/work/home/mayuan/POT/qe-pp/all_pbe_UPF_v1.5")
-        qe_USPP2 = os.path.abspath("/public/home/mayuan/POT/qe-pp/all_pbe_UPF_v1.5")
-        qe_USPP3 = os.path.abspath("/work/home/may/POT/qe-pp/all_pbe_UPF_v1.5")
-        if os.path.exists(qe_USPP1):
-            qe_USPP = qe_USPP1
-            ppfiles = os.listdir(qe_USPP1)
-        elif os.path.exists(qe_USPP2):
-            qe_USPP = qe_USPP2
-            ppfiles = os.listdir(qe_USPP2)
-        elif os.path.exists(qe_USPP3):
-            qe_USPP = qe_USPP3
-            ppfiles = os.listdir(qe_USPP3)
+        qe_USPP = os.path.abspath(qe_source_libs)
+        if os.path.exists(qe_USPP):
+            ppfiles = os.listdir(qe_USPP)
+        else:
+            raise FileExistsError("You may not set the potcar_source_libs, you can set it in `qebin.py` ")
         targetppfiles = filter(lambda file: re.search("^"+species_name+"\_", file.lower()), ppfiles)
         targetppnames = [pp for pp in targetppfiles]
         choosed_flag  = False

@@ -1,4 +1,4 @@
-from argparse import ArgumentParser
+from argparse import ArgumentParser, RawTextHelpFormatter
 
 from vasp_run import vasp_relax, vasp_phono, vaspbatch_relax, vaspbatch_phono, vasp_processdata
 
@@ -29,7 +29,18 @@ def set_more_args(parser: ArgumentParser):
         type=str,
         default=None,
         dest='work_path',
-        help="please tell me your calculated directory, I will put all file there",
+        help="please tell me your calculated directory, it will determine two things\n"
+            "   1. the directory of `work_underpressure` \n"
+            "       when you tell me your work_path, the program will create the directory of `work_underpressure` named:\n"
+            "       input_file_name + mode + press\n"
+            "           such as: POSCAR-disp-200\n"
+            "                    CaH6-dfpt-100\n"
+            "                    LaH10-rvf-50\n"
+            "   2. the directory of `workpath_pppath` \n"
+            "       when you tell me your work_path, the program will create the directory of `workpath_pppath` named:\n"
+            "       potcar_lib\n"
+            
+
     )
     # 指明提交作业的系统
     parser.add_argument(

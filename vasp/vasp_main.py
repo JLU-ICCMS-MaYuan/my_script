@@ -24,7 +24,7 @@ vasp_main.py -i ./CONTCAR/210.0/POSCAR-init -w ./CONTCAR/210.0/ data -m mode=dis
 import os
 import logging
 from pathlib import Path
-from argparse import ArgumentParser
+from argparse import ArgumentParser, RawTextHelpFormatter
 
 from set_args import set_more_args
 
@@ -35,7 +35,7 @@ if __name__ == "__main__":
 
     logger.info("Start vasp calculate")
     
-    parser = ArgumentParser(prog="run_vasp")
+    parser = ArgumentParser(prog="run_vasp", formatter_class=RawTextHelpFormatter)
     args = set_more_args(parser)
 
     logger.info(f"{args} \n")

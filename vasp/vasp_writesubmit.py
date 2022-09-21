@@ -157,9 +157,9 @@ class vasp_writesubmit:
             slurm.write("export MPIR_CVAR_COLL_ALIAS_CHECK=0 \n")
             slurm.write("                                    \n")
             slurm.write('echo "run fine DFPT"                \n')
-            slurm.write('cp -f INCAR_DFPT INCAR              \n')
+            slurm.write('cp -f INCAR_dfpt INCAR              \n')
             slurm.write('cp -f SPOSCAR POSCAR                \n')
-            slurm.write('mpirun -np 48 {} > vasp.log 2>&1    \n')                        
+            slurm.write('mpirun -np 48 {} > vasp.log 2>&1    \n'.format(vaspbin_path))                        
 
     def slurmdisp(self, slurm_dirpath):
         slurm_script_filepath = os.path.join(slurm_dirpath, "slurmdisp.sh")
@@ -274,7 +274,7 @@ class vasp_writesubmit:
             pbs.write('echo "run fine DFPT"                                       \n')
             pbs.write('cp -f INCAR_dfpt INCAR                                     \n')
             pbs.write('cp -f SPOSCAR POSCAR                                       \n')
-            pbs.write('mpirun -n 28 {}  > vasp.log 2>&1  \n')                        
+            pbs.write('mpirun -n 28 {}  > vasp.log 2>&1                           \n'.format(vaspbin_path))                        
 
     def pbsdisp(self, pbs_dirpath):
         pbs_script_filepath = os.path.join(pbs_dirpath, "pbsdisp.sh")
@@ -296,7 +296,7 @@ class vasp_writesubmit:
             pbs.write('killall -9 pw.x                                            \n')
             pbs.write('                                                           \n')
             pbs.write('echo "run Displacement" && pwd                             \n')
-            pbs.write('mpirun -n 28 {}  > vasp.log 2>&1                           \n')                        
+            pbs.write('mpirun -n 28 {}  > vasp.log 2>&1                           \n'.format(vaspbin_path))                        
 
 
 

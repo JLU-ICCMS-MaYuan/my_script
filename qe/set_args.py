@@ -85,8 +85,9 @@ def set_more_args(parser: ArgumentParser):
         type=str,
         dest='more_args',
         nargs='+',
-        help="Enter more parameters for self-consistent iterations, such as"
-            "mode=relax-vc(no default) --- The cellular structure relaxes\n"
+        help="Enter more parameters for self-consistent iterations, such as\n"
+            "mode=scffit(no default) --- self-consistent calculationself (density kpoints meshing)\n"
+            "mode=scf   (no default) --- self-consistent calculationself (sparse kpoints meshing)\n"
             "queue=xieyu(default), lhy, lbt --- Submitting a task queue\n"
             "forc_conv_thr=1.0d-5(default)\n"
             "etot_conv_thr=1.0d-7(default)\n"
