@@ -1,7 +1,7 @@
-vaspbin_path = "/work/home/may/software/vasp.6.1.0/bin/"
+vaspbin_path = "/work/home/may/software/vasp.6.1.0/bin/vasp_std"
 # other backup options
-# vaspbin_path = "/public/home/mayuan/software/vasp.6.1.0/bin/"
-# vaspbin_path = "/work/software/vasp.6.1.0-oneapi2022.2.0/bin/"
+# vaspbin_path = "/public/home/mayuan/software/vasp.6.1.0/bin/vasp_std"
+# vaspbin_path = "/work/software/vasp.6.1.0-oneapi2022.2.0/bin/vasp_std"
 intel_compiler = "/work/home/may/intel/oneapi/setvars.sh"
 # other backup options
 # intel_compiler = "/work/env/oneapi-2022.2.0 "

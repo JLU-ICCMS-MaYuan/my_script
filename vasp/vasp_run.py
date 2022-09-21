@@ -346,7 +346,7 @@ class vasp_processdata(vasp_base):
             cwd = os.getcwd()
             os.chdir(self.work_path)
             os.system("phonopy -p -t mesh.conf") # -p: dos plot   -t: thermal properties print
-            os.system("phonopy -p mesh.conf -c {}".format(self.input_file_name.name)) # 获得 total_dos.dat
+            os.system("phonopy -p mesh.conf -c {}".format(self.input_file_path.name)) # 获得 total_dos.dat
             os.chdir(cwd)
 
             # 获得pdos.dat
@@ -359,7 +359,7 @@ class vasp_processdata(vasp_base):
             )
             cwd = os.getcwd()
             os.chdir(self.work_path)
-            os.system("phonopy -p pdos.conf -c {}".format(self.input_file_name.name)) # 获得 total_dos.dat
+            os.system("phonopy -p pdos.conf -c {}".format(self.input_file_path.name)) # 获得 total_dos.dat
             os.chdir(cwd)
     
     # 创建mesh.conf  目的为了获得 total dos 
@@ -417,7 +417,7 @@ class vasp_processdata(vasp_base):
             f.write("MP ={}                  \n".format(' '.join(__mp)))
             f.write("PDOS = {}               \n".format(pdos))
     # 创建pdos.conf  目的为了获得 pdos 
-    def write_dfpt_mesh_conf(
+    def write_dfpt_pdos_conf(
         self,
         pdos_conf_dirpath, 
         species, 

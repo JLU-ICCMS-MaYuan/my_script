@@ -200,7 +200,7 @@ class qe_writesubmit:
             slurm.write('#SBATCH  --ntasks-per-node=48                                            \n')                        
             slurm.write('#SBATCH  --cpus-per-task=1                                               \n')                     
             slurm.write('\n\n                                                                     \n')
-            slurm.write('source /work/env/intel2018                                               \n')
+            slurm.write('source {}                                                                \n'.format(intel_compiler))
             slurm.write('ulimit -s unlimited                                                      \n')
             slurm.write('\n\n                                                                     \n')
             slurm.write('mpirun -n 48 {}pw.x -npool 4 <scf.in> scf.out                            \n'.format(qebin_path))   

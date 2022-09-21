@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from ase.io import read, write
-
+from ase.io import read
+from ase.io.wien2k import write_struct
 
 def convert(
     input_file_path,
@@ -23,3 +23,6 @@ def convert(
     elif dst_format == "vasp":
         dst_file = work_path.joinpath(formula+".vasp")
         struct.write(dst_file, format="vasp")
+    elif dst_format == "wien2k":
+        dst_file = work_path.joinpath(formula+".struct")
+        write_struct(dst_file, struct)

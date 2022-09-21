@@ -95,7 +95,7 @@ class vasp_writesubmit:
             slurm.write('        echo "run fine vasp opt-$num"         \n')                                      
             slurm.write('        killall -9 vasp_std                                \n')                                                                         
             slurm.write('        sleep 3                                            \n')                                                                         
-            slurm.write('        timeout 14400s mpirun -n 48 {}  > vasp.log 2>&1    \n'.format(vaspbin_path))                                                                         
+            slurm.write('        timeout 14400s mpirun -n 48 {} > vasp.log 2>&1    \n'.format(vaspbin_path))                                                                         
             slurm.write('        cp -f CONTCAR CONTCAR-fine &&  cp -f CONTCAR POSCAR\n')                                                            
             slurm.write("        rows=`sed -n '/F\=/p' OSZICAR | wc -l`             \n")                                               
             slurm.write('        echo "rows-$rows"                                  \n')                           

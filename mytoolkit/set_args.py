@@ -40,8 +40,5 @@ def set_more_args(parser: ArgumentParser):
 
 
 
-
-
-
     args = parser.parse_args()
     return args
