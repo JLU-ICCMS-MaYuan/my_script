@@ -8,6 +8,7 @@ class config:
         config["input_file_path"] = self.args.input_file_path
         config["work_path"]       = self.args.work_path
         config["workflow_type"]   = self.args.tool_flow
-        config["dst_format"]      = self.args.more_args
-            
+        for other_arg in self.args.more_args:
+            arg_name, value = other_arg.split("=")
+            config[arg_name] = value 
         return config

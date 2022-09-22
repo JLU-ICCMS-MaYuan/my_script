@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import logging
-from argparse import ArgumentParser
+from argparse import ArgumentParser, RawTextHelpFormatter
 
 from set_args import set_more_args
 
@@ -11,7 +11,7 @@ if __name__ == "__main__":
 
     logger.info("Start toolkit !")
     
-    parser = ArgumentParser(prog="toolkit")
+    parser = ArgumentParser(prog="toolkit", formatter_class=RawTextHelpFormatter)
     args = set_more_args(parser)
 
     logger.info(f"{args} \n")
