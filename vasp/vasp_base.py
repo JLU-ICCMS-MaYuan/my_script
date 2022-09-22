@@ -4,6 +4,7 @@ import re
 import logging
 import shutil
 from pathlib import Path
+from typing import List
 
 from ase.io import read
 from pymatgen.io.ase import AseAtomsAdaptor
@@ -141,7 +142,7 @@ class vasp_base:
     def merge_potcar(
         self, 
         dst_potcar_path: Path,
-        final_choosed_potcar: list[Path],
+        final_choosed_potcar: List[Path],
         ):
         """
         dst_potcar_path: specify the path of  merged POTCAR
