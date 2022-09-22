@@ -143,8 +143,8 @@ class vasp_processdata(vasp_base):
         self.mode            = self._config['mode']
         # the default value of spectrum and dos is False, 
         # that means the program will not create the phono-spectrum, total-dos, pdos
-        self.spectrum        = eval(self._config.get('spectrum', False))
-        self.dos             = eval(self._config.get('dos', False))
+        self.spectrum        = eval(self._config.get('spectrum', "False"))
+        self.dos             = eval(self._config.get('dos', "False"))
 
         self.ase_type          = read(self.input_file_path)
         self.struct_type       = AseAtomsAdaptor.get_structure(self.ase_type)
