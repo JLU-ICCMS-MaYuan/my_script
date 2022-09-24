@@ -132,7 +132,7 @@ class vasp_writesubmit:
             slurm.write("cp INCAR_$i INCAR                    \n")
             slurm.write("killall -9 vasp_std                  \n")
             slurm.write("sleep 3                              \n")
-            slurm.write("timeout 14400s mpirun -np 48 {} > vasp.log_${i} 2>&1\n".format(vaspbin_path))
+            slurm.write("timeout 14400s mpirun -np 48 {} > vasp.log_$i 2>&1\n".format(vaspbin_path))
             slurm.write("cp CONTCAR POSCAR                    \n")
             slurm.write("done                                 \n")
           
@@ -248,7 +248,7 @@ class vasp_writesubmit:
             pbs.write("cp INCAR_$i INCAR                                          \n")
             pbs.write("killall -9 vasp_std                                        \n")
             pbs.write("sleep 3                                                    \n")
-            pbs.write("timeout 14400s mpirun -np  28 {} > vasp.log_${i} 2>&1      \n".format(vaspbin_path))
+            pbs.write("timeout 14400s mpirun -np  28 {} > vasp.log_$i 2>&1      \n".format(vaspbin_path))
             pbs.write("cp CONTCAR POSCAR                                          \n")
             pbs.write("done                                                       \n")
 
