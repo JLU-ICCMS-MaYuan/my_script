@@ -128,6 +128,18 @@ class qe_writeinput:
             qirreduced_coords=other_class.qirreduced_coords,
             qinserted=other_class.qinserted,
             path_name_coords=other_class.path_name_coords,
+
+            # basic parameter of control precision
+            forc_conv_thr=other_class.forc_conv_thr,
+            etot_conv_thr=other_class.etot_conv_thr,
+            smearing=other_class.smearing,
+            degauss=other_class.degauss,
+            ecutwfc=other_class.ecutwfc,
+            ecutrho=other_class.ecutrho,
+            diagonalization=other_class.diagonalization,
+            conv_thr=other_class.conv_thr,
+            mixing_beta=other_class.mixing_beta,
+            press_conv_thr=other_class.press_conv_thr,
         )
         return self
 

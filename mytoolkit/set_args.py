@@ -44,8 +44,8 @@ def set_more_args(parser: ArgumentParser):
     parser_formatconvert.set_defaults(tool_flow=format_convert)
 
     # 生成KPOINTS
-    parser_formatconvert = subparsers.add_parser("kmesh", formatter_class=RawTextHelpFormatter)
-    parser_formatconvert.add_argument(
+    parser_kmesh = subparsers.add_parser("kmesh", formatter_class=RawTextHelpFormatter)
+    parser_kmesh.add_argument(
         '-m',
         '--more-args-about-kspacing-meshing-density',
         type=str,
@@ -55,8 +55,20 @@ def set_more_args(parser: ArgumentParser):
             '例如: kmesh -m kspacing=0.1\n'
             '请一定注意输入文件必须是POSCAR\n'
     )
-    parser_formatconvert.set_defaults(tool_flow=kmesh)
+    parser_kmesh.set_defaults(tool_flow=kmesh)
 
+    # 绘制 压制相图
+    parser_plot_phase_transition = subparsers.add_parser("plot_phase_transition", formatter_class=RawTextHelpFormatter)
+    parser_plot_phase_transition.add_argument(
+        '-m',
+        '--more-args-about-plot-phase-transition',
+        type=str,
+        nargs="+",
+        dest='more_args',
+        help='请指定\n'
+            '例如: kmesh -m kspacing=0.1\n'
+            '请一定注意输入文件必须是POSCAR\n'
+    )
 
     args = parser.parse_args()
     return args

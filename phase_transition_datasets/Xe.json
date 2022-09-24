@@ -1,0 +1,15 @@
+[
+    {
+        "fcc": [0, 14],
+        "unidentified intermediate structure": [14, 75],
+        "hcp" : [75, "nan"],
+        "data_source_type" : "",
+        "doi" : "https://doi.org/10.1063/1.2746249"
+    },
+    {
+        "insulator" : [0, 132],
+        "metal" : [132, "nan"],
+        "doi" : "https://doi.org/10.1063/1.2746249"
+    }
+]
+

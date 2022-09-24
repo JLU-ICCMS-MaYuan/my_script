@@ -11,7 +11,10 @@ def set_more_args(parser: ArgumentParser):
         type=str,
         default=None,
         dest='input_file_path',
-        help="please tell me your POSCAR path, please notice your file format had better to be ***.vasp",
+        help="please tell me your POSCAR path, please notice your file format had better to be ***.vasp\n"
+            "attention please:\n"
+            "   if you use the `batchrelax` or `batchphono`, your input_file_path have to be a directory.\n"
+            "   In the directory, there are your candidate-structures that is waiting to be calculate!!!"
     )
     # 指明压强
     parser.add_argument(
@@ -55,66 +58,135 @@ def set_more_args(parser: ArgumentParser):
     subparsers = parser.add_subparsers(help="subparsers")
     
     # 结构弛豫
-    parser_relax = subparsers.add_parser("relax")
+    parser_relax = subparsers.add_parser("relax", formatter_class=RawTextHelpFormatter)
     parser_relax.add_argument(
         '-m',
         '--more-argments-about-relax',
         type=str,
         dest='more_args',
         nargs='+',
-        help="输入更多关于结构弛豫的参数"
+        help="输入更多关于结构弛豫的参数, 例如：\n"
+            "encut=600 (default)\n"
+            "kspacing = 0.3 \n"
+            "ismear = 0 \n"
+            "sigma = 0.01 \n"
+            "ediff = 1e-8 \n"
+            "ediffg = -0.01 \n"
+            "ibrion = 2 \n"
+            "isif = 3 \n"
+            "potim = 0.1 \n"
+            "nelm = 200 \n"
+            "ncore = 1 \n"
+            "lreal = Auto \n"
+            "mode = None, you can set it to be: rvf rv3 \n"
+            "queue = xieyu\n"
     )
     parser_relax.set_defaults(vasp_workflow=vasp_relax)
     
     # 计算声子谱
-    parser_phono = subparsers.add_parser("phono")
+    parser_phono = subparsers.add_parser("phono", formatter_class=RawTextHelpFormatter)
     parser_phono.add_argument(
         '-m',
         '--more-argments-about-relax',
         type=str,
         dest='more_args',
         nargs='+',
-        help="输入更多关于结构弛豫的参数"
+        help="输入更多关于声子计算的参数\n"
+            "encut=600 (default)\n"
+            "kspacing = 0.3  or kpoints=[None, None, None]\n"
+            "   The program will prefer to check whether kpoints is set\n"
+            "   if there is no kpoints setting, then use kmesh-method to creat kpoints\n"
+            "       if you choose to set kspacing, then the program will set kpoints by kspacing! \n"
+            "       if you choose to set kpoints, then you need to set kpoints='num1, num2, num3  \n'"
+            "supercell='1 1 1\n'"
+            "ismear = 0 \n"
+            "sigma = 0.01 \n"
+            "ediff = 1e-6 when you do phono calculation, you can't to set it!!\n"
+            "ediffg = -0.01 when you do phono calculation, you can't to set it!!\n"
+            "ibrion = -1 (finit displacement method) or 8 (DFPT method) \n"
+            "potim = 0.01 when you do phono calculation, you can't to set it!! It is uesd in displacement-method\n"
+            "nelm = 200 \n"
+            "lreal = Auto, I suggest you to set it to be 'lreal=.FALSE.' \n"
+            "mode = None,  you have `disp` and `dfpt`  \n"
+            "queue = xieyu\n"
     )
     parser_phono.set_defaults(vasp_workflow=vasp_phono) 
 
     # 批量结构弛豫
-    parser_batch_relax = subparsers.add_parser("batchrelax")
+    parser_batch_relax = subparsers.add_parser("batchrelax", formatter_class=RawTextHelpFormatter)
     parser_batch_relax.add_argument(
         '-m',
         '--more-argments-about-batch-relax',
         type=str,
         dest='more_args',
         nargs='+',
-        help="输入更多关于批量结构弛豫的参数"
+        help="输入更多关于批量结构弛豫的参数\n"
+            "encut=600 (default)\n"
+            "kspacing = 0.3 \n"
+            "ismear = 0 \n"
+            "sigma = 0.01 \n"
+            "ediff = 1e-8 \n"
+            "ediffg = -0.01 \n"
+            "ibrion = 2 \n"
+            "isif = 3 \n"
+            "potim = 0.1 \n"
+            "nelm = 200 \n"
+            "ncore = 1 \n"
+            "lreal = Auto \n"
+            "mode = None, you can set it to be: rvf rv3 \n"
+            "queue = xieyu\n"
     )
     parser_batch_relax.set_defaults(vasp_workflow=vaspbatch_relax) 
 
     # 批量声子谱
-    parser_batch_relax = subparsers.add_parser("batchphono")
+    parser_batch_relax = subparsers.add_parser("batchphono", formatter_class=RawTextHelpFormatter)
     parser_batch_relax.add_argument(
         '-m',
         '--more-argments-about-batch-relax',
         type=str,
         dest='more_args',
         nargs='+',
-        help="输入更多关于批量声子计算参数"
+        help="输入更多关于批量声子计算参数\n"
+            "encut=600 (default)\n"
+            "kspacing = 0.3  or kpoints=[None, None, None]\n"
+            "   The program will prefer to check whether kpoints is set\n"
+            "   if there is no kpoints setting, then use kmesh-method to creat kpoints\n"
+            "       if you choose to set kspacing, then the program will set kpoints by kspacing! \n"
+            "       if you choose to set kpoints, then you need to set kpoints='num1, num2, num3  \n'"
+            "supercell='1 1 1\n'"
+            "ismear = 0 \n"
+            "sigma = 0.01 \n"
+            "ediff = 1e-6 when you do phono calculation, you can't to set it!!\n"
+            "ediffg = -0.01 when you do phono calculation, you can't to set it!!\n"
+            "ibrion = -1 (finit displacement method) or 8 (DFPT method) \n"
+            "potim = 0.01 when you do phono calculation, you can't to set it!! It is uesd in displacement-method\n"
+            "nelm = 200 \n"
+            "lreal = Auto, I suggest you to set it to be 'lreal=.FALSE.' \n"
+            "mode = None,  you have `disp` and `dfpt`  \n"
+            "queue = xieyu\n"
     )
     parser_batch_relax.set_defaults(vasp_workflow=vaspbatch_phono) 
 
     # 处理数据 
-    parser_batch_relax = subparsers.add_parser("data")
+    parser_batch_relax = subparsers.add_parser("data", formatter_class=RawTextHelpFormatter)
     parser_batch_relax.add_argument(
         '-m',
         '--more-argments-about-batch-relax',
         type=str,
         dest='more_args',
         nargs='+',
-        help="输入更多关于结构弛豫的参数"
+        help="输入更多关于声子计算后处理的的参数\n"
+            "supercell has no default, you have to set it by yourself\n"
+            "   supercell='num1 num2 num3'\n"
+            "   mp='8 8 8'\n"
+            "   pdos=AUTO \n"
+            "   spectrum=False\n"
+            "       It mainly determines whether or not to calculate the phono-spectrum\n"
+            "   dos=False\n"
+            "       It mainly determines whether or not to calculate the total-dos and project-dos\n"
+
     )
     parser_batch_relax.set_defaults(vasp_workflow=vasp_processdata) 
-
-
 
 
 
