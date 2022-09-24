@@ -220,7 +220,7 @@ class vasp_processdata(vasp_base):
 
             cwd = os.getcwd()
             os.chdir(self.work_path)
-            os.system("phonopy -p -s band.conf -c POSCAR-init")
+            os.system("phonopy --dim='{}' -p -s band.conf -c POSCAR-init".format(' '.join(list(map(str, self.supercell)))))
             os.system("phonopy-bandplot  --gnuplot> band.dat")
             os.chdir(cwd)
 
