@@ -61,26 +61,34 @@ class vasp_base:
         ############################# done pp directory ##########################
 
     def get_struct_info(self, struct, output_poscar):
-        
+        """
+        function: get information of the `struct`
+        input parameter:
+            struct: the class of the `pymatgen.core.structure.Structure`
+            output_poscar: the output path of your structure
+        """ 
         spa = SpacegroupAnalyzer(struct)
         # bstruct = spa.get_conventional_standard_structure()
         pstruct = spa.get_primitive_standard_structure()
-        Poscar(pstruct).write_file(output_poscar.joinpath("POSCAR"))
+        bstruct = spa.get_conventional_standard_structure()
+        Poscar(pstruct).write_file(output_poscar.joinpath("PPOSCAR"))
+        Poscar(bstruct).write_file(output_poscar.joinpath("BPOSCAR"))
+        Poscar(struct).write_file(output_poscar.joinpath("POSCAR"))
 
         # 处理PPOSCAR的pymatgen对象
         # 获得元素名称 和 每种元素的原子个数
-        self.composition        = pstruct.composition.get_el_amt_dict()
-        self.species            = pstruct.composition.elements
+        self.composition        = struct.composition.get_el_amt_dict()
+        self.species            = struct.composition.elements
         # 获得体系的 化学配比
-        self.system_name        = pstruct.composition.formula.replace(" ", "")
+        self.system_name        = struct.composition.formula.replace(" ", "")
         # 获得元素种类的个数
         self.species_quantity   = len(self.composition)
         # 获得每种元素的相对原子质量
         self.all_atoms_quantity = int(sum(self.composition.values()))
         # 获得晶格矩阵
-        self.cell_parameters    = pstruct.lattice.matrix
+        self.cell_parameters    = struct.lattice.matrix
         # 获得原子分数坐标
-        self.fractional_sites   = pstruct.sites
+        self.fractional_sites   = struct.sites
 
     def get_potcar(self, dst_potcar_path: Path):
         """

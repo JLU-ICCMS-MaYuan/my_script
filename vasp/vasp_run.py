@@ -161,7 +161,7 @@ class vasp_processdata(vasp_base):
             self.mp = list(map(int, _mp))
         else:
             self.mp = [8,8,8]
-            logger.warning("you didn't specify the mp=[?,?,?], the program will set default mp=[8,8,8]")
+            logger.warning("you didn't specify the mp='? ? ?', the program will set default mp=[8,8,8]")
 
         if "pdos" in self._config:
             self.pdos = self._config['pdos']
