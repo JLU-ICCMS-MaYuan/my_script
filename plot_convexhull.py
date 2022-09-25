@@ -17,21 +17,27 @@ import os
 import re
 import shutil
 from pathlib import Path
-from argparse import ArgumentParser
+from argparse import ArgumentParser, RawTextHelpFormatter
 
 import pandas as pd
 from pymatgen.analysis.phase_diagram import PDEntry, PhaseDiagram, PDPlotter
 from pymatgen.core.composition import Composition
 
 
-parser = ArgumentParser()
+parser = ArgumentParser(formatter_class=RawTextHelpFormatter)
 parser.add_argument(
     "-i",
     "--input",
     type=str,
     default="./",
     dest="input_csv_path",
-    help="请输入csv文件路径",
+    help="请输入csv文件路径\n"
+        "这个csv文件是指: nnconvexhull.csv\n"
+        "如果你没有这个文件\n"
+        "   请运行`cak3.py --vasp 得到所有的结构搜索到的文件`\n"
+        "   然后运行`data_processer.py 得到nnconvexhull.csv 和 得到 nconvexhull.csv`\n"
+        "\n"
+        "整个命令在执行命令后, 将会在屏幕上输出高于convex hull 0~50meV的结构 !!!"
 )
 parser.add_argument(
     "-save",
@@ -39,7 +45,8 @@ parser.add_argument(
     action="store_true",
     default=False,
     dest="save_png",
-    help="是否保存图片",
+    help="是否保存图片, 这里保存的图片是pymatgen自动生成的。\n"
+        "保存convexhull图片到当前执行命令的路径下\n"
 )
 parser.add_argument(
     "-show",
@@ -47,15 +54,25 @@ parser.add_argument(
     action="store_true",
     default=False,
     dest="show_png",
-    help="是否展示图片",
+    help="是否展示图片, 以网页的形式展示出一个可以动态调节详细程度的可交互图片\n",
 )
 parser.add_argument(
-    "-collect",
-    "--collect",
+    "-cs",
+    "--collect-stable",
     action="store_true",
     default=False,
     dest="collect_stable",
-    help="是否收集数据",
+    help="是否收集稳定结构数据\n"
+        "将稳定的结构(落在凸包图)上的结构提取出来放在一个叫`stable_structs`的目录里\n"
+)
+parser.add_argument(
+    "-cu",
+    "--collect-unstable",
+    action="store_true",
+    default=False,
+    dest="collect_unstable",
+    help="是否收集亚稳结构数据\n"
+        "将亚稳的结构(落在凸包图)上的结构提取出来放在一个叫`unstable_structs`的目录里\n"
 )
 parser.add_argument(
     "-hand",
@@ -64,7 +81,13 @@ parser.add_argument(
     default=None,
     dest="hand_plot_dat",
     nargs="+",
-    help="导出精细的数据方便origin绘制",
+    help="导出精细的数据方便origin绘制"
+        "如果是一个三元的体系, 该参数应该这样设置：\n"
+        "   -hand Mg B H \n"
+        "然后将会输出3个文件: stable.csv, unstable.csv, for_origin_plot.csv\n"
+        "stable.csv 存储着所有稳定结构的焓值\n"
+        "unstable.csv 存储着所有压稳结构高于convex hull的能量值\n"
+        "for_origin_plot.csv 存储着所有的原始数据"
 )
 args = parser.parse_args()
 
@@ -72,6 +95,7 @@ input_csv_path = args.input_csv_path
 save_pnd = args.save_png
 show_pnd = args.show_png
 collect_stable = args.collect_stable
+collect_unstable = args.collect_unstable
 hand_plot_dat = args.hand_plot_dat
 
 # 生成 凸包图对象
@@ -115,7 +139,7 @@ for entry in ini_entries:
     unstable_dict = {}
     energy_above_hull = ini_pd.get_e_above_hull(entry)*1000
     form_energy = ini_pd.get_form_energy(entry)
-    if 0.0 < energy_above_hull <= 60.0: # 这里取高于convex hull 能量在0~60个meV范围内的亚稳结构
+    if 0.0 < energy_above_hull <= 50.0: # 这里取高于convex hull 能量在0~50个meV范围内的亚稳结构
         print("stoichiometry: {:<10}  No.{:<10} is above convell hull {:<10}".format(
             entry.name, 
             entry.entry_id,
@@ -127,7 +151,7 @@ for entry in ini_entries:
         unstable_dict["enthalpy"] = ini_pd.get_e_above_hull(entry) 
         unstable_list.append(unstable_dict)
         unstable_structs_amount += 1
-print(f"unstable structures above the convex hull is {unstable_structs_amount}\n")
+print(f"unstable structures above the convex hull 0-50 meV is {unstable_structs_amount}\n")
 unstable_pd = pd.DataFrame(unstable_list)
 unstable_pd.to_csv("unstable.csv", index=False)
 
@@ -164,10 +188,35 @@ if collect_stable:
                     print(src_vaspfile)
                     break
 
+# 搜集所有亚稳的结构
+if collect_unstable:
+    unstable_structs = Path(input_csv_path).parent.joinpath("unstable_structs")
+    if not unstable_structs.exists():
+        unstable_structs.mkdir()
+    for entry in ini_entries:
+        unstable_dict = {}
+        energy_above_hull = ini_pd.get_e_above_hull(entry)*1000
+        form_energy = ini_pd.get_form_energy(entry)
+        if 0.0 < energy_above_hull <= 50.0:
+            print(entry.entry_id)
+            print(f"look for the position of N0.{entry.entry_id} structure!")
+            for ana_out_dat in Path(input_csv_path).parent.rglob("Analysis_Output.dat"):
+                f = open(ana_out_dat).readlines()
+                for line in f:
+                    patter = re.compile(r"\d+\s\(\s*%s\)" %entry.entry_id)
+                    result = re.search(patter, line)
+                    if result is not None:
+                        localnumber         = re.findall("\d+", result.group())[0]
+                        spacegroup_symmetry = re.search(r"\w+\(\d+\)", line).group()
+                        spacegroup_number   = re.search(r"\(.*\)", spacegroup_symmetry).group().strip("()")
+                        src_vaspfile = list(ana_out_dat.parent.rglob(f"UCell_{localnumber}_{spacegroup_number}.vasp"))[0]
+                        dst_vaspfile = unstable_structs.joinpath(f"UCell_{entry.entry_id}_{localnumber}_{spacegroup_number}.vasp")
+                        shutil.copy(src_vaspfile, dst_vaspfile)
+                        print(src_vaspfile)
+                        break
 
 if hand_plot_dat:
 
-    
     for ele in hand_plot_dat:
         stable_pd.insert(2, ele, 0)
     for idx, row in stable_pd.iterrows():
@@ -179,6 +228,7 @@ if hand_plot_dat:
             stable_pd.loc[idx, ele_name] = atoms_num
     stable_pd.to_csv("stable.csv", index=False)
 
+
     for ele in hand_plot_dat:
         unstable_pd.insert(2, ele, 0)
     for idx, row in unstable_pd.iterrows():
@@ -189,7 +239,6 @@ if hand_plot_dat:
             atoms_num= comp.to_reduced_dict[ele_name]
             unstable_pd.loc[idx, ele_name] = atoms_num
     unstable_pd.to_csv("unstable.csv", index=False)
-
 
     total_pd = pd.concat((stable_pd, unstable_pd), axis=0)
     #total_pd = total_pd.drop(columns=['Number', 'formula']) # 删除列
