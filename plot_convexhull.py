@@ -123,16 +123,16 @@ for entry in ini_pd.stable_entries:
     stable_dict = {}
     form_energy = ini_pd.get_form_energy(entry)
     stable_dict["Number"] = entry.entry_id
-    stable_dict["formula"] = entry.name
+    stable_dict["formula"] = entry.composition.formula
+    print(entry.composition.formula)
     stable_dict["enthalpy"] = 0.0
     stable_list.append(stable_dict)
     stable_structs_amount += 1
 print(f"stable structures on the convex hull is {stable_structs_amount - len(ini_pd.el_refs)}\n")
 stable_pd = pd.DataFrame(stable_list)
+stable_pd.to_csv("stable.csv", index=False)
 
-
-
-# 获得 高于convex hull  60mev 上稳定结构的 csv 文件
+# 获得 高于convex hull  0~50mev 上亚稳结构的 csv 文件
 unstable_list = []
 unstable_structs_amount = 0
 for entry in ini_entries:
@@ -145,8 +145,8 @@ for entry in ini_entries:
             entry.entry_id,
             energy_above_hull,"meV",
             ))
-        unstable_dict["Number"]   = entry.entry_id
-        unstable_dict["formula"]  = entry.name
+        unstable_dict["Number"]  = entry.entry_id
+        unstable_dict["formula"] = entry.composition.formula
         #!!!!!!!!!!!!!!!!!特别注意这里的单位是meV!!!!!!!!!!!!!!!!!!!!!!!
         unstable_dict["enthalpy"] = ini_pd.get_e_above_hull(entry) 
         unstable_list.append(unstable_dict)
@@ -154,6 +154,10 @@ for entry in ini_entries:
 print(f"unstable structures above the convex hull 0-50 meV is {unstable_structs_amount}\n")
 unstable_pd = pd.DataFrame(unstable_list)
 unstable_pd.to_csv("unstable.csv", index=False)
+
+
+
+
 
 if save_pnd:
     plotter = PDPlotter(ini_pd, show_unstable=0.2, backend='matplotlib')
@@ -215,6 +219,8 @@ if collect_unstable:
                         print(src_vaspfile)
                         break
 
+
+
 if hand_plot_dat:
 
     for ele in hand_plot_dat:
@@ -224,7 +230,7 @@ if hand_plot_dat:
         comp = Composition(row['formula']) 
         for ele in comp.elements:
             ele_name = ele.name
-            atoms_num= comp.to_reduced_dict[ele_name]
+            atoms_num= comp.to_data_dict['unit_cell_composition'][ele_name]
             stable_pd.loc[idx, ele_name] = atoms_num
     stable_pd.to_csv("stable.csv", index=False)
 
@@ -236,7 +242,7 @@ if hand_plot_dat:
         comp = Composition(row['formula']) 
         for ele in comp.elements:
             ele_name = ele.name
-            atoms_num= comp.to_reduced_dict[ele_name]
+            atoms_num= comp.to_data_dict['unit_cell_composition'][ele_name]
             unstable_pd.loc[idx, ele_name] = atoms_num
     unstable_pd.to_csv("unstable.csv", index=False)
 
