@@ -82,7 +82,10 @@ parser.add_argument(
     nargs="+",
     help="导出精细的数据方便origin绘制"
         "如果是一个三元的体系, 该参数应该这样设置：\n"
-        "   -hand Mg B H \n"
+        "   -hand Xn Ym Zq  \n"
+        "########### 这里一定要注意 #############\n"
+        "如果单质X 有 n 个原子,一定要写对 n 的个数\n"
+        "#######################################\n"
         "然后将会输出3个文件: stable.csv, unstable.csv, for_origin_plot.csv\n"
         "stable.csv 存储着所有稳定结构的焓值\n"
         "unstable.csv 存储着所有压稳结构高于convex hull的能量值\n"
