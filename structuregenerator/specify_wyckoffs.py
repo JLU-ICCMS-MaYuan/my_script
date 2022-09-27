@@ -73,7 +73,9 @@ class specify_wyckoffs:
         self.nameofatoms        = nameofatoms
         self.optionalsites      = optionalsites
         self.sitesoccupiedrange = sitesoccupiedrange
-        self.work_path          = work_path
+        self.work_path          = Path(work_path)
+        if not self.work_path.exists():
+            self.work_path.mkdir(parents=True)
         self.popsize            = popsize
         self.maxlimit           = maxlimit
         self.distancematrix     = np.array(distancematrix)

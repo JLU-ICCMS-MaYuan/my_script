@@ -11,7 +11,7 @@ vasp_main.py -i POSCAR-init -w ./ data -m mode=dispprog supercell="2 2 2" mp="8 
 
 DFPT（密度泛函微软理论）声子
 ```shell
-vasp_main.py -i CONTCAR-rvf/200.0/CONTCAR -w ./ -j slurm -p 200 phono -m mode=dfpt encut=800 kpoints="20 20 20" queue=lhy supercell="2 2 2" ismear=1 ncore=4
+vasp_main.py -i CONTCAR-rvf/200.0/CONTCAR -w ./ -j slurm -p 200 phono -m mode=dfpt encut=800 kpoints="20 20 20" queue=lhy supercell="2 2 2" ismear=1
 ```
 DFPT（密度泛函微扰理论）后处理
 ```shell
