@@ -7,7 +7,11 @@ generator_main.py -w ./Kr-Ne-H-spg229-500/ -i ./input.ini method -m mode=specify
 
 input.ini的内容: 
 [specifywps]
-spacegroup_number = 229 
+spacegroup_number = 229
+# Here, spacegroup_number can be set by various ways, such as
+# 1. spacegroup_number = [spg for spg in range(221, 230)]
+# 2. spacegroup_number = [spg for spg in range(13, 18)] + [178, 29, 124]
+# However, spacegroup_number have to a `list type`
 nameofatoms = ["Ar", "Ne", "H"] 
 optionalsites = [['2a', '6b'], 
                  ['8c','12d'], 
@@ -51,7 +55,7 @@ maxstep= 50
 """
 
 import logging
-from argparse import ArgumentParser
+from argparse import ArgumentParser, RawTextHelpFormatter
 
 from set_args import set_more_args
 
@@ -63,7 +67,7 @@ if __name__ == "__main__":
 
     logger.info("Start generator structures")
 
-    parser = ArgumentParser(prog="generators")
+    parser = ArgumentParser(prog="generators", formatter_class=RawTextHelpFormatter)
     args = set_more_args(parser)
 
     #logger.info(f"{args} \n")

@@ -4,6 +4,7 @@ from argparse import ArgumentParser
 from pathlib import Path
 from pprint import pprint
 
+import numpy as np
 
 from config import config
 from specify_wyckoffs import specify_wyckoffs
@@ -17,8 +18,11 @@ class generator_methods:
         self.config_d = config(args).config_d
 
         if self.config_d["mode"] == "specifywps":
-            specify_wyckoffs.init_from_config(self.config_d)
-
+            if len(self.config_d["spacegroup_number"]) == 1:
+                specify_wyckoffs.init_from_config(self.config_d)
+            else:
+                spacegroup_number = np.random.choice(self.config_d["spacegroup_number"])         
+                
         if self.config_d["mode"] == "substitution":
             substitution.init_from_config(self.config_d)
 

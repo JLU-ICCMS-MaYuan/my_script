@@ -49,3 +49,12 @@ qe/eliashberg/modmain.mod
 qe/eliashberg/mpi.mod
 qe/eliashberg/modmain.mod
 qe/eliashberg/modmpi.mod
+structuregenerator/__pycache__/config.cpython-39.pyc
+structuregenerator/__pycache__/generator_methods.cpython-39.pyc
+structuregenerator/__pycache__/set_args.cpython-39.pyc
+structuregenerator/__pycache__/specify_wyckoffs.cpython-39.pyc
+vasp/vasptools/__pycache__/__init__.cpython-39.pyc
+vasp/vasptools/__pycache__/outcar.cpython-39.pyc
+vasp/vasptools/__pycache__/parser_vasp.cpython-39.pyc
+vasp/vasptools/__pycache__/poscar.cpython-39.pyc
+vasp/vasptools/__pycache__/vasprunxml.cpython-39.pyc

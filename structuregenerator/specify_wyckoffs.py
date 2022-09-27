@@ -1,13 +1,5 @@
 """
-使用帮助：
-    例子：
-    enumeration.py -s 201 -xwp 2a 4b -xpc 1 -hwp 6d 8e 12f 12g 24h -hpc 2 3 -e
-        -s 201                  :   space group is 201
-        -xwp 2a 2b              :   X element occupied 2a 2b wyckoff positons
-        -xpc                    :   at least get 1 wps to permutation and combination
-        -hwp 6d 8e 12f 12g 24h  :   H element occupied 6d 8e 12f 12g 24h wyckoff positons
-        -hpc 2 3                :   at least get 2 wps to permutation and combination, 
-                                    at most get 3 wps to permutation and combination
+
 """
 
 import re
@@ -18,6 +10,7 @@ from itertools import product, combinations, chain
 from collections import Counter, defaultdict
 from pathlib import Path
 import signal
+import site
 import time
 
 import numpy as np
@@ -31,28 +24,28 @@ from ase.formula import Formula
 
 logger = logging.getLogger(__name__)
 
-def handle(timeout, frame):  # 收到信号 SIGALRM 后的回调函数，第一个参数是信号的数字，第二个参数是the interrupted stack frame.
-    print("bad structure")
-    raise RuntimeError("run error")
+#def handle(timeout, frame):  # 收到信号 SIGALRM 后的回调函数，第一个参数是信号的数字，第二个参数是the interrupted stack frame.
+    #print("bad structure")
+    #raise RuntimeError("run error")
 
-def set_timeout(timeout, callback):
-    def wrap(func):
-        def inner(*args, **kwargs):
-            try:
-                signal.signal(signal.SIGALRM, handle)  # 设置信号和回调函数
-                signal.alarm(timeout)  # 设置 num 秒的闹钟
-                print('start alarm signal.')
-                r = func(*args, **kwargs)
-                print('close alarm signal.')
-                signal.alarm(0)  # 关闭闹钟
-                return r
-            except RuntimeError as e:
-                callback()
-        return inner
-    return wrap
+#def set_timeout(timeout, callback):
+    #def wrap(func):
+        #def inner(*args, **kwargs):
+            #try:
+                #signal.signal(signal.SIGALRM, handle)  # 设置信号和回调函数
+                #signal.alarm(timeout)  # 设置 num 秒的闹钟
+                #print('start alarm signal.')
+                #r = func(*args, **kwargs)
+                #print('close alarm signal.')
+                #signal.alarm(0)  # 关闭闹钟
+                #return r
+            #except RuntimeError as e:
+                #callback()
+        #return inner
+    #return wrap
 
-def after_timeout():  # 超时后的处理函数
-    print("Time out!")
+#def after_timeout():  # 超时后的处理函数
+    #print("Time out!")
 
 
 class specify_wyckoffs:
@@ -66,10 +59,10 @@ class specify_wyckoffs:
         sitesoccupiedrange: list[int],
         popsize: int,
         maxlimit: int,
-        distancematrix: list[list[float]]
+        distancematrix=0,
         ):
         
-        self.spacegroup_number   = spacegroup_number
+        self.spacegroup_number  = spacegroup_number
         self.nameofatoms        = nameofatoms
         self.optionalsites      = optionalsites
         self.sitesoccupiedrange = sitesoccupiedrange
@@ -83,6 +76,7 @@ class specify_wyckoffs:
         self.structs = []
         while len(self.structs) < self.popsize:
             struct = self.__rand_gen()
+
             if hasattr(struct, "is_ordered"): # 判断结构是否是分数占据的无序结构
                 pstruct = SpacegroupAnalyzer(struct).get_primitive_standard_structure()
                 self.structs.append(pstruct)
@@ -185,11 +179,12 @@ class specify_wyckoffs:
         _group = dict(_group)
         return _group
     
-    @set_timeout(10, after_timeout)
+    #@set_timeout(10, after_timeout)
     def __rand_gen(self):
         '''
         create struct by choosing wyckoff positions
         '''
+        input("暂停1")
         spacegroup_number = self.spacegroup_number
         name_of_atoms = self.nameofatoms
         fomula = random.choice(list(self._group.keys()))
@@ -197,29 +192,36 @@ class specify_wyckoffs:
 
         amounts = species_amounts_sites[0]
         wyck = species_amounts_sites[1]
-
-        species_radius = list(zip(name_of_atoms, self.distancematrix.diagonal()/2.0))
-
-        tm = Tol_matrix()
-        for ele_r1, ele_r2 in combinations(species_radius, 2):
-            tm.set_tol(ele_r1[0], ele_r2[0], ele_r1[1]+ele_r2[1])
+        if self.distancematrix.all() != 0:
+            species_radius = list(zip(name_of_atoms, self.distancematrix.diagonal()/2.0))
+            tm = Tol_matrix()
+            for ele_r1, ele_r2 in combinations(species_radius, 2):
+                tm.set_tol(ele_r1[0], ele_r2[0], ele_r1[1]+ele_r2[1])
+        else:
+            tm = Tol_matrix()
 
         struc = pyxtal()
+        print(struc); input("暂停2")
         try:
+            print(spacegroup_number, name_of_atoms, amounts, wyck); input("暂停3")
             struc.from_random(
                 3,
                 spacegroup_number,
                 name_of_atoms,
                 amounts,
-                factor=2.0,
+                factor=1.0,
                 sites=wyck,
-                tm=tm
             )
+            print(struc); input("暂停4")
             struct_pymatgen = struc.to_pymatgen()
+            print(struct_pymatgen)
+            input()
             if struct_pymatgen.composition.num_atoms < float(self.maxlimit):
                 return struct_pymatgen
         except Exception as e:
             logger.debug(f"except {e}")
+        print(struc); input("暂停5")
+
 
     @classmethod
     def init_from_config(cls, config_d: dict):
