@@ -26,9 +26,11 @@ from pyxtal.tolerance import Tol_matrix
 from pymatgen.io.vasp import Poscar
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from pymatgen.core.structure import Structure
+from pymatgen.io.ase import AseAtomsAdaptor
 
 from ase.formula import Formula
 
+from psolib.utils.sort_atoms import sort_atoms
 
 logger = logging.getLogger(__name__)
 
@@ -95,7 +97,9 @@ class specify_wyckoffs:
             for i, struct in enumerate(self.structs):
                 logger.info(f"try successfully write POSCAR_{i+1} !")
                 filepath = os.path.join(self.work_path, "POSCAR_" + str(i+1))
-                Poscar(struct).write_file(filepath)
+                _struct_ase = AseAtomsAdaptor.get_atoms(struct)
+                struct_ase = sort_atoms(_struct_ase, self.nameofatoms)
+                struct_ase.write(filepath)
 
 
     def get_H(self, H_occupied_wps, h_lower, h_upper):
