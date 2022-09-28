@@ -35,7 +35,9 @@ replacement = [["Mg", "Ca", "Sr", "Ba"], # 第一个元素必须是结构原型�
 
 # pso算法演化产生结构
 """
-Attention please
+Attention please,  if you will `run pso` at the first time, before you run it, you have create a file named `step` where 2 is wroten.
+just like:
+    "2"
 generator_main.py -w ./Ar-Ne-H-spg221-500/ -i ./pso.ini method -m mode=pso
 
 [pso]

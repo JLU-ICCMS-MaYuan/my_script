@@ -99,7 +99,7 @@ class specify_wyckoffs:
                 filepath = os.path.join(self.work_path, "POSCAR_" + str(i+1))
                 _struct_ase = AseAtomsAdaptor.get_atoms(struct)
                 struct_ase = sort_atoms(_struct_ase, self.nameofatoms)
-                struct_ase.write(filepath)
+                struct_ase.write(filepath, format='vasp')
 
 
     def get_H(self, H_occupied_wps, h_lower, h_upper):
