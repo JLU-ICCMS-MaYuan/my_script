@@ -3,7 +3,7 @@
 
 # 指定wyckoff position产生结构
 """
-generator_main.py -w ./Kr-Ne-H-spg229-500/ -i ./input.ini method -m mode=specifywps
+generator_main.py -w ./Ar-Ne-H-spg229-500/ -i ./229.ini method -m mode=specifywps
 
 input.ini的内容: 
 [specifywps]
@@ -35,6 +35,9 @@ replacement = [["Mg", "Ca", "Sr", "Ba"], # 第一个元素必须是结构原型�
 
 # pso算法演化产生结构
 """
+Attention please
+generator_main.py -w ./Ar-Ne-H-spg221-500/ -i ./pso.ini method -m mode=pso
+
 [pso]
 nameofatoms = ["Mg", "B", "H"]
 popsize=5
@@ -55,7 +58,7 @@ from argparse import ArgumentParser
 
 from set_args import set_more_args
 
-logging.basicConfig(level = logging.INFO,format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(level = logging.INFO,format = '%(asctime)s|%(name)s|%(levelname)s|%(message)s')
 logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":

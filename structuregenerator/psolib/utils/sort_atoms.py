@@ -15,10 +15,10 @@ from ase.formula import Formula
 
 def sort_atoms(atoms: Union[Atoms, str, Formula], elems: List) -> Atoms:
     if isinstance(atoms, Atoms):
-        elems_d = {elem: [] for elem in elems}
-        for idx, atom in enumerate(atoms):
-            elems_d[atom.symbol].append(idx)
-        indices = list(chain.from_iterable(elems_d.values()))
+        elems_d = {elem: [] for elem in elems} # Specifying element order by the `elems`
+        for idx, atom in enumerate(atoms):      # In a dictionary that has been ordered, 
+            elems_d[atom.symbol].append(idx)    # Assign a atoms number to each element
+        indices = list(chain.from_iterable(elems_d.values())) 
         return atoms[indices]
     elif isinstance(atoms, str):
         f_count = Formula(atoms).count()
