@@ -25,6 +25,7 @@ from pyxtal import pyxtal
 from pyxtal.tolerance import Tol_matrix
 from pymatgen.io.vasp import Poscar
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
+from pymatgen.core.structure import Structure
 
 from ase.formula import Formula
 
