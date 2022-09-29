@@ -23,9 +23,7 @@ import time
 import numpy as np
 from pyxtal import pyxtal
 from pyxtal.tolerance import Tol_matrix
-from pymatgen.io.vasp import Poscar
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
-from pymatgen.core.structure import Structure
 from pymatgen.io.ase import AseAtomsAdaptor
 
 from ase.formula import Formula
@@ -82,25 +80,8 @@ class specify_wyckoffs:
         self.popsize            = popsize
         self.maxlimit           = maxlimit
         self.distancematrix     = np.array(distancematrix)
-
         self._group             = self.get_group(self.optionalsites, self.sitesoccupiedrange)
-        
         self.structs = []
-        while len(self.structs) < self.popsize:
-            struct = self.__rand_gen()
-            if hasattr(struct, "is_ordered"): # 判断结构是否是分数占据的无序结构
-                pstruct = SpacegroupAnalyzer(struct).get_primitive_standard_structure()
-                self.structs.append(pstruct)
-                logger.info(f"new you have successfully create {len(self.structs)} structures !")
-
-        if len(self.structs) == self.popsize:
-            for i, struct in enumerate(self.structs):
-                logger.info(f"try successfully write POSCAR_{i+1} !")
-                filepath = os.path.join(self.work_path, "POSCAR_" + str(i+1))
-                _struct_ase = AseAtomsAdaptor.get_atoms(struct)
-                struct_ase = sort_atoms(_struct_ase, self.nameofatoms)
-                struct_ase.write(filepath, format='vasp')
-
 
     def get_H(self, H_occupied_wps, h_lower, h_upper):
         if h_upper < h_lower:
@@ -193,30 +174,34 @@ class specify_wyckoffs:
         return _group
     
     @set_timeout(10, after_timeout)
-    def __rand_gen(self):
+    def _specify_gen(self):
         '''
         create struct by choosing wyckoff positions
         '''
         spacegroup_number = self.spacegroup_number
-        name_of_atoms = self.nameofatoms
+        nameofatoms = self.nameofatoms
         fomula = random.choice(list(self._group.keys()))
         species_amounts_sites = random.choice(self._group[fomula])
 
         amounts = species_amounts_sites[0]
         wyck = species_amounts_sites[1]
 
-        species_radius = list(zip(name_of_atoms, self.distancematrix.diagonal()/2.0))
+        species_radius = list(zip(nameofatoms, self.distancematrix.diagonal()/2.0))
 
         tm = Tol_matrix()
         for ele_r1, ele_r2 in combinations(species_radius, 2):
             tm.set_tol(ele_r1[0], ele_r2[0], ele_r1[1]+ele_r2[1])
 
+
         struc = pyxtal()
         try:
+            logger.info("Now the program will try to create ")
+            logger.info(f"every atoms amouts are {amounts}")
+            logger.info(f"wyckoff positions are {wyck}\n")
             struc.from_random(
                 3,
                 spacegroup_number,
-                name_of_atoms,
+                nameofatoms,
                 amounts,
                 factor=2.0,
                 sites=wyck,
@@ -226,7 +211,8 @@ class specify_wyckoffs:
             if struct_pymatgen.composition.num_atoms < float(self.maxlimit):
                 return struct_pymatgen
         except Exception as e:
-            logger.debug(f"except {e}")
+            logger.info(f"except {e}")
+            logger.info(f"The structure input infomation {amounts} {wyck} can't create a reasonable structure!!!")
 
     @classmethod
     def init_from_config(cls, config_d: dict):
@@ -237,7 +223,7 @@ class specify_wyckoffs:
             nameofatoms=config_d["nameofatoms"], 
             optionalsites=config_d["optionalsites"], 
             sitesoccupiedrange=config_d["sitesoccupiedrange"],
-            popsize=config_d["popsize"],    
+            popsize=config_d["popsize"],
             maxlimit=config_d["maxlimit"],
             distancematrix=config_d["distancematrix"],
         )

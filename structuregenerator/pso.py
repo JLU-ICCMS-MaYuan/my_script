@@ -1,6 +1,6 @@
-from json.encoder import py_encode_basestring
-from multiprocessing.spawn import old_main_modules
+from distutils.command.config import config
 import os, sys, shutil
+import symbol
 additional_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(additional_path)
 
@@ -8,17 +8,26 @@ import logging
 from pathlib import Path
 from pprint import pprint
 from itertools import combinations
+from typing import *
 
 import numpy as np
 from ase import Atoms
 from ase.geometry.analysis import Analysis
 from ase.io import ParseError, read, write
+from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
+from pymatgen.io.ase import AseAtomsAdaptor
+from pyxtal.lattice import Lattice
+from pyxtal import pyxtal
+from pyxtal.tolerance import Tol_matrix
 
 from vasp.vasptools.parser_vasp import VASPOutcarFormat, VASPPoscarFormat
+from specify_wyckoffs import specify_wyckoffs
 from psolib.utils.convert import dict2Atoms
 from psolib.utils.get_enthalpy import get_enthalpy
+from psolib.utils.sort_atoms import sort_atoms
 from psolib.finger.mixins import FingerPrintMixin, UpdateBestMixin
-from psolib.lib_so.f90sym3dgenerator import Spgcrylat
+# from psolib.lib_so.f90sym3dgenerator import Spgcrylat
+
 
 logger = logging.getLogger(__name__)
 
@@ -77,6 +86,9 @@ class pso(UpdateBestMixin):
         threshold,
         lbest,
         maxstep,
+        pso_ltype: List[str],
+        spacegroup_number: int,
+        pso_ratio: float
         # id_list,
         # pbest_list,
         # gbest,
@@ -91,6 +103,9 @@ class pso(UpdateBestMixin):
         self.nameofatoms = nameofatoms
         self.lbest = lbest
         self.maxstep = maxstep
+        self.pso_ltype = pso_ltype
+        self.spacegroup_number = spacegroup_number
+        self.pso_ratio = pso_ratio
         # self.next_step 表示下一代的'代编号'
         self.next_step = self.get_next_step(work_path)
         # self.current_step 表示当前代的'代编号', 获得它是为了self.generate_step()方法使用
@@ -137,6 +152,9 @@ class pso(UpdateBestMixin):
             threshold=config_d["simthreshold"],
             lbest=config_d["lbest"],
             maxstep=config_d["maxstep"],
+            pso_ltype=config_d["pso_ltype"],
+            spacegroup_number=config_d["spacegroup_number"],
+            pso_ratio=config_d["pso_ratio"],
         #    id_list,
         #    pbest_list, 
         #    gbest, 
@@ -165,6 +183,50 @@ class pso(UpdateBestMixin):
 
     def collect_ini_opt(self, work_path):
         """
+        Function: 
+            step_1: In according to the the value of `popsize` in the `pso.ini` file, 
+                    the program will determine how many structures will participate in 
+                    the PSO structure evolution 
+            step_2: In the FOR-cycle, check for the presence of POSCAR and OUTCAR of 
+                    every structure.  
+                    2.1 the program will convert POSCAR file into atoms_poscar, 
+                    2.2 the program will convert OUTCAR file into atoms_outcar, 
+                            get the `enthalpy` of every structures, add its `enthalpy` 
+                            to the dictionary of `info['enthalpy']` of `Atoms` class.
+                            get the `fingerprint` of every structures, 
+                            add its `fingerprint` and `fp_type` to the dictionary of `info` of `Atoms` class by blow:
+                                self.set_fp(atoms_outcar)
+                                the method `set_fp` will add `fp_type` to the dictionary of `info['fp_type']` of `Atoms`
+                                the method `set_fp` will add `fingerprint` to the dictionary of `info['fingerprint']` of `Atoms`
+                    *** But if OUTCAR is something wrong, the program will use the 
+                    corresponding POSCAR to subsitute the OUTCAR. the enthalpy will
+                    be set as 610612509 by itself.***
+            step_3: set up `self.pbest`. Suppose the POSCAR and OUTCAR of 5 structures are read in. then 
+                    the `self.data` will be:
+                    self.data = [
+                        [atoms_poscar1, atoms_outcar1],
+                        [atoms_poscar2, atoms_outcar2],
+                        [atoms_poscar3, atoms_outcar3],
+                        [atoms_poscar4, atoms_outcar4],
+                        [atoms_poscar5, atoms_outcar5],
+                    ]
+            step_4: set up `self.pbest`. Suppose the POSCAR and OUTCAR of 5 structures are read in. then 
+                    the `self.pbest` will be:
+                    self.pbest = [
+                        [atoms_outcar1],
+                        [atoms_outcar2],
+                        [atoms_outcar3],
+                        [atoms_outcar4],
+                        [atoms_outcar5],
+                    ]
+            step_5: set up `self.fp_mats`
+                    current_fp = atoms_outcar.info['fingerprint'], 
+                        the `current_fp` is a 3-dim array, its shape is (11, 3, 3)
+                    self.fp_mats = np.expand_dims(current_fp, axis=0)
+                        the `self.fp_mats` is a 4-dim array, its shape is (x, 11, 3, 3)
+                    Suppose the POSCAR and OUTCAR of 5 structures are read in. 
+                        then the shape of `self.fp_mats` will be: (5, 11, 3, 3)
+                
         input:
             work_path : the parent directory path of poscar_ini, poscar_opt 
         return:
@@ -176,23 +238,36 @@ class pso(UpdateBestMixin):
             outcar = Path(work_path).joinpath(f"OUTCAR_{col+1}")
             contcar= Path(work_path).joinpath(f"CONTCAR_{col+1}")
 
-            if not poscar.exists() or not outcar.exists():
-                logger.warning(f"No.{col} structure didn't exist! ")
 
-            # 给poscar的 atoms类赋值
-            data = VASPPoscarFormat().from_poscar(file_name=poscar)
-            atoms_poscar = dict2Atoms(data, self.nameofatoms)
+            # read the POSCAR and convert it to `atoms_poscar`
+            if poscar.exists():
+                data = VASPPoscarFormat().from_poscar(file_name=poscar)
+                atoms_poscar = dict2Atoms(data, self.nameofatoms)
+            else:
+                raise FileExistsError(f"No.{col+1} poscar didn't exist! ")
 
-            # 给outcar的 atoms类赋值
-            try:
-                data = VASPOutcarFormat().from_outcar(file_name=outcar)
-                atoms_outcar = dict2Atoms(data, self.nameofatoms)
-                enth = get_enthalpy(outcar, contcar)
-                atoms_outcar.info['enthalpy'] = enth
-                #atoms_outcar.info['sid']      = sid
-                atoms_outcar.info['column']   = int(col)
-                self.set_fp(atoms_outcar)
-            except Exception as e:
+            # check whether the OUTCAR file exists or not
+            if outcar.exists():
+                # if the OUTCAR exists 
+                # try to read the OUTCAR and convert it to `atoms_outcar`
+                # if read the OUTCAR fails, then the program will read the corresponding POSCAR instead of its OUTCAR
+                try:
+                    data = VASPOutcarFormat().from_outcar(file_name=outcar)
+                    atoms_outcar = dict2Atoms(data, self.nameofatoms)
+                    enth = get_enthalpy(outcar, contcar)
+                    atoms_outcar.info['enthalpy'] = enth
+                    #atoms_outcar.info['sid']      = sid
+                    atoms_outcar.info['column']   = int(col)
+                    self.set_fp(atoms_outcar)
+                except Exception as e:
+                    data = VASPPoscarFormat().from_poscar(file_name=poscar)
+                    atoms_outcar = dict2Atoms(data, self.nameofatoms)
+                    atoms_outcar.info['enthalpy'] = 610612509
+                    #atoms_outcar.info['sid']      = sid
+                    atoms_outcar.info['column']   = int(col)
+                    self.set_fp(atoms_outcar)
+            # if the OUTCAR doesn't exist, then the program will use the corresponding POSCAR instead of its OUTCAR just like beforce.
+            else:
                 data = VASPPoscarFormat().from_poscar(file_name=poscar)
                 atoms_outcar = dict2Atoms(data, self.nameofatoms)
                 atoms_outcar.info['enthalpy'] = 610612509
@@ -201,14 +276,15 @@ class pso(UpdateBestMixin):
                 self.set_fp(atoms_outcar)
             logger.info(f"finish read No.{col + 1 } structure")
 
-            
             self.data[col][0] = atoms_poscar
             self.data[col][1] = atoms_outcar
+
             self.pbest[col].append(atoms_outcar)
 
-            current_fp = atoms_outcar.info['fingerprint']
+
+            current_fp = atoms_outcar.info['fingerprint'] # current_fp.shape = (11, 3, 3)
             if self.fp_mats is None:
-                self.fp_mats = np.expand_dims(current_fp, axis=0)
+                self.fp_mats = np.expand_dims(current_fp, axis=0) # self.fp_mats = (1, 11, 3, 3)
             else:
                 current_fp = np.expand_dims(current_fp, axis=0)
                 self.fp_mats = np.concatenate([self.fp_mats, current_fp])
@@ -223,20 +299,28 @@ class pso(UpdateBestMixin):
         功能:
             更新self.gbest字典
         '''
+        # check the existance of the global minima file of laste step 
         if Path(last_step_gbest).exists():
+
             logger.info(f"The program will read the {self.last_step}_step gbest and generate the {self.current_step}_step gbest")
             old_gbest_list = read(last_step_gbest, ':', 'extxyz')
-            for col, atoms in enumerate(old_gbest_list):
-                self.gbest[atoms.get_chemical_formula('metal')] = self.update_best(
-                    self.gbest.get(atoms.get_chemical_formula('metal'), []) + [atoms], self.lbest
+
+            for col, _atoms in enumerate(old_gbest_list):
+                _atoms = sort_atoms(atoms=_atoms, elems=self.nameofatoms)
+                # try to obtain the `_atoms` named `str(_atoms.symbols)`
+                # if there is no the `_atoms` named `str(_atoms.symbols)`, then the program will create an empty list `[]` for this symbols
+                # if there is    the `_atoms` named `str(_atoms.symbols)`, then the program will get the List of the corresponding symbols. 
+                self.gbest[str(_atoms.symbols)] = self.update_best(
+                    self.gbest.get(str(_atoms.symbols), []) + [_atoms], # self.gbest.get(str(_atoms.symbols), []) will return a list which stores the all `_atoms` of this symbols.
+                    self.lbest, # `self.lbest` will determine the number of structures about this symbols.
                 )
         else:
             logger.info("The program will read the 1_step structure and generate the 2_step structure")
 
         for col, atoms in enumerate(self.data):
             self.pbest[col] = self.update_best(self.pbest[col] + [atoms[1]], 1)
-            self.gbest[atoms[1].get_chemical_formula('metal')] = self.update_best(
-                self.gbest.get(atoms[1].get_chemical_formula('metal'), []) + [atoms[1]], self.lbest
+            self.gbest[str(atoms[1].symbols)] = self.update_best(
+                self.gbest.get(str(atoms[1].symbols), []) + [atoms[1]], self.lbest
             )
 
         logger.info(f"Now there are {len(self.gbest.keys())} stoichiometry")
@@ -266,53 +350,109 @@ class pso(UpdateBestMixin):
             write(current_step_gbest, gbest_list, 'extxyz', append=True, parallel=False)
         
     def store_current_struct(self, work_path):
+        """
+        store the current structures to the directory `result`. For example, 
+            `step` file stores number 2, therefore, self.next_step=2, self.current_step=1
+            `step` file stores number 5, therefore, self.next_step=5, self.current_step=4
+        The execution logic of this instance method:
+            1. check the existance of file named `"step_"+str(self.current_step)` , if exist, then remove it.
+            2. check the existance of file named `"result` , if not exist, then create it.
+            3. extract the enthalpy of the OUTCAR to `atoms_outcar` 
+            4. write the file pso_ini_step, pso_opt_step, pso_sor_step
+            5. move all the POSCAR, OUTCAR, CONTCAR into the `current_step_dir`
+        """
+        # 1. check the existance of file named `"step_"+str(self.current_step)` , if exist, then remove it.
         current_step_dir = Path(work_path).joinpath("step_"+str(self.current_step))
-        result = Path(work_path).joinpath("result")
         if current_step_dir.exists():
             os.system(f"rm -fr {str(current_step_dir)}")
         current_step_dir.mkdir()
+        # 2. check the existance of file named `"result` , if not exist, then create it.
+        result = Path(work_path).joinpath("result")
         if not result.exists():
             os.mkdir(result)
 
         pso_ini = result.joinpath("pso_ini_" + str(self.current_step))
         pso_opt = result.joinpath("pso_opt_" + str(self.current_step)) 
         pso_sor = result.joinpath("pso_sor_" + str(self.current_step))
-        # 获得焓值
-        current_symbols = []
+
         for col in range(self.popsize):
             poscar = Path(work_path).joinpath(f"POSCAR_{col+1}")
             outcar = Path(work_path).joinpath(f"OUTCAR_{col+1}")
             contcar= Path(work_path).joinpath(f"CONTCAR_{col+1}")
+            if not poscar.exists() :
+                logger.warning(f"No.{col}  poscar didn't exist! ")
+            elif not outcar.exists():
+                logger.warning(f"No.{col}  outcar didn't exist! ")
+            elif not contcar.exists():
+                logger.warning(f"No.{col}  contcar didn't exist! ")
 
-            if not poscar.exists() or not outcar.exists():
-                logger.warning(f"No.{col} structure didn't exist! ")
-
-            # 给poscar的 atoms类赋值
+            # 3. extract the enthalpy of the OUTCAR to `atoms_outcar` 
             data = VASPPoscarFormat().from_poscar(file_name=poscar)
             atoms_poscar = dict2Atoms(data, self.nameofatoms)
-
             try:
                 data = VASPOutcarFormat().from_outcar(file_name=outcar)
                 atoms_outcar = dict2Atoms(data, self.nameofatoms)
                 enth = get_enthalpy(outcar, contcar)
-
             except Exception as e:
                 data = VASPPoscarFormat().from_poscar(file_name=poscar)
                 atoms_outcar = dict2Atoms(data, self.nameofatoms)
                 enth = 610612509
 
+            # 4. write the file pso_ini_step, pso_opt_step, pso_sor_step
+            # write pso_ini_step file, such as pso_ini_1,  pso_ini_2,  pso_ini_3, .......
+            # <1> : write `Atoms class` to the file named `"pso_opt_" + str(self.current_step)`
             atoms_poscar.write(pso_ini, format="vasp", append=True)
+            # write pso_opt_step file, such as pso_opt_1,  pso_opt_2,  pso_opt_3, .......
+            #   <1> write `enthalpy`    to the file named `"pso_opt_" + str(self.current_step)`
+            #   <2> : write `Atoms class` to the file named `"pso_opt_" + str(self.current_step)`
+            #   For example:
+            #       0.00324 
+            #       SiO2
+            #       1.0
+            #       5.000  0.000  0.000
+            #       0.000  5.000  0.000
+            #       0.000  0.000  5.000
+            #       Si O
+            #       1  2
+            #       0.0    0.0    0.0
+            #       0.5    0.5    0.5
+            #       0.25   0.25   0.25
+            #       610612509 
+            #       SiO
+            #       1.0
+            #       5.000  0.000  0.000
+            #       0.000  5.000  0.000
+            #       0.000  0.000  5.000
+            #       Si O
+            #       1  2
+            #       0.0    0.0    0.0
+            #       0.5    0.5    0.5
+            #       .........
             with open(pso_opt, "a") as f:
                 f.write(f"{enth}\n")
             atoms_outcar.write(pso_opt, format="vasp", append=True)
+            # write pso_opt_step file, such as pso_opt_1,  pso_opt_2,  pso_opt_3, .......
+            #   <1> write `enthalpy`    to the file named `"pso_opt_" + str(self.current_step)`
+            #   For example:
+            #       0.00324 
+            #       610612509 
             with open(pso_sor, "a") as f:
                 f.write(f"{enth}\n")
 
-            shutil.move(poscar,  current_step_dir); 
-            shutil.move(outcar,  current_step_dir); 
-            shutil.move(contcar, current_step_dir); 
+            # 5. move all the POSCAR, OUTCAR, CONTCAR into the `current_step_dir`
+            # For No.col structure, its POSCAR, OUTCAR, CONTCAR has been extracted completely !!!
+            # Now the program will move its POSCAR OUTCAR CONTCAR into the directory `current_step_dir` !!!
+            if poscar.exists(): shutil.move(poscar,  current_step_dir); 
+            if outcar.exists(): shutil.move(outcar,  current_step_dir); 
+            if contcar.exists(): shutil.move(contcar, current_step_dir); 
 
     def store_next_struct(self, work_path, atoms_list):
+        """
+        store the next structures to the directory `work_path`. For example, 
+            POSCAR_1, POSCAR_2 .... POSCAR_col .... 
+        The execution logic of this instance method:
+            write all structures created by PSO method to the `work_path` directory
+        """
         for col, atoms in enumerate(atoms_list):
             poscar = Path(work_path).joinpath(f"POSCAR_{col+1}")
             write(poscar, atoms, format="vasp")
@@ -332,7 +472,7 @@ class pso(UpdateBestMixin):
             gen_one = self.generate_one(
                 id_list[column],
                 pbest_list[column],
-                gbest[current_atoms[0].get_chemical_formula('metal')],
+                gbest[str(current_atoms[0].symbols)],
                 current_atoms,
                 fp_mats,
             )
@@ -348,7 +488,13 @@ class pso(UpdateBestMixin):
         fp_mats
         ) -> Atoms:
         
-        gen_atoms = self.__pso_gen(pbest, gbest, current_atoms, fp_mats)
+        random_ratio = np.random.uniform(0,1)
+        if random_ratio < self.pso_ratio:
+            logger.info("create the structure by PSO")
+            gen_atoms = self.__pso_gen(pbest, gbest, current_atoms, fp_mats)
+        else:
+            logger.info("create the structure by RANDOM")
+            gen_atoms = self.__random_gen(current_atoms)
 
         return gen_atoms
 
@@ -379,42 +525,82 @@ class pso(UpdateBestMixin):
         # todo: decide which gbest should be used
         gbest_pos        = gbest.get_scaled_positions()
         init_pos         = init_atoms.get_scaled_positions()
-        opt_volume       = opt_atoms.get_volume()
+        opt_volume       = opt_atoms.get_volume(); opt_symbol = opt_atoms.symbols
         detla_pbest_init = pbest_pos - init_pos
         detla_gbest_init = gbest_pos - init_pos
-        for _ in range(5):
-            print(_)
+        for _ in range(10):
+            logger.info(f"No.{_+1} attempt for {opt_symbol}")
             r1 = np.random.rand()
             r2 = np.random.rand()
             init_velocity = init_atoms.arrays.get('caly_velocity', np.random.uniform(0, 1, (len(init_atoms), 3)))
+            # np.random.uniform(0, 1, (len(init_atoms), 3)) represents creating a 2-dim array, its shape is len(init_atoms)*3
             velocity = (
                 omega * init_velocity
                 + c1 * r1 * detla_pbest_init
                 + c2 * r2 * detla_gbest_init
             )
-            gen_pso_pos = init_pos + velocity
+            gen_pso_pos = init_pos + velocity # gen_pso_pos is the new coordinates created by PSO method !!!
 
-            spacegroupid = np.random.uniform(1, 231, 1)
-            lattice = np.ones((3, 3), dtype=np.float64, order='F')
-            Spgcrylat().spggenlat(opt_volume, spacegroupid, lattice)
+            # If the range of crystal systems is given in `pso.ini`,
+            # the program will randomly select one as `_ltype`, 
+            # and then the corresponding lattice matrix will be created. 
+            _ltype = np.random.choice(self.pso_ltype)
+            _volume = opt_atoms.cell.volume + 10
+            lattice = Lattice(ltype=_ltype, volume=_volume).generate_matrix()
+
+            # lattice = np.ones((3, 3), dtype=np.float64, order='F')
+            # spacegroupid = np.random.uniform(1, 231, 1)
+            # Spgcrylat().spggenlat(opt_volume, spacegroupid, lattice)
+            #   opt_volume is the volume of optimized structure
+            #   spacegroupid is the space group ID
+            #   after Spgcryla().spggenlat() is running, the `lattice` will be assigned new volume !!!
             # logger.warning("This lattice may not be physical.")
 
             new_atoms = Atoms(
-                symbols=opt_atoms.symbols,
+                symbols=opt_symbol,
                 scaled_positions=gen_pso_pos,
                 cell=lattice,
                 pbc=True,
             )
             new_atoms.arrays['caly_velocity'] = velocity
             fp = self.get_fp(new_atoms)
-            name_of_atoms = self.nameofatoms
             if (
-                is_bond_reasonable(new_atoms, name_of_atoms, distance_of_ion)
+                is_bond_reasonable(new_atoms, self.nameofatoms, distance_of_ion)
                 and not self.get_similarity(fp, fp_mats)[2]  # not is_sim
             ):
                 break
         else:
-            logger.warning("This structure may not be physical.")
+            # 
+            __ini_atoms = sort_atoms(init_atoms, self.nameofatoms)
+            logger.warning(f"The structure {__ini_atoms.symbols} may not be physical.")
+            logger.warning("Therefore, the program will generator a structure by `specifywps` method !!!")
 
         self.set_fp(new_atoms)
+        return new_atoms
+
+    def __random_gen(self, current_atoms):
+        """
+        Function:
+            create a new structure whose symbols is the same as `current_atoms`
+        """
+        # current_atoms is a list whose size is 2
+        # current_atoms[0] is the initial   structure whose type is `Atoms`
+        # current_atoms[1] is the optimized structure whose type is `Atoms`
+        symbols = current_atoms[0].symbols
+        species_radius = list(zip(self.nameofatoms, self.distancematrix.diagonal()/2.0))
+        tm = Tol_matrix()
+        for ele_r1, ele_r2 in combinations(species_radius, 2):
+            tm.set_tol(ele_r1[0], ele_r2[0], ele_r1[1]+ele_r2[1])
+
+        struct = pyxtal()
+        struct.from_random(
+            dim=3,
+            group=self.spacegroup_number,
+            species=self.nameofatoms,
+            numIons=[ symbols.count(ele) for ele in self.nameofatoms],
+            factor=1.5,
+            tm=tm,
+        )
+        _new_atoms = struct.to_ase()
+        new_atoms = sort_atoms(_new_atoms, self.nameofatoms)
         return new_atoms
