@@ -38,19 +38,31 @@ replacement = [["Mg", "Ca", "Sr", "Ba"], # 第一个元素必须是结构原型�
 Attention please
 generator_main.py -w ./Ar-Ne-H-spg194-500/ -i ./pso.ini method -m mode=pso
 
-[pso]
-nameofatoms = ["Mg", "B", "H"]
-popsize=5
+[specifywps]
+spacegroup_number = 194
+nameofatoms = ["Ar", "Ne", "H"]
+optionalsites = [['2a', '2b', '2c', '2d'],
+                 ['4f', '4e'],
+                 ['6g', '6h', '12i', '12j', '12k', '24l']]
+sitesoccupiedrange=[[1,2],
+                    [1,2],
+                    [2,4],]
 distancematrix=[[2.014, 1.908, 1.590],
                 [1.908, 1.802, 1.483],
                 [1.590, 1.483, 1.116],]
-
+popsize=5
+maxlimit=100
+[pso]
 numberOflbest = 4
 simthreshold = 0.06
 fingerprint = "bcm"
 lbest = 1
-critic = "enthalpy" 
+critic = "enthalpy"
 maxstep= 50
+# choose a few types of braivice lattice for creating the structure by PSO method:
+# ["triclinic", "monoclinic", "orthorhombic", "tetragonal", "trigonal", "hexagonal", "cubic",]
+pso_ltype=["Cubic"]
+pso_ratio=0.5
 """
 
 import logging

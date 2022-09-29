@@ -19,13 +19,16 @@
 #
 # Copyright CALYPSO Develop Group
 
+from email.policy import default
 import os
 import math
 import sys
 import time
 import glob
 
+from configparser import ConfigParser
 from optparse import OptionParser
+
 try:
     import spglib as spg
 except:
@@ -110,6 +113,7 @@ def readinput():
             CL = False
     except:
         CL = False
+
     try:
         lsur = indata['lsurface'][0]
         if lsur.upper() == 'T':
@@ -151,6 +155,7 @@ def readinput():
             BG = False
     except:
         BG = False
+
     try:
         xrd = indata['lxrd'][0]
         if xrd.upper() == 'T':
@@ -177,6 +182,50 @@ def readinput():
 
     return (SystemName, NameOfAtoms, Npop, Mol, Hard, VSC, VSCE, D2, CL, HM, LSUR, BG, XRD, TS, num_neb)
 
+def readmyini(input_ini):
+
+    if not os.path.exists(input_ini):
+        raise FileExistsError
+
+    indata = {}
+    config_inputini      = ConfigParser()
+    config_inputini.read(input_ini)
+
+    if "specifywps" in config_inputini.sections():
+        for key, value in config_inputini.items("specifywps"):
+            try:
+                indata[key] = eval(value)
+            except (NameError, SyntaxError):
+                print("there is no {}".format(key))
+    if "substitution" in config_inputini.sections():
+        for key, value in config_inputini.items("substitution"):
+            try:
+                indata[key] = eval(value)
+            except (NameError, SyntaxError):
+                print("there is no {}".format(key))
+    if "pso" in config_inputini.sections():
+        for key, value in config_inputini.items("pso"):
+            try:
+                indata[key] = eval(value)
+            except (NameError, SyntaxError):
+                print("there is no {}".format(key))
+
+    SystemName  = "mypso"
+    nameofatoms = indata['nameofatoms']
+    Npop        = indata['popsize']
+    Mol  = False
+    Hard = False
+    VSC  = False
+    VSCE = False
+    D2   = False
+    CL   = False
+    HM   = False
+    LSUR = False
+    BG   = False
+    XRD  = False
+    TS   = False
+    num_neb = False
+    return (SystemName, nameofatoms, Npop, Mol, Hard, VSC, VSCE, D2, CL, HM, LSUR, BG, XRD, TS, num_neb)
 
 def parseStruct_old():
     """docstring for parseStruct"""
@@ -254,10 +303,14 @@ def parseStruct_old():
             # print '#', nstruct, gtype, energy, typt
             # print lat
             # print pos
+
+    print(structData); input()
     return structData
 
 def parseStruct():
-    """docstring for parseStruct"""
+    """
+    read the `struct.dat` file
+    """
     try:
         f = open('struct.dat')
     except:
@@ -280,7 +333,7 @@ def parseStruct():
             polar = 0.
             bandgap = 100.
             xrddiff=610612509.
-            nstruct = int(date[i].split('=')[1].strip())
+            nstruct = int(date[i].split('=')[1].strip()) # abtain the 
             # print 'ns', nstruct
             gtype = 1
             # for j in range(i+1, ldate):
@@ -338,9 +391,10 @@ def parseStruct():
                         elif 'Atomic' in line:
                             pos = np.array([item.split() for item in date[k+1 : k+1+natom]], float)
                             k = k + natom
-                        elif 'nstruct' in line or k +3 > ldate :
+                        elif 'nstruct' in line or k + 3 > ldate :
                             i = k
                             lcurr = False
+                            
 
             structData.append( [energy, hardness, nstruct, gtype, (lat, pos, typt, natom), polar, bandgap, xrddiff] )
             # print 'i', i, ldate
@@ -349,6 +403,8 @@ def parseStruct():
             # print '#', nstruct, gtype, energy, typt
             # print lat
             # print pos
+    
+    print(structData); input("structData")
     return structData
 
 def parseTS():
@@ -410,7 +466,7 @@ def parseIni():
     except:
         f.close()
 
-    ldate = len(date)
+    ldate = len(date) # the length of the `struct.dat`
     structData = []
     for i in range(ldate):
         if 'nstruct' in date[i]:
@@ -1223,7 +1279,7 @@ def vsckit_old(structure, vsce, name_ele, options, prec_pool, is_refine, is_prim
         plt.show()
 
 def vsckit(structure, vsce, name_ele, options, prec_pool, is_refine, is_prim, hard, cl, norefine, hm, bg, xrd):
-    import itertools
+
     import pandas as pd
 
     os.system('rm -rf dir_* > /dev/null 2> /dev/null')
@@ -1346,6 +1402,7 @@ def run():
                          maxp = pinfinty,
                          mine = einfinty,
                          maxe = pinfinty )
+    parser.add_option("-i", dest="input_ini", action="store", default=None)
     parser.add_option("-a", dest="is_all", action="store_true")
     parser.add_option("--cif", dest="is_wcif", action="store_true")
     parser.add_option("--pos", "--vasp", dest="is_wvasp", action="store_true")
@@ -1380,7 +1437,12 @@ def run():
         print("Version: 2022.5")
         exit(0)
 
-    (sysname, name_ele, npop, mol, hard, vsc, vsce, d2, cl, hm, lsur, bg, xrd, ts, num_neb) = readinput()
+    if options.input_ini is None:
+        (sysname, name_ele, npop, mol, hard, vsc, vsce, d2, cl, hm, lsur, bg, xrd, ts, num_neb) = readinput()
+    else:
+        (sysname, name_ele, npop, mol, hard, vsc, vsce, d2, cl, hm, lsur, bg, xrd, ts, num_neb) = readmyini(options.input_ini)
+        print(sysname, name_ele, npop, mol, hard, vsc, vsce, d2, cl, hm, lsur, bg, xrd, ts, num_neb)
+        input("sysname, name_ele, npop, mol, hard, vsc, vsce, d2, cl, hm, lsur, bg, xrd, ts, num_neb")
 
     if options.is_ini:
         struct = parseIni()
@@ -1393,8 +1455,10 @@ def run():
     elif options.is_popt:
         struct = parseOpt('opt', hm)
     else:
+        # when you use the order `cak3.py --vasp`, the program enter here !!! 
         if os.path.exists('struct.dat'):
             try:
+                # read the `struct.dat` file
                 struct = parseStruct()
             except:
                 struct = parseOpt('opt', hm)

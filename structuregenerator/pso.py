@@ -1,4 +1,5 @@
 from distutils.command.config import config
+import imp
 import os, sys, shutil
 import symbol
 additional_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -14,6 +15,7 @@ import numpy as np
 from ase import Atoms
 from ase.geometry.analysis import Analysis
 from ase.io import ParseError, read, write
+from ase.spacegroup.spacegroup import get_spacegroup
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from pymatgen.io.ase import AseAtomsAdaptor
 from pyxtal.lattice import Lattice
@@ -359,7 +361,9 @@ class pso(UpdateBestMixin):
             2. check the existance of file named `"result` , if not exist, then create it.
             3. extract the enthalpy of the OUTCAR to `atoms_outcar` 
             4. write the file pso_ini_step, pso_opt_step, pso_sor_step
-            5. move all the POSCAR, OUTCAR, CONTCAR into the `current_step_dir`
+            5. write the file `struct.dat`
+                In the `struct.dat`, enthalpy, POSCAR, CONTCAR will be wroten in it by the order mentioned before. 
+            6. move all the POSCAR, OUTCAR, CONTCAR into the `current_step_dir`
         """
         # 1. check the existance of file named `"step_"+str(self.current_step)` , if exist, then remove it.
         current_step_dir = Path(work_path).joinpath("step_"+str(self.current_step))
@@ -374,6 +378,7 @@ class pso(UpdateBestMixin):
         pso_ini = result.joinpath("pso_ini_" + str(self.current_step))
         pso_opt = result.joinpath("pso_opt_" + str(self.current_step)) 
         pso_sor = result.joinpath("pso_sor_" + str(self.current_step))
+        struct_dat = result.joinpath("struct.dat")
 
         for col in range(self.popsize):
             poscar = Path(work_path).joinpath(f"POSCAR_{col+1}")
@@ -393,14 +398,16 @@ class pso(UpdateBestMixin):
                 data = VASPOutcarFormat().from_outcar(file_name=outcar)
                 atoms_outcar = dict2Atoms(data, self.nameofatoms)
                 enth = get_enthalpy(outcar, contcar)
+                atoms_outcar.info['enthalpy'] = enth
             except Exception as e:
                 data = VASPPoscarFormat().from_poscar(file_name=poscar)
                 atoms_outcar = dict2Atoms(data, self.nameofatoms)
                 enth = 610612509
+                atoms_outcar.info['enthalpy'] = enth
 
             # 4. write the file pso_ini_step, pso_opt_step, pso_sor_step
             # write pso_ini_step file, such as pso_ini_1,  pso_ini_2,  pso_ini_3, .......
-            # <1> : write `Atoms class` to the file named `"pso_opt_" + str(self.current_step)`
+            #   <1> : write `Atoms class` to the file named `"pso_opt_" + str(self.current_step)`
             atoms_poscar.write(pso_ini, format="vasp", append=True)
             # write pso_opt_step file, such as pso_opt_1,  pso_opt_2,  pso_opt_3, .......
             #   <1> write `enthalpy`    to the file named `"pso_opt_" + str(self.current_step)`
@@ -439,7 +446,60 @@ class pso(UpdateBestMixin):
             with open(pso_sor, "a") as f:
                 f.write(f"{enth}\n")
 
-            # 5. move all the POSCAR, OUTCAR, CONTCAR into the `current_step_dir`
+            # 5. write the file `struct.dat`
+            #   In the `struct.dat`, enthalpy, POSCAR, CONTCAR will be wroten by the order mentioned before.
+            #   write poscar information
+            with open(struct_dat, "a") as f:
+                nstruct = (self.current_step-1)*self.popsize + (col + 1) # add another `1` due to python beginning from 0
+                f.write("        nstruct= {:<10}\n".format(nstruct))
+                f.write("++++++++++++++++++++++++++++++++++\n")
+                f.write("        Initial Structure\n")
+                spggroup_symbol = get_spacegroup(atoms_poscar).symbol
+                f.write("Space Group= {:<10}\n".format(spggroup_symbol))
+                volume = atoms_poscar.get_volume()
+                f.write("Volume= {:<.8f}\n".format(volume))
+                f.write("Number Species= {:<20}\n".format(str(len(self.nameofatoms))))
+                symbols = atoms_poscar.symbols
+                _numions =[symbols.count(ele) for ele in self.nameofatoms]
+                numions = list(map(str, _numions))
+                f.write("Ele_Num= {:<50}\n".format(' '.join(numions)))
+                f.write(" ---------------------------------\n")
+                f.write("lat_matrix\n")
+                for vector in atoms_poscar.cell:
+                    f.write("{:<.8f} {:<.8f} {:<.8f}\n".format(vector[0], vector[1], vector[2]))
+                f.write(" ---------------------------------\n")
+                f.write(" ---------------------------------\n")
+                f.write("Atomic Positions\n")
+                fractional_position = atoms_poscar.get_scaled_positions()
+                for vector in fractional_position:
+                    f.write("{:<.8f} {:<.8f} {:<.8f}\n".format(vector[0], vector[1], vector[2]))
+                f.write(" ---------------------------------\n")
+            #   write outcar information
+            with open(struct_dat, "a") as f:
+                f.write(" ======================================\n")
+                f.write("        Optimized Structure\n")
+                f.write("Energy= {:<.10f}\n".format(atoms_outcar.info['enthalpy']))
+                volume = atoms_outcar.get_volume()
+                f.write("Volume= {:<.8f}\n".format(volume))
+                f.write("Number Species= {:<20}\n".format(str(len(self.nameofatoms))))
+                symbols = atoms_outcar.symbols
+                _numions =[symbols.count(ele) for ele in self.nameofatoms]
+                numions = list(map(str, _numions))
+                f.write("Ele_Num= {:<50}\n".format(' '.join(numions)))
+                f.write(" ---------------------------------\n")
+                f.write("lat_matrix\n")
+                for vector in atoms_outcar.cell:
+                    f.write("{:<.8f} {:<.8f} {:<.8f}\n".format(vector[0], vector[1], vector[2]))
+                f.write(" ---------------------------------\n")
+                f.write(" ---------------------------------\n")
+                f.write("Atomic Positions\n")
+                fractional_position = atoms_outcar.get_scaled_positions()
+                for vector in fractional_position:
+                    f.write("{:<.8f} {:<.8f} {:<.8f}\n".format(vector[0], vector[1], vector[2]))
+                f.write(" ---------------------------------\n")
+                f.write("\n")
+                f.write("\n")
+            # 6. move all the POSCAR, OUTCAR, CONTCAR into the `current_step_dir`
             # For No.col structure, its POSCAR, OUTCAR, CONTCAR has been extracted completely !!!
             # Now the program will move its POSCAR OUTCAR CONTCAR into the directory `current_step_dir` !!!
             if poscar.exists(): shutil.move(poscar,  current_step_dir); 
@@ -529,7 +589,6 @@ class pso(UpdateBestMixin):
         detla_pbest_init = pbest_pos - init_pos
         detla_gbest_init = gbest_pos - init_pos
         for _ in range(10):
-            logger.info(f"No.{_+1} attempt for {opt_symbol}")
             r1 = np.random.rand()
             r2 = np.random.rand()
             init_velocity = init_atoms.arrays.get('caly_velocity', np.random.uniform(0, 1, (len(init_atoms), 3)))
@@ -545,7 +604,7 @@ class pso(UpdateBestMixin):
             # the program will randomly select one as `_ltype`, 
             # and then the corresponding lattice matrix will be created. 
             _ltype = np.random.choice(self.pso_ltype)
-            _volume = opt_atoms.cell.volume + 10
+            _volume = opt_atoms.cell.volume + 20
             lattice = Lattice(ltype=_ltype, volume=_volume).generate_matrix()
 
             # lattice = np.ones((3, 3), dtype=np.float64, order='F')
@@ -568,7 +627,10 @@ class pso(UpdateBestMixin):
                 is_bond_reasonable(new_atoms, self.nameofatoms, distance_of_ion)
                 and not self.get_similarity(fp, fp_mats)[2]  # not is_sim
             ):
+                logger.info(f"No.{_+1} attempt for {opt_symbol} succeeded !!!")
                 break
+            else:
+                logger.info(f"No.{_+1} attempt for {opt_symbol} failed !!!")
         else:
             # 
             __ini_atoms = sort_atoms(init_atoms, self.nameofatoms)
