@@ -493,7 +493,6 @@ class pso(UpdateBestMixin):
             logger.info("create the structure by PSO")
             gen_atoms = self.__pso_gen(pbest, gbest, current_atoms, fp_mats)
         else:
-            logger.info("create the structure by RANDOM")
             gen_atoms = self.__random_gen(current_atoms)
 
         return gen_atoms
@@ -593,14 +592,20 @@ class pso(UpdateBestMixin):
             tm.set_tol(ele_r1[0], ele_r2[0], ele_r1[1]+ele_r2[1])
 
         struct = pyxtal()
-        struct.from_random(
-            dim=3,
-            group=self.spacegroup_number,
-            species=self.nameofatoms,
-            numIons=[ symbols.count(ele) for ele in self.nameofatoms],
-            factor=1.5,
-            tm=tm,
-        )
+        try:
+            logger.info("create the structure by RANDOM for {}".format(current_atoms.symbols))
+            struct.from_random(
+                dim=3,
+                group=self.spacegroup_number,
+                species=self.nameofatoms,
+                numIons=[symbols.count(ele) for ele in self.nameofatoms],
+                factor=1.5,
+                tm=tm,
+            )
+        except Exception as e:
+            logger.warning(f"create structure {current_atoms.symbols} failed !!!")
+            logger.warning(f"Its input information is group={self.spacegroup_number}, species={self.nameofatoms}, numIons={[symbols.count(ele) for ele in self.nameofatoms]}")
+
         _new_atoms = struct.to_ase()
         new_atoms = sort_atoms(_new_atoms, self.nameofatoms)
         return new_atoms
