@@ -36,7 +36,7 @@ replacement = [["Mg", "Ca", "Sr", "Ba"], # 第一个元素必须是结构原型�
 # pso算法演化产生结构
 """
 Attention please
-generator_main.py -w ./Ar-Ne-H-spg194-500/ -i ./pso.ini method -m mode=pso
+generator_main.py -w ./Ar-Ne-H-spg194-500/ -i ./194-pso.ini method -m mode=pso
 
 [specifywps]
 spacegroup_number = 194

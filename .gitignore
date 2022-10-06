@@ -49,3 +49,11 @@ qe/eliashberg/modmain.mod
 qe/eliashberg/mpi.mod
 qe/eliashberg/modmain.mod
 qe/eliashberg/modmpi.mod
+structuregenerator/psolib/fortran_src/LegacyFingerPrint/.f2py_f2cmap
+structuregenerator/psolib/fortran_src/LegacyFingerPrint/src.macosx-10.9-x86_64-3.9/_f90LegacyFingerPrintmodule.c
+structuregenerator/psolib/fortran_src/LegacyFingerPrint/src.macosx-10.9-x86_64-3.9/_f90LegacyFingerPrintmodule.o
+structuregenerator/psolib/fortran_src/LegacyFingerPrint/src.macosx-10.9-x86_64-3.9/_f90LegacyFingerPrintmodule.o.d
+structuregenerator/psolib/fortran_src/LegacyFingerPrint/src.macosx-10.9-x86_64-3.9/src.macosx-10.9-x86_64-3.9/fortranobject.c
+structuregenerator/psolib/fortran_src/LegacyFingerPrint/src.macosx-10.9-x86_64-3.9/src.macosx-10.9-x86_64-3.9/fortranobject.h
+structuregenerator/psolib/fortran_src/LegacyFingerPrint/src.macosx-10.9-x86_64-3.9/src.macosx-10.9-x86_64-3.9/fortranobject.o
+structuregenerator/psolib/fortran_src/LegacyFingerPrint/src.macosx-10.9-x86_64-3.9/src.macosx-10.9-x86_64-3.9/fortranobject.o.d

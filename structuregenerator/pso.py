@@ -139,7 +139,10 @@ class pso(UpdateBestMixin):
         self.update_next_step(self.work_path)
         self.store_current_gbest(current_gbest)
         self.store_current_struct(self.work_path)
-        self.store_next_struct(self.work_path, pso_structure)
+        if pso_structure:
+            self.store_next_struct(self.work_path, pso_structure)
+        else:
+            logger.error(f"pso_structure: {pso_structure}")
 
 
     @classmethod
@@ -550,7 +553,6 @@ class pso(UpdateBestMixin):
         
         random_ratio = np.random.uniform(0,1)
         if random_ratio < self.pso_ratio:
-            logger.info("create the structure by PSO")
             gen_atoms = self.__pso_gen(pbest, gbest, current_atoms, fp_mats)
         else:
             gen_atoms = self.__random_gen(current_atoms)
@@ -564,7 +566,7 @@ class pso(UpdateBestMixin):
         current_atoms: list[Atoms],
         fp_mats,
     ):
-
+        logger.info(f"create the structure by PSO for {current_atoms[0].symbols}")
         distance_of_ion = self.distancematrix
         init_atoms = current_atoms[0]
         opt_atoms = current_atoms[1]
@@ -654,20 +656,23 @@ class pso(UpdateBestMixin):
             tm.set_tol(ele_r1[0], ele_r2[0], ele_r1[1]+ele_r2[1])
 
         struct = pyxtal()
-        try:
-            logger.info("create the structure by RANDOM for {}".format(current_atoms.symbols))
-            struct.from_random(
-                dim=3,
-                group=self.spacegroup_number,
-                species=self.nameofatoms,
-                numIons=[symbols.count(ele) for ele in self.nameofatoms],
-                factor=1.5,
-                tm=tm,
-            )
-        except Exception as e:
-            logger.warning(f"create structure {current_atoms.symbols} failed !!!")
-            logger.warning(f"Its input information is group={self.spacegroup_number}, species={self.nameofatoms}, numIons={[symbols.count(ele) for ele in self.nameofatoms]}")
+        for i in range(100):
+            try:
+                logger.info("create the structure by RANDOM for {}".format(current_atoms[0].symbols))
+                struct.from_random(
+                    3,
+                    self.spacegroup_number,
+                    species=self.nameofatoms,
+                    numIons=[symbols.count(ele) for ele in self.nameofatoms],
+                    factor=1.5,
+                    tm=tm,
+                )
+                _new_atoms = struct.to_ase()
+                new_atoms = sort_atoms(_new_atoms, self.nameofatoms)
+                return new_atoms
+            except Exception as e:
+                logger.warning(f"create structure No.{i+1} failed !!!")
+        else:
+            logger.warning(f"Its input information is group={self.spacegroup_number}, species={self.nameofatoms}, numIons={[symbols.count(ele) for ele in self.nameofatoms]}. After 100 attempt, The program can't create the random structure")
 
-        _new_atoms = struct.to_ase()
-        new_atoms = sort_atoms(_new_atoms, self.nameofatoms)
-        return new_atoms
+        
