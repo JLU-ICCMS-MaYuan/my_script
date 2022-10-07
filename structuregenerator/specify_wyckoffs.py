@@ -27,6 +27,7 @@ from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from pymatgen.io.ase import AseAtomsAdaptor
 
 from ase.formula import Formula
+from ase import Atoms
 
 from psolib.utils.sort_atoms import sort_atoms
 
@@ -42,9 +43,9 @@ def set_timeout(timeout, callback):
             try:
                 signal.signal(signal.SIGALRM, handle)  # 设置信号和回调函数
                 signal.alarm(timeout)  # 设置 num 秒的闹钟
-                print('start alarm signal.')
+                # print('start alarm signal.')
                 r = func(*args, **kwargs)
-                print('close alarm signal.')
+                # print('close alarm signal.')
                 signal.alarm(0)  # 关闭闹钟
                 return r
             except RuntimeError as e:
@@ -160,12 +161,38 @@ class specify_wyckoffs:
             wyck, nelems = self.get_X(elem, opt_sites, *sites_range)
             wyck_list.append(
                 wyck
-            )  # [A, B, C]: [[['4b'], ['4d', '4f']], [['4b'], ['4d', '4f'], ...]
+            )
+            # wyck_list 给出每一种元素所有的所有可能的wyckoff position 占位方式， eg:
+            # [
+            #   Ar元素的所有可能占据的wps的排列组合  [['2a'], ['2b'], ['2c'], ['2d'], ['2a', '2b'], ['2a', '2c'], ['2a', '2d'], ['2b', '2c'], ['2b', '2d'], ['2c', '2d']], 
+            #   He元素的所有可能占据的wps的排列组合  [['4f'], ['4e'], ['4e', '4f']], 
+            #   H 元素的所有可能占据的wps的排列组合  [['6g', '6h'], ['12i', '6g'], ['12j', '6g'], ['12k', '6g'], ['24l', '6g'], ['12i', '6h'], ['12j', '6h'], ['12k', '6h'], ['24l', '6h'], ['12i', '12j'], ['12i', '12k'], ['12i', '24l'], ['12j', '12k'], ['12j', '24l'], ['12k', '24l'], ['12i', '6g', '6h'], ['12j', '6g', '6h'], ['12k', '6g', '6h'], ['24l', '6g', '6h'], ['12i', '12j', '6g'], ['12i', '12k', '6g'], ['12i', '24l', '6g'], ['12j', '12k', '6g'], ['12j', '24l', '6g'], ['12k', '24l', '6g'], ['12i', '12j', '6h'], ['12i', '12k', '6h'], ['12i', '24l', '6h'], ['12j', '12k', '6h'], ['12j', '24l', '6h'], ['12k', '24l', '6h'], ['12i', '12j', '12k'], ['12i', '12j', '24l'], ['12i', '12k', '24l'], ['12j', '12k', '24l'], ['12i', '12j', '6g', '6h'], ['12i', '12k', '6g', '6h'], ['12i', '24l', '6g', '6h'], ['12j', '12k', '6g', '6h'], ['12j', '24l', '6g', '6h'], ['12k', '24l', '6g', '6h'], ['12i', '12j', '12k', '6g'], ['12i', '12j', '24l', '6g'], ['12i', '12k', '24l', '6g'], ['12j', '12k', '24l', '6g'], ['12i', '12j', '12k', '6h'], ['12i', '12j', '24l', '6h'], ['12i', '12k', '24l', '6h'], ['12j', '12k', '24l', '6h'], ['12i', '12j', '12k', '24l']]
+            # ]
             nelems_list.append(
                 nelems
-            )  # [A, B, C]: [[4, 8], [4, 8], ...]
-        nelems_comb = product(*nelems_list)  # generator
+            )  
+            # wyck_list 给出每一种元素所有的所有可能的wyckoff position占位方式对应所需的原子数， eg:
+            # [
+            #   Ar元素的所有可能占据的wps的排列组合对应所需的原子数  [2, 2, 2, 2, 4, 4, 4, 4, 4, 4], 
+            #   He元素的所有可能占据的wps的排列组合对应所需的原子数  [4, 4, 8], 
+            #   H 元素的所有可能占据的wps的排列组合对应所需的原子数  [12, 18, 18, 18, 30, 18, 18, 18, 30, 24, 24, 36, 24, 36, 36, 24, 24, 24, 36, 30, 30, 42, 30, 42, 42, 30, 30, 42, 30, 42, 42, 36, 48, 48, 48, 36, 36, 48, 36, 48, 48, 42, 54, 54, 54, 42, 54, 54, 54, 60]
+            # ]
+        nelems_comb = product(*nelems_list) 
+        # 对nelems_list这个二维列表先解包为3个一维列表，然后对这3个一维列表进行直积，搭配出这个体系所有可能的：
+        # [
+        #   (2, 4, 12), 
+        #   (2, 4, 18), 
+        #   (2, 4, 18),
+        #   ....... 
+        # ]
         wyck_comb = product(*wyck_list)
+        # 对wyck_list这个三维列表先解包为3个二维列表，然后对这3个二维列表进行直积，搭配出这个体系所有可能的wyckoff占位方式：
+        # [
+        #   (['2a'], ['4f'], ['6g', '6h']), 
+        #   (['2a'], ['4f'], ['12i', '6g']), 
+        #   (['2a'], ['4f'], ['12j', '6g']), 
+        #   .......
+        # ]
         for nelems, wyck in zip(nelems_comb, wyck_comb):
             formula = ''.join(map(str, chain.from_iterable(zip(elems, nelems))))
             formula = Formula(formula).format("metal")
@@ -174,9 +201,10 @@ class specify_wyckoffs:
         return _group
     
     @set_timeout(10, after_timeout)
-    def _specify_gen(self):
+    def _gen_randomly(self):
         '''
-        create struct by choosing wyckoff positions
+        Function:
+            create a structure by randomly choosing a formula from `self._group` dictionary !!!
         '''
         spacegroup_number = self.spacegroup_number
         nameofatoms = self.nameofatoms
@@ -195,9 +223,9 @@ class specify_wyckoffs:
 
         struc = pyxtal()
         try:
-            logger.info("Now the program will try to create ")
-            logger.info(f"every atoms amouts are {amounts}")
-            logger.info(f"wyckoff positions are {wyck}\n")
+            # logger.info("Now the program will try to create ")
+            # logger.info(f"every atoms amouts are {amounts}")
+            # logger.info(f"wyckoff positions are {wyck}\n")
             struc.from_random(
                 3,
                 spacegroup_number,
@@ -213,6 +241,46 @@ class specify_wyckoffs:
         except Exception as e:
             logger.info(f"except {e}")
             logger.info(f"The structure input infomation {amounts} {wyck} can't create a reasonable structure!!!")
+
+    @set_timeout(10, after_timeout)
+    def _gen_specify_symbols(self, input_atoms: Atoms):
+
+        spacegroup_number = self.spacegroup_number
+        nameofatoms = self.nameofatoms
+
+        fomula = str(input_atoms.symbols.get_chemical_formula('metal'))
+        species_amounts_sites = random.choice(self._group[fomula])
+
+        amounts = species_amounts_sites[0]
+        wyck = species_amounts_sites[1]
+
+        species_radius = list(zip(nameofatoms, self.distancematrix.diagonal()/2.0))
+
+        tm = Tol_matrix()
+        for ele_r1, ele_r2 in combinations(species_radius, 2):
+            tm.set_tol(ele_r1[0], ele_r2[0], ele_r1[1]+ele_r2[1])
+
+        struc = pyxtal()
+        try:
+            # logger.info("Now the program will try to create ")
+            # logger.info(f"every atoms amouts are {amounts}")
+            # logger.info(f"wyckoff positions are {wyck}\n")
+            struc.from_random(
+                3,
+                spacegroup_number,
+                nameofatoms,
+                amounts,
+                factor=2.0,
+                sites=wyck,
+                tm=tm
+            )
+            struct_pymatgen = struc.to_pymatgen()
+            if struct_pymatgen.composition.num_atoms < float(self.maxlimit):
+                return struct_pymatgen
+        except Exception as e:
+            logger.info(f"except {e}")
+            logger.info(f"The structure input infomation {amounts} {wyck} can't create a reasonable structure!!!")
+
 
     @classmethod
     def init_from_config(cls, config_d: dict):

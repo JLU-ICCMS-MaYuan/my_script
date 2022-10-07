@@ -216,7 +216,7 @@ def readmyini(input_ini):
     Mol  = False
     Hard = False
     VSC  = False
-    VSCE = False
+    VSCE = [0]
     D2   = False
     CL   = False
     HM   = False
@@ -225,7 +225,8 @@ def readmyini(input_ini):
     XRD  = False
     TS   = False
     num_neb = False
-    return (SystemName, nameofatoms, Npop, Mol, Hard, VSC, VSCE, D2, CL, HM, LSUR, BG, XRD, TS, num_neb)
+    specifywps = True
+    return (SystemName, nameofatoms, Npop, Mol, Hard, VSC, VSCE, D2, CL, HM, LSUR, BG, XRD, TS, num_neb, specifywps)
 
 def parseStruct_old():
     """docstring for parseStruct"""
@@ -304,7 +305,6 @@ def parseStruct_old():
             # print lat
             # print pos
 
-    print(structData); input()
     return structData
 
 def parseStruct():
@@ -404,7 +404,6 @@ def parseStruct():
             # print lat
             # print pos
     
-    print(structData); input("structData")
     return structData
 
 def parseTS():
@@ -544,20 +543,23 @@ def parseOpt(optf='opt', hm=False):
             else:
                 enthalpy = float(fline[num].split()[0])
                 enth.append(enthalpy)
-            natom = sum(map(int, fline[num+6].split()))
-            #
+            # natom = sum(map(int, fline[num+6].split()))
+            natom = sum(map(int, fline[num+7].split()))
             strutmp = fline[num+1 : num+natom+8]
             lat = []
             for i in range(2, 5):
                 lat.append(list(map(float, strutmp[i].split())))
             lat = np.array(lat, float)
-            typt = list(map(int, strutmp[5].split()))
+            # typt = list(map(int, strutmp[5].split()))
+            typt = list(map(int, strutmp[6].split()))
             pos = []
-            for item in strutmp[7:]:
+            # for item in strutmp[7:]:
+            for item in strutmp[8:]:
                 pos.append(list(map(float, item.split()[:3])))
             pos = np.array(pos, float)
             stru.append( [enthalpy, hardness, nstruct, gtype, (lat, pos, typt, natom), polar, bandgap, xrddiff] )
-            num = num + natom + 8
+            # num = num + natom + 8
+            num = num + natom + 9
 
     return stru
 
@@ -1440,9 +1442,7 @@ def run():
     if options.input_ini is None:
         (sysname, name_ele, npop, mol, hard, vsc, vsce, d2, cl, hm, lsur, bg, xrd, ts, num_neb) = readinput()
     else:
-        (sysname, name_ele, npop, mol, hard, vsc, vsce, d2, cl, hm, lsur, bg, xrd, ts, num_neb) = readmyini(options.input_ini)
-        print(sysname, name_ele, npop, mol, hard, vsc, vsce, d2, cl, hm, lsur, bg, xrd, ts, num_neb)
-        input("sysname, name_ele, npop, mol, hard, vsc, vsce, d2, cl, hm, lsur, bg, xrd, ts, num_neb")
+        (sysname, name_ele, npop, mol, hard, vsc, vsce, d2, cl, hm, lsur, bg, xrd, ts, num_neb, specifywps) = readmyini(options.input_ini)
 
     if options.is_ini:
         struct = parseIni()
@@ -1516,7 +1516,7 @@ def run():
     if options.is_plot:
         plot(struct, npop)
 
-    if vsc:
+    if vsc or specifywps:
         vsckit(structure, vsce, name_ele, options, prec_pool, is_refine, is_prim, hard, cl, norefine, hm, bg, xrd)
     elif ts:
         structure.sort(key=lambda x:x[0])

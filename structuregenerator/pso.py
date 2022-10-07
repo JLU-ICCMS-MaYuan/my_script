@@ -1,7 +1,4 @@
-from distutils.command.config import config
-import imp
 import os, sys, shutil
-import symbol
 additional_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(additional_path)
 
@@ -17,6 +14,7 @@ from ase.geometry.analysis import Analysis
 from ase.io import ParseError, read, write
 from ase.spacegroup.spacegroup import get_spacegroup
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
+from pymatgen.core.structure import Structure
 from pymatgen.io.ase import AseAtomsAdaptor
 from pyxtal.lattice import Lattice
 from pyxtal import pyxtal
@@ -90,7 +88,8 @@ class pso(UpdateBestMixin):
         maxstep,
         pso_ltype: List[str],
         spacegroup_number: int,
-        pso_ratio: float
+        pso_ratio: float,
+        specifywps=None,
         # id_list,
         # pbest_list,
         # gbest,
@@ -108,6 +107,8 @@ class pso(UpdateBestMixin):
         self.pso_ltype = pso_ltype
         self.spacegroup_number = spacegroup_number
         self.pso_ratio = pso_ratio
+        self.specifypwps = specifywps 
+
         # self.next_step 表示下一代的'代编号'
         self.next_step = self.get_next_step(work_path)
         # self.current_step 表示当前代的'代编号', 获得它是为了self.generate_step()方法使用
@@ -146,7 +147,8 @@ class pso(UpdateBestMixin):
 
 
     @classmethod
-    def init_from_config(cls, config_d: dict):
+    def init_from_config(cls, config_d: dict, *args, **kwargs):
+
        self = cls(
             work_path=config_d["work_path"],
             popsize=config_d["popsize"],
@@ -160,6 +162,8 @@ class pso(UpdateBestMixin):
             pso_ltype=config_d["pso_ltype"],
             spacegroup_number=config_d["spacegroup_number"],
             pso_ratio=config_d["pso_ratio"],
+
+            specifywps=kwargs["specifywps"],
         #    id_list,
         #    pbest_list, 
         #    gbest, 
@@ -555,7 +559,8 @@ class pso(UpdateBestMixin):
         if random_ratio < self.pso_ratio:
             gen_atoms = self.__pso_gen(pbest, gbest, current_atoms, fp_mats)
         else:
-            gen_atoms = self.__random_gen(current_atoms)
+            # gen_atoms = self.__random_gen_method1(current_atoms)
+            gen_atoms = self.__random_gen_method2(current_atoms)
 
         return gen_atoms
 
@@ -636,15 +641,21 @@ class pso(UpdateBestMixin):
             # 
             __ini_atoms = sort_atoms(init_atoms, self.nameofatoms)
             logger.warning(f"The structure {__ini_atoms.symbols} may not be physical.")
-            logger.warning("Therefore, the program will generator a structure by `specifywps` method !!!")
+            logger.warning("Therefore, the program will still adopt this non-physical structure !!!")
 
         self.set_fp(new_atoms)
         return new_atoms
 
-    def __random_gen(self, current_atoms):
+    def __random_gen_method1(self, current_atoms):
         """
         Function:
             create a new structure whose symbols is the same as `current_atoms`
+            And do not require the `occupied wyckoff positions` of new_structure are the same as current_atoms[0]
+            Additional Notes: 
+                current_atoms[0].symbols == atoms_poscar.symbols
+        input parameter:
+            current_atoms: List[Atoms]. It's a list which dimension is 1 and which size is 2. 
+            current_atoms = [atoms_poscar, atoms_outcar]
         """
         # current_atoms is a list whose size is 2
         # current_atoms[0] is the initial   structure whose type is `Atoms`
@@ -675,4 +686,30 @@ class pso(UpdateBestMixin):
         else:
             logger.warning(f"Its input information is group={self.spacegroup_number}, species={self.nameofatoms}, numIons={[symbols.count(ele) for ele in self.nameofatoms]}. After 100 attempt, The program can't create the random structure")
 
-        
+    def __random_gen_method2(self, current_atoms):
+        '''
+        Function:
+            This method of generating structures adopts `specify_wyckoffs._gen_specify_symbols` in `specify_wyckoffs.py` module
+            The program will get the `symbols` from `current_atoms[0]`. Then this instance method will create a structure whose 
+            stoichiometry and occupied wyckoff positions are the same as current_atoms[0].
+            Additional Notes: 
+                current_atoms[0].symbols == atoms_poscar.symbols
+        input parameter:
+            current_atoms: List[Atoms]. It's a list which dimension is 1 and which size is 2. 
+            current_atoms = [atoms_poscar, atoms_outcar]
+        '''
+        if self.specifypwps:
+            for i in range(100):
+                stru = self.specifypwps._gen_specify_symbols(current_atoms[0])
+                if isinstance(stru, Structure):
+                    if hasattr(stru, "is_ordered"): # 判断结构是否是分数占据的无序结构
+                        pstru = SpacegroupAnalyzer(stru).get_primitive_standard_structure()
+                        _new_atoms = AseAtomsAdaptor.get_atoms(pstru)
+                        new_atoms = sort_atoms(_new_atoms, self.nameofatoms)
+                        logger.info("The program successfully created a structuere by `__random_gen_method2`")
+                        return new_atoms
+            else:
+                logger.info("The program can't creat a reasonable structuere by `__random_gen_method2`")
+                new_atoms = self.__random_gen_method1(current_atoms)
+                logger.info("The program successfully created a structure by `__random_gen_method1`")
+                return new_atoms

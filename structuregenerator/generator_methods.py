@@ -26,7 +26,7 @@ class generator_methods:
             spe_wps = specify_wyckoffs.init_from_config(self.config_d)
             # create structures and store them in the List `spe_wps.structs`
             while len(spe_wps.structs) < spe_wps.popsize:
-                stru = spe_wps._specify_gen()
+                stru = spe_wps._gen_randomly()
                 if hasattr(stru, "is_ordered"): # 判断结构是否是分数占据的无序结构
                     pstru = SpacegroupAnalyzer(stru).get_primitive_standard_structure()
                     spe_wps.structs.append(pstru)
@@ -44,4 +44,5 @@ class generator_methods:
             substitution.init_from_config(self.config_d)
 
         if self.config_d["mode"] == "pso":
-            pso.init_from_config(self.config_d)
+            spe_wps = specify_wyckoffs.init_from_config(self.config_d)
+            pso.init_from_config(self.config_d, specifywps=spe_wps)
