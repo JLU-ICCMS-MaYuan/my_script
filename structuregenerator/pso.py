@@ -250,8 +250,11 @@ class pso(UpdateBestMixin):
 
             # read the POSCAR and convert it to `atoms_poscar`
             if poscar.exists():
-                data = VASPPoscarFormat().from_poscar(file_name=poscar)
-                atoms_poscar = dict2Atoms(data, self.nameofatoms)
+                try:
+                    data = VASPPoscarFormat().from_poscar(file_name=poscar)
+                    atoms_poscar = dict2Atoms(data, self.nameofatoms)
+                except Exception as e:
+                    raise ValueError(f"No.{col} structure's POSCAR has problems !!!")
             else:
                 raise FileExistsError(f"No.{col+1} poscar didn't exist! ")
 
@@ -269,27 +272,40 @@ class pso(UpdateBestMixin):
                     atoms_outcar.info['column']   = int(col)
                     self.set_fp(atoms_outcar)
                 except Exception as e:
+                    logger.info(f"No.{col} structures's OUTCAR has problems, its POSCAR will be tried to substitue it! ")
+                    try:
+                        data = VASPPoscarFormat().from_poscar(file_name=poscar)
+                        atoms_outcar = dict2Atoms(data, self.nameofatoms)
+                        atoms_outcar.info['enthalpy'] = 610612509
+                        #atoms_outcar.info['sid']      = sid
+                        atoms_outcar.info['column']   = int(col)
+                        self.set_fp(atoms_outcar)
+                    except Exception as e:
+                        raise ValueError(f"No.{col} substituted POSCAR still has problems !!!")
+            # if the OUTCAR doesn't exist, then the program will use the corresponding POSCAR instead of its OUTCAR just like beforce.
+            else:
+                logger(f"No.{col} structures's OUTCAR doesn't exist, its POSCAR will be tried to substitue it! ")
+                try:
                     data = VASPPoscarFormat().from_poscar(file_name=poscar)
                     atoms_outcar = dict2Atoms(data, self.nameofatoms)
                     atoms_outcar.info['enthalpy'] = 610612509
                     #atoms_outcar.info['sid']      = sid
                     atoms_outcar.info['column']   = int(col)
                     self.set_fp(atoms_outcar)
-            # if the OUTCAR doesn't exist, then the program will use the corresponding POSCAR instead of its OUTCAR just like beforce.
-            else:
-                data = VASPPoscarFormat().from_poscar(file_name=poscar)
-                atoms_outcar = dict2Atoms(data, self.nameofatoms)
-                atoms_outcar.info['enthalpy'] = 610612509
-                #atoms_outcar.info['sid']      = sid
-                atoms_outcar.info['column']   = int(col)
-                self.set_fp(atoms_outcar)
+                except Exception as e:
+                    raise ValueError(f"No.{col} substituted POSCAR still has problems !!!")
+
             logger.info(f"finish read No.{col + 1 } structure")
 
-            self.data[col][0] = atoms_poscar
-            self.data[col][1] = atoms_outcar
-
-            self.pbest[col].append(atoms_outcar)
-
+            if isinstance(atoms_poscar, Atoms):
+                self.data[col][0] = atoms_poscar
+            else:
+                raise ValueError(f"atoms_poscar has problem! Perhaps No.{col} POSCAR is something wrong !")
+            if isinstance(atoms_outcar, Atoms):
+                self.data[col][1] = atoms_outcar
+                self.pbest[col].append(atoms_outcar)
+            else:
+                raise ValueError(f"atoms_outcar has problem! Perhaps No.{col} OUTCAR is something wrong !")
 
             current_fp = atoms_outcar.info['fingerprint'] # current_fp.shape = (11, 3, 3)
             if self.fp_mats is None:
@@ -297,7 +313,7 @@ class pso(UpdateBestMixin):
             else:
                 current_fp = np.expand_dims(current_fp, axis=0)
                 self.fp_mats = np.concatenate([self.fp_mats, current_fp])
-
+ 
     def update_current_gbest(self, last_step_gbest):
         '''
         更新当前代结构的全局极小值。
@@ -335,7 +351,6 @@ class pso(UpdateBestMixin):
         logger.info(f"Now there are {len(self.gbest.keys())} stoichiometry")
         logger.info(f"They are respectively:")
         pprint(list(self.gbest.keys()))
-
 
     def update_next_step(self, work_path):
         """
@@ -536,6 +551,7 @@ class pso(UpdateBestMixin):
 
         gen_structures_list = []
         for column, current_atoms in enumerate(current_atoms_list):
+            logger.info(f"generate No.{column} {pbest_list[column][0].symbols}")
             gen_one = self.generate_one(
                 id_list[column],
                 pbest_list[column],
@@ -557,7 +573,8 @@ class pso(UpdateBestMixin):
         
         random_ratio = np.random.uniform(0,1)
         if random_ratio < self.pso_ratio:
-            gen_atoms = self.__pso_gen(pbest, gbest, current_atoms, fp_mats)
+            if pbest: # 如果pbest不是一个空列表
+                gen_atoms = self.__pso_gen(pbest, gbest, current_atoms, fp_mats)
         else:
             # gen_atoms = self.__random_gen_method1(current_atoms)
             gen_atoms = self.__random_gen_method2(current_atoms)
@@ -594,7 +611,7 @@ class pso(UpdateBestMixin):
         opt_volume       = opt_atoms.get_volume(); opt_symbol = opt_atoms.symbols
         detla_pbest_init = pbest_pos - init_pos
         detla_gbest_init = gbest_pos - init_pos
-        for _ in range(10):
+        for _ in range(1):
             r1 = np.random.rand()
             r2 = np.random.rand()
             init_velocity = init_atoms.arrays.get('caly_velocity', np.random.uniform(0, 1, (len(init_atoms), 3)))
@@ -640,8 +657,8 @@ class pso(UpdateBestMixin):
         else:
             # 
             __ini_atoms = sort_atoms(init_atoms, self.nameofatoms)
-            logger.warning(f"The structure {__ini_atoms.symbols} may not be physical.")
-            logger.warning("Therefore, the program will still adopt this non-physical structure !!!")
+            logger.warning(f"The structure may not be physical.")
+            logger.warning("But the program will still adopt this structure !!!")
 
         self.set_fp(new_atoms)
         return new_atoms
@@ -689,7 +706,7 @@ class pso(UpdateBestMixin):
     def __random_gen_method2(self, current_atoms):
         '''
         Function:
-            This method of generating structures adopts `specify_wyckoffs._gen_specify_symbols` in `specify_wyckoffs.py` module
+            This method of generating structures adopts `specify_wyckoffs._gen_specify_symbols` in `specify_wyckoffs.py` file
             The program will get the `symbols` from `current_atoms[0]`. Then this instance method will create a structure whose 
             stoichiometry and occupied wyckoff positions are the same as current_atoms[0].
             Additional Notes: 
