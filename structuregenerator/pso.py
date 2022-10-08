@@ -21,7 +21,6 @@ from pyxtal import pyxtal
 from pyxtal.tolerance import Tol_matrix
 
 from vasp.vasptools.parser_vasp import VASPOutcarFormat, VASPPoscarFormat
-from specify_wyckoffs import specify_wyckoffs
 from psolib.utils.convert import dict2Atoms
 from psolib.utils.get_enthalpy import get_enthalpy
 from psolib.utils.sort_atoms import sort_atoms
@@ -128,6 +127,8 @@ class pso(UpdateBestMixin):
         last_gbest = Path(self.work_path).joinpath(f"gbest_{self.last_step}.extxyz")
         self.update_current_gbest(last_gbest)
         # generate_step 执行时, 使用了self.current_step 变量
+        print("self.pbest")
+        input(self.pbest)
         pso_structure = self.generate_step(
             [column for column in range(len(self.data))],
             [self.pbest[column] for column in range(len(self.data))],
@@ -135,7 +136,6 @@ class pso(UpdateBestMixin):
             [self.data[column] for column in range(len(self.data))],
             self.fp_mats,
         )
-
         current_gbest = Path(self.work_path).joinpath(f"gbest_{self.current_step}.extxyz")
         self.update_next_step(self.work_path)
         self.store_current_gbest(current_gbest)
@@ -241,7 +241,6 @@ class pso(UpdateBestMixin):
         return:
             assign the value for the self.data
         """
-        current_symbols = []
         for col in range(self.popsize):
             poscar = Path(work_path).joinpath(f"POSCAR_{col+1}")
             outcar = Path(work_path).joinpath(f"OUTCAR_{col+1}")
@@ -551,15 +550,19 @@ class pso(UpdateBestMixin):
 
         gen_structures_list = []
         for column, current_atoms in enumerate(current_atoms_list):
-            logger.info(f"generate No.{column} {pbest_list[column][0].symbols}")
-            gen_one = self.generate_one(
-                id_list[column],
-                pbest_list[column],
-                gbest[str(current_atoms[0].symbols)],
-                current_atoms,
-                fp_mats,
-            )
-            gen_structures_list.append(gen_one)
+            if pbest_list[column]:
+                logger.info(f"generate No.{column} {pbest_list[column][0].symbols}")
+                gen_one = self.generate_one(
+                    id_list[column],
+                    pbest_list[column],
+                    gbest[str(current_atoms[0].symbols)],
+                    current_atoms,
+                    fp_mats,
+                )
+                gen_structures_list.append(gen_one)
+            else:
+                logger.warning(f"pbest_list {pbest_list[column]}")
+        
         return gen_structures_list
 
     def generate_one(
@@ -573,8 +576,7 @@ class pso(UpdateBestMixin):
         
         random_ratio = np.random.uniform(0,1)
         if random_ratio < self.pso_ratio:
-            if pbest: # 如果pbest不是一个空列表
-                gen_atoms = self.__pso_gen(pbest, gbest, current_atoms, fp_mats)
+            gen_atoms = self.__pso_gen(pbest, gbest, current_atoms, fp_mats)
         else:
             # gen_atoms = self.__random_gen_method1(current_atoms)
             gen_atoms = self.__random_gen_method2(current_atoms)
@@ -611,7 +613,7 @@ class pso(UpdateBestMixin):
         opt_volume       = opt_atoms.get_volume(); opt_symbol = opt_atoms.symbols
         detla_pbest_init = pbest_pos - init_pos
         detla_gbest_init = gbest_pos - init_pos
-        for _ in range(1):
+        for _ in range(50):
             r1 = np.random.rand()
             r2 = np.random.rand()
             init_velocity = init_atoms.arrays.get('caly_velocity', np.random.uniform(0, 1, (len(init_atoms), 3)))
