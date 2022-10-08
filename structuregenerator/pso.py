@@ -126,9 +126,8 @@ class pso(UpdateBestMixin):
         # 得到的能量最小的结构都存放在这里, 每个化学配比都有一个结构
         last_gbest = Path(self.work_path).joinpath(f"gbest_{self.last_step}.extxyz")
         self.update_current_gbest(last_gbest)
+
         # generate_step 执行时, 使用了self.current_step 变量
-        print("self.pbest")
-        input(self.pbest)
         pso_structure = self.generate_step(
             [column for column in range(len(self.data))],
             [self.pbest[column] for column in range(len(self.data))],
@@ -177,6 +176,7 @@ class pso(UpdateBestMixin):
         获得下一代结构的编号, 即step值。
         比如:
             1. 产生了第1代结构, 那么对应的next_step应该为2, next_step表示下一代的'代数编号'
+               如果没有step这个文件, 那么程序就自己写step文件, 并且将2写进去。
             2. 如果 next_step = 6, 那么说明当前目录下的POSCAR, OUTCAR, CONTCAR都是第5代的结构信息, 下一步我们将向第6代演化
         输入:
             工作目录路径
@@ -185,9 +185,13 @@ class pso(UpdateBestMixin):
         '''
         step_file = Path(work_path).joinpath("step")
         if not step_file.exists():
-            raise FileExistsError("step file doesn't exist")
-
+            # raise FileExistsError("step file doesn't exist")
+            logger.info("There is no `step` file. So the program will create by itself and write `2` into it!")
+            with open(step_file, "w") as f:
+                f.write("2")
+        
         next_step = eval(open(step_file, "r").read().strip("\n"))
+
         return next_step
 
     def collect_ini_opt(self, work_path):
@@ -267,6 +271,10 @@ class pso(UpdateBestMixin):
                     atoms_outcar = dict2Atoms(data, self.nameofatoms)
                     enth = get_enthalpy(outcar, contcar)
                     atoms_outcar.info['enthalpy'] = enth
+                    # !!! get_enthalpy函数在读取OUTCAR并返回每原子的焓值时，可能返回nan。
+                    # 这是因为有些结构优化起来非常困难，所以优化一半就被杀掉了，所以虽然有该结构对应的OUTCAR
+                    # 但它是一个不完成的OUTCAR，读取是可以正常读取的，但是却得不到一个正常的焓值。
+                    # 但是我又不希望它最终返回一个nan，因此我设定get_enthalpy读取失败后返回 `610612509`
                     #atoms_outcar.info['sid']      = sid
                     atoms_outcar.info['column']   = int(col)
                     self.set_fp(atoms_outcar)
@@ -283,7 +291,7 @@ class pso(UpdateBestMixin):
                         raise ValueError(f"No.{col} substituted POSCAR still has problems !!!")
             # if the OUTCAR doesn't exist, then the program will use the corresponding POSCAR instead of its OUTCAR just like beforce.
             else:
-                logger(f"No.{col} structures's OUTCAR doesn't exist, its POSCAR will be tried to substitue it! ")
+                logger.info(f"No.{col+1} structures's OUTCAR doesn't exist, its POSCAR will be tried to substitue it! ")
                 try:
                     data = VASPPoscarFormat().from_poscar(file_name=poscar)
                     atoms_outcar = dict2Atoms(data, self.nameofatoms)
@@ -325,10 +333,8 @@ class pso(UpdateBestMixin):
         '''
         # check the existance of the global minima file of laste step 
         if Path(last_step_gbest).exists():
-
             logger.info(f"The program will read the {self.last_step}_step gbest and generate the {self.current_step}_step gbest")
             old_gbest_list = read(last_step_gbest, ':', 'extxyz')
-
             for col, _atoms in enumerate(old_gbest_list):
                 _atoms = sort_atoms(atoms=_atoms, elems=self.nameofatoms)
                 # try to obtain the `_atoms` named `str(_atoms.symbols)`
@@ -406,11 +412,11 @@ class pso(UpdateBestMixin):
             outcar = Path(work_path).joinpath(f"OUTCAR_{col+1}")
             contcar= Path(work_path).joinpath(f"CONTCAR_{col+1}")
             if not poscar.exists() :
-                logger.warning(f"No.{col}  poscar didn't exist! ")
-            elif not outcar.exists():
-                logger.warning(f"No.{col}  outcar didn't exist! ")
-            elif not contcar.exists():
-                logger.warning(f"No.{col}  contcar didn't exist! ")
+                logger.warning(f"POSCAR_{col+1} didn't exist! So the program can't store POSCAR_{col+1}  ")
+            if not outcar.exists():
+                logger.warning(f"OUTCAR_{col+1} didn't exist! So the program can't store OUTCAR_{col+1}  ")
+            if not contcar.exists():
+                logger.warning(f"CONTCAR_{col+1} didn't exist! So the program can't store CONTCAR_{col+1} ")
 
             # 3. extract the enthalpy of the OUTCAR to `atoms_outcar` 
             data = VASPPoscarFormat().from_poscar(file_name=poscar)
@@ -551,7 +557,7 @@ class pso(UpdateBestMixin):
         gen_structures_list = []
         for column, current_atoms in enumerate(current_atoms_list):
             if pbest_list[column]:
-                logger.info(f"generate No.{column} {pbest_list[column][0].symbols}")
+                logger.info(f"generate No.{column+1} {pbest_list[column][0].symbols}")
                 gen_one = self.generate_one(
                     id_list[column],
                     pbest_list[column],
@@ -613,7 +619,7 @@ class pso(UpdateBestMixin):
         opt_volume       = opt_atoms.get_volume(); opt_symbol = opt_atoms.symbols
         detla_pbest_init = pbest_pos - init_pos
         detla_gbest_init = gbest_pos - init_pos
-        for _ in range(50):
+        for _ in range(5):
             r1 = np.random.rand()
             r2 = np.random.rand()
             init_velocity = init_atoms.arrays.get('caly_velocity', np.random.uniform(0, 1, (len(init_atoms), 3)))

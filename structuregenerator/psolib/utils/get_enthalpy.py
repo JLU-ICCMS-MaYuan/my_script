@@ -141,7 +141,8 @@ def get_enthalpy(outcar_path, contcar_path):
     if pressure(outcar_path, contcar_path):
         e = outEnergy(outcar_path, contcar_path)
     else:
-        e = np.nan
+        # e = np.nan
+        e = 610612509
     # h = hardness()
     return e
 

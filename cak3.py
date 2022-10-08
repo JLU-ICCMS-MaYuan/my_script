@@ -1069,6 +1069,8 @@ def Zoutput(structure, options, num_proce, prec_pool, is_refine, is_prim, hard, 
                 fw.write("%4d (%4d)  %10s%12s" % (i+1, OutputData[i][1], OutputData[i][2], 'NULL'))
             else:
                 fw.write("%4d (%4d)  %12s" % (i+1, OutputData[i][1], 'NULL'))
+                # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                # fw.write("%4d (%4d)  %12s" % (i+1, OutputData[i][1], '610612509'))
         if hard:
             fw.write("%12.5f" % (OutputData[i][3] * -1))
         if hm:

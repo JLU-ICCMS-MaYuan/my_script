@@ -58,6 +58,13 @@ class UpdateBestMixin(FingerPrintMixin):
         return best_structures
 
     def sorted_structures(self, structures: List[Atoms]) -> List[Union[Atoms, None]]:
+        '''
+        首先使用 filter(self._fillout_nan, structures), 过滤掉焓值(enthalpy)为nan的Atoms结构, 将非nan的结构返回为List[Atoms]
+        然后使用 sorted(List[Atoms], key=self._sort_func), 按照某一种标准对结构进行排序，这种标准有以下几种：
+            _sort_enthalpy 按照焓值 对结构进行排序
+            _sort_hardness 按照硬度 对结构进行排序
+            ......
+        '''
         structures = sorted(filter(self._fillout_nan, structures), key=self._sort_func)
         return structures
 
@@ -71,7 +78,15 @@ class UpdateBestMixin(FingerPrintMixin):
                     return
 
     def _fillout_nan(self, atoms: Atoms) -> bool:
+        '''
+        过滤掉焓值(enthalpy)为nan的Atoms结构, 那么如何过滤呢？
+        使用 self._sort_func(atoms) 对 atoms 结构进行过滤，根据选择的标准不同，
+        _sort_func 函数会调用不同的形式：例如：
+            _sort_enthalpy 按照焓值排除nan的形式
+            _sort_hardness 按照硬度排除nan的形式
+        '''
         x = self._sort_func(atoms)
+
         return not np.isnan(x)
 
     def _sort_enthalpy(self, atoms: Atoms) -> bool:
