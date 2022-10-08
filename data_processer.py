@@ -22,10 +22,9 @@ df1.dropna(axis=0, inplace=True)
 # 删除焓值为 610612509 的行
 # index = df1[(df1.enthalpy - 610612509.0 < 0.1)].index.tolist() 表示返回与610612509差值小于0.1的所有行的行索引，将这些行索引存储为列表
 df1.drop(
-    index=df1[(df1.enthalpy - 610612509.0 < 0.1)].index.tolist(),
+    index=df1[(abs(df1.enthalpy - 610612509.0) < 0.1)].index.tolist(),
     inplace=True
     )
 
-print(df1)
 df1.to_csv('nnconvexhull.csv', index=False)
 
