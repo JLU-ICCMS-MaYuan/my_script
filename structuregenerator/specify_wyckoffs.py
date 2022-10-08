@@ -247,6 +247,7 @@ class specify_wyckoffs:
         spacegroup_number = self.spacegroup_number
         nameofatoms = self.nameofatoms
 
+        print(self._group.keys())
         fomula = str(input_atoms.symbols.get_chemical_formula('metal'))
         species_amounts_sites = random.choice(self._group[fomula])
 
