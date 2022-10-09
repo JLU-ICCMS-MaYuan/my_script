@@ -729,7 +729,8 @@ class pso(UpdateBestMixin):
                 stru = self.specifypwps._gen_specify_symbols(current_atoms[0])
                 if isinstance(stru, Structure):
                     if hasattr(stru, "is_ordered"): # 判断结构是否是分数占据的无序结构
-                        pstru = SpacegroupAnalyzer(stru).get_primitive_standard_structure()
+                        # ！！！！！！！！   一定要记得这里产生的是晶胞，不能是原胞
+                        pstru = SpacegroupAnalyzer(stru).get_conventional_standard_structure()
                         _new_atoms = AseAtomsAdaptor.get_atoms(pstru)
                         new_atoms = sort_atoms(_new_atoms, self.nameofatoms)
                         logger.info("The program successfully created a structuere by `__random_gen_method2`")
