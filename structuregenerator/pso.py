@@ -121,15 +121,16 @@ class pso(UpdateBestMixin):
         self.pbest = [[] for _ in range(popsize)]
         self.gbest = {} # gbest 中每个化学配比保存的atoms类数量 由 lbest决定
         self.collect_ini_opt(self.work_path)
-        # old_gbest 表示上一代的'全局极小值信息', 例如:
+        # last_gbest 表示上一代的'全局极小值信息', 例如:
         # gbest_4.extxzy 表示第4代结构经过优化以及综合各方面信息考虑, 
         # 得到的能量最小的结构都存放在这里, 每个化学配比都有一个结构
         last_gbest = Path(self.work_path).joinpath(f"gbest_{self.last_step}.extxyz")
         self.update_current_gbest(last_gbest)
         current_gbest = Path(self.work_path).joinpath(f"gbest_{self.current_step}.extxyz")
         self.store_current_gbest(current_gbest)
-
         self.store_current_struct(self.work_path)
+
+        self.update_next_step(self.work_path)
 
         # generate_step 执行时, 使用了self.current_step 变量
         pso_structure = self.generate_step(
@@ -139,7 +140,6 @@ class pso(UpdateBestMixin):
             [self.data[column] for column in range(len(self.data))],
             self.fp_mats,
         )
-        self.update_next_step(self.work_path)
         if pso_structure:
             self.store_next_struct(self.work_path, pso_structure)
         else:
