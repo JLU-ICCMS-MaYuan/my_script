@@ -195,7 +195,7 @@ class specify_wyckoffs:
         # ]
         for nelems, wyck in zip(nelems_comb, wyck_comb):
             formula = ''.join(map(str, chain.from_iterable(zip(elems, nelems))))
-            formula = Formula(formula).format("metal")
+            formula = Formula(formula).format("metal") # 这里的分子式是没有经过约化的。是多少就是多少，8:8:80 不会变成1:1:10
             _group[formula].append([nelems, wyck])
         _group = dict(_group)
         return _group
@@ -230,9 +230,9 @@ class specify_wyckoffs:
                 3,
                 spacegroup_number,
                 nameofatoms,
-                amounts,
+                (8, 8, 24),
                 factor=2.0,
-                sites=wyck,
+                sites=(['4a', '4b'], ['8c'], ['24e']),
                 tm=tm
             )
             struct_pymatgen = struc.to_pymatgen()
@@ -247,7 +247,6 @@ class specify_wyckoffs:
         spacegroup_number = self.spacegroup_number
         nameofatoms = self.nameofatoms
 
-        print(self._group.keys())
         fomula = str(input_atoms.symbols.get_chemical_formula('metal'))
         species_amounts_sites = random.choice(self._group[fomula])
 

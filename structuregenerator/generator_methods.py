@@ -28,8 +28,9 @@ class generator_methods:
             while len(spe_wps.structs) < spe_wps.popsize:
                 stru = spe_wps._gen_randomly()
                 if hasattr(stru, "is_ordered"): # 判断结构是否是分数占据的无序结构
-                    pstru = SpacegroupAnalyzer(stru).get_primitive_standard_structure()
-                    spe_wps.structs.append(pstru)
+                    # 这里注意一定不要产生原胞结构，尽量保持晶胞结构
+                    bstru = SpacegroupAnalyzer(stru).get_conventional_standard_structure()
+                    spe_wps.structs.append(bstru)
                     logger.info(f"new you have successfully create No.{len(spe_wps.structs)} structures !")
             # write all the structures to the `work_path` by the format `.vasp` 
             if len(spe_wps.structs) == spe_wps.popsize:
