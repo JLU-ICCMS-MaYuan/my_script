@@ -230,9 +230,9 @@ class specify_wyckoffs:
                 3,
                 spacegroup_number,
                 nameofatoms,
-                (8, 8, 24),
+                amounts,
                 factor=2.0,
-                sites=(['4a', '4b'], ['8c'], ['24e']),
+                sites=wyck,
                 tm=tm
             )
             struct_pymatgen = struc.to_pymatgen()
