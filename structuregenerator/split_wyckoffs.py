@@ -264,7 +264,7 @@ class split_wyckoffs:
                     for nonH2_wps, nonH2_rest in self.get_NonHwps(list(wyckoffpositions.keys()), nonH1_rest, nonH2_num, nonH_upper_limit):
 
                         for nonH3_num in range(nonH2_range[0], nonH2_range[-1]+1):
-                            for nonH3_wps, nonH3_rest in self.get_NonHwps(list(wyckoffpositions.keys()), nonH2_rest, nonH2_num, nonH_upper_limit):
+                            for nonH3_wps, nonH3_rest in self.get_NonHwps(list(wyckoffpositions.keys()), nonH2_rest, nonH3_num, nonH_upper_limit):
 
                                 for H_num in range(H_range[0], H_range[-1]+1):
                                     for H_wps, H_rest in self.get_Hwps(list(wyckoffpositions.keys()), nonH3_rest, H_num, H_lower_limit):
