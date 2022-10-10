@@ -53,16 +53,17 @@ class generator_methods:
                 if hasattr(stru, "is_ordered"): # 判断结构是否是分数占据的无序结构
                     # 这里注意一定不要产生原胞结构，尽量保持晶胞结构
                     bstru = SpacegroupAnalyzer(stru).get_conventional_standard_structure()
-                    spl_wps.structs.append(bstru)
-                    logger.info(f"new you have successfully create No.{len(spl_wps.structs)} structures !")
+                    _struct_ase = AseAtomsAdaptor.get_atoms(bstru)
+                    _struct_ase = sort_atoms(_struct_ase, spl_wps.nameofatoms)
+                    spl_wps.structs.append(_struct_ase)
+                    logger.info(f"new you have successfully create No.{len(spl_wps.structs)}-{str(_struct_ase.symbols)} !")
             # write all the structures to the `work_path` by the format `.vasp` 
             if len(spl_wps.structs) == spl_wps.popsize:
-                for i, struct in enumerate(spl_wps.structs):
-                    logger.info(f"try successfully write POSCAR_{i+1} !")
+                for i, struct_ase in enumerate(spl_wps.structs):
                     filepath = os.path.join(spl_wps.work_path, "POSCAR_" + str(i+1))
-                    _struct_ase = AseAtomsAdaptor.get_atoms(struct)
-                    struct_ase = sort_atoms(_struct_ase, spl_wps.nameofatoms)
                     struct_ase.write(filepath, format='vasp')
+                    logger.info(f"try successfully write POSCAR_{i+1} {str(struct_ase.symbols)}!")
+
 
         if self.config_d["mode"] == "substitution":
             substitution.init_from_config(self.config_d)

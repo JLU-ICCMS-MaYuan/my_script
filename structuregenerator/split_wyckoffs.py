@@ -170,12 +170,32 @@ class split_wyckoffs:
         nonH_upper_limit,
         H_lower_limit,
         ):
-        # 考虑该非氢元素可能占据的wps的个数的范围从 `nonH_list1[0]~nonH_list1[-1]+1`
+        _group = defaultdict(list)
+        # 判断 H元素 是否为最后一个元素
+        if not nameofatoms[-1] == 'H':
+            raise ValueError("you have to set nameofatoms in order as `H element is the last one` !!! Just like nameofatoms=['Ar', 'Ne', 'H']")
+        
+        nonH1_range = sitesoccupiedrange[:-1]
+        H_range = sitesoccupiedrange[-1]
+        # 考虑该非氢元素可能占据的wps的个数的范围从 `nonH1_range[0]~nonH1_range[-1]+1`
         # 例如： 
-        #   nonH_list1 = [1, 3]
+        #   nonH1_range = [1, 3]
         # 那么:
-        #   range(nonH_list1[0], nonH_list1[-1]+1) = [1, 2, 3] 
-        pass
+        #   range(nonH1_range[0], nonH1_range[-1]+1) = [1, 2, 3]
+        for nonH1_num in range(nonH1_range[0], nonH1_range[-1]+1):
+            for nonH1_wps, nonH1_rest in self.get_NonHwps(list(wyckoffpositions.keys()) ,wyckoffpositions, nonH1_num, nonH_upper_limit):
+
+                for H_num in range(H_range[0], H_range[-1]+1):
+                    for H_wps, H_rest in self.get_Hwps(list(wyckoffpositions.keys()), nonH1_rest, H_num, H_lower_limit):
+                        
+                        wyckps  = [nonH1_wps, H_wps]
+                        nelems  = self.get_natoms([nonH1_wps, H_wps])
+                        formula = ''.join(map(str, chain.from_iterable(zip(nameofatoms, nelems))))
+                        formula = Formula(formula).format("metal") # 这里的分子式是没有经过约化的。是多少就是多少，8:8:80 不会变成1:1:10
+                        _group[formula].append([nelems, wyckps])
+        
+        _group = dict(_group)
+        return _group
 
     def ternary_hydrides(
         self,
@@ -216,8 +236,47 @@ class split_wyckoffs:
         _group = dict(_group)
         return _group
 
-    def quaternary_hydrides(self,):
-        pass
+    def quaternary_hydrides(
+        self,
+        nameofatoms,
+        sitesoccupiedrange,
+        wyckoffpositions,
+        nonH_upper_limit,
+        H_lower_limit,
+        ):
+        # 考虑该非氢元素可能占据的wps的个数的范围从 `nonH_list1[0]~nonH_list1[-1]+1`
+        # 例如： 
+        #   nonH_list1 = [1, 3]
+        # 那么:
+        #   range(nonH_list1[0], nonH_list1[-1]+1) = [1, 2, 3]
+        # 判断 H元素 是否为最后一个元素
+        _group = defaultdict(list)
+
+        if not nameofatoms[-1] == 'H':
+            raise ValueError("you have to set nameofatoms in order as `H element is the last one` !!! Just like nameofatoms=['Ar', 'Ne', 'H']")
+        
+        nonH1_range, nonH2_range, nonH3_range = sitesoccupiedrange[:-1]
+        H_range = sitesoccupiedrange[-1]
+        for nonH1_num in range(nonH1_range[0], nonH1_range[-1]+1):
+            for nonH1_wps, nonH1_rest in self.get_NonHwps(list(wyckoffpositions.keys()) ,wyckoffpositions, nonH1_num, nonH_upper_limit):
+
+                for nonH2_num in range(nonH2_range[0], nonH2_range[-1]+1):
+                    for nonH2_wps, nonH2_rest in self.get_NonHwps(list(wyckoffpositions.keys()), nonH1_rest, nonH2_num, nonH_upper_limit):
+
+                        for nonH3_num in range(nonH2_range[0], nonH2_range[-1]+1):
+                            for nonH3_wps, nonH3_rest in self.get_NonHwps(list(wyckoffpositions.keys()), nonH2_rest, nonH2_num, nonH_upper_limit):
+
+                                for H_num in range(H_range[0], H_range[-1]+1):
+                                    for H_wps, H_rest in self.get_Hwps(list(wyckoffpositions.keys()), nonH3_rest, H_num, H_lower_limit):
+                                        
+                                        wyckps  = [nonH1_wps, nonH2_wps, nonH3_wps, H_wps]
+                                        nelems  = self.get_natoms([nonH1_wps, nonH2_wps, nonH3_wps, H_wps])
+                                        formula = ''.join(map(str, chain.from_iterable(zip(nameofatoms, nelems))))
+                                        formula = Formula(formula).format("metal") # 这里的分子式是没有经过约化的。是多少就是多少，8:8:80 不会变成1:1:10
+                                        _group[formula].append([nelems, wyckps])
+        
+        _group = dict(_group)
+        return _group
 
     def get_NonHwps(self, original_wps:List, wps:dict, num:int, nonH_upper_limit:str):
         allwps = list(wps.keys())
