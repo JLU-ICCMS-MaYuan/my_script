@@ -81,7 +81,7 @@ class specify_wyckoffs:
         self.popsize            = popsize
         self.maxlimit           = maxlimit
         self.distancematrix     = np.array(distancematrix)
-        self._group             = self.get_group(self.optionalsites, self.sitesoccupiedrange)
+        self._group             = self.get_group(self.nameofatoms, self.optionalsites, self.sitesoccupiedrange)
         self.structs = []
 
     def get_H(self, H_occupied_wps, h_lower, h_upper):
@@ -105,11 +105,11 @@ class specify_wyckoffs:
 
         hydrogen_atoms_number = []
         for wps_strings in hydrogen_wps:
-            atoms = []
+            atoms_amount = []
             for wp_multi in wps_strings:
-                atoms.extend(re.findall(r"\d+", wp_multi))
-            atoms = list(map(int, atoms))
-            hydrogen_atoms_number.append(sum(atoms))
+                atoms_amount.extend(re.findall(r"\d+", wp_multi))
+            atoms_amount = list(map(int, atoms_amount))
+            hydrogen_atoms_number.append(sum(atoms_amount))
 
         return hydrogen_wps, hydrogen_atoms_number
 
@@ -123,11 +123,11 @@ class specify_wyckoffs:
                 X_wps.append(e)
         X_atoms_number = []
         for wps_strings in X_wps:
-            atoms = []
+            atoms_amount = []
             for wp_multi in wps_strings:
-                atoms.extend(re.findall(r"\d+", wp_multi))
-            atoms = list(map(int, atoms))
-            X_atoms_number.append(sum(atoms))
+                atoms_amount.extend(re.findall(r"\d+", wp_multi))
+            atoms_amount = list(map(int, atoms_amount))
+            X_atoms_number.append(sum(atoms_amount))
         return X_wps, X_atoms_number
 
     def get_X(self, X, X_occupied_wps, X_lower, X_upper):
@@ -136,7 +136,7 @@ class specify_wyckoffs:
         else:
             return self.get_M(X_occupied_wps, X_lower, X_upper)
 
-    def get_group(self, optionalsites, sitesoccupiedrange) -> dict:
+    def get_group(self, nameofatoms, optionalsites, sitesoccupiedrange) -> dict:
         """
         Function
 
@@ -152,7 +152,7 @@ class specify_wyckoffs:
             Returns:
             dict: {'formula0': [amount, wyck], ...}
         """
-        elems = self.nameofatoms  # ['H', 'Ca', 'C']
+        elems = nameofatoms  # ['H', 'Ca', 'C']
         _group = defaultdict(list)
         wyck_list, nelems_list = [], []
         for elem, opt_sites, sites_range in zip(

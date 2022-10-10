@@ -11,6 +11,7 @@ class config:
         self.args = args
         # init the self.config by using the method self.read_config()
         self.config_d = {}
+        self.sections = []
         self.read_args()
         self.read_ini()
  
@@ -31,12 +32,23 @@ class config:
         config_inputini.read(self.config_d["input_file_path"])
 
         if "specifywps" in config_inputini.sections():
+            self.sections.append("specifywps")
             for key, value in config_inputini.items("specifywps"):
                 try:
                     self.config_d[key] = eval(value)
                 except (NameError, SyntaxError):
                     pass
+
+        if "splitwps" in config_inputini.sections():
+            self.sections.append("splitwps")
+            for key, value in config_inputini.items("splitwps"):
+                try:
+                    self.config_d[key] = eval(value)
+                except (NameError, SyntaxError):
+                    pass
+        
         if "substitution" in config_inputini.sections():
+            self.sections.append("substitution")
             for key, value in config_inputini.items("substitution"):
                 try:
                     self.config_d[key] = eval(value)
@@ -44,6 +56,7 @@ class config:
                     logger.error("there is no {}".format(key))
         
         if "pso" in config_inputini.sections():
+            self.sections.append("pso")
             for key, value in config_inputini.items("pso"):
                 try:
                     self.config_d[key] = eval(value)

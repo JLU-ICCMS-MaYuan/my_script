@@ -15,9 +15,9 @@ optionalsites = [['2a', '6b'],
 sitesoccupiedrange=[[1,2], 
                     [1,2], 
                     [1,3],] 
-distancematrix=[[],
-                [],
-                [],]
+distancematrix=[[2.014, 1.908, 1.590],
+                [1.908, 1.802, 1.483],
+                [1.590, 1.483, 1.116],]
 popsize=300 
 maxlimit=150
 """

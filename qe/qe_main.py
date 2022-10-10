@@ -12,12 +12,12 @@ pbs
 
     # no split method
     # 进行不分q点计算
-    qe_main.py -i ./CaH6.vasp -w ./test/ -p 200 -j pbs phono -m mode=nosplit qpoints=[4,4,4] dyn0_flag=False 
+    qe_main.py -i ./CaH6.vasp -w ./test/ -p 200 -j pbs phono -m mode=nosplit qpoints='4 4 4' dyn0_flag=False 
     # 只计算dyn0_flag
-    qe_main.py -w ./CaH6.vasp -w ./test/ -p 200 -j pbs phono -m mode=npsplit qpoints=[4,4,4] dyn0_flag=True
+    qe_main.py -w ./CaH6.vasp -w ./test/ -p 200 -j pbs phono -m mode=npsplit qpoints='4 4 4' dyn0_flag=True
 
     # spilit method 1
-    qe_main.py -i ./relax.out -w ./ -p 0.0  -j pbs phono -m mode=split_from_dyn0 qpoints=[8,8,8]
+    qe_main.py -i ./relax.out -w ./ -p 0.0  -j pbs phono -m mode=split_from_dyn0 qpoints='8 8 8'    
     qe_main.py -i ./relax.out -w ./ -p 0.0  -j pbs phono -m mode=merge
 
     # split method 2

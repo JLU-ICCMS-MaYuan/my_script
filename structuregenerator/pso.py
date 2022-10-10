@@ -89,6 +89,7 @@ class pso(UpdateBestMixin):
         spacegroup_number: int,
         pso_ratio: float,
         specifywps=None,
+        splitwps=None,
         # id_list,
         # pbest_list,
         # gbest,
@@ -107,6 +108,7 @@ class pso(UpdateBestMixin):
         self.spacegroup_number = spacegroup_number
         self.pso_ratio = pso_ratio
         self.specifypwps = specifywps 
+        self.splitwps = splitwps
 
         # self.next_step 表示下一代的'代编号'
         self.next_step = self.get_next_step(work_path)
@@ -163,7 +165,8 @@ class pso(UpdateBestMixin):
             spacegroup_number=config_d["spacegroup_number"],
             pso_ratio=config_d["pso_ratio"],
 
-            specifywps=kwargs["specifywps"],
+            specifywps=kwargs.get("specifywps", None),
+            splitwps=kwargs.get("splitwps", None),
         #    id_list,
         #    pbest_list, 
         #    gbest, 
@@ -544,6 +547,7 @@ class pso(UpdateBestMixin):
         for col, atoms in enumerate(atoms_list):
             poscar = Path(work_path).joinpath(f"POSCAR_{col+1}")
             write(poscar, atoms, format="vasp")
+            logger.info(f"try successfully write POSCAR_{col+1}")
 
 
     def generate_step(
@@ -727,6 +731,23 @@ class pso(UpdateBestMixin):
         if self.specifypwps:
             for i in range(100):
                 stru = self.specifypwps._gen_specify_symbols(current_atoms[0])
+                if isinstance(stru, Structure):
+                    if hasattr(stru, "is_ordered"): # 判断结构是否是分数占据的无序结构
+                        # ！！！！！！！！   一定要记得这里产生的是晶胞，不能是原胞
+                        pstru = SpacegroupAnalyzer(stru).get_conventional_standard_structure()
+                        _new_atoms = AseAtomsAdaptor.get_atoms(pstru)
+                        new_atoms = sort_atoms(_new_atoms, self.nameofatoms)
+                        logger.info("The program successfully created a structuere by `__random_gen_method2`")
+                        return new_atoms
+            else:
+                logger.info("The program can't creat a reasonable structuere by `__random_gen_method2`")
+                new_atoms = self.__random_gen_method1(current_atoms)
+                logger.info("The program successfully created a structure by `__random_gen_method1`")
+                return new_atoms
+        
+        elif self.splitwps:
+            for i in range(100):
+                stru = self.splitwps._gen_specify_symbols(current_atoms[0])
                 if isinstance(stru, Structure):
                     if hasattr(stru, "is_ordered"): # 判断结构是否是分数占据的无序结构
                         # ！！！！！！！！   一定要记得这里产生的是晶胞，不能是原胞
