@@ -209,7 +209,13 @@ def readmyini(input_ini):
                 indata[key] = eval(value)
             except (NameError, SyntaxError):
                 print("there is no {}".format(key))
-
+    if "splitwps" in config_inputini.sections():
+        for key, value in config_inputini.items("splitwps"):
+            try:
+                indata[key] = eval(value)
+            except (NameError, SyntaxError):
+                print("there is no {}".format(key))
+            
     SystemName  = "mypso"
     nameofatoms = indata['nameofatoms']
     Npop        = indata['popsize']
