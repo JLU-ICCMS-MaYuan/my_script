@@ -356,6 +356,7 @@ class split_wyckoffs:
             )
             struct_pymatgen = struc.to_pymatgen()
             if struct_pymatgen.composition.num_atoms < float(self.maxlimit):
+                logger.info(f"The structure input infomation {amounts} {wyck} successfully create a reasonable structure!!!")
                 return struct_pymatgen
         except Exception as e:
             logger.info(f"The structure input infomation {amounts} {wyck} can't create a reasonable structure!!!")
@@ -366,8 +367,17 @@ class split_wyckoffs:
         spacegroup_number = self.spacegroup_number
         nameofatoms = self.nameofatoms
 
-        fomula = str(input_atoms.symbols.get_chemical_formula('metal'))
-        species_amounts_sites = random.choice(self._group[fomula])
+        try:
+            fomula = str(input_atoms.symbols.get_chemical_formula('metal'))
+            species_amounts_sites = random.choice(self._group[fomula])
+        except KeyError:
+            # 为什么捕捉这个错误呢？因为在产生结构的时候很有可能产生一些意料之外的化学配比
+            # 例如： 225号空间群使用4a, 4b, 48h 构造晶体结构。
+            #   虽然48h 的占位是 [y, y, 0]。如果y=0.5，那么48h就会发生merge，merge成12i
+            #   此时225空间群就变成221.
+            # 就是因为这样特殊的情况，所以 如果读入的结构的化学配比在 self._group字典 中找到不到的话
+            # 就返回一个None
+            return None
 
         amounts = species_amounts_sites[0]
         wyck = species_amounts_sites[1]

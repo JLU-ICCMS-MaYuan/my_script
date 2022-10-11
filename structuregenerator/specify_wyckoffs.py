@@ -237,6 +237,7 @@ class specify_wyckoffs:
             )
             struct_pymatgen = struc.to_pymatgen()
             if struct_pymatgen.composition.num_atoms < float(self.maxlimit):
+                logger.info(f"The structure input infomation {amounts} {wyck} successfully create a reasonable structure!!!")
                 return struct_pymatgen
         except Exception as e:
             logger.info(f"The structure input infomation {amounts} {wyck} can't create a reasonable structure!!!")

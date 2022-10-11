@@ -109,7 +109,10 @@ class pso(UpdateBestMixin):
         self.pso_ratio = pso_ratio
         self.specifypwps = specifywps 
         self.splitwps = splitwps
-
+        if self.specifypwps is not None:
+            self.group = self.specifypwps._group
+        elif self.splitwps is not None:
+            self.group = self.splitwps._group
         # self.next_step 表示下一代的'代编号'
         self.next_step = self.get_next_step(work_path)
         # self.current_step 表示当前代的'代编号', 获得它是为了self.generate_step()方法使用
@@ -263,7 +266,7 @@ class pso(UpdateBestMixin):
                 except Exception as e:
                     raise ValueError(f"No.{col} structure's POSCAR has problems !!!")
             else:
-                raise FileExistsError(f"No.{col+1} poscar didn't exist! ")
+                raise FileExistsError(f"No.{col+1} poscar didn't exist! So The program can't read it!!!")
 
             # check whether the OUTCAR file exists or not
             if outcar.exists():
@@ -546,8 +549,11 @@ class pso(UpdateBestMixin):
         """
         for col, atoms in enumerate(atoms_list):
             poscar = Path(work_path).joinpath(f"POSCAR_{col+1}")
-            write(poscar, atoms, format="vasp")
-            logger.info(f"try successfully write POSCAR_{col+1}")
+            if atoms:
+                write(poscar, atoms, format="vasp")
+                logger.info(f"try successfully write POSCAR_{col+1}")
+            else:
+                logger.warning(f"The `Class Atoms` for POSCAR_{col+1} doesn't exist !!! So the program can't write it !!!")
 
 
     def generate_step(
@@ -697,12 +703,13 @@ class pso(UpdateBestMixin):
             tm.set_tol(ele_r1[0], ele_r2[0], ele_r1[1]+ele_r2[1])
 
         struct = pyxtal()
-        for i in range(100):
+        for i in range(1000):
             try:
                 logger.info("create the structure by RANDOM for {}".format(current_atoms[0].symbols))
+                spacegroup_number = self.random_get_spacegroup(self.spacegroup_number)
                 struct.from_random(
                     3,
-                    self.spacegroup_number,
+                    spacegroup_number,
                     species=self.nameofatoms,
                     numIons=[symbols.count(ele) for ele in self.nameofatoms],
                     factor=1.5,
@@ -714,7 +721,8 @@ class pso(UpdateBestMixin):
             except Exception as e:
                 logger.warning(f"create structure No.{i+1} failed !!!")
         else:
-            logger.warning(f"Its input information is group={self.spacegroup_number}, species={self.nameofatoms}, numIons={[symbols.count(ele) for ele in self.nameofatoms]}. After 100 attempt, The program can't create the random structure")
+            logger.warning(f"Its input information can't create the random structure")
+            return None
 
     def __random_gen_method2(self, current_atoms):
         '''
@@ -739,10 +747,17 @@ class pso(UpdateBestMixin):
                         new_atoms = sort_atoms(_new_atoms, self.nameofatoms)
                         logger.info("The program successfully created a structuere by `__random_gen_method2`")
                         return new_atoms
+                else:
+                    logger.info("The program can't creat a reasonable structuere by `__random_gen_method2`")
+                    new_atoms = self.__random_gen_method1(current_atoms)
+                    if new_atoms:
+                        logger.info("The program successfully created a structure by `__random_gen_method1`")
+                    return new_atoms
             else:
                 logger.info("The program can't creat a reasonable structuere by `__random_gen_method2`")
                 new_atoms = self.__random_gen_method1(current_atoms)
-                logger.info("The program successfully created a structure by `__random_gen_method1`")
+                if new_atoms:
+                    logger.info("The program successfully created a structure by `__random_gen_method1`")
                 return new_atoms
         
         elif self.splitwps:
@@ -756,8 +771,50 @@ class pso(UpdateBestMixin):
                         new_atoms = sort_atoms(_new_atoms, self.nameofatoms)
                         logger.info("The program successfully created a structuere by `__random_gen_method2`")
                         return new_atoms
+                else:
+                    logger.info("The program can't creat a reasonable structuere by `__random_gen_method2`")
+                    new_atoms = self.__random_gen_method1(current_atoms)
+                    if new_atoms:
+                        logger.info("The program successfully created a structure by `__random_gen_method1`")
+                    return new_atoms
             else:
                 logger.info("The program can't creat a reasonable structuere by `__random_gen_method2`")
                 new_atoms = self.__random_gen_method1(current_atoms)
-                logger.info("The program successfully created a structure by `__random_gen_method1`")
+                if new_atoms:
+                    logger.info("The program successfully created a structure by `__random_gen_method1`")
                 return new_atoms
+
+
+    def random_get_spacegroup(self, spacegroup_number):
+        """
+        根据给定的空间群所在的晶系, 随机给出一个该晶系下的任意一个空间群
+        """
+        triclinic    = [i for i in range(1, 3)]
+        monoclinic   = [i for i in range(3, 16)]
+        orthorhombic = [i for i in range(16, 75)]
+        tetragonal   = [i for i in range(75, 143)]
+        trigonal     = [i for i in range(143, 168)]
+        hexagonal    = [i for i in range(168, 195)]
+        cubic        = [i for i in range(195, 231)]
+
+        if spacegroup_number in triclinic:
+            select_crystal = triclinic.remove(spacegroup_number)
+        elif spacegroup_number in monoclinic:
+            select_crystal = monoclinic.remove(spacegroup_number)
+        elif spacegroup_number in orthorhombic:
+            select_crystal = orthorhombic.remove(spacegroup_number)
+        elif spacegroup_number in tetragonal:
+            select_crystal = tetragonal.remove(spacegroup_number)
+        elif spacegroup_number in trigonal:
+            select_crystal = trigonal.remove(spacegroup_number)
+        elif spacegroup_number in hexagonal:
+            select_crystal = hexagonal.remove(spacegroup_number)
+        elif spacegroup_number in cubic:
+            select_crystal = cubic.copy()
+            select_crystal.remove(spacegroup_number)
+        else:
+            select_crystal = [i for i in range(1, 231)]
+
+        new_spacegroup_number = np.random.choice(select_crystal)
+        
+        return new_spacegroup_number
