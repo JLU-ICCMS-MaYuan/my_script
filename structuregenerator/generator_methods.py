@@ -31,18 +31,16 @@ class generator_methods:
             while len(spe_wps.structs) < spe_wps.popsize:
                 stru = spe_wps._gen_randomly()
                 if hasattr(stru, "is_ordered"): # 判断结构是否是分数占据的无序结构
-                    # 这里注意一定不要产生原胞结构，尽量保持晶胞结构
-                    bstru = SpacegroupAnalyzer(stru).get_conventional_standard_structure()
-                    spe_wps.structs.append(bstru)
-                    logger.info(f"new you have successfully create No.{len(spe_wps.structs)} structures !")
+                    _struct_ase = AseAtomsAdaptor.get_atoms(stru)
+                    struct_ase = sort_atoms(_struct_ase, spe_wps.nameofatoms)
+                    spe_wps.structs.append(struct_ase)
+                    logger.info(f"new you have successfully create No.{len(spl_wps.structs)}-{str(_struct_ase.symbols)} !")
             # write all the structures to the `work_path` by the format `.vasp` 
             if len(spe_wps.structs) == spe_wps.popsize:
                 for i, struct in enumerate(spe_wps.structs):
                     logger.info(f"try successfully write POSCAR_{i+1} !")
                     filepath = os.path.join(spe_wps.work_path, "POSCAR_" + str(i+1))
-                    _struct_ase = AseAtomsAdaptor.get_atoms(struct)
-                    struct_ase = sort_atoms(_struct_ase, spe_wps.nameofatoms)
-                    struct_ase.write(filepath, format='vasp')
+                    struct.write(filepath, format='vasp')
 
         if self.config_d["mode"] == "splitwps":
             # init the parameter for generating the structure
@@ -51,9 +49,7 @@ class generator_methods:
             while len(spl_wps.structs) < spl_wps.popsize:
                 stru = spl_wps._gen_randomly()
                 if hasattr(stru, "is_ordered"): # 判断结构是否是分数占据的无序结构
-                    # 这里注意一定不要产生原胞结构，尽量保持晶胞结构
-                    bstru = SpacegroupAnalyzer(stru).get_conventional_standard_structure()
-                    _struct_ase = AseAtomsAdaptor.get_atoms(bstru)
+                    _struct_ase = AseAtomsAdaptor.get_atoms(stru)
                     _struct_ase = sort_atoms(_struct_ase, spl_wps.nameofatoms)
                     spl_wps.structs.append(_struct_ase)
                     logger.info(f"new you have successfully create No.{len(spl_wps.structs)}-{str(_struct_ase.symbols)} !")

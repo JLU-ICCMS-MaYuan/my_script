@@ -359,8 +359,9 @@ class split_wyckoffs:
                 logger.info(f"The structure input infomation {amounts} {wyck} successfully create a reasonable structure!!!")
                 return struct_pymatgen
         except Exception as e:
-            logger.info(f"The structure input infomation {amounts} {wyck} can't create a reasonable structure!!!")
-
+            # logger.info(f"The structure input infomation {amounts} {wyck} can't create a reasonable structure!!!")
+            logger.info(f"Generating failed !!!")
+    
     @set_timeout(30, after_timeout)
     def _gen_specify_symbols(self, input_atoms: Atoms):
 

@@ -419,11 +419,11 @@ class pso(UpdateBestMixin):
             outcar = Path(work_path).joinpath(f"OUTCAR_{col+1}")
             contcar= Path(work_path).joinpath(f"CONTCAR_{col+1}")
             if not poscar.exists() :
-                logger.warning(f"POSCAR_{col+1} didn't exist! So the program can't store POSCAR_{col+1}  ")
+                logger.warning(f"POSCAR_{col+1}  didn't exist! So the program can't store POSCAR_{col+1}")
             if not outcar.exists():
-                logger.warning(f"OUTCAR_{col+1} didn't exist! So the program can't store OUTCAR_{col+1}  ")
+                logger.warning(f"OUTCAR_{col+1}  didn't exist! So the program can't store OUTCAR_{col+1}")
             if not contcar.exists():
-                logger.warning(f"CONTCAR_{col+1} didn't exist! So the program can't store CONTCAR_{col+1} ")
+                logger.warning(f"CONTCAR_{col+1} didn't exist! So the program can't store CONTCAR_{col+1}")
 
             # 3. extract the enthalpy of the OUTCAR to `atoms_outcar` 
             data = VASPPoscarFormat().from_poscar(file_name=poscar)
@@ -668,10 +668,10 @@ class pso(UpdateBestMixin):
                 is_bond_reasonable(new_atoms, self.nameofatoms, distance_of_ion)
                 and not self.get_similarity(fp, fp_mats)[2]  # not is_sim
             ):
-                logger.info(f"No.{_+1} attempt for {opt_symbol} succeeded !!!")
+                logger.info(f"attempt {_+1} for {opt_symbol} succeeded !!!")
                 break
             else:
-                logger.info(f"No.{_+1} attempt for {opt_symbol} failed !!!")
+                logger.info(f"attempt {_+1} for {opt_symbol} failed !!!")
         else:
             # 
             __ini_atoms = sort_atoms(init_atoms, self.nameofatoms)
@@ -740,8 +740,7 @@ class pso(UpdateBestMixin):
             while True:
                 stru = self.specifypwps._gen_randomly()
                 if hasattr(stru, "is_ordered"): # 判断结构是否是分数占据的无序结构
-                    pstru = SpacegroupAnalyzer(stru).get_conventional_standard_structure()
-                    _new_atoms = AseAtomsAdaptor.get_atoms(pstru)
+                    _new_atoms = AseAtomsAdaptor.get_atoms(stru)
                     new_atoms = sort_atoms(_new_atoms, self.nameofatoms)
                     logger.info(f"The program successfully created a structuere by `__random_gen` {new_atoms.symbols}")
                     return new_atoms
@@ -749,8 +748,7 @@ class pso(UpdateBestMixin):
             while True:
                 stru = self.splitwps._gen_randomly()
                 if hasattr(stru, "is_ordered"): # 判断结构是否是分数占据的无序结构
-                    pstru = SpacegroupAnalyzer(stru).get_conventional_standard_structure()
-                    _new_atoms = AseAtomsAdaptor.get_atoms(pstru)
+                    _new_atoms = AseAtomsAdaptor.get_atoms(stru)
                     new_atoms = sort_atoms(_new_atoms, self.nameofatoms)
                     logger.info(f"The program successfully created a structuere by `__random_gen` {new_atoms.symbols}")
                     return new_atoms
