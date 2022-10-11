@@ -595,9 +595,8 @@ class pso(UpdateBestMixin):
         if random_ratio < self.pso_ratio:
             gen_atoms = self.__pso_gen(pbest, gbest, current_atoms, fp_mats)
         else:
-            # gen_atoms = self.__random_gen_method1(current_atoms)
-            gen_atoms = self.__random_gen_method2(current_atoms)
-
+            # gen_atoms = self.__random_gen_method2(current_atoms)
+            gen_atoms = self.__random_gen(current_atoms)
         return gen_atoms
 
     def __pso_gen(
@@ -682,7 +681,7 @@ class pso(UpdateBestMixin):
         self.set_fp(new_atoms)
         return new_atoms
 
-    def __random_gen_method1(self, current_atoms):
+    def __same_symbol_gen(self, current_atoms):
         """
         Function:
             create a new structure whose symbols is the same as `current_atoms`
@@ -703,9 +702,9 @@ class pso(UpdateBestMixin):
             tm.set_tol(ele_r1[0], ele_r2[0], ele_r1[1]+ele_r2[1])
 
         struct = pyxtal()
+        logger.info(f"create the structure by RANDOM for {current_atoms[0].symbols}")
         for i in range(1000):
             try:
-                logger.info("create the structure by RANDOM for {}".format(current_atoms[0].symbols))
                 spacegroup_number = self.random_get_spacegroup(self.spacegroup_number)
                 struct.from_random(
                     3,
@@ -721,10 +720,10 @@ class pso(UpdateBestMixin):
             except Exception as e:
                 logger.warning(f"create structure No.{i+1} failed !!!")
         else:
-            logger.warning(f"Its input information can't create the random structure")
+            logger.warning(f"Its input information can't create the random {current_atoms[0].symbols}")
             return None
 
-    def __random_gen_method2(self, current_atoms):
+    def __random_gen(self, current_atoms):
         '''
         Function:
             This method of generating structures adopts `specify_wyckoffs._gen_specify_symbols` in `specify_wyckoffs.py` file
@@ -738,52 +737,48 @@ class pso(UpdateBestMixin):
         '''
         if self.specifypwps:
             for i in range(100):
-                stru = self.specifypwps._gen_specify_symbols(current_atoms[0])
-                if isinstance(stru, Structure):
-                    if hasattr(stru, "is_ordered"): # 判断结构是否是分数占据的无序结构
-                        # ！！！！！！！！   一定要记得这里产生的是晶胞，不能是原胞
-                        pstru = SpacegroupAnalyzer(stru).get_conventional_standard_structure()
-                        _new_atoms = AseAtomsAdaptor.get_atoms(pstru)
-                        new_atoms = sort_atoms(_new_atoms, self.nameofatoms)
-                        logger.info("The program successfully created a structuere by `__random_gen_method2`")
-                        return new_atoms
-                else:
-                    logger.info("The program can't creat a reasonable structuere by `__random_gen_method2`")
-                    new_atoms = self.__random_gen_method1(current_atoms)
-                    if new_atoms:
-                        logger.info("The program successfully created a structure by `__random_gen_method1`")
+                stru = self.specifypwps._gen_randomly()
+                if hasattr(stru, "is_ordered"): # 判断结构是否是分数占据的无序结构
+                    # ！！！！！！！！   一定要记得这里产生的是晶胞，不能是原胞
+                    pstru = SpacegroupAnalyzer(stru).get_conventional_standard_structure()
+                    _new_atoms = AseAtomsAdaptor.get_atoms(pstru)
+                    new_atoms = sort_atoms(_new_atoms, self.nameofatoms)
+                    logger.info(f"The program successfully created a structuere by `__random_gen` {new_atoms.symbols}")
                     return new_atoms
+                else:
+                    _new_atoms = self.__same_symbol_gen(current_atoms)
+                    if _new_atoms:
+                        new_atoms = sort_atoms(_new_atoms, self.nameofatoms)
+                        logger.info(f"The program successfully created a structure by `__same_symbol_gen` {new_atoms.symbols}")
+                        return new_atoms
             else:
-                logger.info("The program can't creat a reasonable structuere by `__random_gen_method2`")
-                new_atoms = self.__random_gen_method1(current_atoms)
-                if new_atoms:
-                    logger.info("The program successfully created a structure by `__random_gen_method1`")
-                return new_atoms
-        
+                _new_atoms = self.__same_symbol_gen(current_atoms)
+                if _new_atoms:
+                    new_atoms = sort_atoms(_new_atoms, self.nameofatoms)
+                    logger.info(f"The program successfully created a structure by `__same_symbol_gen` {new_atoms.symbols}")
+                    return new_atoms
         elif self.splitwps:
             for i in range(100):
-                stru = self.splitwps._gen_specify_symbols(current_atoms[0])
-                if isinstance(stru, Structure):
-                    if hasattr(stru, "is_ordered"): # 判断结构是否是分数占据的无序结构
-                        # ！！！！！！！！   一定要记得这里产生的是晶胞，不能是原胞
-                        pstru = SpacegroupAnalyzer(stru).get_conventional_standard_structure()
-                        _new_atoms = AseAtomsAdaptor.get_atoms(pstru)
-                        new_atoms = sort_atoms(_new_atoms, self.nameofatoms)
-                        logger.info("The program successfully created a structuere by `__random_gen_method2`")
-                        return new_atoms
-                else:
-                    logger.info("The program can't creat a reasonable structuere by `__random_gen_method2`")
-                    new_atoms = self.__random_gen_method1(current_atoms)
-                    if new_atoms:
-                        logger.info("The program successfully created a structure by `__random_gen_method1`")
+                stru = self.splitwps._gen_randomly()
+                if hasattr(stru, "is_ordered"): # 判断结构是否是分数占据的无序结构
+                    # ！！！！！！！！   一定要记得这里产生的是晶胞，不能是原胞
+                    pstru = SpacegroupAnalyzer(stru).get_conventional_standard_structure()
+                    _new_atoms = AseAtomsAdaptor.get_atoms(pstru)
+                    new_atoms = sort_atoms(_new_atoms, self.nameofatoms)
+                    logger.info(f"The program successfully created a structuere by `__random_gen` {new_atoms.symbols}")
                     return new_atoms
+                else:
+                    _new_atoms = self.__same_symbol_gen(current_atoms)
+                    if _new_atoms:
+                        new_atoms = sort_atoms(_new_atoms, self.nameofatoms)
+                        logger.info(f"The program successfully created a structure by `__same_symbol_gen` {new_atoms.symbols}")
+                        return new_atoms
             else:
-                logger.info("The program can't creat a reasonable structuere by `__random_gen_method2`")
-                new_atoms = self.__random_gen_method1(current_atoms)
-                if new_atoms:
-                    logger.info("The program successfully created a structure by `__random_gen_method1`")
-                return new_atoms
-
+                _new_atoms = self.__same_symbol_gen(current_atoms)
+                if _new_atoms:
+                    new_atoms = sort_atoms(_new_atoms, self.nameofatoms)
+                    logger.info(f"The program successfully created a structure by `__same_symbol_gen` {new_atoms.symbols}")
+                    return new_atoms
 
     def random_get_spacegroup(self, spacegroup_number):
         """
