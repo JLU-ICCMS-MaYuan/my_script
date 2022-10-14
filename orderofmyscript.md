@@ -40,9 +40,11 @@ qe phono (不分q点计算声子)
 qe_main.py -i relax.out -w ./ -j slurm -p 200 phono -m mode=nosplit qpoints='6 6 6' dyn0_flag=False queue=lhy
 ```
 
-qe phono (不分q点计算声子只计算dyn0)
+qe phono (q点计算声子)
 ```shell
-qe_main.py -i relax.out -w ./ -j slurm -p 200 phono -m mode=nosplit qpoints='6 6 6' dyn0_flag=True queue=debug-N-20
+qe_main.py -i relax.out -w ./ -j slurm -p 200 phono -m mode=nosplit qpoints='6 6 6' dyn0_flag=True queue=xieyu
+qe_main.py -i ./relax.out -w ./ -p 压力值  -j pbs phono -m mode=split_from_dyn0 qpoints='6 6 6' 
+
 ```
 
 mytoolkit 命令
