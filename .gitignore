@@ -25,6 +25,7 @@
 /structuregenerator/psolib/fortran_src/sym3dgenerator/OBJ
 /structuregenerator/psolib/fortran_src/sym3dgenerator/FPP
 /structuregenerator/psolib/fortran_src/sym3dgenerator/src.linux-x86_64-3.9
+/notebook/.ipynb_checkpoints
 
 #files
 /calypso/.idea/inspectionProfiles/Project_Default.xml
