@@ -137,10 +137,10 @@ def check(struc: Atoms):
             logger.info(f"finally successed! The program find some cages which is {res}")
             return True
         else:
-            logger.info("check H-cage failed")
+            # logger.info("check H-cage failed")
             return False
     else:
-        logger.info("check H-distance failed")
+        # logger.info("check H-distance failed")
         return False
     
 
@@ -156,7 +156,8 @@ if __name__ == "__main__":
     # struc = read("/home/mayuan/mycode/my_script/test/clathrate/ScH9.vasp")
     # struc = read("/home/mayuan/mycode/my_script/test/clathrate/CaYH12.vasp")
     
-    for path in Path("/home/mayuan/mycode/my_script/test/194/unstable_structs").glob("UCell_*"):
+    # for path in Path("/home/mayuan/mycode/my_script/test/194/unstable_structs").glob("UCell_*"):
+    for path in Path("/work/home/may/calypso-prediction/194/result/unstable_structs").glob("UCell_*"):
         struc = read(path)
         res = check(struc)
         if res:
