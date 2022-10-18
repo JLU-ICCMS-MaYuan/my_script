@@ -1,5 +1,6 @@
 import logging
 from itertools import product
+from collections import defaultdict
 from typing import *
 
 import numpy as np
@@ -8,71 +9,62 @@ from ase.atoms import Atoms
 from ase.io import read
 from ase.build import make_supercell
 
+from pymatgen.core.structure import Structure
+from pymatgen.io.ase import AseAtomsAdaptor
+
 from sklearn.preprocessing import minmax_scale
 
 logging.basicConfig(level = logging.INFO,format = '%(asctime)s|%(name)s|%(levelname)s|%(message)s')
 logger = logging.getLogger(__name__)
 
-def MinMax_normalize(data: np.ndarray):
-    '''
-    离差标准化
-    x = x - min / max - min
-    '''
-    max = data.max()
-    min = data.min()
-    result = (data - min) / (max -min)
-    return result
 
-def MeanVariance_normalize(X: np.ndarray):
-    '''
-    计算均值方差归一化
-    把所有数据归一到均值为0方差为1的数据中
-    既适用于数据没有明显的边界，有可能存在极端数据值的情况。也适用于数据有明显边界的情况
-    x_scale =  ( x - x_mean ) / s
-        s      是一维数组x的标准差
-        x_mean 是一维数组的平均值
-        x_scale是一维数组的均值方差归一化值
-    '''
-
-    result = (X[:] - np.mean(X[:])) / np.std(X[:])
-
-    # np.std 计算标准差 
-    #   平均值 = x_mean = np.average((x1 + x2 + ... + xn))
-    #   标准差 = [(x1 - x_mean) + (x2 - x_mean) + ... + (xn - x_mean)] / n
-    return result
-
-def checkHDistance(struc: Atoms):
-    for a in struc:
-        for b in struc:
-            if (a.index != b.index) and (a.symbol == "H") and (b.symbol == "H"):
-                d = struc.get_distance(a.index, b.index)
-                if d < 0.8:
-                    return False
+def checkHDistance(pmg_struc, center_indices, points_indices, images, distances):
+    for center, points, imgs, dist in zip(center_indices, points_indices, images, distances):
+        if (str(pmg_struc.sites[center].specie) == "H") and \
+           (str(pmg_struc.sites[points].specie) == "H"):
+            if dist < 0.8:
+                return False
     else:
         return True
 
-def checkHCage(struc: Atoms):
-    lower_limit = 20 # 构成一个氢笼子需要氢原子的下限。只要达到了这个下限，就认为该非氢原子周围围满了足够多的氢原子用于构成氢笼子
-    for a in struc:
-        if (a.symbol != "H"):
-            contribution_for_cage = 0
-            for b in struc:
-                if(b.symbol == "H"):
-                    d = struc.get_distance(a.index, b.index)
-                    if (1.8 <= d) and (d <= 2.2) :
-                        contribution_for_cage += 1
-                    if d < 1.8:
-                        logger.info(f"non-H element {a.symbol}{a.index} is too closed with the hydrogen {b.symbol}{b.index}")
-                        return False
-            else:
-                if contribution_for_cage >= lower_limit:
-                    logger.info(f"There are    enough hydrogens aroud {a.symbol}{a.index}, whose amount is {contribution_for_cage}")
-                else:
-                    logger.info(f"There are no enough hydrogens aroud {a.symbol}{a.index}, whose amount is {contribution_for_cage}!")
-    else:
-        return False
+def checkHCage(pmg_struc, center_indices, points_indices, images, distances):
 
-def checkHdensity(struc: Atoms):
+    large_size = defaultdict(int)
+    for center, points, imgs, dist in zip(center_indices, points_indices, images, distances):
+        if str(pmg_struc.sites[center].specie) != "H" and 1.7 <= dist <= 2.2 :
+            large_size[str(pmg_struc.sites[center].specie)] += 1
+
+    small_size = defaultdict(int)
+    for center, points, imgs, dist in zip(center_indices, points_indices, images, distances):
+        if str(pmg_struc.sites[center].specie) != "H" and 1.3 <= dist <= 1.8 :
+            small_size[str(pmg_struc.sites[center].specie)] += 1
+
+    el_amt = pmg_struc.composition.get_el_amt_dict()
+    specie_without_H = list(el_amt.keys())
+    specie_without_H.remove("H")
+    cage_size_without_reducing = {}
+    for key in specie_without_H:
+        from_big_cage = large_size.get(key, 0)
+        from_small_cage = small_size.get(key, 0)
+        if from_big_cage > from_small_cage:
+            cage_size_without_reducing[key] = from_big_cage
+        else:
+            cage_size_without_reducing[key] = from_small_cage
+
+    cage_size_with_reducing = defaultdict(int)
+    for key, value in cage_size_without_reducing.items():
+        if key in list(el_amt.keys()):
+            around = value / el_amt[key]
+            cage_size_with_reducing[key] = around
+
+    cage_size_with_reducing = dict(cage_size_with_reducing)
+    for key, value in cage_size_with_reducing.items():
+        if value < 8:
+            return False
+    else:
+        return cage_size_with_reducing
+    
+def checkHdensity(pmg_struc, center_indices, points_indices, images, distances):
     # 1. 扩包
     # 2. 计算晶格实空间内氢原子的密度：
     #    把晶格打网格，计算每一个网格点在某平均内平均氢原子的个数，即在这一点的H的密度为
@@ -109,7 +101,7 @@ def checkHdensity(struc: Atoms):
     __coords_Hdensity = np.array(__coords_Hdensity)
 
     _total_Hdensity = minmax_scale(
-        X=__total_Hdensity,      # 输入一个矩阵，即一个二维数组，如果你输入一维数组，会报错的, 你需要自行扩维
+        X=__total_Hdensity,     # 输入一个矩阵，即一个二维数组，如果你输入一维数组，会报错的, 你需要自行扩维
         feature_range=(0, 1),   # 设置将数据归一化到哪个范围内
         axis=0,                 # 以每一列为一个整体，计算每一列的数据对应的标准差标准化的值
         copy=True,              # 这个开关：布尔值，是否拷贝一份数据以避免在原数据上进行操作，默认为True
@@ -128,23 +120,47 @@ def checkHdensity(struc: Atoms):
     logger.info(std_of_totalHdensity)
     return np.array(total_Hdensity) 
 
-
+def check(struc: Atoms):
+    pmg_struc = AseAtomsAdaptor.get_structure(struc)
+    (   center_indices, 
+        points_indices, 
+        images, 
+        distances,
+    ) = pmg_struc.get_neighbor_list(
+        r=2.2, 
+        sites=pmg_struc.sites, 
+        numerical_tol=1e-8
+    )
+    if checkHDistance(pmg_struc, center_indices, points_indices, images, distances):
+        res: Dict = checkHCage(pmg_struc, center_indices, points_indices, images, distances)
+        if res:
+            logger.info(f"finally successed! The program find some cages which is {res}")
+            return True
+        else:
+            logger.info("check H-cage failed")
+            return False
+    else:
+        logger.info("check H-distance failed")
+        return False
+    
 
 if __name__ == "__main__":
+
+    from pathlib import Path
     # struc = read(f"/Users/macbookpro/my_code/my_script/test/LaH10/LaH10.vasp")
-    struc = read(f"/Users/macbookpro/Library/CloudStorage/OneDrive-mails.jlu.edu.cn/氢化物结构/CaH6.vasp")
-    dim = [[2, 0, 0],[0, 2, 0],[0, 0, 2]]
-    superstruc = make_supercell(struc, dim)
-    print(len(superstruc))
-    if checkHDistance(superstruc):
-        print("step 1st checkHDistance succeeded !")
-        if checkHCage(superstruc):
-            print("step 2nd checkHCage succeeded !")
-            coords_Hdensity = checkHdensity(superstruc) 
-        else:
-            print("step 2nd checkHCage failed !")
-    else:
-        print("step 1st checkHDistance failed !")
+    # struc = read(f"/Users/macbookpro/Library/CloudStorage/OneDrive-mails.jlu.edu.cn/氢化物结构/CaH6.vasp")
+    # struc = read("/home/mayuan/mycode/my_script/test/clathrate/CaH6.vasp")
+    # struc = read("/home/mayuan/mycode/my_script/test/clathrate/LaH10.vasp")
+    # struc = read("/home/mayuan/mycode/my_script/test/clathrate/LaBH8.vasp")
+    # struc = read("/home/mayuan/mycode/my_script/test/clathrate/Li2MgH16.vasp")
+    # struc = read("/home/mayuan/mycode/my_script/test/clathrate/ScH9.vasp")
+    # struc = read("/home/mayuan/mycode/my_script/test/clathrate/CaYH12.vasp")
+    
+    for path in Path("/home/mayuan/mycode/my_script/test/194/unstable_structs").glob("UCell_*"):
+        struc = read(path)
+        res = check(struc)
+        if res:
+            print(struc.symbols, path)
 
 
 

@@ -33,7 +33,38 @@ replacement = [["Mg", "Ca", "Sr", "Ba"], # 第一个元素必须是结构原型�
                ["B", "Li", "Na", "K", "Ru", "Cs"]]  # 第一个元素必须是结构原型中的元素
 """
 
-# pso算法演化产生结构
+# splitwps + pso 算法演化产生结构  
+'''
+[splitwps]
+spacegroup_number = 229 
+nameofatoms = ["Ar", "Ne", "H"] 
+wyckoffpositions = {
+    '2a': False,
+    '6b': False,
+    '8c': False,
+    '12d': False,
+    '12e': True,
+    '16f': True,
+    '24g': True,
+    '24h': True,
+    '48i': True,
+    '48j': True,
+    '48k': True,
+    '96l': True,
+    }
+nonH_upper_limit = '12e'
+H_lower_limit    = '12d'
+sitesoccupiedrange=[[1,2], 
+                    [1,2], 
+                    [1,3],] 
+popsize=300 
+maxlimit=150
+distancematrix=[[2.014, 1.908, 1.590],
+                [1.908, 1.802, 1.483],
+                [1.590, 1.483, 1.116],]
+'''
+
+#  specifywps + pso算法演化产生结构
 """
 Attention please
 generator_main.py -w ./Ar-Ne-H-spg194-500/ -i ./194-pso.ini method -m mode=pso
