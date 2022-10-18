@@ -43,9 +43,9 @@ structuregenerator/psolib/fortran_src/sym3dgenerator/f90sym3dgenerator.py.bak
 structuregenerator/psolib/fortran_src/LegacyFingerPrint/f90LegacyFingerPrint.py.bak
 structuregenerator/psolib/fortran_src/sym3dgenerator/f90sym3dgenerator.py
 structuregenerator/psolib/fortran_src/LegacyFingerPrint/f90LegacyFingerPrint.py
+structuregenerator/psolib/lib_so/*
 
 qe/eliashberg/eliashberg.x
-
 qe/eliashberg/modmain.mod
 qe/eliashberg/mpi.mod
 qe/eliashberg/modmain.mod

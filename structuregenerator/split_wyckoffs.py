@@ -10,29 +10,23 @@
                                     at most get 3 wps to permutation and combination
 """
 
-from math import comb
 import re
-import os
 import random
 import logging
 from itertools import *
-from collections import Counter, defaultdict
+from collections import defaultdict
 from pathlib import Path
 import signal
-from symbol import atom
-import time
 from typing import *
 
 import numpy as np
 from pyxtal import pyxtal
 from pyxtal.tolerance import Tol_matrix
-from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
-from pymatgen.io.ase import AseAtomsAdaptor
 
 from ase.formula import Formula
 from ase import Atoms
 
-from psolib.utils.sort_atoms import sort_atoms
+from checkstructure import check
 
 logger = logging.getLogger(__name__)
 
@@ -319,7 +313,7 @@ class split_wyckoffs:
             amount_for_every_element.append(sum(natoms))
         return amount_for_every_element
 
-    @set_timeout(10, after_timeout)
+    # @set_timeout(10, after_timeout)
     def _gen_randomly(self):
         '''
         Function:
@@ -355,14 +349,14 @@ class split_wyckoffs:
                 tm=tm
             )
             struct_pymatgen = struc.to_pymatgen()
-            if struct_pymatgen.composition.num_atoms < float(self.maxlimit):
+            if struct_pymatgen.composition.num_atoms < float(self.maxlimit) and (check(struct_pymatgen)):
                 logger.info(f"The structure input infomation {amounts} {wyck} successfully create a reasonable structure!!!")
                 return struct_pymatgen
         except Exception as e:
             # logger.info(f"The structure input infomation {amounts} {wyck} can't create a reasonable structure!!!")
             logger.info(f"Generating failed !!!")
     
-    @set_timeout(30, after_timeout)
+    @set_timeout(120, after_timeout)
     def _gen_specify_symbols(self, input_atoms: Atoms):
 
         spacegroup_number = self.spacegroup_number

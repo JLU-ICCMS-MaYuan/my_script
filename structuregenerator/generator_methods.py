@@ -1,10 +1,7 @@
 import os
 import logging
 from argparse import ArgumentParser
-from pathlib import Path
-from pprint import pprint
 
-from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from pymatgen.io.ase import AseAtomsAdaptor
 
 from config import config

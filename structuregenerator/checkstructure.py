@@ -120,11 +120,12 @@ def checkHdensity(pmg_struc, center_indices, points_indices, images, distances):
     logger.info(std_of_totalHdensity)
     return np.array(total_Hdensity) 
 
-def check(struc: Atoms):
-    pmg_struc = AseAtomsAdaptor.get_structure(struc)
-    (   center_indices, 
-        points_indices, 
-        images, 
+def check(pmg_struc: Structure):
+
+    (
+        center_indices,
+        points_indices,
+        images,
         distances,
     ) = pmg_struc.get_neighbor_list(
         r=2.2, 
