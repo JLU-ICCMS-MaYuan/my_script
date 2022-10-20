@@ -158,11 +158,13 @@ if __name__ == "__main__":
     # struc = read("/home/mayuan/mycode/my_script/test/clathrate/CaYH12.vasp")
     
     # for path in Path("/home/mayuan/mycode/my_script/test/194/unstable_structs").glob("UCell_*"):
-    for path in Path("/work/home/may/calypso-prediction/194/result/unstable_structs").glob("UCell_*"):
-        struc = read(path)
+    dir = Path("/home/mayuan/mycode/my_script/test/227")
+    for i in range(30):
+        struc = Structure.from_file(dir.joinpath("POSCAR_" + str(i+1)))
         res = check(struc)
         if res:
-            print(struc.symbols, path)
+            print(struc.composition.formula, dir.joinpath(dir.joinpath("POSCAR_" + str(i))))
+            input()
 
 
 

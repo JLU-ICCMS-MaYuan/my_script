@@ -17,6 +17,7 @@ from itertools import *
 from collections import defaultdict
 from pathlib import Path
 import signal
+from tkinter.messagebox import NO
 from typing import *
 
 import numpy as np
@@ -100,7 +101,8 @@ class split_wyckoffs:
         sitesoccupiedrange: list[int],
         popsize: int,
         maxlimit: int,
-        distancematrix: list[list[float]]
+        distancematrix: list[list[float]],
+        clathrate_ratio : float,
         ):
         
         self.spacegroup_number  = spacegroup_number
@@ -117,6 +119,8 @@ class split_wyckoffs:
         self.popsize            = popsize
         self.maxlimit           = maxlimit
         self.distancematrix     = np.array(distancematrix)
+        self.clathrate_ratio    = clathrate_ratio
+
         self._group = self.get_group(
             self.nameofatoms, 
             self.wyckoffpositions,
@@ -327,18 +331,19 @@ class split_wyckoffs:
         amounts = species_amounts_sites[0]
         wyck = species_amounts_sites[1]
 
-        species_radius = list(zip(nameofatoms, self.distancematrix.diagonal()/2.0))
+        if sum(amounts) > float(self.maxlimit):
+            return None, None
 
-        tm = Tol_matrix()
-        for ele_r1, ele_r2 in combinations(species_radius, 2):
-            tm.set_tol(ele_r1[0], ele_r2[0], ele_r1[1]+ele_r2[1])
+        # species_radius = list(zip(nameofatoms, self.distancematrix.diagonal()/2.0))
+        # tm = Tol_matrix()
+        # for ele_r1, ele_r2 in combinations(species_radius, 2):
+        #     tm.set_tol(ele_r1[0], ele_r2[0], ele_r1[1]+ele_r2[1])
+
 
 
         struc = pyxtal()
         try:
-            # logger.info("Now the program will try to create ")
-            # logger.info(f"every atoms amouts are {amounts}")
-            # logger.info(f"wyckoff positions are {wyck}\n")
+            logger.info(f"try {amounts} {wyck}")
             struc.from_random(
                 3,
                 spacegroup_number,
@@ -346,17 +351,21 @@ class split_wyckoffs:
                 amounts,
                 factor=2.0,
                 sites=wyck,
-                tm=tm
             )
             struct_pymatgen = struc.to_pymatgen()
-            if struct_pymatgen.composition.num_atoms < float(self.maxlimit) and (check(struct_pymatgen)):
-                logger.info(f"The structure input infomation {amounts} {wyck} successfully create a reasonable structure!!!")
-                return struct_pymatgen
-        except Exception as e:
+            if self.clathrate_ratio > np.random.uniform():
+                if check(struct_pymatgen):
+                    return (struct_pymatgen, "clathrate")
+                else:
+                    return None, None
+            else:
+                return (struct_pymatgen, "ramdom structure")
+        except:
             # logger.info(f"The structure input infomation {amounts} {wyck} can't create a reasonable structure!!!")
             logger.info(f"Generating failed !!!")
-    
-    @set_timeout(120, after_timeout)
+            return None, None
+
+    # @set_timeout(120, after_timeout)
     def _gen_specify_symbols(self, input_atoms: Atoms):
 
         spacegroup_number = self.spacegroup_number
@@ -418,6 +427,7 @@ class split_wyckoffs:
             popsize=config_d["popsize"],
             maxlimit=config_d["maxlimit"],
             distancematrix=config_d["distancematrix"],
+            clathrate_ratio=config_d["clathrate_ratio"],
         )
         return self
 
