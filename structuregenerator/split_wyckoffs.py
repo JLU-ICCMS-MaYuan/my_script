@@ -77,7 +77,7 @@ class split_wyckoffs:
         '48k': True,
         '96l': True,
         }
-    nonH_upper_limit = '12e'
+#    nonH_upper_limit = '12e'
     H_lower_limit    = '12d'
     sitesoccupiedrange=[[1,2], 
                         [1,2], 
@@ -87,7 +87,7 @@ class split_wyckoffs:
     distancematrix=[[2.014, 1.908, 1.590],
                     [1.908, 1.802, 1.483],
                     [1.590, 1.483, 1.116],]
-
+    clathrate_ratio=0.75
     '''
     def __init__(
         self              ,
