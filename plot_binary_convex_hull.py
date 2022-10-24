@@ -19,6 +19,7 @@ from pathlib import Path
 from argparse import ArgumentParser, RawTextHelpFormatter
 
 import pandas as pd
+import numpy as np
 from pymatgen.analysis.phase_diagram import PDEntry, PhaseDiagram, PDPlotter
 from pymatgen.core.composition import Composition
 
@@ -127,7 +128,7 @@ for entry in ini_pd.stable_entries:
     stable_dict["Number"] = entry.entry_id
     stable_dict["formula"] = entry.composition.formula
     print(entry.composition.formula)
-    stable_dict["enthalpy"] = 0.0
+    stable_dict["enthalpy"] = ini_pd.get_form_energy_per_atom(entry)
     stable_list.append(stable_dict)
     stable_structs_amount += 1
 print(f"stable structures on the convex hull is {stable_structs_amount - len(ini_pd.el_refs)}\n")
@@ -149,15 +150,12 @@ for entry in ini_entries:
             ))
         unstable_dict["Number"]  = entry.entry_id
         unstable_dict["formula"] = entry.composition.formula
-        #!!!!!!!!!!!!!!!!!特别注意这里的单位是meV!!!!!!!!!!!!!!!!!!!!!!!
-        unstable_dict["enthalpy"] = ini_pd.get_e_above_hull(entry) 
+        unstable_dict["enthalpy"] = ini_pd.get_form_energy_per_atom(entry)
         unstable_list.append(unstable_dict)
         unstable_structs_amount += 1
 print(f"unstable structures above the convex hull 0-50 meV is {unstable_structs_amount}\n")
 unstable_pd = pd.DataFrame(unstable_list)
 unstable_pd.to_csv("unstable.csv", index=False)
-
-
 
 
 
@@ -227,27 +225,42 @@ if hand_plot_dat:
 
     for ele in hand_plot_dat:
         stable_pd.insert(2, ele, 0)
+    stable_pd.insert(loc=4, column="Hcontent", value=0.0)
     for idx, row in stable_pd.iterrows():
+        total_amount = 0.0; H_amount = 0
         entry_id = row['Number']
         comp = Composition(row['formula']) 
         for ele in comp.elements:
             ele_name = ele.name
             atoms_num= comp.to_data_dict['unit_cell_composition'][ele_name]
             stable_pd.loc[idx, ele_name] = atoms_num
+            total_amount += float(atoms_num)
+            if ele_name == "H":
+                H_amount = float(atoms_num)
+        else:
+            Hcontent = np.round(H_amount / total_amount, 3)
+            stable_pd.loc[idx, "Hcontent"] = Hcontent
     stable_pd.to_csv("stable.csv", index=False)
 
 
     for ele in hand_plot_dat:
         unstable_pd.insert(2, ele, 0)
+    unstable_pd.insert(loc=4, column="Hcontent", value=0.0)
     for idx, row in unstable_pd.iterrows():
+        total_amount = 0.0; H_amount = 0
         entry_id = row['Number']
         comp = Composition(row['formula']) 
         for ele in comp.elements:
             ele_name = ele.name
             atoms_num= comp.to_data_dict['unit_cell_composition'][ele_name]
             unstable_pd.loc[idx, ele_name] = atoms_num
+            total_amount += float(atoms_num)
+            if ele_name == "H":
+                H_amount = float(atoms_num)
+        else:
+            Hcontent = np.round(H_amount / total_amount, 3)
+            unstable_pd.loc[idx, "Hcontent"] = Hcontent
     unstable_pd.to_csv("unstable.csv", index=False)
-
     total_pd = pd.concat((stable_pd, unstable_pd), axis=0)
     #total_pd = total_pd.drop(columns=['Number', 'formula']) # 删除列
     total_pd.to_csv("for_origin_plot.csv", index=False)

@@ -26,8 +26,9 @@ class qe_relax:
         # init the submit job script
         self.qe_writesubmit = qe_writesubmit.init_from_relaxinput(self.relax_inputpara)
 
-        # submit the job
-        self.qe_submitjob   = qe_submitjob.init_from_relaxinput(self.relax_inputpara)
+        # submit the job. If we didn't set the parameter of `queue`, it will be set `None` in `qe_inputpara`
+        if self.relax_inputpara.queue is not None:
+            self.qe_submitjob = qe_submitjob.init_from_relaxinput(self.relax_inputpara)
 
 
 class qe_scf:
@@ -47,7 +48,8 @@ class qe_scf:
         self.qe_writesubmit = qe_writesubmit.init_from_scfinput(self.scf_inputpara)
 
         # submit the job
-        self.qe_submitjob   = qe_submitjob.init_from_scfinput(self.scf_inputpara)
+        if self.scf_inputpara.queue is not None:
+            self.qe_submitjob = qe_submitjob.init_from_scfinput(self.scf_inputpara)
 
 
 class qe_phono:
@@ -67,7 +69,8 @@ class qe_phono:
         self.qe_writesubmit = qe_writesubmit.init_from_phonoinput(self.phono_inputpara)
 
         # submit the job
-        self.qe_submitjob   = qe_submitjob.init_from_phonoinput(self.phono_inputpara)
+        if self.scf_inputpara.queue is not None:
+            self.phono_inputpara = qe_submitjob.init_from_phonoinput(self.phono_inputpara)
 
 class qe_superconduct:
 
@@ -85,4 +88,5 @@ class qe_superconduct:
         self.qe_writesubmit = qe_writesubmit.init_from_scinput(self.sc_inputpara)
 
         # submit the job
-        self.qe_submitjob   = qe_submitjob.init_from_scinput(self.sc_inputpara)
+        if self.sc_inputpara.queue is not None:
+            self.qe_submitjob   = qe_submitjob.init_from_scinput(self.sc_inputpara)

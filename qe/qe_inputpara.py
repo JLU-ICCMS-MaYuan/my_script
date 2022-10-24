@@ -57,7 +57,7 @@ class qe_inputpara(qe_base):
             raise AttributeError("there is no attribution of mode")
 
         if not hasattr(self, "queue"):
-            self.queue = "xieyu"
+            self.queue = "None"
 
         # qe 设置的一些基本参数
         if not hasattr(self, "forc_conv_thr"):
