@@ -57,7 +57,7 @@ class qe_inputpara(qe_base):
             raise AttributeError("there is no attribution of mode")
 
         if not hasattr(self, "queue"):
-            self.queue = "None"
+            self.queue = None
 
         # qe 设置的一些基本参数
         if not hasattr(self, "forc_conv_thr"):
@@ -275,7 +275,7 @@ class qephono_inputpara(qe_inputpara):
                 shutil.copy(src_a2Fq2r, dst_a2Fq2r)
                 logger.info(f"a2Fq2r.{str(j)}.1 copy finished \n {dst_dyn}")
 
-    def get_hspp(self):
+    def singet_hspp(self):
         """
         This method is to get high symmetry paths and points
         """ 

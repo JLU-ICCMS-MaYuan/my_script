@@ -552,7 +552,7 @@ class qe_writeinput:
             qe.write("  flfrc = '{}.fc',                                 \n".format(self.system_name))                              
             qe.write("  flfrq='{}.freq',                                 \n".format(self.system_name))                              
             qe.write("  la2F=.true.,                                     \n")                     
-            qe.write("  dos=.flase.,                                     \n")                     
+            qe.write("  dos=.false.,                                     \n")                     
             qe.write("  q_in_band_form=.true.,                           \n")                                 
             qe.write("  q_in_cryst_coord=.true.,                         \n") 
             qe.write("/                                                  \n")          

@@ -69,7 +69,7 @@ class qe_phono:
         self.qe_writesubmit = qe_writesubmit.init_from_phonoinput(self.phono_inputpara)
 
         # submit the job
-        if self.scf_inputpara.queue is not None:
+        if self.phono_inputpara.queue is not None:
             self.phono_inputpara = qe_submitjob.init_from_phonoinput(self.phono_inputpara)
 
 class qe_superconduct:
