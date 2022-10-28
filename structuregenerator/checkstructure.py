@@ -18,25 +18,31 @@ logging.basicConfig(level = logging.INFO,format = '%(asctime)s|%(name)s|%(leveln
 logger = logging.getLogger(__name__)
 
 
-def checkHDistance(pmg_struc, center_indices, points_indices, images, distances):
+def check_H_H_Distance(pmg_struc, center_indices, points_indices, images, distances):
     for center, points, imgs, dist in zip(center_indices, points_indices, images, distances):
         if (str(pmg_struc.sites[center].specie) == "H") and \
            (str(pmg_struc.sites[points].specie) == "H"):
             if dist < 0.8:
+                logger.info("H-H distance dist < 0.8")
                 return False
     else:
         return True
 
 def checkHCage(pmg_struc, center_indices, points_indices, images, distances):
 
+    for center, points, imgs, dist in zip(center_indices, points_indices, images, distances):
+        if str(pmg_struc.sites[center].specie) != "H" and str(pmg_struc.sites[points].specie) == "H" and dist < 1.0 :
+            logger.info("nonH-H distance < 1.0")
+            return False
+
     large_size = defaultdict(int)
     for center, points, imgs, dist in zip(center_indices, points_indices, images, distances):
-        if str(pmg_struc.sites[center].specie) != "H" and 1.7 <= dist <= 2.2 :
+        if str(pmg_struc.sites[center].specie) != "H" and str(pmg_struc.sites[points].specie) == "H" and 1.7 <= dist <= 2.2 :
             large_size[str(pmg_struc.sites[center].specie)] += 1
 
     small_size = defaultdict(int)
     for center, points, imgs, dist in zip(center_indices, points_indices, images, distances):
-        if str(pmg_struc.sites[center].specie) != "H" and 1.3 <= dist <= 1.8 :
+        if str(pmg_struc.sites[center].specie) != "H" and str(pmg_struc.sites[points].specie) == "H" and 1.3 <= dist <= 1.8 :
             small_size[str(pmg_struc.sites[center].specie)] += 1
 
     el_amt = pmg_struc.composition.get_el_amt_dict()
@@ -64,6 +70,7 @@ def checkHCage(pmg_struc, center_indices, points_indices, images, distances):
     else:
         return cage_size_with_reducing
     
+
 def checkHdensity(pmg_struc, center_indices, points_indices, images, distances):
     # 1. 扩包
     # 2. 计算晶格实空间内氢原子的密度：
@@ -120,6 +127,7 @@ def checkHdensity(pmg_struc, center_indices, points_indices, images, distances):
     logger.info(std_of_totalHdensity)
     return np.array(total_Hdensity) 
 
+
 def check(pmg_struc: Structure):
 
     (
@@ -132,7 +140,7 @@ def check(pmg_struc: Structure):
         sites=pmg_struc.sites, 
         numerical_tol=1e-8
     )
-    if checkHDistance(pmg_struc, center_indices, points_indices, images, distances):
+    if check_H_H_Distance(pmg_struc, center_indices, points_indices, images, distances):
         res: Dict = checkHCage(pmg_struc, center_indices, points_indices, images, distances)
         if res:
             logger.info(f"finally successed! The program find some cages which is {res}")
@@ -157,16 +165,19 @@ if __name__ == "__main__":
     # struc = read("/home/mayuan/mycode/my_script/test/clathrate/ScH9.vasp")
     # struc = read("/home/mayuan/mycode/my_script/test/clathrate/CaYH12.vasp")
     
-    # for path in Path("/home/mayuan/mycode/my_script/test/194/unstable_structs").glob("UCell_*"):
-    dir = Path("/home/mayuan/mycode/my_script/test/227")
-    for i in range(30):
-        struc = Structure.from_file(dir.joinpath("POSCAR_" + str(i+1)))
+    for path in Path("/home/mayuan/mycode/my_script/test/binary/lah10_reproduce/dir_0.02").glob("UCell_*"):
+    # dir = Path("/home/mayuan/mycode/my_script/test/227")
+        struc = Structure.from_file(path)
         res = check(struc)
         if res:
-            print(struc.composition.formula, dir.joinpath(dir.joinpath("POSCAR_" + str(i))))
-            input()
+            print(struc.composition.formula, path.name)
 
 
-
+    # p = Path("/home/mayuan/mycode/my_script/test/binary/lah10_reproduce/struc/POSCAR_183")
+    # struc = Structure.from_file(p)
+    # res = check(struc)
+    # if res:
+    #     print(struc.composition.formula, p.name)
+    #     input()
 
 

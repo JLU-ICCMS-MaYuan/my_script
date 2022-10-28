@@ -140,13 +140,14 @@ class split_wyckoffs:
         ):
 
         if   len(nameofatoms) == 2:
-            self.binary_hydrides(
+            _group = self.binary_hydrides(
                 nameofatoms,
                 sitesoccupiedrange,
                 wyckoffpositions,
                 nonH_upper_limit,
                 # H_lower_limit,
             )
+            return _group
         elif len(nameofatoms) == 3:
             _group = self.ternary_hydrides(
                 nameofatoms,
@@ -173,7 +174,7 @@ class split_wyckoffs:
         if not nameofatoms[-1] == 'H':
             raise ValueError("you have to set nameofatoms in order as `H element is the last one` !!! Just like nameofatoms=['Ar', 'Ne', 'H']")
         
-        nonH1_range = sitesoccupiedrange[:-1]
+        nonH1_range = sitesoccupiedrange[:-1][0]
         H_range = sitesoccupiedrange[-1]
         # 考虑该非氢元素可能占据的wps的个数的范围从 `nonH1_range[0]~nonH1_range[-1]+1`
         # 例如： 
@@ -194,6 +195,7 @@ class split_wyckoffs:
         
         _group = dict(_group)
         return _group
+
 
     def ternary_hydrides(
         self,
@@ -261,7 +263,7 @@ class split_wyckoffs:
                 for nonH2_num in range(nonH2_range[0], nonH2_range[-1]+1):
                     for nonH2_wps, nonH2_rest in self.get_NonHwps(list(wyckoffpositions.keys()), nonH1_rest, nonH2_num, nonH_upper_limit):
 
-                        for nonH3_num in range(nonH2_range[0], nonH2_range[-1]+1):
+                        for nonH3_num in range(nonH3_range[0], nonH3_range[-1]+1):
                             for nonH3_wps, nonH3_rest in self.get_NonHwps(list(wyckoffpositions.keys()), nonH2_rest, nonH3_num, nonH_upper_limit):
 
                                 for H_num in range(H_range[0], H_range[-1]+1):

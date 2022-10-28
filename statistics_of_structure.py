@@ -1,4 +1,4 @@
-#!/public/home/mayuan/miniconda3/envs/cage/bin/python3
+#!/usr/bin/env python
 '''
 Use examples:
     statistics_of_structure.py -d 195/ -o -hc 75 100 -p 75 100
