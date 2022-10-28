@@ -70,6 +70,17 @@ class qe_submitjob:
         return self 
 
     @classmethod
+    def init_from_dosinput(cls, other_class: qe_inputpara):
+        
+        self = cls(
+            work_underpressure=other_class.work_underpressure,
+            submit_job_system=other_class.submit_job_system,
+            mode=other_class.mode,
+        )
+
+        return self 
+
+    @classmethod
     def init_from_scinput(cls, other_class: qe_inputpara):
         
         self = cls(

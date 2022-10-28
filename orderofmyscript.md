@@ -44,8 +44,14 @@ qe phono (q点计算声子)
 ```shell
 qe_main.py -i relax.out -w ./ -j slurm -p 200 phono -m mode=nosplit qpoints='6 6 6' dyn0_flag=True queue=xieyu
 qe_main.py -i ./relax.out -w ./ -p 压力值  -j pbs phono -m mode=split_from_dyn0 qpoints='6 6 6' 
-
 ```
+
+qe 合并声子文件
+```shell
+qe_main.py -i ./relax.out -w ./ -p 300  -j pbs phono -m mode=merge
+```
+
+
 
 mytoolkit 命令
 

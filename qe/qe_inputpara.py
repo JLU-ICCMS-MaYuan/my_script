@@ -142,6 +142,7 @@ class qephono_inputpara(qe_inputpara):
             self.qpoints = [4,4,4]
             self.kpoints_sparse= [kp*2 for kp in self.qpoints]
             self.kpoints_dense = [kp*4 for kp in self.qpoints]
+
         if not hasattr(self, "tr2_ph"):
             self.tr2_ph = "1.0d-16"
         if not hasattr(self, "el_ph_nsigma"):
@@ -315,6 +316,35 @@ class qephono_inputpara(qe_inputpara):
         top_freq  = ceil(max(frequents))
         return top_freq
 
+
+class qedos_inputpara(qe_inputpara):
+
+    def __init__(
+        self, 
+        work_path: str, 
+        press: int, 
+        submit_job_system: str, 
+        input_file_path: str, 
+        **kwargs: dict,
+        ):
+    
+        super(qedos_inputpara, self).__init__(
+            work_path, 
+            press, 
+            submit_job_system, 
+            input_file_path, 
+            **kwargs
+            )
+            
+        if hasattr(self, "qpoints"):
+            _qpoints = self.qpoints.split()
+            self.qpoints = list(map(int, _qpoints))
+        else:
+            raise ValueError("You have to set qpoints with more density values !!!")
+
+        if not hasattr(self, "ndos"):
+            logger.info("You didn't set ndos, the program will set ndos=500")
+            self.ndos = 500
 
 class qesc_inputpara(qephono_inputpara):
 

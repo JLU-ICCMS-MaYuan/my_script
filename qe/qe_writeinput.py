@@ -29,7 +29,6 @@ class qe_writeinput:
         self.mode = mode
         for key, value in kwargs.items():
             setattr(self, key, value)
-
         self.writeinput()
 
     @classmethod
@@ -129,6 +128,8 @@ class qe_writeinput:
             qinserted=other_class.qinserted,
             path_name_coords=other_class.path_name_coords,
 
+            ndos=other_class.ndos,
+
             # basic parameter of control precision
             forc_conv_thr=other_class.forc_conv_thr,
             etot_conv_thr=other_class.etot_conv_thr,
@@ -140,6 +141,29 @@ class qe_writeinput:
             conv_thr=other_class.conv_thr,
             mixing_beta=other_class.mixing_beta,
             press_conv_thr=other_class.press_conv_thr,
+        )
+        return self
+
+    @classmethod
+    def init_from_dosinput(cls, other_class: qe_inputpara):
+
+        self = cls(
+            work_underpressure=other_class.work_underpressure,
+            workpath_pppath=other_class.workpath_pppath,
+            press=other_class.press,
+            qe_workflow=other_class.qe_workflow,
+            mode=other_class.mode,
+
+            system_name=other_class.system_name,
+            all_atoms_quantity=other_class.all_atoms_quantity,
+            species_quantity=other_class.species_quantity,
+            composition=other_class.composition,
+            final_choosed_pp=other_class.final_choosed_pp,
+            cell_parameters=other_class.cell_parameters,
+            fractional_sites=other_class.fractional_sites,
+
+            qpoints=other_class.qpoints,
+            ndos=other_class.ndos,
         )
         return self
 
@@ -568,14 +592,14 @@ class qe_writeinput:
             for i, species_name in enumerate(self.composition.keys()):
                 element      = Element(species_name)
                 species_mass = str(element.atomic_mass).strip("amu")
-                qe.write(" amass({})={},                                 \n".format(i+1, species_mass))                                    
+                qe.write("   amass({})={},                                 \n".format(i+1, species_mass))                                    
             qe.write("   flfrc = '{}.fc',                                \n".format(self.system_name))                                                                                    
             qe.write("   flfrq = '{}.freq',                              \n".format(self.system_name))                                         
             qe.write("   la2F = .true.,                                  \n")                                
-            qe.write("   dos = .true.,                                   \n")                               
-            qe.write("   fldos = 'phonon.dos',                           \n")                                       
-            qe.write("   nk1=8, nk2=8, nk3=8,                            \n")                                      
-            qe.write("   ndos=500,                                       \n")                           
+            qe.write("   dos = .true.,                                   \n")  # 计算声子态密度,dos必须设置为.true.                           
+            qe.write("   fldos = '{}.dos',                               \n".format(self.system_name))                                       
+            qe.write("   nk1={}, nk2={}, nk3={},                         \n".format(self.qpoints[0], self.qpoints[1], self.qpoints[2]))  # 计算态密度时要用更密的q点网格，这需设置nk1, nk2, nk3                                      
+            qe.write("   ndos={},                                        \n".format(self.ndos))  # 态密度的能量刻度上的点的数目                       
             qe.write("/                                                  \n")                                                                
 
     def write_lambda_in(self):

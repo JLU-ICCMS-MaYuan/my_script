@@ -112,7 +112,7 @@ def set_more_args(parser: ArgumentParser):
         type=str,
         dest='more_args',
         nargs='+',
-        help="输入更多关于声子计算和dos计算的参数\n"
+        help="输入更多关于声子计算的参数\n"
             "tr2_ph = 1.0d-16 (default)\n"
             "el_ph_nsigma=50 (default)\n"
             "el_ph_sigma=0.005 (default)\n"
@@ -132,12 +132,27 @@ def set_more_args(parser: ArgumentParser):
             "Now phono part has 4 part !\n"
             "   mode=merge\n"
             "   mode=matdyn, at the moment, you need to set qinserted=50 (default)\n"
-            "   mode=matdyn_dos\n"
             "   mode=nosplit\n"
             "   mode=split_from_dyn0\n"
             "   mode=split_specify_q\n"
     )
     parser_phono.set_defaults(qe_workflow=qe_phono)
+
+   # dos计算
+    parser_dos = subparsers.add_parser("dos", formatter_class=RawTextHelpFormatter)
+    parser_dos.add_argument(
+        '-m',
+        '--more-argments-about-relax',
+        type=str,
+        dest='more_args',
+        nargs='+',
+        help="输入dos计算的参数\n"
+            "qpoints='x x x' (尽量密一点, 比如是声子计算的2倍) \n"
+            "   `x`=`path\POSCAR`\n"
+            "   `y`=`the position of directory where KPOINTS will be put`\n"
+            "   mode=matdyn_dos\n"
+    )
+    parser_dos.set_defaults(qe_workflow=qe_dos)
 
    # 超导
     parser_phono = subparsers.add_parser("sc",  formatter_class=RawTextHelpFormatter)
