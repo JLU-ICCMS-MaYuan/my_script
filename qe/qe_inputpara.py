@@ -59,6 +59,9 @@ class qe_inputpara(qe_base):
         if not hasattr(self, "core"):
             raise AttributeError("there is no attribution of core")
 
+        if not hasattr(self, "npool"):
+            self.npool = 1
+            logger.warning("The program will set npool=1 in your submitjob scripts")
  
         if not hasattr(self, "queue"):
             self.queue = None

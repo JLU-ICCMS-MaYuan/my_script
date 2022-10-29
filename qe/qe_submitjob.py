@@ -95,94 +95,81 @@ class qe_submitjob:
         return self 
 
 
-    def submit(self, jobname):
-
-        if self.mode == "relax-vc":
-            dst_file = Path(self.work_underpressure).joinpath("relax.in")
-            if not dst_file.exists():
-                raise FileExistsError(" relax.in doesn't exist")
-
-        cwd = dst_file.cwd()
-        dst_dir = dst_file.parent.absolute()
+    def submit_mode1(self, inputfilename, jobname):
+        """
+        submit_mode1 can be used to submit:
+            relax-vc, 
+            scffit, 
+            scf, 
+            nscf,
+        """
+        input_file = Path(self.work_underpressure).joinpath(inputfilename)
+        if not input_file.exists():
+            raise FileExistsError(f" {inputfilename} doesn't exist")
+        job_file = Path(self.work_underpressure).joinpath(jobname)
+        if not job_file.exists():
+            raise FileExistsError(f" {jobname} doesn't exist")
+        cwd = input_file.cwd()
+        dst_dir = input_file.parent.absolute()
         os.chdir(dst_dir)
         if self.submit_job_system == "bash":
-            res   = os.popen(f"nohup {self.submit_order} {jobname} > bash.log 2>&1 &").read()
-            jobid = os.popen(f"ps -aux | grep pw.x | awk '{print $2}'").read().split("\n"); print(jobid)
+            res = os.popen(f"nohup {self.submit_order} {jobname} > bash.log 2>&1 &").read()
+            jobid = self.getpid()
         else:
             res = os.popen(f"{self.submit_order} {jobname}").read()
             jobid = re.search(r"\d+", res)
-
-        logger.info(f"pid or jobid = {jobid}")
+        logger.info(f"{jobname} is running. pid or jobid = {jobid}")
         os.chdir(cwd)
 
-        if self.mode == "scffit":
-            dst_files = Path(self.work_underpressure).glob("scf.fit.in")
-            for dst_file in dst_files:
-                if dst_file.exists():
-                    cwd = dst_file.cwd()
-                    dst_dir = dst_file.parent.absolute()
-                    os.chdir(dst_dir)
-                    os.system(f"{self.submit_order} {jobname}")
-                    logger.info("qe scffit is running")
-                    os.chdir(cwd)
-        if self.mode == "scf":
-            dst_files = Path(self.work_underpressure).glob("scf.in")
-            for dst_file in dst_files:
-                if dst_file.exists():
-                    cwd = dst_file.cwd()
-                    dst_dir = dst_file.parent.absolute()
-                    os.chdir(dst_dir)
-                    os.system(f"{self.submit_order} {jobname}")
-                    logger.info("qe scf is running")
-                    os.chdir(cwd)
-        if self.mode == "nscf":
-            dst_files = Path(self.work_underpressure).glob("nscf.in")
-            for dst_file in dst_files:
-                if dst_file.exists():
-                    cwd = dst_file.cwd()
-                    dst_dir = dst_file.parent.absolute()
-                    os.chdir(dst_dir)
-                    os.system(f"{self.submit_order} {jobname}")
-                    logger.info("qe nscf is running")
-                    os.chdir(cwd)
-        if self.mode =="nosplit":
-            dst_files = Path(self.work_underpressure).glob("ph_no_split.in")
-            for dst_file in dst_files:
-                if dst_file.exists():
-                    cwd = dst_file.cwd()
-                    dst_dir = dst_file.parent.absolute()
-                    os.chdir(dst_dir)
-                    id_info = os.popen(f"{self.submit_order} {jobname}").read()
-                    print(f"{id_info}")
-                    if re.search(r"\d+", id_info) is not None:
-                        id_num  = re.search(r"\d+", id_info).group()
-                    os.chdir(cwd)
-            while self.dyn0_flag:
-                if os.path.exists(os.path.join(self.work_underpressure, self.system_name+".dyn0")):
-                    os.system("sq")
-                    os.system("scancel {}".format(id_num))
-                    logger.info(f"The script detected the *.dyn0, so scancel the slurm job {id_num}")
-                    self.dyn0_flag = False
+    def submit_mode2(self, inputfilename, jobname):
+        """
+        submit_mode1 can be used to submit:
+           nosplit dyn0_flag=True     : only to get *dyn0 file. When *dyn0 appear, The ph.x will be kill  
+           nosplit dyn0_flag=False    : run phono calculation, and don't interupte the ph.x
+        """
+        self.submit_mode1(inputfilename, jobname)
+        logger.info(f"You set dyn0_flag = {self.dyn0_flag}.")
+        if self.mode == "nosplit" and self.dyn0_flag:
+            while True:
+                time.sleep(8)
+                if self.checksuffix(self.work_underpressure, ".dyn0"):
+                    logger.info("The *.dyn0 has been created just now !!! The program will run `killall -9 ph.x`")
+                    os.system("killall -9 ph.x")
+                    break
+
+    def submit_mode3(self, inputfilename, jobnames):
+        
+        if self.mode =="split_dyn0":
+            cwd = os.getcwd()
+            os.chdir(self.work_underpressure)
+            jobids = []
+            for jobname in jobnames:
+                if self.submit_job_system == "bash":
+                    print(f"nohup {self.submit_order} {jobname} > bash.log 2>&1 &")
+                    res = os.popen(f"nohup {self.submit_order} {jobname} > bash.log 2>&1 &").read()
+                    jobid = self.getpid()
                 else:
-                    time.sleep(5)
-                    self.dyn0_flag = True
-        if self.mode =="split_from_dyn0":
-            for root, dirs, files in os.walk(self.work_underpressure):
-                if "split_ph.in" in files and "scf.fit.in" in files and "scf.in" in files and "slurmph_split_from_dyn0.sh" in files:
-                    cwd = os.getcwd()
-                    os.chdir(root)
-                    os.system(f"{self.submit_order} {jobname}")
-                    os.chdir(cwd)
-        if self.mode =="split_specify_q":
-            split_ph_files = list(Path(self.work_underpressure).glob("split_ph*.in"))
-            if len(split_ph_files)==self.qirreduced:
-                for split_ph_file in split_ph_files:
-                    split_ph_name = re.split(r"[\/.]" ,str(split_ph_file))[-2]
-                    cwd = os.getcwd()
-                    os.chdir(self.work_underpressure)
-                    os.system(f"{self.submit_order} {jobname}".format(split_ph_name))
-                    logger.info(f"finish submit {split_ph_name}")
-                    os.chdir(cwd) 
+                    res = os.popen(f"{self.submit_order} {jobname}").read()
+                    jobid = re.search(r"\d+", res)
+                    jobids.append(jobid)
+                logger.info(f"finish submit {jobname}, jobid = {''.join(jobids)}")
+            os.chdir(cwd)
+
+        if self.mode =="split_assignQ":
+                cwd = os.getcwd()
+                os.chdir(self.work_underpressure)
+                for jobname in jobnames:
+                    if self.submit_job_system == "bash":
+                        print(f"nohup {self.submit_order} {jobname} > bash.log 2>&1 &")
+                        res = os.popen(f"nohup {self.submit_order} {jobname} > bash.log 2>&1 &").read()
+                        jobid = self.getpid()
+                    else:
+                        res = os.popen(f"{self.submit_order} {jobname}").read()
+                        jobid = re.search(r"\d+", res)
+                    logger.info(f"finish submit {jobname}")
+                os.chdir(cwd)
+
+    def submit_mode4(self):
         if self.mode =="q2r":
             dst_files = Path(self.work_underpressure).glob("q2r.in")
             for dst_file in dst_files:
@@ -232,3 +219,27 @@ class qe_submitjob:
                 os.system(f"{self.submit_order} {jobname}")
                 logger.info("qe lambda is running")
                 os.chdir(cwd)
+
+    @staticmethod
+    def getpid():
+        """get pid number"""
+        osawk = """sleep 8 && ps -aux | grep pw.x | awk '{print $2}'""" # return a series of number, such as: 423423 324233 423424
+        _jobid = os.popen(osawk).read()  # return a string; such as '423423\n324233\n423424\n'
+        jobid = _jobid.strip("\n").split("\n")
+        return jobid
+
+    @staticmethod
+    def checksuffix(directory_path, suffix):
+        """
+        Checks for the existence of a file with a suffix in the destination directory
+        directory_path : destination directory
+        suffix : a file with a suffix
+
+        return: True of False
+        """ 
+
+        files_underdir = os.listdir(directory_path)
+        for file in files_underdir:
+            if Path(file).suffix == suffix:
+                return True
+

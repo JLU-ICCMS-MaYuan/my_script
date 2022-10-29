@@ -133,8 +133,8 @@ def set_more_args(parser: ArgumentParser):
             "   mode=merge\n"
             "   mode=matdyn, at the moment, you need to set qinserted=50 (default)\n"
             "   mode=nosplit\n"
-            "   mode=split_from_dyn0\n"
-            "   mode=split_specify_q\n"
+            "   mode=split_dyn0\n"
+            "   mode=split_assignQ\n"
     )
     parser_phono.set_defaults(qe_workflow=qe_phono)
 

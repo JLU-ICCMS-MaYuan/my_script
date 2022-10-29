@@ -29,7 +29,7 @@ class qe_writeinput:
         self.mode = mode
         for key, value in kwargs.items():
             setattr(self, key, value)
-        self.writeinput()
+        
 
     @classmethod
     def init_from_relaxinput(cls, other_class: qe_inputpara):
@@ -128,8 +128,6 @@ class qe_writeinput:
             qinserted=other_class.qinserted,
             path_name_coords=other_class.path_name_coords,
 
-            ndos=other_class.ndos,
-
             # basic parameter of control precision
             forc_conv_thr=other_class.forc_conv_thr,
             etot_conv_thr=other_class.etot_conv_thr,
@@ -205,46 +203,62 @@ class qe_writeinput:
 
     def writeinput(self):
         if self.mode == "relax-vc":
-            self.write_relax_in()
+            inputfilename = self.write_relax_in()
+            return inputfilename
         if self.mode == "scffit":
-            self.write_scf_fit_in(self.work_underpressure)
+            inputfilename = self.write_scf_fit_in(self.work_underpressure)
+            return inputfilename
         if self.mode == "scf":
-            self.write_scf_in(self.work_underpressure)
+            inputfilename = self.write_scf_in(self.work_underpressure)
+            return inputfilename
         if self.mode == "nscf":
-            self.write_nscf_in(self.work_underpressure)
+            inputfilename = self.write_nscf_in(self.work_underpressure)
+            return inputfilename
         if self.mode =="nosplit":
-            self.write_ph_no_split_in()
-        if self.mode =="split_from_dyn0":
+            inputfilename = self.write_ph_no_split_in()
+            return inputfilename
+        if self.mode =="split_dyn0":
+            inputfilename = []
             for i, q3 in enumerate(self.qirreduced_coords):
                 split_ph_dir = os.path.join(self.work_underpressure, str(i+1))
                 if not os.path.exists(split_ph_dir):
                     os.makedirs(split_ph_dir)
-                self.write_split_ph_in_from_dyn0(split_ph_dir, q3)
-                self.write_scf_fit_in(split_ph_dir)
-                self.write_scf_in(split_ph_dir)
+                scffit_name = self.write_scf_fit_in(split_ph_dir)
+                scf_name    = self.write_scf_in(split_ph_dir)
+                ph_name     = self.write_split_ph_dyn0(split_ph_dir, q3)
+                inputfilename.append([scffit_name, scf_name, ph_name])
                 logger.info(f"finish input files in {i+1}")
-        if self.mode =="split_specify_q":
+            return inputfilename
+                
+        if self.mode =="split_assignQ":
+            inputfilename = []
             if self.qirreduced is not None:
                 for i in range(int(self.qirreduced)):
-                    self.write_split_ph_in_set_startlast_q(
-                        self.work_underpressure, 
-                        i+1, 
-                        i+1)
-                logger.info(f"finish input files {i+1}")
+                    ph_name     = self.write_split_phassignQ(self.work_underpressure, i+1, i+1)
+                    inputfilename.append(ph_name)
+                logger.info(f"finish input files {i+1}")            
+            return inputfilename
+
         if self.mode =="q2r":
-            self.write_q2r_in()
+            inputfilename = self.write_q2r_in()
+            return inputfilename
         if self.mode =="matdyn":
-            self.write_matdyn_in()
+            inputfilename = self.write_matdyn_in()
+            return inputfilename
         if self.mode =="matdyn_dos":
-            self.write_matdyn_dos_in()
+            inputfilename = self.write_matdyn_dos_in()
+            return inputfilename
         if self.mode =="McAD":
-            self.write_lambda_in()
+            inputfilename = self.write_lambda_in()
+            return inputfilename
         if self.mode =="eliashberg":
-            self.write_eliashberg_in()
+            inputfilename = self.write_eliashberg_in()
             self.write_alpha2f_out()
+            return inputfilename
 
     def write_relax_in(self):
-        relax_in = os.path.join(self.work_underpressure, "relax.in")
+        inputfilename =  "relax.in"
+        relax_in = os.path.join(self.work_underpressure, inputfilename)
         with open(relax_in, "w") as qe:
             qe.write("&CONTROL\n")
             qe.write(" calculation='vc-relax',         \n")
@@ -310,9 +324,11 @@ class qe_writeinput:
                 qe.write("{:<5} {:<30} {:<30} {:<30} \n".format(name, coord[0], coord[1], coord[2]))
             qe.write("K_POINTS {automatic}             \n")
             qe.write(" {} {} {} 0 0 0                  \n".format(self.kpoints_dense[0] , self.kpoints_dense[1], self.kpoints_dense[2]))
+        return inputfilename
 
     def write_scf_fit_in(self, dir):
-        scf_fit_in = os.path.join(dir, "scf.fit.in")
+        inputfilename = "scffit.in"
+        scf_fit_in = os.path.join(dir, inputfilename)
         with open(scf_fit_in, "w") as qe:
             qe.write("&CONTROL\n")
             qe.write(" calculation='scf',              \n")
@@ -362,9 +378,11 @@ class qe_writeinput:
                 qe.write("{:<5} {:<30} {:<30} {:<30} \n".format(name, coord[0], coord[1], coord[2]))
             qe.write("K_POINTS {automatic}             \n")
             qe.write(" {} {} {} 0 0 0                  \n".format(self.kpoints_dense[0] , self.kpoints_dense[1], self.kpoints_dense[2]))
+        return inputfilename
 
     def write_scf_in(self, dir):
-        scf_in = os.path.join(dir, "scf.in")
+        inputfilename = "scf.in"
+        scf_in = os.path.join(dir, inputfilename)
         with open(scf_in, "w") as qe:
             qe.write("&CONTROL\n")
             qe.write(" calculation='scf',              \n")
@@ -413,9 +431,11 @@ class qe_writeinput:
                 qe.write("{:<5} {:<30} {:<30} {:<30} \n".format(name, coord[0], coord[1], coord[2]))
             qe.write("K_POINTS {automatic}             \n")
             qe.write(" {} {} {} 0 0 0                  \n".format(self.kpoints_sparse[0], self.kpoints_sparse[1], self.kpoints_sparse[2]))  
+        return inputfilename
 
     def write_nscf_in(self, dir):
-        nscf_in = os.path.join(dir, "nscf.in")
+        inputfilename = "nscf.in"
+        nscf_in = os.path.join(dir, inputfilename)
         with open(nscf_in, "w") as qe:
             qe.write("&CONTROL\n")
             qe.write(" calculation='nscf',             \n")
@@ -466,10 +486,12 @@ class qe_writeinput:
                 qe.write("{:<5} {:<30} {:<30} {:<30} \n".format(name, coord[0], coord[1], coord[2]))
             qe.write("K_POINTS {automatic}             \n")
             qe.write(" {} {} {} 0 0 0                  \n".format(self.kpoints_dense[0], self.kpoints_dense[1], self.kpoints_dense[2]))   
+        return inputfilename
 
     # not split mode
     def write_ph_no_split_in(self):
-        ph_in = os.path.join(self.work_underpressure, "ph_no_split.in")
+        inputfilename = "ph_no_split.in"
+        ph_in = os.path.join(self.work_underpressure, inputfilename)
         with open(ph_in, "w") as qe:
             qe.write("Electron-phonon coefficients for {}                \n".format(self.system_name))                                    
             qe.write(" &inputph                                          \n")      
@@ -490,19 +512,22 @@ class qe_writeinput:
             qe.write("  ldisp=.true.,                                    \n")            
             qe.write("  nq1={},nq2={},nq3={},                            \n".format(self.qpoints[0], self.qpoints[1], self.qpoints[2]))                 
             qe.write("/                                                  \n")
-    
+        return inputfilename
     
     def write_dyn0(self, dir):
-        dyn0_path = os.path.join(dir, self.system_name+".dyn0")
+        inputfilename = self.system_name+".dyn0"
+        dyn0_path = os.path.join(dir, inputfilename)
         with open(dyn0_path, "w") as qe:
             qe.write("{:<5} {:<5} {:<5}              \n".format(str(self.q1), str(self.q2), str(self.q3)))
             qe.write("{}                             \n".format(str(len(self.q_list))))
             for q in self.q_list:
                 qe.write("{:<30}  {:<30}  {:<30}     \n".format(q[0], q[1], q[2]))
+        return inputfilename
 
     # split mode1
-    def write_split_ph_in_from_dyn0(self, many_split_ph_dirs, q3):
-        split_ph = os.path.join(many_split_ph_dirs, "split_ph.in")
+    def write_split_ph_dyn0(self, many_split_ph_dirs, q3):
+        inputfilename = "split_ph.in"
+        split_ph = os.path.join(many_split_ph_dirs, inputfilename)
         with open(split_ph, "w") as qe:
             qe.write("Electron-phonon coefficients for {}                \n".format(self.system_name))                                    
             qe.write(" &inputph                                          \n")      
@@ -523,11 +548,12 @@ class qe_writeinput:
             qe.write("  ldisp=.false.,                                   \n")            
             qe.write("/                                                  \n")
             qe.write(" {:<30} {:<30} {:<30}                              \n".format(q3[0], q3[1], q3[2]))
-    
+        return inputfilename
+
     # split mode2
-    def write_split_ph_in_set_startlast_q(self, dir, start_q, last_q):
-        split_ph_in = "split_ph" + str(start_q) + "-" + str(last_q) + ".in"
-        split_ph_path = os.path.join(dir, split_ph_in)
+    def write_split_phassignQ(self, dir, start_q, last_q):
+        inputfilename = "splitph_" + str(start_q) + "-" + str(last_q) + ".in"
+        split_ph_path = os.path.join(dir, inputfilename)
         with open(split_ph_path, "w") as qe:
             qe.write("Electron-phonon coefficients for {}                \n".format(self.system_name))                                    
             qe.write(" &inputph                                          \n")      
@@ -550,10 +576,12 @@ class qe_writeinput:
             qe.write("  start_q={}                                       \n".format(start_q)) 
             qe.write("  last_q={}                                        \n".format(last_q)) 
             qe.write("/                                                  \n")
+        return inputfilename
 
- 
+
     def write_q2r_in(self):
-        q2r_in = os.path.join(self.work_underpressure, "q2r.in")
+        inputfilename = "q2r.in"
+        q2r_in = os.path.join(self.work_underpressure, inputfilename)
         with open(q2r_in, "w") as qe:
             qe.write("&input                      \n")             
             qe.write("  la2F = .true.,            \n")                       
@@ -561,9 +589,11 @@ class qe_writeinput:
             qe.write("  fildyn = '{}.dyn'         \n".format(self.system_name))                               
             qe.write("  flfrc = '{}.fc',          \n".format(self.system_name))                              
             qe.write("/                           \n")        
+        return inputfilename
 
     def write_matdyn_in(self):
-        matdyn_in = os.path.join(self.work_underpressure, "matdyn.in")
+        inputfilename = "matdyn.in"
+        matdyn_in = os.path.join(self.work_underpressure, inputfilename)
         special_qpoints_number  = len(self.path_name_coords)
         inserted_qpoints_number = self.qinserted
         with open(matdyn_in, "w") as qe:
@@ -583,9 +613,11 @@ class qe_writeinput:
             qe.write("{}                                                 \n".format(special_qpoints_number))            
             for name, coord in self.path_name_coords:
                 qe.write(" {:<15} {:<15} {:<15} {:<5}                   \n".format(str(coord[0]), str(coord[1]), str(coord[2]), str(inserted_qpoints_number)))
+        return inputfilename
 
     def write_matdyn_dos_in(self):
-        matdyn_dos_in = os.path.join(self.work_underpressure, "matdyn.dos.in") 
+        inputfilename = "matdyn.dos.in"
+        matdyn_dos_in = os.path.join(self.work_underpressure, inputfilename) 
         with open(matdyn_dos_in, "w") as qe:
             qe.write("&input                                             \n")
             qe.write("   asr = 'simple',                                 \n")                                 
@@ -601,12 +633,14 @@ class qe_writeinput:
             qe.write("   nk1={}, nk2={}, nk3={},                         \n".format(self.qpoints[0], self.qpoints[1], self.qpoints[2]))  # 计算态密度时要用更密的q点网格，这需设置nk1, nk2, nk3                                      
             qe.write("   ndos={},                                        \n".format(self.ndos))  # 态密度的能量刻度上的点的数目                       
             qe.write("/                                                  \n")                                                                
+        return inputfilename
 
     def write_lambda_in(self):
-        lambda_in      = os.path.join(self.work_underpressure, "lambda.in")
+        inputfilename = "lambda.in"
+        lambda_in      = os.path.join(self.work_underpressure, inputfilename)
         elph_dir_path  = os.path.join(self.work_underpressure, "elph_dir")
         if not os.path.exists(elph_dir_path):
-            logger.warning("There is no directory elph_dir! So the lambda.in will not be created!!!")
+            raise FileExistsError("There is no directory elph_dir! So the lambda.in will not be created!!!")
         else:
             a2Fq2r_elphInpLambda = os.listdir(elph_dir_path)
             elphInpLambda = sorted(list(filter(lambda x: "elph.inp_lambda" in x, a2Fq2r_elphInpLambda)))
@@ -632,15 +666,18 @@ class qe_writeinput:
                 for elph in elphInpLambda:
                     qe.write(" {}                              \n".format(os.path.join("elph_dir", elph)))
                 qe.write("{}                                   \n".format(str(screen_constant)))
+        return inputfilename
 
     def write_eliashberg_in(self):
 
         screen_constant = self.screen_constant
         temperature_points = self.temperature_points
-
-        eliashberg_in = os.path.join(self.work_underpressure, "INPUT")
+        inputfilename = "INPUT"
+        eliashberg_in = os.path.join(self.work_underpressure, inputfilename)
         with open(eliashberg_in, "w") as qe:
             qe.write("{:<10} {:<10}".format(screen_constant, temperature_points))
+        return inputfilename
+
 
     def write_alpha2f_out(self):
         alpha2f_out = Path(self.work_underpressure).joinpath("ALPHA2F.out").absolute()
@@ -652,11 +689,4 @@ class qe_writeinput:
         a2f_dos_path = str(a2f_dos_path)
         alpha2f_out = str(alpha2f_out)
         os.system(f"sed '1,5d' {a2f_dos_path} | sed '/lambda/d' | awk '{'{print $1/2, $2}'}' > ALPHA2F.OUT")
-
-
-
-
-
         
-    
-
