@@ -1,0 +1,1582 @@
+
+     Program PHONON v.6.8 starts on 31Jul2022 at  5: 0:59 
+
+     This program is part of the open-source Quantum ESPRESSO suite
+     for quantum simulation of materials; please cite
+         "P. Giannozzi et al., J. Phys.:Condens. Matter 21 395502 (2009);
+         "P. Giannozzi et al., J. Phys.:Condens. Matter 29 465901 (2017);
+         "P. Giannozzi et al., J. Chem. Phys. 152 154105 (2020);
+          URL http://www.quantum-espresso.org", 
+     in publications or presentations arising from this work. More details at
+     http://www.quantum-espresso.org/quote
+
+     Parallel version (MPI), running on    48 processors
+
+     MPI processes distributed on     1 nodes
+     K-points division:     npool     =       4
+     R & G space division:  proc/nbgrp/npool/nimage =      12
+     188564 MiB available memory on the printing compute node when the environment starts
+ 
+     Waiting for input...
+     Reading input from standard input
+
+     Reading xml data from directory:
+
+     ./tmp/Ca1H6.save/
+
+     IMPORTANT: XC functional enforced from input :
+     Exchange-correlation= PBE
+                           (   1   4   3   4   0   0   0)
+     Any further DFT definition will be discarded
+     Please, verify this is what you really want
+
+ 
+     Parallelization info
+     --------------------
+     sticks:   dense  smooth     PW     G-vecs:    dense   smooth      PW
+     Min         139      46     17                 3602      698     155
+     Max         140      47     18                 3604      701     157
+     Sum        1669     557    205                43227     8391    1865
+ 
+     Using Slab Decomposition
+ 
+     Reading collected, re-writing distributed wavefunctions
+
+
+     Dynamical matrices for ( 8, 8, 8)  uniform grid of q-points
+     (  29 q-points):
+       N         xq(1)         xq(2)         xq(3) 
+       1   0.000000000   0.000000000   0.000000000
+       2   0.108253175   0.108253175   0.000000000
+       3   0.216506351   0.216506351   0.000000000
+       4   0.324759526   0.324759526   0.000000000
+       5  -0.433012702  -0.433012702   0.000000000
+       6   0.216506351   0.108253175   0.108253175
+       7   0.324759526   0.216506351   0.108253175
+       8   0.433012702   0.324759526   0.108253175
+       9   0.433012702   0.216506351   0.216506351
+      10   0.541265877   0.324759526   0.216506351
+      11   0.216506351   0.216506351   0.216506351
+      12   0.324759526   0.324759526   0.216506351
+      13   0.433012702   0.433012702   0.216506351
+      14  -0.000000000  -0.000000000   0.216506351
+      15   0.433012702   0.324759526   0.324759526
+      16  -0.000000000  -0.108253175   0.324759526
+      17  -0.000000000  -0.216506351   0.433012702
+      18   0.108253175  -0.108253175   0.433012702
+      19  -0.866025404  -0.324759526  -0.324759526
+      20  -0.757772228  -0.216506351  -0.324759526
+      21  -0.649519053  -0.216506351  -0.216506351
+      22   0.433012702   0.433012702   0.433012702
+      23  -0.000000000  -0.000000000   0.433012702
+      24  -0.000000000  -0.108253175   0.541265877
+      25  -0.866025404  -0.216506351  -0.216506351
+      26  -0.757772228  -0.108253175  -0.216506351
+      27  -0.000000000  -0.000000000   0.649519053
+      28  -0.866025404  -0.108253175  -0.108253175
+      29  -0.866025404  -0.866025404  -0.866025404
+
+     Saving dvscf to file. Distribute only q points, not irreducible represetations.
+
+     Calculation of q =   -0.7577722  -0.1082532  -0.2165064
+
+     Subspace diagonalization in iterative solution of the eigenvalue problem:
+     a serial algorithm will be used
+
+ 
+     Parallelization info
+     --------------------
+     sticks:   dense  smooth     PW     G-vecs:    dense   smooth      PW
+     Min         139      46     20                 3602      698     195
+     Max         140      47     21                 3604      701     196
+     Sum        1669     557    241                43227     8391    2347
+ 
+     Using Slab Decomposition
+ 
+
+     Title: 
+     Electron-phonon coefficients for Ca1H6                                     
+
+
+     bravais-lattice index     =            0
+     lattice parameter (alat)  =       5.5613  a.u.
+     unit-cell volume          =     132.4087 (a.u.)^3
+     number of atoms/cell      =            7
+     number of atomic types    =            2
+     number of electrons       =        16.00
+     number of Kohn-Sham states=           12
+     kinetic-energy cutoff     =      60.0000  Ry
+     charge density cutoff     =     720.0000  Ry
+     Exchange-correlation= PBE
+                           (   1   4   3   4   0   0   0)
+
+     celldm(1)=   5.561340  celldm(2)=   0.000000  celldm(3)=   0.000000
+     celldm(4)=   0.000000  celldm(5)=   0.000000  celldm(6)=   0.000000
+
+     crystal axes: (cart. coord. in units of alat)
+               a(1) = (  -0.577350   0.577350   0.577350 )  
+               a(2) = (   0.577350  -0.577350   0.577350 )  
+               a(3) = (   0.577350   0.577350  -0.577350 )  
+
+     reciprocal axes: (cart. coord. in units 2 pi/alat)
+               b(1) = ( -0.000000  0.866025  0.866025 )  
+               b(2) = (  0.866025 -0.000000  0.866025 )  
+               b(3) = (  0.866025  0.866025  0.000000 )  
+
+
+     PseudoPot. # 1 for Ca read from file:
+     /work/home/mayuan/code/my_script/scripts_tests/out2/200.0/pp/ca_pbe_v1.uspp.F.UPF
+     MD5 check sum: 403a4c14b9e4d4dfdc3024c9a3812218
+     Pseudo is Ultrasoft + core correction, Zval = 10.0
+     Generated by new atomic code, or converted to UPF format
+     Using radial grid of  845 points,  6 beta functions with: 
+                l(1) =   0
+                l(2) =   0
+                l(3) =   1
+                l(4) =   1
+                l(5) =   2
+                l(6) =   2
+     Q(r) pseudized with  8 coefficients,  rinner =    1.500   1.500   1.500
+                                                       1.500   1.500
+
+     PseudoPot. # 2 for H  read from file:
+     /work/home/mayuan/code/my_script/scripts_tests/out2/200.0/pp/h_pbe_v1.uspp.F.UPF
+     MD5 check sum: 3408e3ff4ec8b0a4e358431e7e038a48
+     Pseudo is Ultrasoft, Zval =  1.0
+     Generated by new atomic code, or converted to UPF format
+     Using radial grid of  615 points,  2 beta functions with: 
+                l(1) =   0
+                l(2) =   0
+     Q(r) pseudized with  8 coefficients,  rinner =    0.700
+
+     atomic species   valence    mass     pseudopotential
+        Ca            10.00    40.07800     Ca( 1.00)
+        H              1.00     1.00794     H ( 1.00)
+
+     48 Sym. Ops., with inversion, found
+
+
+
+   Cartesian axes
+
+     site n.     atom                  positions (alat units)
+         1           Ca  tau(   1) = (   0.0000000   0.0000000   0.0000000  )
+         2           H   tau(   2) = (   0.2886751   0.0000000   0.5773503  )
+         3           H   tau(   3) = (   0.2886751   0.5773503   0.0000000  )
+         4           H   tau(   4) = (   0.5773503   0.2886751   0.0000000  )
+         5           H   tau(   5) = (   0.0000000   0.2886751   0.5773503  )
+         6           H   tau(   6) = (   0.0000000   0.5773503   0.2886751  )
+         7           H   tau(   7) = (   0.5773503   0.0000000   0.2886751  )
+
+     number of k points=  4352  Methfessel-Paxton smearing, width (Ry)=  0.0200
+
+     Number of k-points >= 100: set verbosity='high' to print them.
+
+     Dense  grid:    43227 G-vectors     FFT dimensions: (  48,  48,  48)
+
+     Smooth grid:     8391 G-vectors     FFT dimensions: (  27,  27,  27)
+
+     Estimated max dynamical RAM per process >       8.40 MB
+
+     Estimated total dynamical RAM >     403.40 MB
+
+     The potential is recalculated from file :
+     ./tmp/_ph0/Ca1H6.q_26/Ca1H6.save/charge-density
+
+     Starting wfcs are   16 atomic wfcs
+
+     Band Structure Calculation
+     Davidson diagonalization with overlap
+
+     ethr =  6.25E-11,  avg # of iterations = 15.0
+
+     total cpu time spent up to now is       27.6 secs
+
+     End of band structure calculation
+
+     Number of k-points >= 100: set verbosity='high' to print the bands.
+
+     the Fermi energy is    17.0980 ev
+
+     Writing output data file ./tmp/_ph0/Ca1H6.q_26/Ca1H6.save/
+
+     Electron-phonon coefficients for Ca1H6                                     
+
+     bravais-lattice index     =            0
+     lattice parameter (alat)  =       5.5613  a.u.
+     unit-cell volume          =     132.4087 (a.u.)^3
+     number of atoms/cell      =            7
+     number of atomic types    =            2
+     kinetic-energy cut-off    =      60.0000  Ry
+     charge density cut-off    =     720.0000  Ry
+     convergence threshold     =      1.0E-16
+     beta                      =       0.7000
+     number of iterations used =            4
+     Exchange-correlation= PBE
+                           (   1   4   3   4   0   0   0)
+
+
+     celldm(1)=    5.56134  celldm(2)=    0.00000  celldm(3)=    0.00000
+     celldm(4)=    0.00000  celldm(5)=    0.00000  celldm(6)=    0.00000
+
+     crystal axes: (cart. coord. in units of alat)
+               a(1) = ( -0.5774  0.5774  0.5774 )  
+               a(2) = (  0.5774 -0.5774  0.5774 )  
+               a(3) = (  0.5774  0.5774 -0.5774 )  
+
+     reciprocal axes: (cart. coord. in units 2 pi/alat)
+               b(1) = ( -0.0000  0.8660  0.8660 )  
+               b(2) = (  0.8660 -0.0000  0.8660 )  
+               b(3) = (  0.8660  0.8660  0.0000 )  
+
+
+     Atoms inside the unit cell: 
+
+     Cartesian axes
+
+     site n.  atom      mass           positions (alat units)
+        1     Ca  40.0780   tau(    1) = (    0.00000    0.00000    0.00000  )
+        2     H    1.0079   tau(    2) = (    0.28868    0.00000    0.57735  )
+        3     H    1.0079   tau(    3) = (    0.28868    0.57735    0.00000  )
+        4     H    1.0079   tau(    4) = (    0.57735    0.28868    0.00000  )
+        5     H    1.0079   tau(    5) = (    0.00000    0.28868    0.57735  )
+        6     H    1.0079   tau(    6) = (    0.00000    0.57735    0.28868  )
+        7     H    1.0079   tau(    7) = (    0.57735    0.00000    0.28868  )
+
+     Computing dynamical matrix for 
+                    q = (  -0.7577722  -0.1082532  -0.2165064 )
+ 
+      2 Sym.Ops. (no q -> -q+G )
+
+
+     G cutoff =  564.0682  (   3604 G-vectors)     FFT grid: ( 48, 48, 48)
+     G cutoff =  188.0227  (    699 G-vectors)  smooth grid: ( 27, 27, 27)
+
+     number of k points=  4352  Methfessel-Paxton smearing, width (Ry)=  0.0200
+
+     PseudoPot. # 1 for Ca read from file:
+     /work/home/mayuan/code/my_script/scripts_tests/out2/200.0/pp/ca_pbe_v1.uspp.F.UPF
+     MD5 check sum: 403a4c14b9e4d4dfdc3024c9a3812218
+     Pseudo is Ultrasoft + core correction, Zval = 10.0
+     Generated by new atomic code, or converted to UPF format
+     Using radial grid of  845 points,  6 beta functions with: 
+                l(1) =   0
+                l(2) =   0
+                l(3) =   1
+                l(4) =   1
+                l(5) =   2
+                l(6) =   2
+     Q(r) pseudized with  8 coefficients,  rinner =    1.500   1.500   1.500
+                                                       1.500   1.500
+
+     PseudoPot. # 2 for H  read from file:
+     /work/home/mayuan/code/my_script/scripts_tests/out2/200.0/pp/h_pbe_v1.uspp.F.UPF
+     MD5 check sum: 3408e3ff4ec8b0a4e358431e7e038a48
+     Pseudo is Ultrasoft, Zval =  1.0
+     Generated by new atomic code, or converted to UPF format
+     Using radial grid of  615 points,  2 beta functions with: 
+                l(1) =   0
+                l(2) =   0
+     Q(r) pseudized with  8 coefficients,  rinner =    0.700
+
+     Mode symmetry, C_s (m)     point group:
+
+
+     Atomic displacements:
+     There are   21 irreducible representations
+
+     Representation     1      1 modes -  To be done
+
+     Representation     2      1 modes -  To be done
+
+     Representation     3      1 modes -  To be done
+
+     Representation     4      1 modes -  To be done
+
+     Representation     5      1 modes -  To be done
+
+     Representation     6      1 modes -  To be done
+
+     Representation     7      1 modes -  To be done
+
+     Representation     8      1 modes -  To be done
+
+     Representation     9      1 modes -  To be done
+
+     Representation    10      1 modes -  To be done
+
+     Representation    11      1 modes -  To be done
+
+     Representation    12      1 modes -  To be done
+
+     Representation    13      1 modes -  To be done
+
+     Representation    14      1 modes -  To be done
+
+     Representation    15      1 modes -  To be done
+
+     Representation    16      1 modes -  To be done
+
+     Representation    17      1 modes -  To be done
+
+     Representation    18      1 modes -  To be done
+
+     Representation    19      1 modes -  To be done
+
+     Representation    20      1 modes -  To be done
+
+     Representation    21      1 modes -  To be done
+
+
+
+     Alpha used in Ewald sum =   2.8000
+     PHONON       :     44.23s CPU     53.39s WALL
+
+
+
+     Representation #   1 mode #   1
+
+     Self-consistent Calculation
+
+      iter #   1 total cpu time :    63.9 secs   av.it.:   4.0
+      thresh= 1.000E-02 alpha_mix =  0.700 |ddv_scf|^2 =  9.772E-07
+
+      iter #   2 total cpu time :    84.1 secs   av.it.:   9.5
+      thresh= 9.885E-05 alpha_mix =  0.700 |ddv_scf|^2 =  1.507E-06
+
+      iter #   3 total cpu time :   107.2 secs   av.it.:   8.7
+      thresh= 1.228E-04 alpha_mix =  0.700 |ddv_scf|^2 =  3.206E-09
+
+      iter #   4 total cpu time :   129.6 secs   av.it.:   9.7
+      thresh= 5.663E-06 alpha_mix =  0.700 |ddv_scf|^2 =  3.126E-10
+
+      iter #   5 total cpu time :   148.6 secs   av.it.:   9.5
+      thresh= 1.768E-06 alpha_mix =  0.700 |ddv_scf|^2 =  3.045E-11
+
+      iter #   6 total cpu time :   171.4 secs   av.it.:   9.6
+      thresh= 5.518E-07 alpha_mix =  0.700 |ddv_scf|^2 =  7.107E-13
+
+      iter #   7 total cpu time :   195.4 secs   av.it.:   9.7
+      thresh= 8.430E-08 alpha_mix =  0.700 |ddv_scf|^2 =  2.807E-14
+
+      iter #   8 total cpu time :   217.8 secs   av.it.:   9.8
+      thresh= 1.675E-08 alpha_mix =  0.700 |ddv_scf|^2 =  2.416E-15
+
+      iter #   9 total cpu time :   240.4 secs   av.it.:   9.7
+      thresh= 4.915E-09 alpha_mix =  0.700 |ddv_scf|^2 =  7.085E-16
+
+      iter #  10 total cpu time :   259.3 secs   av.it.:   9.0
+      thresh= 2.662E-09 alpha_mix =  0.700 |ddv_scf|^2 =  7.219E-17
+
+     End of self-consistent calculation
+
+     Convergence has been achieved 
+
+
+     Representation #   2 mode #   2
+
+     Self-consistent Calculation
+
+      iter #   1 total cpu time :   275.8 secs   av.it.:   4.2
+      thresh= 1.000E-02 alpha_mix =  0.700 |ddv_scf|^2 =  9.557E-07
+
+      iter #   2 total cpu time :   288.5 secs   av.it.:   9.7
+      thresh= 9.776E-05 alpha_mix =  0.700 |ddv_scf|^2 =  9.920E-07
+
+      iter #   3 total cpu time :   303.4 secs   av.it.:   9.0
+      thresh= 9.960E-05 alpha_mix =  0.700 |ddv_scf|^2 =  1.698E-08
+
+      iter #   4 total cpu time :   318.9 secs   av.it.:   9.0
+      thresh= 1.303E-05 alpha_mix =  0.700 |ddv_scf|^2 =  7.225E-10
+
+      iter #   5 total cpu time :   334.2 secs   av.it.:   9.5
+      thresh= 2.688E-06 alpha_mix =  0.700 |ddv_scf|^2 =  2.310E-11
+
+      iter #   6 total cpu time :   352.5 secs   av.it.:   9.7
+      thresh= 4.807E-07 alpha_mix =  0.700 |ddv_scf|^2 =  8.322E-13
+
+      iter #   7 total cpu time :   368.6 secs   av.it.:   9.7
+      thresh= 9.122E-08 alpha_mix =  0.700 |ddv_scf|^2 =  3.789E-14
+
+      iter #   8 total cpu time :   387.8 secs   av.it.:   9.8
+      thresh= 1.947E-08 alpha_mix =  0.700 |ddv_scf|^2 =  2.729E-15
+
+      iter #   9 total cpu time :   403.8 secs   av.it.:   9.8
+      thresh= 5.224E-09 alpha_mix =  0.700 |ddv_scf|^2 =  1.276E-15
+
+      iter #  10 total cpu time :   428.4 secs   av.it.:   9.2
+      thresh= 3.572E-09 alpha_mix =  0.700 |ddv_scf|^2 =  1.254E-16
+
+      iter #  11 total cpu time :   445.0 secs   av.it.:   9.2
+      thresh= 1.120E-09 alpha_mix =  0.700 |ddv_scf|^2 =  8.895E-18
+
+     End of self-consistent calculation
+
+     Convergence has been achieved 
+
+
+     Representation #   3 mode #   3
+
+     Self-consistent Calculation
+
+      iter #   1 total cpu time :   461.3 secs   av.it.:   4.1
+      thresh= 1.000E-02 alpha_mix =  0.700 |ddv_scf|^2 =  6.966E-07
+
+      iter #   2 total cpu time :   475.1 secs   av.it.:   9.7
+      thresh= 8.346E-05 alpha_mix =  0.700 |ddv_scf|^2 =  7.982E-07
+
+      iter #   3 total cpu time :   488.1 secs   av.it.:   8.9
+      thresh= 8.934E-05 alpha_mix =  0.700 |ddv_scf|^2 =  1.223E-08
+
+      iter #   4 total cpu time :   501.3 secs   av.it.:   9.2
+      thresh= 1.106E-05 alpha_mix =  0.700 |ddv_scf|^2 =  7.827E-10
+
+      iter #   5 total cpu time :   520.9 secs   av.it.:   9.4
+      thresh= 2.798E-06 alpha_mix =  0.700 |ddv_scf|^2 =  2.778E-11
+
+      iter #   6 total cpu time :   536.3 secs   av.it.:   9.6
+      thresh= 5.271E-07 alpha_mix =  0.700 |ddv_scf|^2 =  9.345E-13
+
+      iter #   7 total cpu time :   550.2 secs   av.it.:   9.7
+      thresh= 9.667E-08 alpha_mix =  0.700 |ddv_scf|^2 =  5.157E-14
+
+      iter #   8 total cpu time :   567.2 secs   av.it.:   9.8
+      thresh= 2.271E-08 alpha_mix =  0.700 |ddv_scf|^2 =  4.375E-15
+
+      iter #   9 total cpu time :   579.3 secs   av.it.:   9.7
+      thresh= 6.614E-09 alpha_mix =  0.700 |ddv_scf|^2 =  2.174E-15
+
+      iter #  10 total cpu time :   595.8 secs   av.it.:   9.0
+      thresh= 4.663E-09 alpha_mix =  0.700 |ddv_scf|^2 =  1.987E-16
+
+      iter #  11 total cpu time :   608.0 secs   av.it.:   9.3
+      thresh= 1.410E-09 alpha_mix =  0.700 |ddv_scf|^2 =  1.298E-17
+
+     End of self-consistent calculation
+
+     Convergence has been achieved 
+
+
+     Representation #   4 mode #   4
+
+     Self-consistent Calculation
+
+      iter #   1 total cpu time :   623.4 secs   av.it.:   4.2
+      thresh= 1.000E-02 alpha_mix =  0.700 |ddv_scf|^2 =  6.741E-07
+
+      iter #   2 total cpu time :   636.2 secs   av.it.:   9.6
+      thresh= 8.210E-05 alpha_mix =  0.700 |ddv_scf|^2 =  6.733E-07
+
+      iter #   3 total cpu time :   649.3 secs   av.it.:   8.9
+      thresh= 8.205E-05 alpha_mix =  0.700 |ddv_scf|^2 =  1.295E-08
+
+      iter #   4 total cpu time :   663.7 secs   av.it.:   9.0
+      thresh= 1.138E-05 alpha_mix =  0.700 |ddv_scf|^2 =  7.750E-10
+
+      iter #   5 total cpu time :   675.1 secs   av.it.:   9.4
+      thresh= 2.784E-06 alpha_mix =  0.700 |ddv_scf|^2 =  3.571E-11
+
+      iter #   6 total cpu time :   691.4 secs   av.it.:   9.7
+      thresh= 5.976E-07 alpha_mix =  0.700 |ddv_scf|^2 =  8.082E-13
+
+      iter #   7 total cpu time :   704.3 secs   av.it.:   9.6
+      thresh= 8.990E-08 alpha_mix =  0.700 |ddv_scf|^2 =  2.238E-14
+
+      iter #   8 total cpu time :   719.5 secs   av.it.:   9.9
+      thresh= 1.496E-08 alpha_mix =  0.700 |ddv_scf|^2 =  1.229E-15
+
+      iter #   9 total cpu time :   733.8 secs   av.it.:   9.8
+      thresh= 3.505E-09 alpha_mix =  0.700 |ddv_scf|^2 =  1.473E-16
+
+      iter #  10 total cpu time :   749.1 secs   av.it.:   9.5
+      thresh= 1.213E-09 alpha_mix =  0.700 |ddv_scf|^2 =  7.159E-17
+
+     End of self-consistent calculation
+
+     Convergence has been achieved 
+
+
+     Representation #   5 mode #   5
+
+     Self-consistent Calculation
+
+      iter #   1 total cpu time :   765.1 secs   av.it.:   4.1
+      thresh= 1.000E-02 alpha_mix =  0.700 |ddv_scf|^2 =  3.738E-07
+
+      iter #   2 total cpu time :   781.6 secs   av.it.:   9.7
+      thresh= 6.114E-05 alpha_mix =  0.700 |ddv_scf|^2 =  3.530E-07
+
+      iter #   3 total cpu time :   801.7 secs   av.it.:   9.0
+      thresh= 5.941E-05 alpha_mix =  0.700 |ddv_scf|^2 =  1.165E-08
+
+      iter #   4 total cpu time :   816.3 secs   av.it.:   9.1
+      thresh= 1.079E-05 alpha_mix =  0.700 |ddv_scf|^2 =  4.199E-10
+
+      iter #   5 total cpu time :   834.2 secs   av.it.:   9.5
+      thresh= 2.049E-06 alpha_mix =  0.700 |ddv_scf|^2 =  4.008E-11
+
+      iter #   6 total cpu time :   851.0 secs   av.it.:   9.6
+      thresh= 6.330E-07 alpha_mix =  0.700 |ddv_scf|^2 =  1.404E-12
+
+      iter #   7 total cpu time :   870.2 secs   av.it.:   9.7
+      thresh= 1.185E-07 alpha_mix =  0.700 |ddv_scf|^2 =  7.616E-14
+
+      iter #   8 total cpu time :   884.9 secs   av.it.:   9.8
+      thresh= 2.760E-08 alpha_mix =  0.700 |ddv_scf|^2 =  6.149E-15
+
+      iter #   9 total cpu time :   906.4 secs   av.it.:   9.7
+      thresh= 7.842E-09 alpha_mix =  0.700 |ddv_scf|^2 =  2.954E-15
+
+      iter #  10 total cpu time :   922.8 secs   av.it.:   8.9
+      thresh= 5.435E-09 alpha_mix =  0.700 |ddv_scf|^2 =  1.433E-16
+
+      iter #  11 total cpu time :   940.6 secs   av.it.:   9.6
+      thresh= 1.197E-09 alpha_mix =  0.700 |ddv_scf|^2 =  2.023E-17
+
+     End of self-consistent calculation
+
+     Convergence has been achieved 
+
+
+     Representation #   6 mode #   6
+
+     Self-consistent Calculation
+
+      iter #   1 total cpu time :   953.1 secs   av.it.:   6.8
+      thresh= 1.000E-02 alpha_mix =  0.700 |ddv_scf|^2 =  9.885E-05
+
+      iter #   2 total cpu time :   968.8 secs   av.it.:   9.6
+      thresh= 9.942E-04 alpha_mix =  0.700 |ddv_scf|^2 =  1.609E-04
+
+      iter #   3 total cpu time :   980.6 secs   av.it.:   8.6
+      thresh= 1.268E-03 alpha_mix =  0.700 |ddv_scf|^2 =  4.027E-07
+
+      iter #   4 total cpu time :   996.3 secs   av.it.:   9.5
+      thresh= 6.346E-05 alpha_mix =  0.700 |ddv_scf|^2 =  2.269E-08
+
+      iter #   5 total cpu time :  1010.1 secs   av.it.:   9.4
+      thresh= 1.506E-05 alpha_mix =  0.700 |ddv_scf|^2 =  6.215E-10
+
+      iter #   6 total cpu time :  1022.9 secs   av.it.:   9.4
+      thresh= 2.493E-06 alpha_mix =  0.700 |ddv_scf|^2 =  1.059E-11
+
+      iter #   7 total cpu time :  1037.8 secs   av.it.:   9.8
+      thresh= 3.255E-07 alpha_mix =  0.700 |ddv_scf|^2 =  1.036E-12
+
+      iter #   8 total cpu time :  1050.0 secs   av.it.:   9.8
+      thresh= 1.018E-07 alpha_mix =  0.700 |ddv_scf|^2 =  1.187E-13
+
+      iter #   9 total cpu time :  1070.9 secs   av.it.:   9.6
+      thresh= 3.445E-08 alpha_mix =  0.700 |ddv_scf|^2 =  8.388E-15
+
+      iter #  10 total cpu time :  1086.9 secs   av.it.:   9.1
+      thresh= 9.158E-09 alpha_mix =  0.700 |ddv_scf|^2 =  3.621E-16
+
+      iter #  11 total cpu time :  1102.8 secs   av.it.:   9.6
+      thresh= 1.903E-09 alpha_mix =  0.700 |ddv_scf|^2 =  7.965E-17
+
+     End of self-consistent calculation
+
+     Convergence has been achieved 
+
+
+     Representation #   7 mode #   7
+
+     Self-consistent Calculation
+
+      iter #   1 total cpu time :  1115.2 secs   av.it.:   4.1
+      thresh= 1.000E-02 alpha_mix =  0.700 |ddv_scf|^2 =  8.776E-07
+
+      iter #   2 total cpu time :  1130.3 secs   av.it.:   9.6
+      thresh= 9.368E-05 alpha_mix =  0.700 |ddv_scf|^2 =  1.073E-06
+
+      iter #   3 total cpu time :  1143.1 secs   av.it.:   8.8
+      thresh= 1.036E-04 alpha_mix =  0.700 |ddv_scf|^2 =  1.219E-08
+
+      iter #   4 total cpu time :  1155.4 secs   av.it.:   9.1
+      thresh= 1.104E-05 alpha_mix =  0.700 |ddv_scf|^2 =  6.234E-10
+
+      iter #   5 total cpu time :  1171.6 secs   av.it.:   9.3
+      thresh= 2.497E-06 alpha_mix =  0.700 |ddv_scf|^2 =  3.143E-11
+
+      iter #   6 total cpu time :  1183.6 secs   av.it.:   9.6
+      thresh= 5.606E-07 alpha_mix =  0.700 |ddv_scf|^2 =  7.933E-13
+
+      iter #   7 total cpu time :  1198.6 secs   av.it.:   9.6
+      thresh= 8.907E-08 alpha_mix =  0.700 |ddv_scf|^2 =  3.123E-14
+
+      iter #   8 total cpu time :  1211.3 secs   av.it.:   9.8
+      thresh= 1.767E-08 alpha_mix =  0.700 |ddv_scf|^2 =  2.802E-15
+
+      iter #   9 total cpu time :  1225.4 secs   av.it.:   9.8
+      thresh= 5.294E-09 alpha_mix =  0.700 |ddv_scf|^2 =  1.750E-15
+
+      iter #  10 total cpu time :  1238.9 secs   av.it.:   8.9
+      thresh= 4.183E-09 alpha_mix =  0.700 |ddv_scf|^2 =  1.165E-16
+
+      iter #  11 total cpu time :  1251.2 secs   av.it.:   9.3
+      thresh= 1.079E-09 alpha_mix =  0.700 |ddv_scf|^2 =  8.847E-18
+
+     End of self-consistent calculation
+
+     Convergence has been achieved 
+
+
+     Representation #   8 mode #   8
+
+     Self-consistent Calculation
+
+      iter #   1 total cpu time :  1267.5 secs   av.it.:   6.5
+      thresh= 1.000E-02 alpha_mix =  0.700 |ddv_scf|^2 =  2.571E-05
+
+      iter #   2 total cpu time :  1278.5 secs   av.it.:   9.8
+      thresh= 5.070E-04 alpha_mix =  0.700 |ddv_scf|^2 =  1.618E-05
+
+      iter #   3 total cpu time :  1297.3 secs   av.it.:   9.2
+      thresh= 4.023E-04 alpha_mix =  0.700 |ddv_scf|^2 =  6.620E-07
+
+      iter #   4 total cpu time :  1311.0 secs   av.it.:   9.2
+      thresh= 8.136E-05 alpha_mix =  0.700 |ddv_scf|^2 =  2.471E-08
+
+      iter #   5 total cpu time :  1324.9 secs   av.it.:   9.3
+      thresh= 1.572E-05 alpha_mix =  0.700 |ddv_scf|^2 =  8.487E-10
+
+      iter #   6 total cpu time :  1342.5 secs   av.it.:   9.6
+      thresh= 2.913E-06 alpha_mix =  0.700 |ddv_scf|^2 =  2.629E-11
+
+      iter #   7 total cpu time :  1354.3 secs   av.it.:   9.7
+      thresh= 5.128E-07 alpha_mix =  0.700 |ddv_scf|^2 =  1.230E-12
+
+      iter #   8 total cpu time :  1371.1 secs   av.it.:   9.9
+      thresh= 1.109E-07 alpha_mix =  0.700 |ddv_scf|^2 =  1.163E-13
+
+      iter #   9 total cpu time :  1395.4 secs   av.it.:   9.6
+      thresh= 3.410E-08 alpha_mix =  0.700 |ddv_scf|^2 =  2.660E-14
+
+      iter #  10 total cpu time :  1415.6 secs   av.it.:   9.0
+      thresh= 1.631E-08 alpha_mix =  0.700 |ddv_scf|^2 =  1.188E-15
+
+      iter #  11 total cpu time :  1427.8 secs   av.it.:   9.4
+      thresh= 3.446E-09 alpha_mix =  0.700 |ddv_scf|^2 =  1.753E-16
+
+      iter #  12 total cpu time :  1446.2 secs   av.it.:   9.5
+      thresh= 1.324E-09 alpha_mix =  0.700 |ddv_scf|^2 =  2.797E-17
+
+     End of self-consistent calculation
+
+     Convergence has been achieved 
+
+
+     Representation #   9 mode #   9
+
+     Self-consistent Calculation
+
+      iter #   1 total cpu time :  1458.9 secs   av.it.:   4.2
+      thresh= 1.000E-02 alpha_mix =  0.700 |ddv_scf|^2 =  1.110E-06
+
+      iter #   2 total cpu time :  1474.3 secs   av.it.:   9.5
+      thresh= 1.053E-04 alpha_mix =  0.700 |ddv_scf|^2 =  1.773E-06
+
+      iter #   3 total cpu time :  1488.3 secs   av.it.:   8.6
+      thresh= 1.331E-04 alpha_mix =  0.700 |ddv_scf|^2 =  2.797E-09
+
+      iter #   4 total cpu time :  1503.3 secs   av.it.:   9.6
+      thresh= 5.289E-06 alpha_mix =  0.700 |ddv_scf|^2 =  2.631E-10
+
+      iter #   5 total cpu time :  1519.9 secs   av.it.:   9.5
+      thresh= 1.622E-06 alpha_mix =  0.700 |ddv_scf|^2 =  2.626E-11
+
+      iter #   6 total cpu time :  1531.9 secs   av.it.:   9.6
+      thresh= 5.125E-07 alpha_mix =  0.700 |ddv_scf|^2 =  1.193E-12
+
+      iter #   7 total cpu time :  1549.7 secs   av.it.:   9.6
+      thresh= 1.092E-07 alpha_mix =  0.700 |ddv_scf|^2 =  3.611E-14
+
+      iter #   8 total cpu time :  1562.6 secs   av.it.:   9.8
+      thresh= 1.900E-08 alpha_mix =  0.700 |ddv_scf|^2 =  6.454E-15
+
+      iter #   9 total cpu time :  1578.2 secs   av.it.:   9.5
+      thresh= 8.034E-09 alpha_mix =  0.700 |ddv_scf|^2 =  1.649E-15
+
+      iter #  10 total cpu time :  1596.8 secs   av.it.:   8.9
+      thresh= 4.061E-09 alpha_mix =  0.700 |ddv_scf|^2 =  5.098E-17
+
+     End of self-consistent calculation
+
+     Convergence has been achieved 
+
+
+     Representation #  10 mode #  10
+
+     Self-consistent Calculation
+
+      iter #   1 total cpu time :  1609.7 secs   av.it.:   4.1
+      thresh= 1.000E-02 alpha_mix =  0.700 |ddv_scf|^2 =  6.099E-07
+
+      iter #   2 total cpu time :  1623.7 secs   av.it.:   9.6
+      thresh= 7.810E-05 alpha_mix =  0.700 |ddv_scf|^2 =  5.914E-07
+
+      iter #   3 total cpu time :  1636.7 secs   av.it.:   8.9
+      thresh= 7.691E-05 alpha_mix =  0.700 |ddv_scf|^2 =  1.314E-08
+
+      iter #   4 total cpu time :  1653.7 secs   av.it.:   8.9
+      thresh= 1.146E-05 alpha_mix =  0.700 |ddv_scf|^2 =  6.324E-10
+
+      iter #   5 total cpu time :  1667.0 secs   av.it.:   9.3
+      thresh= 2.515E-06 alpha_mix =  0.700 |ddv_scf|^2 =  3.138E-11
+
+      iter #   6 total cpu time :  1685.0 secs   av.it.:   9.7
+      thresh= 5.602E-07 alpha_mix =  0.700 |ddv_scf|^2 =  7.799E-13
+
+      iter #   7 total cpu time :  1703.0 secs   av.it.:   9.7
+      thresh= 8.831E-08 alpha_mix =  0.700 |ddv_scf|^2 =  1.378E-14
+
+      iter #   8 total cpu time :  1719.9 secs   av.it.:   9.9
+      thresh= 1.174E-08 alpha_mix =  0.700 |ddv_scf|^2 =  1.018E-15
+
+      iter #   9 total cpu time :  1734.4 secs   av.it.:   9.8
+      thresh= 3.191E-09 alpha_mix =  0.700 |ddv_scf|^2 =  1.452E-16
+
+      iter #  10 total cpu time :  1752.9 secs   av.it.:   9.5
+      thresh= 1.205E-09 alpha_mix =  0.700 |ddv_scf|^2 =  6.409E-17
+
+     End of self-consistent calculation
+
+     Convergence has been achieved 
+
+
+     Representation #  11 mode #  11
+
+     Self-consistent Calculation
+
+      iter #   1 total cpu time :  1765.2 secs   av.it.:   4.2
+      thresh= 1.000E-02 alpha_mix =  0.700 |ddv_scf|^2 =  1.067E-06
+
+      iter #   2 total cpu time :  1780.8 secs   av.it.:   9.6
+      thresh= 1.033E-04 alpha_mix =  0.700 |ddv_scf|^2 =  1.644E-06
+
+      iter #   3 total cpu time :  1794.7 secs   av.it.:   8.7
+      thresh= 1.282E-04 alpha_mix =  0.700 |ddv_scf|^2 =  3.966E-09
+
+      iter #   4 total cpu time :  1811.0 secs   av.it.:   9.6
+      thresh= 6.298E-06 alpha_mix =  0.700 |ddv_scf|^2 =  2.688E-10
+
+      iter #   5 total cpu time :  1831.4 secs   av.it.:   9.6
+      thresh= 1.640E-06 alpha_mix =  0.700 |ddv_scf|^2 =  3.493E-11
+
+      iter #   6 total cpu time :  1846.3 secs   av.it.:   9.6
+      thresh= 5.910E-07 alpha_mix =  0.700 |ddv_scf|^2 =  1.006E-12
+
+      iter #   7 total cpu time :  1864.7 secs   av.it.:   9.6
+      thresh= 1.003E-07 alpha_mix =  0.700 |ddv_scf|^2 =  5.037E-14
+
+      iter #   8 total cpu time :  1879.5 secs   av.it.:   9.8
+      thresh= 2.244E-08 alpha_mix =  0.700 |ddv_scf|^2 =  1.040E-14
+
+      iter #   9 total cpu time :  1897.9 secs   av.it.:   9.6
+      thresh= 1.020E-08 alpha_mix =  0.700 |ddv_scf|^2 =  2.233E-15
+
+      iter #  10 total cpu time :  1911.9 secs   av.it.:   8.9
+      thresh= 4.725E-09 alpha_mix =  0.700 |ddv_scf|^2 =  4.341E-17
+
+     End of self-consistent calculation
+
+     Convergence has been achieved 
+
+
+     Representation #  12 mode #  12
+
+     Self-consistent Calculation
+
+      iter #   1 total cpu time :  1927.9 secs   av.it.:   3.8
+      thresh= 1.000E-02 alpha_mix =  0.700 |ddv_scf|^2 =  2.375E-07
+
+      iter #   2 total cpu time :  1939.5 secs   av.it.:   9.5
+      thresh= 4.873E-05 alpha_mix =  0.700 |ddv_scf|^2 =  1.530E-07
+
+      iter #   3 total cpu time :  1953.3 secs   av.it.:   8.8
+      thresh= 3.911E-05 alpha_mix =  0.700 |ddv_scf|^2 =  5.198E-10
+
+      iter #   4 total cpu time :  1969.3 secs   av.it.:   9.5
+      thresh= 2.280E-06 alpha_mix =  0.700 |ddv_scf|^2 =  4.400E-11
+
+      iter #   5 total cpu time :  1985.9 secs   av.it.:   9.4
+      thresh= 6.634E-07 alpha_mix =  0.700 |ddv_scf|^2 =  3.655E-13
+
+      iter #   6 total cpu time :  2002.8 secs   av.it.:   9.6
+      thresh= 6.046E-08 alpha_mix =  0.700 |ddv_scf|^2 =  1.166E-14
+
+      iter #   7 total cpu time :  2017.6 secs   av.it.:   9.7
+      thresh= 1.080E-08 alpha_mix =  0.700 |ddv_scf|^2 =  6.159E-16
+
+      iter #   8 total cpu time :  2034.8 secs   av.it.:   9.6
+      thresh= 2.482E-09 alpha_mix =  0.700 |ddv_scf|^2 =  1.527E-17
+
+     End of self-consistent calculation
+
+     Convergence has been achieved 
+
+
+     Representation #  13 mode #  13
+
+     Self-consistent Calculation
+
+      iter #   1 total cpu time :  2047.7 secs   av.it.:   3.9
+      thresh= 1.000E-02 alpha_mix =  0.700 |ddv_scf|^2 =  1.960E-07
+
+      iter #   2 total cpu time :  2064.2 secs   av.it.:   9.5
+      thresh= 4.427E-05 alpha_mix =  0.700 |ddv_scf|^2 =  1.216E-07
+
+      iter #   3 total cpu time :  2082.6 secs   av.it.:   8.8
+      thresh= 3.487E-05 alpha_mix =  0.700 |ddv_scf|^2 =  5.521E-10
+
+      iter #   4 total cpu time :  2107.2 secs   av.it.:   9.4
+      thresh= 2.350E-06 alpha_mix =  0.700 |ddv_scf|^2 =  2.739E-11
+
+      iter #   5 total cpu time :  2123.1 secs   av.it.:   9.5
+      thresh= 5.234E-07 alpha_mix =  0.700 |ddv_scf|^2 =  8.791E-13
+
+      iter #   6 total cpu time :  2142.5 secs   av.it.:   9.6
+      thresh= 9.376E-08 alpha_mix =  0.700 |ddv_scf|^2 =  2.481E-14
+
+      iter #   7 total cpu time :  2160.0 secs   av.it.:   9.7
+      thresh= 1.575E-08 alpha_mix =  0.700 |ddv_scf|^2 =  1.265E-15
+
+      iter #   8 total cpu time :  2181.5 secs   av.it.:   9.6
+      thresh= 3.557E-09 alpha_mix =  0.700 |ddv_scf|^2 =  2.728E-17
+
+     End of self-consistent calculation
+
+     Convergence has been achieved 
+
+
+     Representation #  14 mode #  14
+
+     Self-consistent Calculation
+
+      iter #   1 total cpu time :  2194.8 secs   av.it.:   3.6
+      thresh= 1.000E-02 alpha_mix =  0.700 |ddv_scf|^2 =  5.000E-08
+
+      iter #   2 total cpu time :  2213.1 secs   av.it.:   9.6
+      thresh= 2.236E-05 alpha_mix =  0.700 |ddv_scf|^2 =  1.654E-08
+
+      iter #   3 total cpu time :  2229.9 secs   av.it.:   9.2
+      thresh= 1.286E-05 alpha_mix =  0.700 |ddv_scf|^2 =  8.686E-10
+
+      iter #   4 total cpu time :  2247.1 secs   av.it.:   9.2
+      thresh= 2.947E-06 alpha_mix =  0.700 |ddv_scf|^2 =  5.723E-11
+
+      iter #   5 total cpu time :  2268.5 secs   av.it.:   9.4
+      thresh= 7.565E-07 alpha_mix =  0.700 |ddv_scf|^2 =  5.722E-13
+
+      iter #   6 total cpu time :  2283.2 secs   av.it.:   9.6
+      thresh= 7.564E-08 alpha_mix =  0.700 |ddv_scf|^2 =  1.067E-14
+
+      iter #   7 total cpu time :  2303.2 secs   av.it.:   9.8
+      thresh= 1.033E-08 alpha_mix =  0.700 |ddv_scf|^2 =  4.981E-16
+
+      iter #   8 total cpu time :  2318.1 secs   av.it.:   9.7
+      thresh= 2.232E-09 alpha_mix =  0.700 |ddv_scf|^2 =  2.635E-17
+
+     End of self-consistent calculation
+
+     Convergence has been achieved 
+
+
+     Representation #  15 mode #  15
+
+     Self-consistent Calculation
+
+      iter #   1 total cpu time :  2337.3 secs   av.it.:   6.6
+      thresh= 1.000E-02 alpha_mix =  0.700 |ddv_scf|^2 =  4.122E-05
+
+      iter #   2 total cpu time :  2351.2 secs   av.it.:   9.5
+      thresh= 6.420E-04 alpha_mix =  0.700 |ddv_scf|^2 =  2.781E-05
+
+      iter #   3 total cpu time :  2369.4 secs   av.it.:   8.8
+      thresh= 5.273E-04 alpha_mix =  0.700 |ddv_scf|^2 =  7.122E-08
+
+      iter #   4 total cpu time :  2385.1 secs   av.it.:   9.4
+      thresh= 2.669E-05 alpha_mix =  0.700 |ddv_scf|^2 =  1.203E-09
+
+      iter #   5 total cpu time :  2402.9 secs   av.it.:   9.3
+      thresh= 3.469E-06 alpha_mix =  0.700 |ddv_scf|^2 =  4.327E-11
+
+      iter #   6 total cpu time :  2418.8 secs   av.it.:   9.3
+      thresh= 6.578E-07 alpha_mix =  0.700 |ddv_scf|^2 =  1.016E-12
+
+      iter #   7 total cpu time :  2436.9 secs   av.it.:   9.1
+      thresh= 1.008E-07 alpha_mix =  0.700 |ddv_scf|^2 =  2.791E-14
+
+      iter #   8 total cpu time :  2455.3 secs   av.it.:   9.0
+      thresh= 1.671E-08 alpha_mix =  0.700 |ddv_scf|^2 =  4.798E-16
+
+      iter #   9 total cpu time :  2473.4 secs   av.it.:   9.2
+      thresh= 2.190E-09 alpha_mix =  0.700 |ddv_scf|^2 =  9.262E-18
+
+     End of self-consistent calculation
+
+     Convergence has been achieved 
+
+
+     Representation #  16 mode #  16
+
+     Self-consistent Calculation
+
+      iter #   1 total cpu time :  2490.0 secs   av.it.:   3.9
+      thresh= 1.000E-02 alpha_mix =  0.700 |ddv_scf|^2 =  3.455E-07
+
+      iter #   2 total cpu time :  2508.6 secs   av.it.:   9.4
+      thresh= 5.878E-05 alpha_mix =  0.700 |ddv_scf|^2 =  2.274E-07
+
+      iter #   3 total cpu time :  2526.9 secs   av.it.:   8.8
+      thresh= 4.769E-05 alpha_mix =  0.700 |ddv_scf|^2 =  5.800E-10
+
+      iter #   4 total cpu time :  2544.0 secs   av.it.:   9.5
+      thresh= 2.408E-06 alpha_mix =  0.700 |ddv_scf|^2 =  4.601E-11
+
+      iter #   5 total cpu time :  2561.2 secs   av.it.:   9.4
+      thresh= 6.783E-07 alpha_mix =  0.700 |ddv_scf|^2 =  3.093E-13
+
+      iter #   6 total cpu time :  2578.8 secs   av.it.:   9.7
+      thresh= 5.562E-08 alpha_mix =  0.700 |ddv_scf|^2 =  1.189E-14
+
+      iter #   7 total cpu time :  2599.8 secs   av.it.:   9.6
+      thresh= 1.091E-08 alpha_mix =  0.700 |ddv_scf|^2 =  6.338E-16
+
+      iter #   8 total cpu time :  2615.6 secs   av.it.:   9.5
+      thresh= 2.518E-09 alpha_mix =  0.700 |ddv_scf|^2 =  2.010E-17
+
+     End of self-consistent calculation
+
+     Convergence has been achieved 
+
+
+     Representation #  17 mode #  17
+
+     Self-consistent Calculation
+
+      iter #   1 total cpu time :  2633.7 secs   av.it.:   3.7
+      thresh= 1.000E-02 alpha_mix =  0.700 |ddv_scf|^2 =  1.720E-07
+
+      iter #   2 total cpu time :  2648.2 secs   av.it.:   9.4
+      thresh= 4.147E-05 alpha_mix =  0.700 |ddv_scf|^2 =  1.041E-07
+
+      iter #   3 total cpu time :  2665.2 secs   av.it.:   8.8
+      thresh= 3.227E-05 alpha_mix =  0.700 |ddv_scf|^2 =  6.059E-10
+
+      iter #   4 total cpu time :  2680.4 secs   av.it.:   9.4
+      thresh= 2.461E-06 alpha_mix =  0.700 |ddv_scf|^2 =  4.929E-11
+
+      iter #   5 total cpu time :  2695.4 secs   av.it.:   9.3
+      thresh= 7.021E-07 alpha_mix =  0.700 |ddv_scf|^2 =  3.880E-13
+
+      iter #   6 total cpu time :  2710.6 secs   av.it.:   9.6
+      thresh= 6.229E-08 alpha_mix =  0.700 |ddv_scf|^2 =  1.387E-14
+
+      iter #   7 total cpu time :  2724.2 secs   av.it.:   9.7
+      thresh= 1.178E-08 alpha_mix =  0.700 |ddv_scf|^2 =  6.297E-16
+
+      iter #   8 total cpu time :  2741.7 secs   av.it.:   9.7
+      thresh= 2.509E-09 alpha_mix =  0.700 |ddv_scf|^2 =  5.791E-17
+
+     End of self-consistent calculation
+
+     Convergence has been achieved 
+
+
+     Representation #  18 mode #  18
+
+     Self-consistent Calculation
+
+      iter #   1 total cpu time :  2753.7 secs   av.it.:   3.9
+      thresh= 1.000E-02 alpha_mix =  0.700 |ddv_scf|^2 =  2.783E-07
+
+      iter #   2 total cpu time :  2774.0 secs   av.it.:   9.5
+      thresh= 5.275E-05 alpha_mix =  0.700 |ddv_scf|^2 =  1.478E-07
+
+      iter #   3 total cpu time :  2790.2 secs   av.it.:   9.0
+      thresh= 3.844E-05 alpha_mix =  0.700 |ddv_scf|^2 =  1.517E-09
+
+      iter #   4 total cpu time :  2807.9 secs   av.it.:   9.3
+      thresh= 3.894E-06 alpha_mix =  0.700 |ddv_scf|^2 =  5.274E-11
+
+      iter #   5 total cpu time :  2824.5 secs   av.it.:   9.3
+      thresh= 7.262E-07 alpha_mix =  0.700 |ddv_scf|^2 =  7.433E-13
+
+      iter #   6 total cpu time :  2841.4 secs   av.it.:   9.6
+      thresh= 8.622E-08 alpha_mix =  0.700 |ddv_scf|^2 =  1.133E-14
+
+      iter #   7 total cpu time :  2859.6 secs   av.it.:   9.7
+      thresh= 1.064E-08 alpha_mix =  0.700 |ddv_scf|^2 =  6.429E-16
+
+      iter #   8 total cpu time :  2878.4 secs   av.it.:   9.5
+      thresh= 2.536E-09 alpha_mix =  0.700 |ddv_scf|^2 =  2.317E-17
+
+     End of self-consistent calculation
+
+     Convergence has been achieved 
+
+
+     Representation #  19 mode #  19
+
+     Self-consistent Calculation
+
+      iter #   1 total cpu time :  2894.1 secs   av.it.:   4.1
+      thresh= 1.000E-02 alpha_mix =  0.700 |ddv_scf|^2 =  3.872E-07
+
+      iter #   2 total cpu time :  2906.0 secs   av.it.:   9.4
+      thresh= 6.222E-05 alpha_mix =  0.700 |ddv_scf|^2 =  1.885E-07
+
+      iter #   3 total cpu time :  2922.4 secs   av.it.:   8.9
+      thresh= 4.342E-05 alpha_mix =  0.700 |ddv_scf|^2 =  2.786E-09
+
+      iter #   4 total cpu time :  2936.7 secs   av.it.:   8.8
+      thresh= 5.279E-06 alpha_mix =  0.700 |ddv_scf|^2 =  7.273E-11
+
+      iter #   5 total cpu time :  2954.2 secs   av.it.:   9.4
+      thresh= 8.528E-07 alpha_mix =  0.700 |ddv_scf|^2 =  1.637E-12
+
+      iter #   6 total cpu time :  2968.5 secs   av.it.:   9.4
+      thresh= 1.280E-07 alpha_mix =  0.700 |ddv_scf|^2 =  2.324E-14
+
+      iter #   7 total cpu time :  2983.8 secs   av.it.:   9.7
+      thresh= 1.525E-08 alpha_mix =  0.700 |ddv_scf|^2 =  1.568E-15
+
+      iter #   8 total cpu time :  2999.8 secs   av.it.:   9.4
+      thresh= 3.960E-09 alpha_mix =  0.700 |ddv_scf|^2 =  2.956E-17
+
+     End of self-consistent calculation
+
+     Convergence has been achieved 
+
+
+     Representation #  20 mode #  20
+
+     Self-consistent Calculation
+
+      iter #   1 total cpu time :  3011.0 secs   av.it.:   3.6
+      thresh= 1.000E-02 alpha_mix =  0.700 |ddv_scf|^2 =  6.877E-08
+
+      iter #   2 total cpu time :  3025.0 secs   av.it.:   9.4
+      thresh= 2.622E-05 alpha_mix =  0.700 |ddv_scf|^2 =  3.195E-08
+
+      iter #   3 total cpu time :  3036.6 secs   av.it.:   8.8
+      thresh= 1.787E-05 alpha_mix =  0.700 |ddv_scf|^2 =  7.121E-10
+
+      iter #   4 total cpu time :  3051.5 secs   av.it.:   9.2
+      thresh= 2.669E-06 alpha_mix =  0.700 |ddv_scf|^2 =  4.501E-11
+
+      iter #   5 total cpu time :  3065.5 secs   av.it.:   9.4
+      thresh= 6.709E-07 alpha_mix =  0.700 |ddv_scf|^2 =  6.046E-13
+
+      iter #   6 total cpu time :  3080.3 secs   av.it.:   9.6
+      thresh= 7.776E-08 alpha_mix =  0.700 |ddv_scf|^2 =  1.923E-14
+
+      iter #   7 total cpu time :  3095.9 secs   av.it.:   9.7
+      thresh= 1.387E-08 alpha_mix =  0.700 |ddv_scf|^2 =  8.164E-16
+
+      iter #   8 total cpu time :  3108.6 secs   av.it.:   9.7
+      thresh= 2.857E-09 alpha_mix =  0.700 |ddv_scf|^2 =  5.422E-17
+
+     End of self-consistent calculation
+
+     Convergence has been achieved 
+
+
+     Representation #  21 mode #  21
+
+     Self-consistent Calculation
+
+      iter #   1 total cpu time :  3122.8 secs   av.it.:   3.9
+      thresh= 1.000E-02 alpha_mix =  0.700 |ddv_scf|^2 =  2.638E-07
+
+      iter #   2 total cpu time :  3133.5 secs   av.it.:   9.6
+      thresh= 5.137E-05 alpha_mix =  0.700 |ddv_scf|^2 =  1.335E-07
+
+      iter #   3 total cpu time :  3150.0 secs   av.it.:   9.0
+      thresh= 3.654E-05 alpha_mix =  0.700 |ddv_scf|^2 =  1.699E-09
+
+      iter #   4 total cpu time :  3170.4 secs   av.it.:   9.2
+      thresh= 4.122E-06 alpha_mix =  0.700 |ddv_scf|^2 =  5.492E-11
+
+      iter #   5 total cpu time :  3182.5 secs   av.it.:   9.3
+      thresh= 7.411E-07 alpha_mix =  0.700 |ddv_scf|^2 =  8.734E-13
+
+      iter #   6 total cpu time :  3197.8 secs   av.it.:   9.5
+      thresh= 9.346E-08 alpha_mix =  0.700 |ddv_scf|^2 =  1.102E-14
+
+      iter #   7 total cpu time :  3209.5 secs   av.it.:   9.8
+      thresh= 1.050E-08 alpha_mix =  0.700 |ddv_scf|^2 =  7.393E-16
+
+      iter #   8 total cpu time :  3228.0 secs   av.it.:   9.5
+      thresh= 2.719E-09 alpha_mix =  0.700 |ddv_scf|^2 =  2.259E-17
+
+     End of self-consistent calculation
+
+     Convergence has been achieved 
+ 
+     Number of q in the star =   24
+     List of q in the star:
+          1  -0.757772228  -0.108253175  -0.216506351
+          2   0.757772228  -0.216506351  -0.108253175
+          3  -0.757772228  -0.216506351  -0.108253175
+          4  -0.108253175   0.757772228  -0.216506351
+          5   0.757772228   0.108253175  -0.216506351
+          6  -0.108253175   0.216506351   0.757772228
+          7   0.108253175   0.216506351  -0.757772228
+          8  -0.108253175  -0.216506351  -0.757772228
+          9  -0.216506351   0.757772228   0.108253175
+         10   0.216506351  -0.757772228   0.108253175
+         11  -0.216506351  -0.757772228  -0.108253175
+         12   0.757772228  -0.108253175   0.216506351
+         13  -0.757772228   0.108253175   0.216506351
+         14   0.757772228   0.216506351   0.108253175
+         15  -0.757772228  -0.216506351   0.108253175
+         16  -0.757772228   0.216506351  -0.108253175
+         17   0.757772228   0.108253175   0.216506351
+         18  -0.757772228  -0.108253175   0.216506351
+         19   0.216506351   0.757772228  -0.108253175
+         20   0.108253175  -0.757772228  -0.216506351
+         21  -0.216506351   0.108253175  -0.757772228
+         22   0.216506351   0.108253175   0.757772228
+         23  -0.216506351  -0.108253175   0.757772228
+         24   0.216506351  -0.108253175  -0.757772228
+
+     Diagonalizing the dynamical matrix
+
+     q = (   -0.757772228  -0.108253175  -0.216506351 ) 
+
+ **************************************************************************
+     freq (    1) =       8.797563 [THz] =     293.455122 [cm-1]
+     freq (    2) =       9.328679 [THz] =     311.171240 [cm-1]
+     freq (    3) =      11.442694 [THz] =     381.687201 [cm-1]
+     freq (    4) =      22.122574 [THz] =     737.929641 [cm-1]
+     freq (    5) =      28.371545 [THz] =     946.372872 [cm-1]
+     freq (    6) =      30.244494 [THz] =    1008.847740 [cm-1]
+     freq (    7) =      30.443314 [THz] =    1015.479640 [cm-1]
+     freq (    8) =      31.900117 [THz] =    1064.073379 [cm-1]
+     freq (    9) =      33.810859 [THz] =    1127.808866 [cm-1]
+     freq (   10) =      40.272205 [THz] =    1343.336165 [cm-1]
+     freq (   11) =      40.905717 [THz] =    1364.467861 [cm-1]
+     freq (   12) =      41.908111 [THz] =    1397.904100 [cm-1]
+     freq (   13) =      42.968995 [THz] =    1433.291385 [cm-1]
+     freq (   14) =      42.984098 [THz] =    1433.795160 [cm-1]
+     freq (   15) =      44.426559 [THz] =    1481.910512 [cm-1]
+     freq (   16) =      44.726812 [THz] =    1491.925853 [cm-1]
+     freq (   17) =      46.888547 [THz] =    1564.033563 [cm-1]
+     freq (   18) =      47.097485 [THz] =    1571.003002 [cm-1]
+     freq (   19) =      54.480632 [THz] =    1817.278265 [cm-1]
+     freq (   20) =      56.302610 [THz] =    1878.052923 [cm-1]
+     freq (   21) =      58.188149 [THz] =    1940.947733 [cm-1]
+ **************************************************************************
+
+     Mode symmetry, C_s (m)     point group:
+
+     freq (   1-   1) =        293.5  [cm-1]   --> A''                
+     freq (   2-   2) =        311.2  [cm-1]   --> A'                 
+     freq (   3-   3) =        381.7  [cm-1]   --> A'                 
+     freq (   4-   4) =        737.9  [cm-1]   --> A''                
+     freq (   5-   5) =        946.4  [cm-1]   --> A'                 
+     freq (   6-   6) =       1008.8  [cm-1]   --> A'                 
+     freq (   7-   7) =       1015.5  [cm-1]   --> A''                
+     freq (   8-   8) =       1064.1  [cm-1]   --> A''                
+     freq (   9-   9) =       1127.8  [cm-1]   --> A'                 
+     freq (  10-  10) =       1343.3  [cm-1]   --> A''                
+     freq (  11-  11) =       1364.5  [cm-1]   --> A'                 
+     freq (  12-  12) =       1397.9  [cm-1]   --> A''                
+     freq (  13-  13) =       1433.3  [cm-1]   --> A''                
+     freq (  14-  14) =       1433.8  [cm-1]   --> A'                 
+     freq (  15-  15) =       1481.9  [cm-1]   --> A'                 
+     freq (  16-  16) =       1491.9  [cm-1]   --> A''                
+     freq (  17-  17) =       1564.0  [cm-1]   --> A'                 
+     freq (  18-  18) =       1571.0  [cm-1]   --> A''                
+     freq (  19-  19) =       1817.3  [cm-1]   --> A'                 
+     freq (  20-  20) =       1878.1  [cm-1]   --> A''                
+     freq (  21-  21) =       1940.9  [cm-1]   --> A'                 
+     electron-phonon interaction  ...
+
+     Gaussian Broadening:   0.005 Ry, ngauss=   0
+     DOS =  1.900675 states/spin/Ry/Unit Cell at Ef= 17.155196 eV
+     lambda(    1)=  0.3483   gamma=   48.94 GHz
+     lambda(    2)=  0.0750   gamma=   11.84 GHz
+     lambda(    3)=  0.0770   gamma=   18.30 GHz
+     lambda(    4)=  0.4318   gamma=  383.55 GHz
+     lambda(    5)=  0.3741   gamma=  546.57 GHz
+     lambda(    6)=  0.1868   gamma=  310.20 GHz
+     lambda(    7)=  0.3115   gamma=  524.04 GHz
+     lambda(    8)=  0.2765   gamma=  510.65 GHz
+     lambda(    9)=  0.0821   gamma=  170.44 GHz
+     lambda(   10)=  0.0116   gamma=   34.12 GHz
+     lambda(   11)=  0.0034   gamma=   10.30 GHz
+     lambda(   12)=  0.0060   gamma=   19.12 GHz
+     lambda(   13)=  0.0081   gamma=   27.22 GHz
+     lambda(   14)=  0.0072   gamma=   24.28 GHz
+     lambda(   15)=  0.0211   gamma=   75.62 GHz
+     lambda(   16)=  0.0094   gamma=   34.23 GHz
+     lambda(   17)=  0.0176   gamma=   70.19 GHz
+     lambda(   18)=  0.0203   gamma=   81.79 GHz
+     lambda(   19)=  0.0289   gamma=  155.45 GHz
+     lambda(   20)=  0.0051   gamma=   29.28 GHz
+     lambda(   21)=  0.0387   gamma=  238.05 GHz
+     Gaussian Broadening:   0.010 Ry, ngauss=   0
+     DOS =  2.130656 states/spin/Ry/Unit Cell at Ef= 17.149400 eV
+     lambda(    1)=  0.2067   gamma=   32.55 GHz
+     lambda(    2)=  0.1016   gamma=   17.99 GHz
+     lambda(    3)=  0.0698   gamma=   18.60 GHz
+     lambda(    4)=  0.3289   gamma=  327.54 GHz
+     lambda(    5)=  0.2812   gamma=  460.58 GHz
+     lambda(    6)=  0.2102   gamma=  391.17 GHz
+     lambda(    7)=  0.1939   gamma=  365.63 GHz
+     lambda(    8)=  0.2129   gamma=  440.75 GHz
+     lambda(    9)=  0.0818   gamma=  190.26 GHz
+     lambda(   10)=  0.0066   gamma=   21.81 GHz
+     lambda(   11)=  0.0058   gamma=   19.62 GHz
+     lambda(   12)=  0.0043   gamma=   15.33 GHz
+     lambda(   13)=  0.0062   gamma=   23.30 GHz
+     lambda(   14)=  0.0078   gamma=   29.22 GHz
+     lambda(   15)=  0.0243   gamma=   97.66 GHz
+     lambda(   16)=  0.0053   gamma=   21.38 GHz
+     lambda(   17)=  0.0144   gamma=   64.53 GHz
+     lambda(   18)=  0.0115   gamma=   51.74 GHz
+     lambda(   19)=  0.0263   gamma=  158.75 GHz
+     lambda(   20)=  0.0040   gamma=   25.79 GHz
+     lambda(   21)=  0.0406   gamma=  279.70 GHz
+     Gaussian Broadening:   0.015 Ry, ngauss=   0
+     DOS =  2.235086 states/spin/Ry/Unit Cell at Ef= 17.146382 eV
+     lambda(    1)=  0.1824   gamma=   30.13 GHz
+     lambda(    2)=  0.0976   gamma=   18.13 GHz
+     lambda(    3)=  0.0674   gamma=   18.84 GHz
+     lambda(    4)=  0.2615   gamma=  273.12 GHz
+     lambda(    5)=  0.2624   gamma=  450.79 GHz
+     lambda(    6)=  0.2208   gamma=  431.16 GHz
+     lambda(    7)=  0.1661   gamma=  328.49 GHz
+     lambda(    8)=  0.2150   gamma=  467.00 GHz
+     lambda(    9)=  0.0876   gamma=  213.81 GHz
+     lambda(   10)=  0.0061   gamma=   21.24 GHz
+     lambda(   11)=  0.0059   gamma=   21.02 GHz
+     lambda(   12)=  0.0047   gamma=   17.78 GHz
+     lambda(   13)=  0.0056   gamma=   22.19 GHz
+     lambda(   14)=  0.0072   gamma=   28.42 GHz
+     lambda(   15)=  0.0266   gamma=  111.92 GHz
+     lambda(   16)=  0.0042   gamma=   17.97 GHz
+     lambda(   17)=  0.0130   gamma=   61.09 GHz
+     lambda(   18)=  0.0104   gamma=   49.01 GHz
+     lambda(   19)=  0.0250   gamma=  158.10 GHz
+     lambda(   20)=  0.0036   gamma=   24.42 GHz
+     lambda(   21)=  0.0417   gamma=  301.65 GHz
+     Gaussian Broadening:   0.020 Ry, ngauss=   0
+     DOS =  2.290454 states/spin/Ry/Unit Cell at Ef= 17.145317 eV
+     lambda(    1)=  0.1796   gamma=   30.41 GHz
+     lambda(    2)=  0.1030   gamma=   19.60 GHz
+     lambda(    3)=  0.0682   gamma=   19.52 GHz
+     lambda(    4)=  0.2434   gamma=  260.60 GHz
+     lambda(    5)=  0.2565   gamma=  451.66 GHz
+     lambda(    6)=  0.2280   gamma=  456.24 GHz
+     lambda(    7)=  0.1627   gamma=  329.83 GHz
+     lambda(    8)=  0.2195   gamma=  488.53 GHz
+     lambda(    9)=  0.1001   gamma=  250.35 GHz
+     lambda(   10)=  0.0062   gamma=   22.10 GHz
+     lambda(   11)=  0.0059   gamma=   21.54 GHz
+     lambda(   12)=  0.0051   gamma=   19.77 GHz
+     lambda(   13)=  0.0058   gamma=   23.39 GHz
+     lambda(   14)=  0.0074   gamma=   29.71 GHz
+     lambda(   15)=  0.0294   gamma=  127.12 GHz
+     lambda(   16)=  0.0040   gamma=   17.46 GHz
+     lambda(   17)=  0.0129   gamma=   61.98 GHz
+     lambda(   18)=  0.0103   gamma=   49.77 GHz
+     lambda(   19)=  0.0259   gamma=  168.08 GHz
+     lambda(   20)=  0.0037   gamma=   25.55 GHz
+     lambda(   21)=  0.0438   gamma=  324.34 GHz
+     Gaussian Broadening:   0.025 Ry, ngauss=   0
+     DOS =  2.332190 states/spin/Ry/Unit Cell at Ef= 17.144758 eV
+     lambda(    1)=  0.1824   gamma=   31.44 GHz
+     lambda(    2)=  0.1076   gamma=   20.85 GHz
+     lambda(    3)=  0.0697   gamma=   20.31 GHz
+     lambda(    4)=  0.2420   gamma=  263.79 GHz
+     lambda(    5)=  0.2572   gamma=  461.02 GHz
+     lambda(    6)=  0.2317   gamma=  471.92 GHz
+     lambda(    7)=  0.1646   gamma=  339.67 GHz
+     lambda(    8)=  0.2227   gamma=  504.60 GHz
+     lambda(    9)=  0.1105   gamma=  281.23 GHz
+     lambda(   10)=  0.0064   gamma=   23.03 GHz
+     lambda(   11)=  0.0059   gamma=   21.83 GHz
+     lambda(   12)=  0.0054   gamma=   21.28 GHz
+     lambda(   13)=  0.0062   gamma=   25.51 GHz
+     lambda(   14)=  0.0078   gamma=   31.98 GHz
+     lambda(   15)=  0.0312   gamma=  137.29 GHz
+     lambda(   16)=  0.0040   gamma=   17.71 GHz
+     lambda(   17)=  0.0132   gamma=   64.47 GHz
+     lambda(   18)=  0.0106   gamma=   52.16 GHz
+     lambda(   19)=  0.0270   gamma=  178.54 GHz
+     lambda(   20)=  0.0038   gamma=   26.94 GHz
+     lambda(   21)=  0.0449   gamma=  338.26 GHz
+     Gaussian Broadening:   0.030 Ry, ngauss=   0
+     DOS =  2.360595 states/spin/Ry/Unit Cell at Ef= 17.144134 eV
+     lambda(    1)=  0.1847   gamma=   32.22 GHz
+     lambda(    2)=  0.1099   gamma=   21.57 GHz
+     lambda(    3)=  0.0713   gamma=   21.03 GHz
+     lambda(    4)=  0.2497   gamma=  275.46 GHz
+     lambda(    5)=  0.2595   gamma=  470.80 GHz
+     lambda(    6)=  0.2337   gamma=  481.98 GHz
+     lambda(    7)=  0.1661   gamma=  347.12 GHz
+     lambda(    8)=  0.2238   gamma=  513.30 GHz
+     lambda(    9)=  0.1167   gamma=  300.85 GHz
+     lambda(   10)=  0.0065   gamma=   23.77 GHz
+     lambda(   11)=  0.0059   gamma=   22.08 GHz
+     lambda(   12)=  0.0056   gamma=   22.24 GHz
+     lambda(   13)=  0.0066   gamma=   27.67 GHz
+     lambda(   14)=  0.0083   gamma=   34.68 GHz
+     lambda(   15)=  0.0321   gamma=  142.74 GHz
+     lambda(   16)=  0.0040   gamma=   18.20 GHz
+     lambda(   17)=  0.0135   gamma=   66.81 GHz
+     lambda(   18)=  0.0109   gamma=   54.44 GHz
+     lambda(   19)=  0.0278   gamma=  186.11 GHz
+     lambda(   20)=  0.0039   gamma=   28.22 GHz
+     lambda(   21)=  0.0453   gamma=  345.51 GHz
+     Gaussian Broadening:   0.035 Ry, ngauss=   0
+     DOS =  2.381114 states/spin/Ry/Unit Cell at Ef= 17.143351 eV
+     lambda(    1)=  0.1862   gamma=   32.77 GHz
+     lambda(    2)=  0.1112   gamma=   22.00 GHz
+     lambda(    3)=  0.0727   gamma=   21.65 GHz
+     lambda(    4)=  0.2628   gamma=  292.48 GHz
+     lambda(    5)=  0.2618   gamma=  479.13 GHz
+     lambda(    6)=  0.2351   gamma=  488.95 GHz
+     lambda(    7)=  0.1671   gamma=  352.17 GHz
+     lambda(    8)=  0.2236   gamma=  517.43 GHz
+     lambda(    9)=  0.1208   gamma=  313.97 GHz
+     lambda(   10)=  0.0066   gamma=   24.40 GHz
+     lambda(   11)=  0.0059   gamma=   22.42 GHz
+     lambda(   12)=  0.0057   gamma=   22.89 GHz
+     lambda(   13)=  0.0071   gamma=   29.78 GHz
+     lambda(   14)=  0.0089   gamma=   37.53 GHz
+     lambda(   15)=  0.0325   gamma=  145.75 GHz
+     lambda(   16)=  0.0041   gamma=   18.83 GHz
+     lambda(   17)=  0.0138   gamma=   68.87 GHz
+     lambda(   18)=  0.0112   gamma=   56.49 GHz
+     lambda(   19)=  0.0284   gamma=  191.70 GHz
+     lambda(   20)=  0.0041   gamma=   29.53 GHz
+     lambda(   21)=  0.0454   gamma=  349.73 GHz
+     Gaussian Broadening:   0.040 Ry, ngauss=   0
+     DOS =  2.398900 states/spin/Ry/Unit Cell at Ef= 17.142416 eV
+     lambda(    1)=  0.1875   gamma=   33.24 GHz
+     lambda(    2)=  0.1122   gamma=   22.36 GHz
+     lambda(    3)=  0.0739   gamma=   22.17 GHz
+     lambda(    4)=  0.2794   gamma=  313.19 GHz
+     lambda(    5)=  0.2639   gamma=  486.70 GHz
+     lambda(    6)=  0.2361   gamma=  494.76 GHz
+     lambda(    7)=  0.1678   gamma=  356.29 GHz
+     lambda(    8)=  0.2230   gamma=  519.95 GHz
+     lambda(    9)=  0.1241   gamma=  324.94 GHz
+     lambda(   10)=  0.0067   gamma=   25.03 GHz
+     lambda(   11)=  0.0060   gamma=   22.87 GHz
+     lambda(   12)=  0.0058   gamma=   23.48 GHz
+     lambda(   13)=  0.0075   gamma=   31.84 GHz
+     lambda(   14)=  0.0095   gamma=   40.38 GHz
+     lambda(   15)=  0.0327   gamma=  147.93 GHz
+     lambda(   16)=  0.0043   gamma=   19.60 GHz
+     lambda(   17)=  0.0141   gamma=   70.88 GHz
+     lambda(   18)=  0.0115   gamma=   58.46 GHz
+     lambda(   19)=  0.0289   gamma=  196.51 GHz
+     lambda(   20)=  0.0043   gamma=   30.98 GHz
+     lambda(   21)=  0.0455   gamma=  352.84 GHz
+     Gaussian Broadening:   0.045 Ry, ngauss=   0
+     DOS =  2.416850 states/spin/Ry/Unit Cell at Ef= 17.141341 eV
+     lambda(    1)=  0.1889   gamma=   33.74 GHz
+     lambda(    2)=  0.1132   gamma=   22.74 GHz
+     lambda(    3)=  0.0749   gamma=   22.64 GHz
+     lambda(    4)=  0.2982   gamma=  336.80 GHz
+     lambda(    5)=  0.2661   gamma=  494.29 GHz
+     lambda(    6)=  0.2371   gamma=  500.52 GHz
+     lambda(    7)=  0.1686   gamma=  360.60 GHz
+     lambda(    8)=  0.2225   gamma=  522.54 GHz
+     lambda(    9)=  0.1273   gamma=  335.97 GHz
+     lambda(   10)=  0.0069   gamma=   25.69 GHz
+     lambda(   11)=  0.0061   gamma=   23.45 GHz
+     lambda(   12)=  0.0060   gamma=   24.15 GHz
+     lambda(   13)=  0.0079   gamma=   33.86 GHz
+     lambda(   14)=  0.0101   gamma=   43.22 GHz
+     lambda(   15)=  0.0329   gamma=  150.06 GHz
+     lambda(   16)=  0.0044   gamma=   20.50 GHz
+     lambda(   17)=  0.0144   gamma=   73.02 GHz
+     lambda(   18)=  0.0118   gamma=   60.46 GHz
+     lambda(   19)=  0.0294   gamma=  201.21 GHz
+     lambda(   20)=  0.0045   gamma=   32.65 GHz
+     lambda(   21)=  0.0455   gamma=  355.69 GHz
+     Gaussian Broadening:   0.050 Ry, ngauss=   0
+     DOS =  2.436152 states/spin/Ry/Unit Cell at Ef= 17.140123 eV
+     lambda(    1)=  0.1906   gamma=   34.32 GHz
+     lambda(    2)=  0.1145   gamma=   23.18 GHz
+     lambda(    3)=  0.0757   gamma=   23.07 GHz
+     lambda(    4)=  0.3186   gamma=  362.73 GHz
+     lambda(    5)=  0.2682   gamma=  502.21 GHz
+     lambda(    6)=  0.2381   gamma=  506.61 GHz
+     lambda(    7)=  0.1696   gamma=  365.72 GHz
+     lambda(    8)=  0.2221   gamma=  525.87 GHz
+     lambda(    9)=  0.1308   gamma=  347.84 GHz
+     lambda(   10)=  0.0070   gamma=   26.43 GHz
+     lambda(   11)=  0.0062   gamma=   24.16 GHz
+     lambda(   12)=  0.0061   gamma=   25.01 GHz
+     lambda(   13)=  0.0084   gamma=   35.88 GHz
+     lambda(   14)=  0.0107   gamma=   46.11 GHz
+     lambda(   15)=  0.0332   gamma=  152.42 GHz
+     lambda(   16)=  0.0046   gamma=   21.54 GHz
+     lambda(   17)=  0.0147   gamma=   75.36 GHz
+     lambda(   18)=  0.0121   gamma=   62.56 GHz
+     lambda(   19)=  0.0298   gamma=  206.06 GHz
+     lambda(   20)=  0.0047   gamma=   34.56 GHz
+     lambda(   21)=  0.0455   gamma=  358.65 GHz
+ 
+ 
+     Number of q in the star =   24
+     List of q in the star:
+          1  -0.757772228  -0.108253175  -0.216506351
+          2   0.757772228  -0.216506351  -0.108253175
+          3  -0.757772228  -0.216506351  -0.108253175
+          4  -0.108253175   0.757772228  -0.216506351
+          5   0.757772228   0.108253175  -0.216506351
+          6  -0.108253175   0.216506351   0.757772228
+          7   0.108253175   0.216506351  -0.757772228
+          8  -0.108253175  -0.216506351  -0.757772228
+          9  -0.216506351   0.757772228   0.108253175
+         10   0.216506351  -0.757772228   0.108253175
+         11  -0.216506351  -0.757772228  -0.108253175
+         12   0.757772228  -0.108253175   0.216506351
+         13  -0.757772228   0.108253175   0.216506351
+         14   0.757772228   0.216506351   0.108253175
+         15  -0.757772228  -0.216506351   0.108253175
+         16  -0.757772228   0.216506351  -0.108253175
+         17   0.757772228   0.108253175   0.216506351
+         18  -0.757772228  -0.108253175   0.216506351
+         19   0.216506351   0.757772228  -0.108253175
+         20   0.108253175  -0.757772228  -0.216506351
+         21  -0.216506351   0.108253175  -0.757772228
+         22   0.216506351   0.108253175   0.757772228
+         23  -0.216506351  -0.108253175   0.757772228
+         24   0.216506351  -0.108253175  -0.757772228
+ 
+     init_run     :      0.07s CPU      0.22s WALL (       1 calls)
+     electrons    :     24.56s CPU     27.31s WALL (       1 calls)
+
+     Called by init_run:
+     wfcinit      :      0.00s CPU      0.04s WALL (       1 calls)
+     potinit      :      0.01s CPU      0.09s WALL (       1 calls)
+     hinit0       :      0.04s CPU      0.04s WALL (       1 calls)
+
+     Called by electrons:
+     c_bands      :     24.53s CPU     27.27s WALL (       1 calls)
+     v_of_rho     :      0.01s CPU      0.03s WALL (       2 calls)
+     newd         :      0.01s CPU      0.06s WALL (       2 calls)
+
+     Called by c_bands:
+     init_us_2    :      3.44s CPU      3.81s WALL (  133824 calls)
+     cegterg      :     17.19s CPU     18.55s WALL (    1103 calls)
+
+     Called by *egterg:
+     cdiaghg      :      5.87s CPU      6.32s WALL (   17247 calls)
+     h_psi        :   1137.91s CPU   1356.97s WALL ( 1467932 calls)
+     s_psi        :     29.32s CPU     33.14s WALL ( 3025226 calls)
+     g_psi        :      0.05s CPU      0.05s WALL (   16159 calls)
+
+     Called by h_psi:
+     h_psi:calbec :     26.81s CPU     30.05s WALL ( 1467932 calls)
+     vloc_psi     :   1084.67s CPU   1297.16s WALL ( 1467932 calls)
+     add_vuspsi   :     13.94s CPU     15.75s WALL ( 1467932 calls)
+
+     General routines
+     calbec       :     72.60s CPU     79.40s WALL ( 3197674 calls)
+     fft          :      0.71s CPU      1.00s WALL (    3879 calls)
+     ffts         :      0.67s CPU      0.77s WALL (   12305 calls)
+     fftw         :   1485.82s CPU   1801.04s WALL (20367392 calls)
+     interpolate  :      0.16s CPU      0.21s WALL (     419 calls)
+     davcio       :     18.31s CPU    322.69s WALL (  579564 calls)
+ 
+     Parallel routines
+ 
+     PHONON       :  42m 8.39s CPU  54m29.42s WALL
+
+     INITIALIZATION: 
+     phq_setup    :      0.01s CPU      0.03s WALL (       1 calls)
+     phq_init     :     18.80s CPU     21.17s WALL (       1 calls)
+ 
+     phq_init     :     18.80s CPU     21.17s WALL (       1 calls)
+     set_drhoc    :      0.04s CPU      0.05s WALL (       3 calls)
+     init_vloc    :      0.00s CPU      0.04s WALL (       2 calls)
+     init_us_1    :      0.06s CPU      0.22s WALL (       2 calls)
+     newd         :      0.01s CPU      0.06s WALL (       2 calls)
+     dvanqq       :      0.17s CPU      0.18s WALL (       1 calls)
+     drho         :     12.44s CPU     13.94s WALL (       1 calls)
+ 
+     DYNAMICAL MATRIX:
+     dynmat0      :      3.81s CPU      4.32s WALL (       1 calls)
+     phqscf       :   2451.63s CPU   3180.77s WALL (       1 calls)
+     dynmatrix    :      0.04s CPU      0.07s WALL (       1 calls)
+ 
+     phqscf       :   2451.63s CPU   3180.77s WALL (       1 calls)
+     solve_linter :   2431.67s CPU   3156.26s WALL (      21 calls)
+     drhodv       :     19.95s CPU     22.21s WALL (      21 calls)
+ 
+     dynmat0      :      3.81s CPU      4.32s WALL (       1 calls)
+     dynmat_us    :      3.76s CPU      4.26s WALL (       1 calls)
+     d2ionq       :      0.01s CPU      0.01s WALL (       1 calls)
+     dynmatcc     :      0.04s CPU      0.04s WALL (       1 calls)
+ 
+     dynmat_us    :      3.76s CPU      4.26s WALL (       1 calls)
+     addusdynmat  :      0.00s CPU      0.00s WALL (       1 calls)
+ 
+     phqscf       :   2451.63s CPU   3180.77s WALL (       1 calls)
+     solve_linter :   2431.67s CPU   3156.26s WALL (      21 calls)
+ 
+     solve_linter :   2431.67s CPU   3156.26s WALL (      21 calls)
+     dvqpsi_us    :     17.51s CPU     18.93s WALL (   11424 calls)
+     ortho        :     24.98s CPU     26.62s WALL (  107712 calls)
+     cgsolve      :   1238.76s CPU   1471.01s WALL (  107712 calls)
+     incdrhoscf   :    195.19s CPU    243.14s WALL (  107712 calls)
+     addusddens   :      3.37s CPU      4.19s WALL (     219 calls)
+     vpsifft      :    266.38s CPU    328.96s WALL (  107712 calls)
+     dv_of_drho   :      0.60s CPU      0.63s WALL (     198 calls)
+     mix_pot      :      6.88s CPU     40.72s WALL (     198 calls)
+     psymdvscf    :      3.26s CPU      3.44s WALL (     198 calls)
+     newdq        :      2.77s CPU      2.79s WALL (     198 calls)
+     adddvscf     :      3.48s CPU      3.94s WALL (  107712 calls)
+     drhodvus     :      1.57s CPU      4.19s WALL (      21 calls)
+ 
+     dvqpsi_us    :     17.51s CPU     18.93s WALL (   11424 calls)
+     dvqpsi_us_on :      6.49s CPU      6.88s WALL (   11424 calls)
+ 
+     cgsolve      :   1238.76s CPU   1471.01s WALL (  107712 calls)
+     ch_psi       :   1219.45s CPU   1449.04s WALL ( 1449582 calls)
+ 
+     ch_psi       :   1219.45s CPU   1449.04s WALL ( 1449582 calls)
+     h_psi        :   1137.91s CPU   1356.97s WALL ( 1467932 calls)
+     last         :     61.15s CPU     68.80s WALL ( 1449582 calls)
+ 
+     h_psi        :   1137.91s CPU   1356.97s WALL ( 1467932 calls)
+     add_vuspsi   :     13.94s CPU     15.75s WALL ( 1467932 calls)
+ 
+     incdrhoscf   :    195.19s CPU    243.14s WALL (  107712 calls)
+     addusdbec    :      3.41s CPU      3.78s WALL (  119136 calls)
+ 
+     drhodvus     :      1.57s CPU      4.19s WALL (      21 calls)
+ 
+      Electron-phonon coupling
+     elphel       :     72.03s CPU    103.03s WALL (      21 calls)
+     elphsum      :     32.38s CPU     33.19s WALL (       1 calls)
+ 
+      General routines
+     calbec       :     72.60s CPU     79.40s WALL ( 3197674 calls)
+     fft          :      0.71s CPU      1.00s WALL (    3879 calls)
+     ffts         :      0.67s CPU      0.77s WALL (   12305 calls)
+     fftw         :   1485.82s CPU   1801.04s WALL (20367392 calls)
+     davcio       :     18.31s CPU    322.69s WALL (  579564 calls)
+     write_rec    :      0.14s CPU     16.11s WALL (     219 calls)
+ 
+ 
+     PHONON       :  42m 8.39s CPU  54m29.42s WALL
+
+ 
+   This run was terminated on:   5:55:29  31Jul2022            
+
+=------------------------------------------------------------------------------=
+   JOB DONE.
+=------------------------------------------------------------------------------=

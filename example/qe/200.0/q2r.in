@@ -1,0 +1,6 @@
+&input                      
+  la2F = .true.,            
+  zasr = 'simple',          
+  fildyn = 'Ca1H6.dyn'         
+  flfrc = 'Ca1H6.fc',          
+/                           

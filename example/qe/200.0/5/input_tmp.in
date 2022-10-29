@@ -1,0 +1,16 @@
+Electron-phonon coefficients for Ca1H6
+ &inputph
+  tr2_ph=1.0d-16,
+  prefix='Ca1H6',
+  fildvscf='Ca1H6.dv',
+  electron_phonon='interpolated',
+  el_ph_sigma=0.005,
+  el_ph_nsigma=10,
+  amass(1)=40.078 ,
+  amass(2)=1.00794 ,
+  outdir='./tmp',
+  fildyn='Ca1H6.dyn',
+  trans=.true.,
+  ldisp=.false.,
+/
+ -0.4330127 -0.4330127 0.0000000

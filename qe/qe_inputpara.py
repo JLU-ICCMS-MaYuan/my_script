@@ -56,6 +56,10 @@ class qe_inputpara(qe_base):
         if not hasattr(self, "mode"):
             raise AttributeError("there is no attribution of mode")
 
+        if not hasattr(self, "core"):
+            raise AttributeError("there is no attribution of core")
+
+ 
         if not hasattr(self, "queue"):
             self.queue = None
 
@@ -345,6 +349,7 @@ class qedos_inputpara(qe_inputpara):
         if not hasattr(self, "ndos"):
             logger.info("You didn't set ndos, the program will set ndos=500")
             self.ndos = 500
+
 
 class qesc_inputpara(qephono_inputpara):
 

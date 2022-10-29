@@ -22,13 +22,15 @@ class qe_relax:
 
         # init the input
         self.qe_writeinput  = qe_writeinput.init_from_relaxinput(self.relax_inputpara)
-
+        
         # init the submit job script
         self.qe_writesubmit = qe_writesubmit.init_from_relaxinput(self.relax_inputpara)
-
+        jobname = self.qe_writesubmit.job_system()
+        
         # submit the job. If we didn't set the parameter of `queue`, it will be set `None` in `qe_inputpara`
+        self.qe_submitjob = qe_submitjob.init_from_relaxinput(self.relax_inputpara)
         if self.relax_inputpara.queue is not None:
-            self.qe_submitjob = qe_submitjob.init_from_relaxinput(self.relax_inputpara)
+            self.qe_submitjob.submit(jobname)
 
 
 class qe_scf:
