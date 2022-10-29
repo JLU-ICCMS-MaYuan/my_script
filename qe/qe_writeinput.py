@@ -184,7 +184,7 @@ class qe_writeinput:
             deguass=other_class.deguass,
             smearing_method=other_class.smearing_method,
             temperature_points=other_class.temperature_points,
-            a2f_dos=other_class.a2f_dos,
+            a2F_dos=other_class.a2F_dos,
 
             # basic parameter of control precision
             forc_conv_thr=other_class.forc_conv_thr,
@@ -201,6 +201,7 @@ class qe_writeinput:
         )
         return self
 
+    # write inputfile
     def writeinput(self):
         if self.mode == "relax-vc":
             inputfilename = self.write_relax_in()
@@ -228,8 +229,7 @@ class qe_writeinput:
                 ph_name     = self.write_split_ph_dyn0(split_ph_dir, q3)
                 inputfilename.append([scffit_name, scf_name, ph_name])
                 logger.info(f"finish input files in {i+1}")
-            return inputfilename
-                
+            return inputfilename     
         if self.mode =="split_assignQ":
             inputfilename = []
             if self.qirreduced is not None:
@@ -238,7 +238,6 @@ class qe_writeinput:
                     inputfilename.append(ph_name)
                 logger.info(f"finish input files {i+1}")            
             return inputfilename
-
         if self.mode =="q2r":
             inputfilename = self.write_q2r_in()
             return inputfilename
@@ -308,7 +307,7 @@ class qe_writeinput:
                 for species_pseudo in self.final_choosed_pp:
                     match_res = re.search("^"+species_name.lower()+"\_", species_pseudo)
                     if match_res is not None:
-                        logger.info(f"write USPP for species in relax.in: {match_res.group()}") 
+                        logger.info(f"write USPP for species in relax.in: {species_pseudo}") 
                         element      = Element(species_name)
                         species_mass = str(element.atomic_mass).strip("amu")
                         qe.write(" {:<5}  {:<10}  {:<50} \n".format(species_name, species_mass, species_pseudo))
@@ -362,7 +361,7 @@ class qe_writeinput:
                 for species_pseudo in self.final_choosed_pp:
                     match_res = re.search("^"+species_name.lower()+"\_", species_pseudo)
                     if match_res is not None:
-                        logger.info(f"write USPP for species in scf.fit.in: {match_res.group()}") 
+                        logger.info(f"write USPP for species in scf.fit.in: {species_pseudo}") 
                         element      = Element(species_name)
                         species_mass = str(element.atomic_mass).strip("amu")
                         qe.write(" {:<5}  {:<10}  {:<50} \n".format(species_name, species_mass, species_pseudo))
@@ -415,7 +414,7 @@ class qe_writeinput:
                 for species_pseudo in self.final_choosed_pp:
                     match_res = re.search("^"+species_name.lower()+"\_", species_pseudo)
                     if match_res is not None:
-                        logger.info(f"write USPP for species in scf.in: {match_res.group()}") 
+                        logger.info(f"write USPP for species in scf.in: {species_pseudo}") 
                         element      = Element(species_name)
                         species_mass = str(element.atomic_mass).strip("amu")
                         qe.write(" {:<5}  {:<10}  {:<50} \n".format(species_name, species_mass, species_pseudo))
@@ -470,7 +469,7 @@ class qe_writeinput:
                 for species_pseudo in self.final_choosed_pp:
                     match_res = re.search("^"+species_name.lower()+"\_", species_pseudo)
                     if match_res is not None:
-                        logger.info(f"write USPP for species in scf.in: {match_res.group()}") 
+                        logger.info(f"write USPP for species in scf.in: {species_pseudo}") 
                         element      = Element(species_name)
                         species_mass = str(element.atomic_mass).strip("amu")
                         qe.write(" {:<5}  {:<10}  {:<50} \n".format(species_name, species_mass, species_pseudo))
@@ -616,7 +615,7 @@ class qe_writeinput:
         return inputfilename
 
     def write_matdyn_dos_in(self):
-        inputfilename = "matdyn.dos.in"
+        inputfilename = "matdyn_dos.in"
         matdyn_dos_in = os.path.join(self.work_underpressure, inputfilename) 
         with open(matdyn_dos_in, "w") as qe:
             qe.write("&input                                             \n")
@@ -649,15 +648,13 @@ class qe_writeinput:
             deguass         = self.deguass
             smearing_method = self.smearing_method
             screen_constant = self.screen_constant
-            if len(self.qirreduced_coords)        == \
-               len(self.qweights)            == \
-               int(self.qirreduced) == \
-               len(elphInpLambda):
+            if len(self.qirreduced_coords) == len(self.qweights) == int(self.qirreduced) == len(elphInpLambda):
                 q_number = self.qirreduced
                 q_coords = self.qirreduced_coords
                 q_weight = self.qweights
             else:
                 logger.error("q number is wrong. The q number in qlist.dat is not matched with nqs.dat")
+
             with open(lambda_in, "w") as qe:
                 qe.write("{:<10} {:<10} {:<10}                 \n".format(str(top_freq), str(deguass), str(smearing_method)))
                 qe.write("{:<10}                               \n".format(str(q_number)))
@@ -678,15 +675,13 @@ class qe_writeinput:
             qe.write("{:<10} {:<10}".format(screen_constant, temperature_points))
         return inputfilename
 
-
     def write_alpha2f_out(self):
         alpha2f_out = Path(self.work_underpressure).joinpath("ALPHA2F.out").absolute()
-        if self.a2f_dos is not None:
-            a2f_dos_path = Path(self.work_underpressure).joinpath(self.a2f_dos).absolute()
-            if not a2f_dos_path.exists():
+        if self.a2F_dos is not None:
+            a2F_dos_path = Path(self.work_underpressure).joinpath(self.a2F_dos).absolute()
+            if not a2F_dos_path.exists():
                 raise FileExistsError(f"{self.a2f_dos} doesn't exist !")
 
-        a2f_dos_path = str(a2f_dos_path)
+        a2F_dos_path = str(a2F_dos_path)
         alpha2f_out = str(alpha2f_out)
-        os.system(f"sed '1,5d' {a2f_dos_path} | sed '/lambda/d' | awk '{'{print $1/2, $2}'}' > ALPHA2F.OUT")
-        
+        os.system(f"sed '1,5d' {a2F_dos_path} | sed '/lambda/d' | awk '{'{print $1/2, $2}'}' > {alpha2f_out}")

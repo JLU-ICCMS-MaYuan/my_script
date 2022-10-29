@@ -30,11 +30,9 @@ class qe_base:
             2. the position of ppdirectory
 
         input_file_path:
-            1. if .vasp: then the program will create directory filename/press,
-               it will be named work_underpressure
-
-            2. if relax.out: then the program will not create directory filename/press under the work_path,
+            1. if relax.out: then the program will not create directory filename/press under the work_path,
                the parents of input_file_path will be work_underpressure
+            2. if others:  then the program will create directory `/press`, it will be named work_underpressure
 
         if you do "relax":
             you must specify: 1. work_path, 2. press, 3. submit_job_system, 4. input_file_path
@@ -46,12 +44,7 @@ class qe_base:
         self.submit_job_system = submit_job_system
         self.input_file_path   = Path(input_file_path)
         
-        if ".vasp" in self.input_file_path.name:
-            self.input_file_name = self.input_file_path.name.split(".")[0]
-            self.work_underpressure= Path(self.work_path).joinpath(self.input_file_name, str(self.press))
-            if not self.work_underpressure.exists():
-                self.work_underpressure.mkdir(parents=True, exist_ok=True)
-        elif "relax.out" in self.input_file_path.name:
+        if "relax.out" in self.input_file_path.name:
             self.work_underpressure= Path(self.input_file_path).parent
         else:
             self.work_underpressure= Path(self.work_path).joinpath(str(self.press))
@@ -64,7 +57,7 @@ class qe_base:
         
         ############################ prepare pp directory #########################
         logger.info(f"create potcar dir in {self.work_path}")
-        self.workpath_pppath = Path(self.work_path).joinpath("pp")
+        self.workpath_pppath = Path(self.work_underpressure).joinpath("pp")
         if not self.workpath_pppath.exists():
             self.workpath_pppath.mkdir(parents=True)
         # 准备赝势 

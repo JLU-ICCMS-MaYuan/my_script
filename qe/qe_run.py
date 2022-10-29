@@ -77,10 +77,10 @@ class qe_phono:
 
         # submit the job
         self.qe_submitjob = qe_submitjob.init_from_phonoinput(self.phono_inputpara)
-        if self.phono_inputpara.queue is not None and self.phono_inputpara.mode == "nosplit":
-            self.qe_submitjob.submit_mode2(inputfilename, jobnames)
-        if self.phono_inputpara.queue is not None:
-            if self.phono_inputpara.mode == "split_dyn0" or self.phono_inputpara.mode == "split_assignQ":
+        if self.phono_inputpara.queue is not None :
+            if self.phono_inputpara.mode == "nosplit":
+                self.qe_submitjob.submit_mode2(inputfilename, jobnames)
+            elif self.phono_inputpara.mode == "split_dyn0" or self.phono_inputpara.mode == "split_assignQ":
                 self.qe_submitjob.submit_mode3(inputfilename, jobnames)
             else:
                 self.qe_submitjob.submit_mode1(inputfilename, jobnames)
@@ -98,13 +98,14 @@ class qe_dos:
 
         # write input parameter
         self.qe_writeinput  = qe_writeinput.init_from_dosinput(self.dos_inputpara)
-
+        inputfilename = self.qe_writeinput.writeinput()
         # init the submit job script
         self.qe_writesubmit = qe_writesubmit.init_from_dosinput(self.dos_inputpara)
-
+        jobname = self.qe_writesubmit.write_submit_scripts(inputfilename)
         # submit the job
+        self.qe_submitjob = qe_submitjob.init_from_dosinput(self.dos_inputpara)
         if self.dos_inputpara.queue is not None:
-            self.phono_inputpara = qe_submitjob.init_from_dosinput(self.dos_inputpara)
+            self.qe_submitjob.submit_mode1(inputfilename, jobname)
 
 
 class qe_superconduct:
@@ -117,11 +118,15 @@ class qe_superconduct:
         # prepare input parameter
         self.sc_inputpara  = qesc_inputpara.init_from_config(self._config)
         # init the input
+
         self.qe_writeinput  = qe_writeinput.init_from_scinput(self.sc_inputpara)
+        inputfilename = self.qe_writeinput.writeinput()
 
         # init the submit job script
         self.qe_writesubmit = qe_writesubmit.init_from_scinput(self.sc_inputpara)
+        jobname = self.qe_writesubmit.write_submit_scripts(inputfilename)
 
         # submit the job
+        self.qe_submitjob   = qe_submitjob.init_from_scinput(self.sc_inputpara)
         if self.sc_inputpara.queue is not None:
-            self.qe_submitjob   = qe_submitjob.init_from_scinput(self.sc_inputpara)
+            self.qe_submitjob.submit_mode1(inputfilename, jobname)

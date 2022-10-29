@@ -4,7 +4,7 @@
 
 qebin_path     = "/home/mayuan/mysoftware/q-e-qe-7.1/bin"
 qe_source_libs = "/home/mayuan/mysoftware/all_pbe_UPF_v1.5"
-eliashberg_x_path = "/work/home/may/code/my_script/qe/eliashberg/eliashberg.x"
+eliashberg_x_path = "/home/mayuan/mycode/my_script/qe/eliashberg/eliashberg.x"
 
 # qebin_path = "/public/home/mayuan/software/qe-7.1/bin/"
 # qe_source_libs = "/public/home/mayuan/POT/qe-pp/all_pbe_UPF_v1.5"

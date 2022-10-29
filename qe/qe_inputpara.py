@@ -283,7 +283,7 @@ class qephono_inputpara(qe_inputpara):
                 shutil.copy(src_a2Fq2r, dst_a2Fq2r)
                 logger.info(f"a2Fq2r.{str(j)}.1 copy finished \n {dst_dyn}")
 
-    def singet_hspp(self):
+    def get_hspp(self):
         """
         This method is to get high symmetry paths and points
         """ 
@@ -311,8 +311,8 @@ class qephono_inputpara(qe_inputpara):
         path_name_coords= list(zip(path_name_list, path_coords))
         return path_name_coords 
 
-    def get_top_freq(self, phonondos_path):
-        phonon_dos = open(phonondos_path, "r").readlines()
+    def get_top_freq(self, dosfile):
+        phonon_dos = open(dosfile, "r").readlines()
         frequents = []
         for id, line in enumerate(phonon_dos):
             if id != 0:
@@ -374,7 +374,7 @@ class qesc_inputpara(qephono_inputpara):
         
         # Mc-A-D and Eliashberg
         if not hasattr(self, "screen_constant"):
-            logger.warning("you have to specify the temperature_points ! The program will set default 0.13")
+            logger.warning("you have to specify the screen_constant ! The program will set default 0.13")
             self.screen_constant = 0.13
 
         # Mc-A-D
@@ -388,10 +388,9 @@ class qesc_inputpara(qephono_inputpara):
         
         # Mc-A-D
         if not hasattr(self, "top_freq"):
-            phonondos_names = list(Path(self.work_underpressure).glob("phonon.dos"))
-            if len(phonondos_names) == 1:
-                phonondos_path = phonondos_names[0]
-                self.top_freq = self.get_top_freq(phonondos_path=phonondos_path)
+            dosfile = Path(self.work_underpressure).joinpath(self.system_name+".dos")
+            if dosfile.exists():
+                self.top_freq = self.get_top_freq(dosfile=dosfile)
         
         # Mc-A-D
         if not hasattr(self, "deguass"):
@@ -405,12 +404,12 @@ class qesc_inputpara(qephono_inputpara):
         
         # Eliashberg
         if not hasattr(self, "temperature_points"):
-            logger.warning("you have to specify the temperature_points ! The program will set default 0.12")
+            logger.warning("If you use Eliashberg method, you have to specify the temperature_points ! The program will set default `5000`")
             self.temperature_points = 5000
         
         # Eliashberg
-        if not hasattr(self, "a2f_dos"):
-            logger.warning("you didn't specify the a2f.dos* ! Please specify it !")
-            self.a2f_dos = None
+        if not hasattr(self, "a2F_dos"):
+            logger.warning("If you use Eliashberg method, you may not specify the a2f_dos* ! Please specify it ! The program will set default `None`")
+            self.a2F_dos = None
 
             

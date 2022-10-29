@@ -102,6 +102,8 @@ class qe_submitjob:
             scffit, 
             scf, 
             nscf,
+            q2r,
+            matdyn
         """
         input_file = Path(self.work_underpressure).joinpath(inputfilename)
         if not input_file.exists():
@@ -140,46 +142,32 @@ class qe_submitjob:
     def submit_mode3(self, inputfilename, jobnames):
         
         if self.mode =="split_dyn0":
-            cwd = os.getcwd()
-            os.chdir(self.work_underpressure)
             jobids = []
-            for jobname in jobnames:
-                if self.submit_job_system == "bash":
-                    print(f"nohup {self.submit_order} {jobname} > bash.log 2>&1 &")
-                    res = os.popen(f"nohup {self.submit_order} {jobname} > bash.log 2>&1 &").read()
-                    jobid = self.getpid()
-                else:
-                    res = os.popen(f"{self.submit_order} {jobname}").read()
-                    jobid = re.search(r"\d+", res)
-                    jobids.append(jobid)
-                logger.info(f"finish submit {jobname}, jobid = {''.join(jobids)}")
-            os.chdir(cwd)
-
-        if self.mode =="split_assignQ":
+            for i, jobname in enumerate(jobnames):
                 cwd = os.getcwd()
-                os.chdir(self.work_underpressure)
-                for jobname in jobnames:
-                    if self.submit_job_system == "bash":
-                        print(f"nohup {self.submit_order} {jobname} > bash.log 2>&1 &")
-                        res = os.popen(f"nohup {self.submit_order} {jobname} > bash.log 2>&1 &").read()
-                        jobid = self.getpid()
-                    else:
-                        res = os.popen(f"{self.submit_order} {jobname}").read()
-                        jobid = re.search(r"\d+", res)
-                    logger.info(f"finish submit {jobname}")
+                os.chdir(self.work_underpressure.joinpath(str(i+1)))
+                if self.submit_job_system == "bash":
+                    print(f"nohup {self.submit_order} {jobname} > phbash{i+1}.log 2>&1 &")
+                    os.system(f"nohup {self.submit_order} {jobname} > phbash{i+1}.log 2>&1 &")
+                else:
+                    print(f"{self.submit_order} {jobname}")
+                    os.system(f"{self.submit_order} {jobname}")
+                logger.info(f"finish submit {jobname}, jobid = {''.join(jobids)}")
                 os.chdir(cwd)
 
-    def submit_mode4(self):
-        if self.mode =="q2r":
-            dst_files = Path(self.work_underpressure).glob("q2r.in")
-            for dst_file in dst_files:
-                if dst_file.exists():
-                    cwd = dst_file.cwd()
-                    dst_dir = dst_file.parent.absolute()
-                    os.chdir(dst_dir)
+        if self.mode =="split_assignQ":
+            cwd = os.getcwd()
+            os.chdir(self.work_underpressure)
+            for i, jobname in enumerate(jobnames):
+                if self.submit_job_system == "bash":
+                    print(f"nohup {self.submit_order} {jobname} > phbash{i+1}.log 2>&1 &")
+                    os.system(f"nohup {self.submit_order} {jobname} > phbash{i+1}.log 2>&1 &")
+                else:
+                    print(f"{self.submit_order} {jobname}")
                     os.system(f"{self.submit_order} {jobname}")
-                    logger.info("qe q2r is running")
-                    os.chdir(cwd)
+                    logger.info(f"finish submit {jobname}, jobid = {''.join(jobids)}")
+            os.chdir(cwd)
+
         if self.mode =="matdyn":
             dst_files = Path(self.work_underpressure).glob("matdyn.in")
             for dst_file in dst_files:
@@ -191,7 +179,7 @@ class qe_submitjob:
                     logger.info("qe matdyn is running")
                     os.chdir(cwd)
         if self.mode =="matdyn_dos":
-            dst_files = Path(self.work_underpressure).glob("matdyn.dos.in")
+            dst_files = Path(self.work_underpressure).glob("matdyn_dos.in")
             for dst_file in dst_files:
                 if dst_file.exists():
                     cwd = dst_file.cwd()
