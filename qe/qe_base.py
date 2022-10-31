@@ -1,8 +1,10 @@
 import os
 import re
 import shutil
-from pathlib import Path
 import logging
+import numpy as np
+from pathlib import Path
+
 from argparse import ArgumentParser
 
 from ase.io import read
@@ -73,7 +75,7 @@ class qe_base:
             None
         '''
         spa = SpacegroupAnalyzer(struct)
-        # bstruct = spa.get_conventional_standard_structure()
+        bstruct = spa.get_conventional_standard_structure()
         pstruct = spa.get_primitive_standard_structure()
         Poscar(pstruct).write_file(output_poscar.joinpath("PPOSCAR"))
 
@@ -91,6 +93,14 @@ class qe_base:
         self.cell_parameters    = pstruct.lattice.matrix
         # 获得原子分数坐标
         self.fractional_sites   = pstruct.sites
+        # 获得倒格矢
+        # 注意，这是用于固体物理的标准倒数晶格，因数为2π
+        self.reciprocal_plattice = self.get_reciprocal_lattice(self.work_underpressure.joinpath("scffit.out"))
+        # self.reciprocal_plattice = pstruct.lattice.reciprocal_lattice
+        # self.reciprocal_blattice = bstruct.lattice.reciprocal_lattice
+        # 返回晶体倒数晶格，即没有2π的因子。
+        # self.reciprocal_lattice_crystallographic = pstruct.lattice.reciprocal_lattice_crystallographic
+
 
     def get_USPP(self, workpath_pppath):
         '''
@@ -106,12 +116,19 @@ class qe_base:
         pp_files = os.listdir(workpath_pppath)
         self.final_choosed_pp = []
         for species in self.species:
-            species_name = species.name.lower()
-            dst_pps = filter(lambda file: re.search("^"+species_name+"\_", file.lower()), pp_files)
-            dst_pps = list(dst_pps)
-            if len(dst_pps) == 1:
-                print(1)
-                self.final_choosed_pp.append(dst_pps[0])
+            species_name = species.name
+            dst_pps = get_pps_for_a_element(species_name, pp_files)
+            if len(dst_pps) >= 1:
+                # 如果目标元素已经有多个赝势放在pp目录中. 例如S元素的三个赝势都放在了pp目录中，你需要手动选择哪个赝势用作计算
+                choosed_flag  = False
+                while not choosed_flag:
+                    choosed_pp = input(f"The pp directory has the {dst_pps}! please input you want one\n")
+                    if choosed_pp in dst_pps:
+                        choosed_flag = True
+                        self.final_choosed_pp.append(choosed_pp)
+                    else:
+                        choosed_flag = False
+                print(self.final_choosed_pp)
             elif len(dst_pps) == 0:
                 logger.info(f"to prepare {species_name} uspp! ")
                 dst_pp = self.get_single_uspp(species_name, workpath_pppath)
@@ -130,11 +147,12 @@ class qe_base:
         '''
         qe_USPP = os.path.abspath(qe_source_libs)
         if os.path.exists(qe_USPP):
-            ppfiles = os.listdir(qe_USPP)
+            pp_files = os.listdir(qe_USPP)
         else:
             raise FileExistsError("You may not set the potcar_source_libs, you can set it in `qebin.py` ")
-        targetppfiles = filter(lambda file: re.search("^"+species_name+"\_", file.lower()), ppfiles)
-        targetppnames = [pp for pp in targetppfiles]
+
+        targetppfiles    = self.get_pps_for_a_element(species_name, pp_files)
+        targetppnames    = [pp for pp in targetppfiles]
         choosed_flag  = False
         while not choosed_flag:
             choosed_pp = input(f"{targetppnames}, \nplease input you want one\n")
@@ -147,3 +165,36 @@ class qe_base:
                 choosed_flag = False
             
         return choosed_pp
+
+    def get_reciprocal_lattice(self, scffit_out: Path):
+        """
+        读取scffit.out文件获得其中的reciprocal lattice
+        Read the scffit.out file to get the reciprocal lattice
+        """
+
+        if not scffit_out.exists():
+            logger.warning("You have run scffit for getting `scffit.out`")
+            return None
+            
+        reciprocal_lattice = []
+        for i in range(1,4):
+            b = os.popen(f"sed -n '/b({i})/p' {scffit_out}").read()
+            b = re.findall(r"-?\d+\.\d+", b)
+            b  = list(map(float, b))
+            reciprocal_lattice.append(b)
+        return np.array(reciprocal_lattice)
+
+
+def get_pps_for_a_element(species_name:str, pp_files:list):
+    """
+    species_name: 元素名
+    pp_files    : 存储着赝势名的列表
+    该函数可以从存储着赝势名的列表中挑选出指定元素的全部赝势
+    支持识别的赝势名称格式分别为：
+        H.pbe-van_bm.UPF.txt  首字母大写的元素名.****
+        h_pbe_v1.uspp.F.UPF   首字母小写的元素名_****
+    """
+    qepp_name_patter = re.compile(f"^[{species_name.capitalize()}|{species_name.lower()}][\.|\_]")
+    dst_pps          = list(filter(lambda file: qepp_name_patter.findall(file), pp_files))
+
+    return dst_pps

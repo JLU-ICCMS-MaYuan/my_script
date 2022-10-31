@@ -140,33 +140,34 @@ class qe_submitjob:
                     break
 
     def submit_mode3(self, inputfilename, jobnames):
-        
-        if self.mode =="split_dyn0":
-            jobids = []
-            for i, jobname in enumerate(jobnames):
-                cwd = os.getcwd()
-                os.chdir(self.work_underpressure.joinpath(str(i+1)))
-                if self.submit_job_system == "bash":
-                    print(f"nohup {self.submit_order} {jobname} > phbash{i+1}.log 2>&1 &")
-                    os.system(f"nohup {self.submit_order} {jobname} > phbash{i+1}.log 2>&1 &")
-                else:
-                    print(f"{self.submit_order} {jobname}")
-                    os.system(f"{self.submit_order} {jobname}")
-                logger.info(f"finish submit {jobname}, jobid = {''.join(jobids)}")
-                os.chdir(cwd)
-
-        if self.mode =="split_assignQ":
+        """split_dyn0"""
+        jobids = []
+        for i, jobname in enumerate(jobnames):
             cwd = os.getcwd()
-            os.chdir(self.work_underpressure)
-            for i, jobname in enumerate(jobnames):
-                if self.submit_job_system == "bash":
-                    print(f"nohup {self.submit_order} {jobname} > phbash{i+1}.log 2>&1 &")
-                    os.system(f"nohup {self.submit_order} {jobname} > phbash{i+1}.log 2>&1 &")
-                else:
-                    print(f"{self.submit_order} {jobname}")
-                    os.system(f"{self.submit_order} {jobname}")
-                    logger.info(f"finish submit {jobname}, jobid = {''.join(jobids)}")
+            os.chdir(self.work_underpressure.joinpath(str(i+1)))
+            if self.submit_job_system == "bash":
+                print(f"nohup {self.submit_order} {jobname} > phbash{i+1}.log 2>&1 &")
+                os.system(f"nohup {self.submit_order} {jobname} > phbash{i+1}.log 2>&1 &")
+            else:
+                print(f"{self.submit_order} {jobname}")
+                os.system(f"{self.submit_order} {jobname}")
+            logger.info(f"finish submit {jobname}, jobid = {''.join(jobids)}")
             os.chdir(cwd)
+
+    def submit_mode4(self, inputfilename, jobnames):
+        """split_assignQ"""
+        jobids = []
+        cwd = os.getcwd()
+        os.chdir(self.work_underpressure)
+        for i, jobname in enumerate(jobnames):
+            if self.submit_job_system == "bash":
+                print(f"nohup {self.submit_order} {jobname} > phbash{i+1}.log 2>&1 &")
+                os.system(f"nohup {self.submit_order} {jobname} > phbash{i+1}.log 2>&1 &")
+            else:
+                print(f"{self.submit_order} {jobname}")
+                os.system(f"{self.submit_order} {jobname}")
+                logger.info(f"finish submit {jobname}, jobid = {''.join(jobids)}")
+        os.chdir(cwd)
 
         if self.mode =="matdyn":
             dst_files = Path(self.work_underpressure).glob("matdyn.in")
@@ -211,7 +212,12 @@ class qe_submitjob:
     @staticmethod
     def getpid():
         """get pid number"""
-        osawk = """sleep 8 && ps -aux | grep pw.x | awk '{print $2}'""" # return a series of number, such as: 423423 324233 423424
+        logger.info("wait 2s, The program will tell you PID"); time.sleep(2); 
+        osawk = """ps -ef | grep -E "pw.x|ph.x|matdyn.x|lambda.x|q2r.x" |  grep -v grep | awk '{print $2}'""" # return a series of number, such as: 423423 324233 423424
+        # ps -ef ps -ef用于查看全格式的全部进程，其中“ps”是在Linux中是查看进程的命令，“-e ”参数代表显示所有进程，“-f”参数代表全格式。
+        # grep -E  ‘grep’ ‘-E’ 选项表示使用扩展的正则表达式。如果你使用 ‘grep’ 命令时带 ‘-E’，你只需要用途 ‘|’ 来分隔OR条件。 grep -E 'pattern1|pattern2' filename
+        # grep -v grep 这里可以比较看出，多出了一个进程号，这是grep时所多出来的进程，通过grep -v grep去除包含grep文本的进程行 ，避免影响最终数据的正确性
+        #  awk '{print $2}' 这样，就可以抓取PID号
         _jobid = os.popen(osawk).read()  # return a string; such as '423423\n324233\n423424\n'
         jobid = _jobid.strip("\n").split("\n")
         return jobid

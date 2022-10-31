@@ -1,11 +1,3 @@
-'''
-qeSuperconductTc.py -pos scripts_tests/POSCAR -caldir scripts_tests/out
--pos    scripts_tests/POSCAR 
--caldir scripts_tests/out
-'''
-
-from builtins import hasattr
-from curses.ascii import isdigit
 import os
 import re
 import shutil
@@ -14,13 +6,7 @@ from pathlib import Path
 from itertools import chain
 from math import ceil
 
-from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
-from pymatgen.core.periodic_table import Element
-from pymatgen.io.vasp import Poscar
-from pymatgen.io.ase import AseAtomsAdaptor
-from ase.io import read
-
-from config import config
+import numpy as np
 
 from qe_base import qe_base
 
@@ -188,9 +174,6 @@ class qephono_inputpara(qe_inputpara):
 
         if not hasattr(self, "path_name_coords"):
             self.path_name_coords = None
-
-        if self.mode == "merge":
-            self.merge(self.work_underpressure)
         
         if self.mode == "matdyn":
             self.path_name_coords = self.get_hspp()
@@ -275,13 +258,13 @@ class qephono_inputpara(qe_inputpara):
             src_dyn    = os.path.join(dir, str(i+1), self.system_name+".dyn")
             dst_dyn    = os.path.join(dir,           self.system_name+".dyn"+str(i+1))
             shutil.copy(src_dyn, dst_dyn)
-            logger.info(f"{self.system_name}.dyn copy finished \n {dst_dyn}")
+            logger.info(f"{self.system_name}.dyn copy finished {dst_dyn}")
 
             for j in range(51, 61):
                 src_a2Fq2r = os.path.join(dir, str(i+1), "elph_dir", "a2Fq2r."+str(j)+".1")
                 dst_a2Fq2r = os.path.join(elph_dir_path,             "a2Fq2r."+str(j)+"."+str(i+1))
                 shutil.copy(src_a2Fq2r, dst_a2Fq2r)
-                logger.info(f"a2Fq2r.{str(j)}.1 copy finished \n {dst_dyn}")
+                logger.info(f"a2Fq2r.{str(j)}.1 copy finished  {dst_dyn}")
 
     def get_hspp(self):
         """
@@ -309,6 +292,15 @@ class qephono_inputpara(qe_inputpara):
         special_points       = lat.get_special_points()
         path_coords          = [list(special_points[point_name]) for point_name in path_name_list]
         path_name_coords= list(zip(path_name_list, path_coords))
+
+        logger.info("Print Fractional Coordinates of Reciprocal Lattice ! ")
+        for name, dirt in path_name_coords:
+            print("{:<4} {:<10} {:<10} {:<10}".format(dirt[0], dirt[1], dirt[2], name))
+        logger.info("Print Cartesian coordinates of Reciprocal Lattice ! ")
+        for name, dirt in path_name_coords:
+            cart = np.dot(self.reciprocal_plattice, dirt)
+            print("{:<10} {:<10} {:<10} {:<4} ".format(cart[0], cart[1], cart[2], name))
+            
         return path_name_coords 
 
     def get_top_freq(self, dosfile):

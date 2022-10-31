@@ -5,6 +5,7 @@ import subprocess
 from pathlib import Path
 
 from qe_inputpara import qe_inputpara
+from qe_base import get_pps_for_a_element
 
 from pymatgen.core.periodic_table import Element
 
@@ -304,13 +305,12 @@ class qe_writeinput:
 
             qe.write("ATOMIC_SPECIES                   \n")
             for species_name in self.composition.keys():
-                for species_pseudo in self.final_choosed_pp:
-                    match_res = re.search("^"+species_name.lower()+"\_", species_pseudo)
-                    if match_res is not None:
-                        logger.info(f"write USPP for species in relax.in: {species_pseudo}") 
-                        element      = Element(species_name)
-                        species_mass = str(element.atomic_mass).strip("amu")
-                        qe.write(" {:<5}  {:<10}  {:<50} \n".format(species_name, species_mass, species_pseudo))
+                species_pseudo = get_pps_for_a_element(species_name, self.final_choosed_pp)
+                if len(species_pseudo)==1:
+                    logger.info(f"write USPP for species in relax.in: {species_pseudo[0]}") 
+                    element      = Element(species_name)
+                    species_mass = str(element.atomic_mass).strip("amu")
+                    qe.write(" {:<5}  {:<10}  {:<50} \n".format(species_name, species_mass, species_pseudo[0]))
             qe.write("CELL_PARAMETERS {angstrom}        \n")  # 如果选择angstrom单未，原子坐标选择分数坐标，即，ATOMIC_POSITIONS (crystal), 且不设置celldm(1). 这时alat和celldm(1)设置成v1的长度
             for cell_p in self.cell_parameters:
                 cell_p = list(map(str, cell_p))
@@ -358,13 +358,12 @@ class qe_writeinput:
 
             qe.write("ATOMIC_SPECIES                   \n")
             for species_name in self.composition.keys():
-                for species_pseudo in self.final_choosed_pp:
-                    match_res = re.search("^"+species_name.lower()+"\_", species_pseudo)
-                    if match_res is not None:
-                        logger.info(f"write USPP for species in scf.fit.in: {species_pseudo}") 
-                        element      = Element(species_name)
-                        species_mass = str(element.atomic_mass).strip("amu")
-                        qe.write(" {:<5}  {:<10}  {:<50} \n".format(species_name, species_mass, species_pseudo))
+                species_pseudo = get_pps_for_a_element(species_name, self.final_choosed_pp)
+                if len(species_pseudo)==1:
+                    logger.info(f"write USPP for species in relax.in: {species_pseudo[0]}") 
+                    element      = Element(species_name)
+                    species_mass = str(element.atomic_mass).strip("amu")
+                    qe.write(" {:<5}  {:<10}  {:<50} \n".format(species_name, species_mass, species_pseudo[0]))
             qe.write("CELL_PARAMETERS {angstrom}        \n")  # 如果选择angstrom单未，原子坐标选择分数坐标，即，ATOMIC_POSITIONS (crystal), 且不设置celldm(1). 这时alat和celldm(1)设置成v1的长度
             for cell_p in self.cell_parameters:
                 cell_p = list(map(str, cell_p))
@@ -411,13 +410,12 @@ class qe_writeinput:
 
             qe.write("ATOMIC_SPECIES                   \n")
             for species_name in self.composition.keys():
-                for species_pseudo in self.final_choosed_pp:
-                    match_res = re.search("^"+species_name.lower()+"\_", species_pseudo)
-                    if match_res is not None:
-                        logger.info(f"write USPP for species in scf.in: {species_pseudo}") 
-                        element      = Element(species_name)
-                        species_mass = str(element.atomic_mass).strip("amu")
-                        qe.write(" {:<5}  {:<10}  {:<50} \n".format(species_name, species_mass, species_pseudo))
+                species_pseudo = get_pps_for_a_element(species_name, self.final_choosed_pp)
+                if len(species_pseudo)==1:
+                    logger.info(f"write USPP for species in relax.in: {species_pseudo[0]}") 
+                    element      = Element(species_name)
+                    species_mass = str(element.atomic_mass).strip("amu")
+                    qe.write(" {:<5}  {:<10}  {:<50} \n".format(species_name, species_mass, species_pseudo[0]))
             qe.write("CELL_PARAMETERS {angstrom}        \n")  # 如果选择angstrom单未，原子坐标选择分数坐标，即，ATOMIC_POSITIONS (crystal), 且不设置celldm(1). 这时alat和celldm(1)设置成v1的长度
             for cell_p in self.cell_parameters:
                 cell_p = list(map(str, cell_p))
@@ -466,13 +464,12 @@ class qe_writeinput:
 
             qe.write("ATOMIC_SPECIES                   \n")
             for species_name in self.composition.keys():
-                for species_pseudo in self.final_choosed_pp:
-                    match_res = re.search("^"+species_name.lower()+"\_", species_pseudo)
-                    if match_res is not None:
-                        logger.info(f"write USPP for species in scf.in: {species_pseudo}") 
-                        element      = Element(species_name)
-                        species_mass = str(element.atomic_mass).strip("amu")
-                        qe.write(" {:<5}  {:<10}  {:<50} \n".format(species_name, species_mass, species_pseudo))
+                species_pseudo = get_pps_for_a_element(species_name, self.final_choosed_pp)
+                if len(species_pseudo)==1:
+                    logger.info(f"write USPP for species in relax.in: {species_pseudo[0]}") 
+                    element      = Element(species_name)
+                    species_mass = str(element.atomic_mass).strip("amu")
+                    qe.write(" {:<5}  {:<10}  {:<50} \n".format(species_name, species_mass, species_pseudo[0]))
             qe.write("CELL_PARAMETERS {angstrom}        \n")  # 如果选择angstrom单未，原子坐标选择分数坐标，即，ATOMIC_POSITIONS (crystal), 且不设置celldm(1). 这时alat和celldm(1)设置成v1的长度
             for cell_p in self.cell_parameters:
                 cell_p = list(map(str, cell_p))

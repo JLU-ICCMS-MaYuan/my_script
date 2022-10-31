@@ -67,23 +67,28 @@ class qe_phono:
         # prepare input parameter
         self.phono_inputpara = qephono_inputpara.init_from_config(self._config)
 
-        # init the input
-        self.qe_writeinput  = qe_writeinput.init_from_phonoinput(self.phono_inputpara)
-        inputfilename = self.qe_writeinput.writeinput()
+        if self.phono_inputpara.mode == "merge":
+            self.phono_inputpara.merge(self.phono_inputpara.work_underpressure)
+        else:
+            # init the input
+            self.qe_writeinput  = qe_writeinput.init_from_phonoinput(self.phono_inputpara)
+            inputfilename = self.qe_writeinput.writeinput()
 
-        # init the submit job script
-        self.qe_writesubmit = qe_writesubmit.init_from_phonoinput(self.phono_inputpara)
-        jobnames = self.qe_writesubmit.write_submit_scripts(inputfilename)
+            # init the submit job script
+            self.qe_writesubmit = qe_writesubmit.init_from_phonoinput(self.phono_inputpara)
+            jobnames = self.qe_writesubmit.write_submit_scripts(inputfilename)
 
-        # submit the job
-        self.qe_submitjob = qe_submitjob.init_from_phonoinput(self.phono_inputpara)
-        if self.phono_inputpara.queue is not None :
-            if self.phono_inputpara.mode == "nosplit":
-                self.qe_submitjob.submit_mode2(inputfilename, jobnames)
-            elif self.phono_inputpara.mode == "split_dyn0" or self.phono_inputpara.mode == "split_assignQ":
-                self.qe_submitjob.submit_mode3(inputfilename, jobnames)
-            else:
-                self.qe_submitjob.submit_mode1(inputfilename, jobnames)
+            # submit the job
+            self.qe_submitjob = qe_submitjob.init_from_phonoinput(self.phono_inputpara)
+            if self.phono_inputpara.queue is not None :
+                if self.phono_inputpara.mode == "nosplit":
+                    self.qe_submitjob.submit_mode2(inputfilename, jobnames)
+                elif self.phono_inputpara.mode == "split_dyn0":
+                    self.qe_submitjob.submit_mode3(inputfilename, jobnames)
+                elif self.phono_inputpara.mode == "split_assignQ":
+                    self.qe_submitjob.submit_mode4(inputfilename, jobnames)
+                else:
+                    self.qe_submitjob.submit_mode1(inputfilename, jobnames)
         
 
 class qe_dos:
