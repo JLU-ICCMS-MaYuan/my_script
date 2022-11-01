@@ -96,7 +96,7 @@ class qe_inputpara(qe_base):
         work_path         = config['work_path']            ; del config['work_path']
         press             = config['press']                ; del config['press']
         submit_job_system = config['submit_job_system']    ; del config['submit_job_system']
-        input_file_path   = Path(config['input_file_path']); del config['input_file_path']
+        input_file_path   = config['input_file_path']      ; del config['input_file_path']
         
         self = cls(
             work_path=work_path,

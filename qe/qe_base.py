@@ -35,7 +35,7 @@ class qe_base:
             1. if relax.out: then the program will not create directory filename/press under the work_path,
                the parents of input_file_path will be work_underpressure
             2. if others:  then the program will create directory `/press`, it will be named work_underpressure
-
+            ####3. if None  :  then input_file_path = Path(self.work_path).joinpath("relax.out")
         if you do "relax":
             you must specify: 1. work_path, 2. press, 3. submit_job_system, 4. input_file_path
         if you do "scf":
@@ -45,7 +45,8 @@ class qe_base:
         self.press             = press          
         self.submit_job_system = submit_job_system
         self.input_file_path   = Path(input_file_path)
-        
+
+        # 设置underpressure
         if "relax.out" in self.input_file_path.name:
             self.work_underpressure= Path(self.input_file_path).parent
         else:

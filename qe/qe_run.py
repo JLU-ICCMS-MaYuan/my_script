@@ -172,9 +172,8 @@ class qe_prepare:
         # read input para
         self._config = config(args).read_config()
 
-        # prepare input parameter
+        #进行结构弛豫
         self.prepare_inputpara  = qeprepare_inputpara.init_from_config(self._config)
-
         if "relax-vc" in self.prepare_inputpara.mode:
             self.qe_writeinput  = qe_writeinput.init_from_relaxinput(self.prepare_inputpara)
             inputfilename = self.qe_writeinput.writeinput(mode="relax-vc")
@@ -186,7 +185,6 @@ class qe_prepare:
             self.qe_submitjob = qe_submitjob.init_from_relaxinput(self.prepare_inputpara)
             if self.prepare_inputpara.queue is not None:
                 ids = self.qe_submitjob.submit_mode1(inputfilename, jobname)
-        
         logger.info("The program is running relax")
         try:
             check_pid_jobid(ids, self.qe_submitjob.submit_job_system)
@@ -195,6 +193,17 @@ class qe_prepare:
         logger.info("The program finished relax")
         ids = []
 
+        # 读入结构弛豫的输出文件进行自洽计算和声子计算
+        input_file_path   = Path(self.prepare_inputpara.work_underpressure).joinpath("relax.out")
+        if not input_file_path.exists():
+            raise FileExistsError(f"{input_file_path.absolute()} doesn't exist!!! ")
+        self.prepare_inputpara  = qeprepare_inputpara(
+            work_path=self.prepare_inputpara.work_path,
+            press=self.prepare_inputpara.press,
+            submit_job_system=self.prepare_inputpara.submit_job_system,
+            input_file_path=input_file_path,
+            **self._config,
+        )
         if "scffit" in self.prepare_inputpara.mode:
             self.qe_writeinput  = qe_writeinput.init_from_scfinput(self.prepare_inputpara)
             inputfilename = self.qe_writeinput.writeinput(mode="scffit")
@@ -206,7 +215,6 @@ class qe_prepare:
             self.qe_submitjob = qe_submitjob.init_from_scfinput(self.prepare_inputpara)
             if self.prepare_inputpara.queue is not None:
                 ids = self.qe_submitjob.submit_mode1(inputfilename, jobname)
-        
         logger.info("The program is running scffit")
         try:
             check_pid_jobid(ids, self.qe_submitjob.submit_job_system)
@@ -226,7 +234,6 @@ class qe_prepare:
             self.qe_submitjob = qe_submitjob.init_from_scfinput(self.prepare_inputpara)
             if self.prepare_inputpara.queue is not None:
                 ids = self.qe_submitjob.submit_mode1(inputfilename, jobname)
-        
         logger.info("The program is running scf")
         try:
             check_pid_jobid(ids, self.qe_submitjob.submit_job_system)

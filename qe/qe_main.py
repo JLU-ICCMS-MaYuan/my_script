@@ -32,7 +32,7 @@ j=0;x=1; for i in `squeue | awk '{print $1}'`; do  let j+=x; done; echo $j
     qe_main.py -i ./200.0/relax.out -w ./200.0 -p 200 -j bash   sc    -m mode=eliashberg core=1 npool=1 queue=local temperature_points=10000 a2F_dos=a2F.dos3
 
 
-    ##
+    # 完成了批量化任务提交。可以一次性完成relax, scffit, scf, nosplit-dyn0flag=True。
     qe_main.py -i ./200.0/relax.out  -w ./  -p 200 -j bash prepare -m mode="relax-vc scffit scf nosplit" dyn0_flag=True core=4 npool=1 queue=local
     qe_main.py -i ./200.0/relax.out  -w ./  -p 200 -j bash prepare -m mode="relax-vc scffit scf        " dyn0_flag=True core=4 npool=1 queue=local
 
