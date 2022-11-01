@@ -203,23 +203,26 @@ class qe_writeinput:
         return self
 
     # write inputfile
-    def writeinput(self):
-        if self.mode == "relax-vc":
+    def writeinput(self, mode=None):
+        if mode == None:
+            mode = self.mode
+
+        if mode == "relax-vc":
             inputfilename = self.write_relax_in()
             return inputfilename
-        if self.mode == "scffit":
+        if mode == "scffit":
             inputfilename = self.write_scf_fit_in(self.work_underpressure)
             return inputfilename
-        if self.mode == "scf":
+        if mode == "scf":
             inputfilename = self.write_scf_in(self.work_underpressure)
             return inputfilename
-        if self.mode == "nscf":
+        if mode == "nscf":
             inputfilename = self.write_nscf_in(self.work_underpressure)
             return inputfilename
-        if self.mode =="nosplit":
+        if mode =="nosplit":
             inputfilename = self.write_ph_no_split_in()
             return inputfilename
-        if self.mode =="split_dyn0":
+        if mode =="split_dyn0":
             inputfilename = []
             for i, q3 in enumerate(self.qirreduced_coords):
                 split_ph_dir = os.path.join(self.work_underpressure, str(i+1))
@@ -231,7 +234,7 @@ class qe_writeinput:
                 inputfilename.append([scffit_name, scf_name, ph_name])
                 logger.info(f"finish input files in {i+1}")
             return inputfilename     
-        if self.mode =="split_assignQ":
+        if mode =="split_assignQ":
             inputfilename = []
             if self.qirreduced is not None:
                 for i in range(int(self.qirreduced)):
@@ -239,19 +242,19 @@ class qe_writeinput:
                     inputfilename.append(ph_name)
                 logger.info(f"finish input files {i+1}")            
             return inputfilename
-        if self.mode =="q2r":
+        if mode =="q2r":
             inputfilename = self.write_q2r_in()
             return inputfilename
-        if self.mode =="matdyn":
+        if mode =="matdyn":
             inputfilename = self.write_matdyn_in()
             return inputfilename
-        if self.mode =="matdyn_dos":
+        if mode =="matdyn_dos":
             inputfilename = self.write_matdyn_dos_in()
             return inputfilename
-        if self.mode =="McAD":
+        if mode =="McAD":
             inputfilename = self.write_lambda_in()
             return inputfilename
-        if self.mode =="eliashberg":
+        if mode =="eliashberg":
             inputfilename = self.write_eliashberg_in()
             self.write_alpha2f_out()
             return inputfilename
@@ -360,7 +363,7 @@ class qe_writeinput:
             for species_name in self.composition.keys():
                 species_pseudo = get_pps_for_a_element(species_name, self.final_choosed_pp)
                 if len(species_pseudo)==1:
-                    logger.info(f"write USPP for species in relax.in: {species_pseudo[0]}") 
+                    logger.info(f"write USPP for species in scffit.in: {species_pseudo[0]}") 
                     element      = Element(species_name)
                     species_mass = str(element.atomic_mass).strip("amu")
                     qe.write(" {:<5}  {:<10}  {:<50} \n".format(species_name, species_mass, species_pseudo[0]))
@@ -412,7 +415,7 @@ class qe_writeinput:
             for species_name in self.composition.keys():
                 species_pseudo = get_pps_for_a_element(species_name, self.final_choosed_pp)
                 if len(species_pseudo)==1:
-                    logger.info(f"write USPP for species in relax.in: {species_pseudo[0]}") 
+                    logger.info(f"write USPP for species in scf.in: {species_pseudo[0]}") 
                     element      = Element(species_name)
                     species_mass = str(element.atomic_mass).strip("amu")
                     qe.write(" {:<5}  {:<10}  {:<50} \n".format(species_name, species_mass, species_pseudo[0]))

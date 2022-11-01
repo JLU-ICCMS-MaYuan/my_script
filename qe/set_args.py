@@ -175,6 +175,23 @@ def set_more_args(parser: ArgumentParser):
             "   a2F_dos=a2F_dos3\n"
     )
     parser_phono.set_defaults(qe_workflow=qe_superconduct)
-    args = parser.parse_args()
 
+
+   # relax scffit scf dyn0file
+    parser_prepare = subparsers.add_parser("prepare",  formatter_class=RawTextHelpFormatter)
+    parser_prepare.add_argument(
+        '-m',
+        '--more-argments-about-relax',
+        type=str,
+        dest='more_args',
+        nargs='+',
+        help="输入更多关于结构弛豫的参数\n"
+            "mode=all"
+    )
+    parser_prepare.set_defaults(qe_workflow=qe_prepare)
+
+
+
+
+    args = parser.parse_args()
     return args

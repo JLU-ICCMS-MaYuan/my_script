@@ -300,7 +300,7 @@ class qephono_inputpara(qe_inputpara):
         for name, dirt in path_name_coords:
             cart = np.dot(self.reciprocal_plattice, dirt)
             print("{:<10} {:<10} {:<10} {:<4} ".format(cart[0], cart[1], cart[2], name))
-            
+
         return path_name_coords 
 
     def get_top_freq(self, dosfile):
@@ -404,4 +404,25 @@ class qesc_inputpara(qephono_inputpara):
             logger.warning("If you use Eliashberg method, you may not specify the a2f_dos* ! Please specify it ! The program will set default `None`")
             self.a2F_dos = None
 
-            
+
+class qeprepare_inputpara(qephono_inputpara):
+
+    def __init__(
+        self,
+        work_path: str,
+        press: int,
+        submit_job_system: str,
+        input_file_path: str,
+        **kwargs: dict,
+        ):
+
+        super(qeprepare_inputpara, self).__init__(
+            work_path, 
+            press, 
+            submit_job_system, 
+            input_file_path, 
+            **kwargs
+            )
+
+        if hasattr(self, "mode"):
+            self.mode = self.mode.split()

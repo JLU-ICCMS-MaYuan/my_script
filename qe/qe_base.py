@@ -118,7 +118,7 @@ class qe_base:
         for species in self.species:
             species_name = species.name
             dst_pps = get_pps_for_a_element(species_name, pp_files)
-            if len(dst_pps) >= 1:
+            if len(dst_pps) > 1:
                 # 如果目标元素已经有多个赝势放在pp目录中. 例如S元素的三个赝势都放在了pp目录中，你需要手动选择哪个赝势用作计算
                 choosed_flag  = False
                 while not choosed_flag:
@@ -129,6 +129,8 @@ class qe_base:
                     else:
                         choosed_flag = False
                 print(self.final_choosed_pp)
+            elif len(dst_pps) == 1:
+                self.final_choosed_pp.append(dst_pps[0])
             elif len(dst_pps) == 0:
                 logger.info(f"to prepare {species_name} uspp! ")
                 dst_pp = self.get_single_uspp(species_name, workpath_pppath)
@@ -151,7 +153,7 @@ class qe_base:
         else:
             raise FileExistsError("You may not set the potcar_source_libs, you can set it in `qebin.py` ")
 
-        targetppfiles    = self.get_pps_for_a_element(species_name, pp_files)
+        targetppfiles    = get_pps_for_a_element(species_name, pp_files)
         targetppnames    = [pp for pp in targetppfiles]
         choosed_flag  = False
         while not choosed_flag:

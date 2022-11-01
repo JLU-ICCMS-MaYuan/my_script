@@ -102,21 +102,24 @@ class qe_writesubmit:
         return self
 
 
-    def write_submit_scripts(self, inpufilename):
+    def write_submit_scripts(self, inpufilename, mode=None):
 
-        if self.mode == "relax-vc":
+        if mode==None:
+            mode=self.mode
+
+        if mode == "relax-vc":
             jobname = self.s1_relax(self.work_underpressure, inpufilename)
             return jobname
-        if self.mode == "scffit":
+        if mode == "scffit":
             jobname = self.s2_scffit(self.work_underpressure, inpufilename)
             return jobname
-        if self.mode == "scf":
+        if mode == "scf":
             jobname = self.s3_scf(self.work_underpressure, inpufilename)
             return jobname
-        if self.mode =="nosplit":
+        if mode =="nosplit":
             jobname = self.s4_PhNoSplit(self.work_underpressure, inpufilename)
             return jobname
-        if self.mode =="split_dyn0":
+        if mode =="split_dyn0":
             jobnames = []
             for i, inname in enumerate(inpufilename):
                 split_ph_dir = os.path.join(self.work_underpressure, str(i+1))
@@ -126,28 +129,28 @@ class qe_writesubmit:
                 jobnames.append(jobname)
                 logger.info(f"finish submit job script in {i+1}")
             return jobnames
-        if self.mode =="split_assignQ":
+        if mode =="split_assignQ":
             jobnames = []
             for i, inname in enumerate(inpufilename):
                 jobname = self.s5_PhSplitAssignQ(self.work_underpressure, inname)
                 jobnames.append(jobname)
             return jobnames
-        if self.mode =="q2r":
+        if mode =="q2r":
             jobname = self.s6_q2r(self.work_underpressure, inpufilename)
             return jobname
-        if self.mode =="matdyn":
+        if mode =="matdyn":
             jobname = self.s7_matdyn(self.work_underpressure, inpufilename)
             return jobname
-        if self.mode =="matdyn_dos":
+        if mode =="matdyn_dos":
             jobname = self.s8_matdyn_dos(self.work_underpressure, inpufilename)
             return jobname
-        if self.mode =="McAD":
+        if mode =="McAD":
             jobname = self.s9_lambda(self.work_underpressure, inpufilename)
             return jobname
-        if self.mode =="eliashberg":
+        if mode =="eliashberg":
             jobname = self.s9_eliashberg(self.work_underpressure, inpufilename)
             return jobname
-        if self.mode =="nscf":
+        if mode =="nscf":
             jobname = self.s10_nscf(self.work_underpressure, inpufilename)
             return jobname
 

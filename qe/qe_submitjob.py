@@ -123,6 +123,8 @@ class qe_submitjob:
         logger.info(f"{jobname} is running. pid or jobid = {jobid}")
         os.chdir(cwd)
 
+        return jobid
+
     def submit_mode2(self, inputfilename, jobname):
         """
         submit_mode1 can be used to submit:
@@ -131,13 +133,18 @@ class qe_submitjob:
         """
         self.submit_mode1(inputfilename, jobname)
         logger.info(f"You set dyn0_flag = {self.dyn0_flag}.")
-        if self.mode == "nosplit" and self.dyn0_flag:
+        if self.dyn0_flag:
             while True:
                 time.sleep(8)
                 if self.checksuffix(self.work_underpressure, ".dyn0"):
                     logger.info("The *.dyn0 has been created just now !!! The program will run `killall -9 ph.x`")
                     os.system("killall -9 ph.x")
                     break
+                else:
+                    logger.info("The *.dyn0 has existed ! It seems that dyn0 is not create by you!! Please check it carefully!!! The program will run `killall -9 ph.x`")
+                    os.system("killall -9 ph.x")
+
+
 
     def submit_mode3(self, inputfilename, jobnames):
         """split_dyn0"""
@@ -147,12 +154,16 @@ class qe_submitjob:
             os.chdir(self.work_underpressure.joinpath(str(i+1)))
             if self.submit_job_system == "bash":
                 print(f"nohup {self.submit_order} {jobname} > phbash{i+1}.log 2>&1 &")
-                os.system(f"nohup {self.submit_order} {jobname} > phbash{i+1}.log 2>&1 &")
+                res = os.popen(f"nohup {self.submit_order} {jobname} > bash.log 2>&1 &").read()
+                jobids = self.getpid()
             else:
                 print(f"{self.submit_order} {jobname}")
-                os.system(f"{self.submit_order} {jobname}")
+                res = os.popen(f"{self.submit_order} {jobname}").read()
+                jobids = re.search(r"\d+", res)
             logger.info(f"finish submit {jobname}, jobid = {''.join(jobids)}")
             os.chdir(cwd)
+
+
 
     def submit_mode4(self, inputfilename, jobnames):
         """split_assignQ"""
@@ -162,10 +173,12 @@ class qe_submitjob:
         for i, jobname in enumerate(jobnames):
             if self.submit_job_system == "bash":
                 print(f"nohup {self.submit_order} {jobname} > phbash{i+1}.log 2>&1 &")
-                os.system(f"nohup {self.submit_order} {jobname} > phbash{i+1}.log 2>&1 &")
+                res = os.popen(f"nohup {self.submit_order} {jobname} > bash.log 2>&1 &").read()
+                jobids = self.getpid()
             else:
                 print(f"{self.submit_order} {jobname}")
-                os.system(f"{self.submit_order} {jobname}")
+                res = os.popen(f"{self.submit_order} {jobname}").read()
+                jobids = re.search(r"\d+", res)
                 logger.info(f"finish submit {jobname}, jobid = {''.join(jobids)}")
         os.chdir(cwd)
 
@@ -208,6 +221,8 @@ class qe_submitjob:
                 os.system(f"{self.submit_order} {jobname}")
                 logger.info("qe lambda is running")
                 os.chdir(cwd)
+
+
 
     @staticmethod
     def getpid():
