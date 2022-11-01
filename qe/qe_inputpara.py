@@ -55,19 +55,25 @@ class qe_inputpara(qe_base):
         # qe 设置的一些基本参数
         if not hasattr(self, "forc_conv_thr"):
             self.forc_conv_thr = "1.0d-5"
+        
         if not hasattr(self, "etot_conv_thr"):
             self.etot_conv_thr = "1.0d-7"
+        
         if not hasattr(self, "smearing"):
             self.smearing = "gauss"
             # self.smearing = methfessel-paxton 做scffit 和 scf 时候用这个参数
         if not hasattr(self, "degauss"):
             self.degauss = "0.005"
+        
         if not hasattr(self, "ecutwfc"):
             self.ecutwfc = "60"
+        
         if not hasattr(self, "ecutrho"):
             self.ecutrho = "720"
+        
         if not hasattr(self, "diagonalization"):
             self.diagonalization = "david"
+        
         if not hasattr(self, "conv_thr"):
             self.conv_thr = "1.0d-8"
             #  做结构弛豫 1.0-d8
@@ -215,8 +221,8 @@ class qephono_inputpara(qe_inputpara):
         _q_total_amount = content[0].strip("\n").split()
         qtot  = list(map(int, _q_total_amount))
         if qtot != self.qpoints:
-            print("qtot", qtot)
-            print("self.qpoints", self.qpoints)
+            logger.error(f"qtot = {qtot}")
+            logger.error(f"self.qpoints = {self.qpoints}")
             raise ValueError ("q points set wrong")
 
         def find_q(item):
