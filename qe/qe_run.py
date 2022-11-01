@@ -25,8 +25,9 @@ def check_pid_jobid(ids: list, submit_job_system):
                 if i == len(ids):
                     return
     elif submit_job_system == "slurm":
+        i = 0
         while True:
-            osawk = """sleep 5 | squeue | awk '{print $1}'""" 
+            osawk = """sleep 120 | squeue | awk '{print $1}'""" 
             _jobids = os.popen(osawk).read()  # return a string; such as '423423\n324233\n423424\n'
             jobids = _jobids.strip("\n").split("\n")
             for id in ids:
