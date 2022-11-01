@@ -119,7 +119,7 @@ class qe_submitjob:
             jobid = self.getpid()
         else:
             res = os.popen(f"{self.submit_order} {jobname}").read()
-            jobid = re.search(r"\d+", res)
+            jobid = re.findall(r"\d+", res)
         logger.info(f"{jobname} is running. pid or jobid = {jobid}")
         os.chdir(cwd)
 
@@ -159,7 +159,7 @@ class qe_submitjob:
             else:
                 print(f"{self.submit_order} {jobname}")
                 res = os.popen(f"{self.submit_order} {jobname}").read()
-                jobids = re.search(r"\d+", res)
+                jobids = re.findall(r"\d+", res)
             logger.info(f"finish submit {jobname}, jobid = {''.join(jobids)}")
             os.chdir(cwd)
 
@@ -178,7 +178,7 @@ class qe_submitjob:
             else:
                 print(f"{self.submit_order} {jobname}")
                 res = os.popen(f"{self.submit_order} {jobname}").read()
-                jobids = re.search(r"\d+", res)
+                jobids = re.findall(r"\d+", res)
                 logger.info(f"finish submit {jobname}, jobid = {''.join(jobids)}")
         os.chdir(cwd)
 
