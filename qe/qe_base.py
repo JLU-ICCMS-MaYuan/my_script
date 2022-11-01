@@ -197,7 +197,8 @@ def get_pps_for_a_element(species_name:str, pp_files:list):
         H.pbe-van_bm.UPF.txt  首字母大写的元素名.****
         h_pbe_v1.uspp.F.UPF   首字母小写的元素名_****
     """
-    qepp_name_patter = re.compile(f"^[{species_name.capitalize()}|{species_name.lower()}][\.|\_]")
+    # 这里写的实在是太精妙了。我用2个花括号套在一起解决了正则表达式传入花括号的问题
+    qepp_name_patter = re.compile(f'''^[{species_name.capitalize()}|{species_name.lower()}]{'{1,2}'}[\.|\_]''')
     dst_pps          = list(filter(lambda file: qepp_name_patter.findall(file), pp_files))
 
     return dst_pps
