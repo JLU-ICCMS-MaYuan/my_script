@@ -161,7 +161,7 @@ class qe_writesubmit:
         jobname = "s1_relax.sh"
         _script_filepath = os.path.join(_dirpath, jobname)
         with open(_script_filepath, "w") as j:
-            j.write(self.jobtitle)
+            j.writelines(self.jobtitle)
             j.write('mpirun -np {} {}/pw.x -npool {} <{}> {}  \n'.format(self.core, qebin_path,  self.npool, _inpufilename, _outputfilename))
             j.write('check symmetry ops is consistent or not after vc-relax                      \n')
             j.write('grep "Sym. Ops." relax.out                                                  \n')
@@ -174,7 +174,7 @@ class qe_writesubmit:
         jobname = "s2_scffit.sh"
         _script_filepath = os.path.join(_dirpath, jobname)
         with open(_script_filepath, "w") as j:
-            j.write(self.jobtitle)
+            j.writelines(self.jobtitle)
             j.write('mpirun -np {} {}/pw.x -npool {} <{}> {}  \n'.format(self.core, qebin_path, self.npool, _inpufilename, _outputfilename))                                                        
         return jobname
         
@@ -184,7 +184,7 @@ class qe_writesubmit:
         jobname = "s3_scf.sh"
         _script_filepath = os.path.join(_dirpath, jobname)
         with open(_script_filepath, "w") as j:
-            j.write(self.jobtitle)
+            j.writelines(self.jobtitle)
             j.write('mpirun -np {} {}/pw.x -npool {} <{}> {} \n'.format(self.core, qebin_path, self.npool, _inpufilename,  _outputfilename)) 
         return jobname
 
@@ -194,7 +194,7 @@ class qe_writesubmit:
         jobname = "s4_PhNoSplit.sh"
         _script_filepath = os.path.join(_dirpath, jobname)
         with open(_script_filepath, "w") as j:
-            j.write(self.jobtitle)
+            j.writelines(self.jobtitle)
             j.write('mpirun -np {} {}/ph.x -npool {} <{}> {} \n'.format(self.core, qebin_path,  self.npool, _inpufilename, _outputfilename))
         return jobname
 
@@ -206,7 +206,7 @@ class qe_writesubmit:
         jobname = "s5_PhSplitDyn0.sh"
         _script_filepath = os.path.join(_dirpath, jobname)
         with open(_script_filepath, "w") as j:
-            j.write(self.jobtitle)
+            j.writelines(self.jobtitle)
             j.write('echo "run scf.fit"                                                     \n')
             j.write('mpirun -np {} {}/pw.x -npool {} <{}> {} \n'.format(self.core, qebin_path,  self.npool, _inputscffit_name, _outputscffit_name))
             j.write('echo "run scf"                                                         \n')
@@ -221,7 +221,7 @@ class qe_writesubmit:
         jobname = "s5_"+_inputsplitph_name.split(".")[0]+".sh"
         _script_filepath = os.path.join(_dirpath, jobname)
         with open(_script_filepath, "w") as j:
-            j.write(self.jobtitle)
+            j.writelines(self.jobtitle)
             j.write('mpirun -np {} {}/ph.x -npool {} <{}> {}  \n'.format(self.core, qebin_path, self.npool, _inputsplitph_name, _outputsplitph_name))
         return jobname
 
@@ -231,7 +231,7 @@ class qe_writesubmit:
         jobname = "s6_q2r.sh"
         _script_filepath = os.path.join(_dirpath,jobname)
         with open(_script_filepath, "w") as j:
-            j.write(self.jobtitle)
+            j.writelines(self.jobtitle)
             j.write('mpirun -np {} {}/q2r.x -npool {} <{}> {} \n'.format(self.core, qebin_path, self.npool, _inpufilename, _outputfilename))
             j.write('grep nqs q2r.out > nqs                   \n')  
         return jobname
@@ -242,7 +242,7 @@ class qe_writesubmit:
         jobname = "s7_matdyn.sh"
         _script_filepath = os.path.join(_dirpath, jobname)
         with open(_script_filepath, "w") as j:
-            j.write(self.jobtitle)
+            j.writelines(self.jobtitle)
             j.write('mpirun -np {} {}/matdyn.x -npool {} <{}> {} \n'.format(self.core, qebin_path, self.npool, _inpufilename, _outputfilename))
         return jobname
 
@@ -252,7 +252,7 @@ class qe_writesubmit:
         jobname = "s8_matdyn_dos.sh"
         _script_filepath = os.path.join(_dirpath, jobname)
         with open(_script_filepath, "w") as j:
-            j.write(self.jobtitle)
+            j.writelines(self.jobtitle)
             j.write('mpirun -np {} {}/matdyn.x -npool {} <{}> {}  \n'.format(self.core, qebin_path, self.npool, _inpufilename, _outputfilename))
         return jobname
 
@@ -262,7 +262,7 @@ class qe_writesubmit:
         jobname = "s9_lambda.sh"
         _script_filepath = os.path.join(_dirpath, jobname)
         with open(_script_filepath, "w") as j:
-            j.write(self.jobtitle)
+            j.writelines(self.jobtitle)
             j.write('mpirun -np {} {}/lambda.x -npool {} <{}> {}  \n'.format(self.core, qebin_path, self.npool, _inpufilename, _outputfilename))
         return jobname
 
@@ -272,7 +272,7 @@ class qe_writesubmit:
         jobname = "s9_eliashberg.sh"
         _script_filepath = os.path.join(_dirpath, jobname)
         with open(_script_filepath, "w") as j:
-            j.write(self.jobtitle)
+            j.writelines(self.jobtitle)
             j.write('killall -9 pw.x                   \n')
             j.write('\n\n                              \n')
             j.write('time {} > eliashberg.log 2>&1     \n'.format(eliashberg_x_path))
@@ -284,7 +284,7 @@ class qe_writesubmit:
         jobname = "s10_nscf.sh"
         _script_filepath = os.path.join(_dirpath, jobname)
         with open(_script_filepath, "w") as j:
-            j.write(self.jobtitle)
+            j.writelines(self.jobtitle)
             j.write('mpirun -np {} {}/pw.x {} <{}> {}  \n'.format(self.core, qebin_path, self.npool, _inpufilename, _outputfilename))
         return jobname
 
