@@ -27,7 +27,7 @@ def check_pid_jobid(ids: list, submit_job_system):
     elif submit_job_system == "slurm":
         i = 0
         while True:
-            osawk = """sleep 120 | squeue | awk '{print $1}'""" 
+            osawk = """sleep 5 | squeue | awk '{print $1}'""" 
             _jobids = os.popen(osawk).read()  # return a string; such as '423423\n324233\n423424\n'
             jobids = _jobids.strip("\n").split("\n")
             for id in ids:
@@ -186,16 +186,19 @@ class qe_prepare:
             self.qe_submitjob = qe_submitjob.init_from_relaxinput(self.prepare_inputpara)
             if self.prepare_inputpara.queue is not None:
                 ids = self.qe_submitjob.submit_mode1(inputfilename, jobname)
-        logger.info("The program is running relax")
-        try:
-            check_pid_jobid(ids, self.qe_submitjob.submit_job_system)
-        except:
-            logger.info(f"ids={None}")
-        logger.info("The program finished relax")
-        ids = []
+            logger.info("The program is running relax")
+            try:
+                check_pid_jobid(ids, self.qe_submitjob.submit_job_system)
+            except:
+                logger.info(f"ids={None}")
+            logger.info("The program finished relax")
+            ids = []
 
         # 读入结构弛豫的输出文件进行自洽计算和声子计算
-        input_file_path   = Path(self.prepare_inputpara.work_underpressure).joinpath("relax.out")
+        if self.prepare_inputpara.input_file_path.name != "relax.out":
+            input_file_path = Path(self.prepare_inputpara.work_underpressure).joinpath("relax.out")
+        else:
+            input_file_path = self.prepare_inputpara.input_file_path
         if not input_file_path.exists():
             raise FileExistsError(f"{input_file_path.absolute()} doesn't exist!!! ")
         self.prepare_inputpara  = qeprepare_inputpara(
@@ -203,8 +206,7 @@ class qe_prepare:
             press=self.prepare_inputpara.press,
             submit_job_system=self.prepare_inputpara.submit_job_system,
             input_file_path=input_file_path,
-            **self._config,
-        )
+            **self._config,)
         if "scffit" in self.prepare_inputpara.mode:
             self.qe_writeinput  = qe_writeinput.init_from_scfinput(self.prepare_inputpara)
             inputfilename = self.qe_writeinput.writeinput(mode="scffit")
@@ -216,13 +218,13 @@ class qe_prepare:
             self.qe_submitjob = qe_submitjob.init_from_scfinput(self.prepare_inputpara)
             if self.prepare_inputpara.queue is not None:
                 ids = self.qe_submitjob.submit_mode1(inputfilename, jobname)
-        logger.info("The program is running scffit")
-        try:
-            check_pid_jobid(ids, self.qe_submitjob.submit_job_system)
-        except:
-            logger.info(f"ids={None}")
-        logger.info("The program finished scffit")
-        ids = []
+            logger.info("The program is running scffit")
+            try:
+                check_pid_jobid(ids, self.qe_submitjob.submit_job_system)
+            except:
+                logger.info(f"ids={None}")
+            logger.info("The program finished scffit")
+            ids = []
 
         if "scf" in self.prepare_inputpara.mode:
             self.qe_writeinput  = qe_writeinput.init_from_scfinput(self.prepare_inputpara)
@@ -235,13 +237,13 @@ class qe_prepare:
             self.qe_submitjob = qe_submitjob.init_from_scfinput(self.prepare_inputpara)
             if self.prepare_inputpara.queue is not None:
                 ids = self.qe_submitjob.submit_mode1(inputfilename, jobname)
-        logger.info("The program is running scf")
-        try:
-            check_pid_jobid(ids, self.qe_submitjob.submit_job_system)
-        except:
-            logger.info(f"ids={None}")
-        logger.info("The program finished scf")
-        ids = []
+            logger.info("The program is running scf")
+            try:
+                check_pid_jobid(ids, self.qe_submitjob.submit_job_system)
+            except:
+                logger.info(f"ids={None}")
+            logger.info("The program finished scf")
+            ids = []
         
         if "nosplit" in self.prepare_inputpara.mode and self.prepare_inputpara.dyn0_flag:
             self.qe_writeinput  = qe_writeinput.init_from_phonoinput(self.prepare_inputpara)

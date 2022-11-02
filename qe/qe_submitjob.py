@@ -115,9 +115,11 @@ class qe_submitjob:
         dst_dir = input_file.parent.absolute()
         os.chdir(dst_dir)
         if self.submit_job_system == "bash":
+            logger.info(f"nohup {self.submit_order} {jobname} > bash.log 2>&1 &")
             res = os.popen(f"nohup {self.submit_order} {jobname} > bash.log 2>&1 &").read()
             jobid = self.getpid()
         else:
+            logger.info(f"{self.submit_order} {jobname}")
             res = os.popen(f"{self.submit_order} {jobname}").read()
             jobid = re.findall(r"\d+", res)
         logger.info(f"{jobname} is running. pid or jobid = {jobid}")
