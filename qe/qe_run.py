@@ -35,7 +35,17 @@ def check_pid_jobid(ids: list, submit_job_system):
                     i += 1
                 if i == len(ids):
                     return
-
+    elif submit_job_system == "pbs":
+        i = 0
+        while True:
+            osawk = """sleep 5 | qstat | awk '{print $1}' | cut -d . -f1""" 
+            _jobids = os.popen(osawk).read()  # return a string; such as '423423\n324233\n423424\n'
+            jobids = _jobids.strip("\n").split("\n")
+            for id in ids:
+                if id not in jobids:
+                    i += 1
+                if i == len(ids):
+                    return
 
 
 class qe_relax:

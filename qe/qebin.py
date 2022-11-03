@@ -1,14 +1,14 @@
-# qebin_path = "/work/home/may/software/qe-7.1/bin/"
+# qebin_path = "/work/home/may/software/qe-7.1/bin"
 # qe_source_libs = "/work/home/may/POT/qe-pp/all_pbe_UPF_v1.5"
 # eliashberg_x_path = "/work/home/may/code/my_script/qe/eliashberg/eliashberg.x"
 
-qebin_path     = "/home/mayuan/mysoftware/q-e-qe-7.1/bin"
-qe_source_libs = "/home/mayuan/mysoftware/all_pbe_UPF_v1.5"
-eliashberg_x_path = "/home/mayuan/mycode/my_script/qe/eliashberg/eliashberg.x"
+# qebin_path     = "/home/mayuan/mysoftware/q-e-qe-7.1/bin"
+# qe_source_libs = "/home/mayuan/mysoftware/all_pbe_UPF_v1.5"
+# eliashberg_x_path = "/home/mayuan/mycode/my_script/qe/eliashberg/eliashberg.x"
 
-# qebin_path = "/public/home/mayuan/software/qe-7.1/bin/"
-# qe_source_libs = "/public/home/mayuan/POT/qe-pp/all_pbe_UPF_v1.5"
-# eliashberg_x_path = "/public/home/mayuan/code/my_script/qe/eliashberg/eliashberg.x"
+qebin_path = "/public/home/mayuan/software/qe-7.1/bin"
+qe_source_libs = "/public/home/mayuan/POT/qe-pp/all_pbe_UPF_v1.5"
+eliashberg_x_path = "/public/home/mayuan/code/my_script/qe/eliashberg/eliashberg.x"
 
 # qebin_path = "/work/home/mayuan/mysoftware/qe-7.0/bin/"
 # intel_compiler = "/work/home/mayuan/intel/oneapi/setvars.sh --force"
@@ -23,7 +23,7 @@ ulimit -s unlimited
 '''
 
 slurmtitle = '''#!/bin/sh                           
-#SBATCH  --job-name=mayuan                      
+#SBATCH  --job-name=mayqe                      
 #SBATCH  --output=log.out                       
 #SBATCH  --error=log.err                       
 #SBATCH  --partition=lhy          
@@ -40,7 +40,7 @@ ulimit -s unlimited
 
 pbstitle = '''            
 #!/bin/sh                       
-#PBS -N    relax                                    
+#PBS -N    mayqe                                    
 #PBS -q    liuhy         
 #PBS -l    nodes=1:ppn=28               
 #PBS -j    oe                                      
@@ -49,6 +49,6 @@ pbstitle = '''
 source /public/home/mayuan/intel/oneapi/setvars.sh --force
 ulimit -s unlimited        
 cd $PBS_O_WORKDIR                  
-killall -9 pw.x ph.x
+#killall -9 pw.x ph.x
 
 '''
