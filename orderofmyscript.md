@@ -18,7 +18,21 @@ DFPT（密度泛函微扰理论）后处理
 vasp_main.py -i POSCAR-init -w ./ data -m mode=dfptprog supercell="2 2 2" mp="8 8 8" spectrum=True dos=True
 ```
 
+
 # QE 计算
+
+准备输入文件
+```shell
+relax -m mode=relax-vc core=64 npool=8
+```
+
+进行批量计算
+```shell
+prepare -m mode="relax-vc scffit scf nosplit" dyn0_flag=True core=28 npool=4 queue=liuhy &
+prepare -m mode="relax-vc scffit scf nosplit" dyn0_flag=True core=64 npool=8 queue=normal &
+```
+
+
 qe结构弛豫在上一步结构弛豫的基础上做新的结构弛豫
 ```shell
 qe_main.py -i ./POSCAR          -w ./      -p 200 -j bash relax -m mode=relax-vc core=4 npool=1 queue=local

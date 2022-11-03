@@ -198,7 +198,13 @@ def get_pps_for_a_element(species_name:str, pp_files:list):
         h_pbe_v1.uspp.F.UPF   首字母小写的元素名_****
     """
     # 这里写的实在是太精妙了。我用2个花括号套在一起解决了正则表达式传入花括号的问题
-    qepp_name_patter = re.compile(f'''^[{species_name.capitalize()}|{species_name.lower()}]{'{1,2}'}[\.|\_]''')
+    namelenth = len(species_name)
+    if namelenth == 1:
+        qepp_name_patter = re.compile(f'''^[{species_name.capitalize()}|{species_name.lower()}]{'{1,1}'}[\.|\_]''')
+    elif namelenth == 2:
+        qepp_name_patter = re.compile(f'''^[{species_name.capitalize()}|{species_name.lower()}]{'{2,2}'}[\.|\_]''')
+    else:
+        logger.warning(f"Inconceivable that the length of the element name is not 1 or 2, it is {namelenth}, its name is {species_name}")
     dst_pps          = list(filter(lambda file: qepp_name_patter.findall(file), pp_files))
 
     return dst_pps
