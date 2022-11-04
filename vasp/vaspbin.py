@@ -1,15 +1,94 @@
-#vaspbin_path = "/work/home/may/software/vasp.6.1.0/bin/vasp_std"
-#intel_compiler = "/work/home/may/intel/oneapi/setvars.sh"
-#potcar_source_libs = "/work/home/may/POT/vasp_pot1/potpaw_PBE54"
+qebin_path = "/home/mayuan/mysoftware/q-e-qe-7.1/bin"
+qe_source_libs = "/home/mayuan/mysoftware/all_pbe_UPF_v1.5"
+eliashberg_x_path = "/home/mayuan/mycode/my_script/qe/eliashberg/eliashberg.x"
 
-# vaspbin_path = "/public/home/mayuan/software/vasp.6.1.0/bin/vasp_std"
-# intel_compiler = "/public/home/mayuan/intel/oneapi/setvars.sh"
-# potcar_source_libs = "/public/home/mayuan/POT/vasp_pot1/potpaw_PBE54"
-
-vaspbin_path = "/work/software/vasp.6.1.0-oneapi2022.2.0/bin/vasp_std"
-intel_compiler = "/work/env/oneapi-2022.2.0 "
-potcar_source_libs = "/work/home/mayuan/POT/vasp_pot1/potpaw_PBE54"
+vaspbin_path = "/home/mayuan/mysoftware/vasp.6.1.0/bin/vasp_std"
+potcar_source_libs = "/home/mayuan/mysoftware/pot"
 
 
+bashtitle = '''#!/bin/sh   
+source /opt/intel/oneapi/setvars.sh --force  
+ulimit -s unlimited
+'''
 
-# intel_compiler = "/work/home/mayuan/intel/oneapi/setvars.sh"
+slurmtitle = '''#!/bin/sh                           
+#SBATCH  --job-name=mayqe                      
+#SBATCH  --output=log.out                       
+#SBATCH  --error=log.err                       
+#SBATCH  --partition=lhy          
+#SBATCH  --nodes=1                          
+#SBATCH  --ntasks=48                          
+#SBATCH  --ntasks-per-node=48                          
+#SBATCH  --cpus-per-task=1                         
+source /work/home/may/intel/oneapi/setvars.sh --force      
+#source /work/home/mayuan/intel/oneapi/setvars.sh --force      
+ulimit -s unlimited
+'''
+
+pbstitle = '''#!/bin/sh                   
+#PBS -N    mayqe                                    
+#PBS -q    liuhy         
+#PBS -l    nodes=1:ppn=28               
+#PBS -j    oe                                      
+#PBS -V  
+source /public/home/mayuan/intel/oneapi/setvars.sh --force
+ulimit -s unlimited        
+cd $PBS_O_WORKDIR                  
+#killall -9 pw.x ph.x
+'''
+
+if __name__ == "__main__":
+    
+    from pathlib import Path
+
+    qebin_path          = Path(qebin_path)
+    qe_source_libs_path = Path(qe_source_libs)
+    eliashberg_x_path   = Path(eliashberg_x_path)
+
+    if Path(qebin_path).exists():
+        print(f"The path {qebin_path} you set rightly !!!")
+    else:
+        raise FileNotFoundError(f"The path {qebin_path} you set wrong !!!")
+    if Path(qe_source_libs_path).exists():
+        print(f"The path {qe_source_libs_path} you set rightly !!!")
+    else:
+        raise FileNotFoundError(f"The path {qe_source_libs_path} you set wrong !!!")
+    if Path(eliashberg_x_path).exists():
+        print(f"The path {eliashberg_x_path} you set rightly !!!")
+    else:
+        raise FileNotFoundError(f"The path {eliashberg_x_path} you set wrong !!!")
+
+    vaspbin_path       = Path(vaspbin_path)
+    potcar_source_libs_path = Path(potcar_source_libs)
+    if Path(vaspbin_path).exists():
+        print(f"The path {vaspbin_path} you set rightly !!!")
+    else:
+        raise FileNotFoundError(f"The path {vaspbin_path} you set wrong !!!")
+    if Path(potcar_source_libs_path).exists():
+        print(f"The path {potcar_source_libs_path} you set rightly !!!")
+    else:
+        raise FileNotFoundError(f"The path {potcar_source_libs_path} you set wrong !!!")
+        
+    print("bash      的设置, 请注意:")
+    print("    1. 请注意source编译器的设置")
+    print(bashtitle, "\n")
+
+    print("slurmtitle 的设置, 请注意:")
+    print("    1. 请注意source编译器的设置")
+    print("    2. 请注意job-name, partition, ntasks, ntasks-per-node设置")
+    print("    3. 请注意是否需要添加以下设置")
+    print("        ulimit -s unlimited ")
+    print("        export I_MPI_ADJUST_REDUCE=3")
+    print("        export MPIR_CVAR_COLL_ALIAS_CHECK=0")
+    print(slurmtitle, "\n")
+
+    print("pbstitle 的设置, 请注意:")
+    print("    1. 请注意source编译器的设置")
+    print("    2. 请注意PBS -N , PBS -q, PBS -l 设置")
+    print("    3. 请注意是否需要添加以下设置")
+    print("        ulimit -s unlimited")      
+    print("        cd $PBS_O_WORKDIR  ")
+    print("        export I_MPI_ADJUST_REDUCE=3")
+    print("        export MPIR_CVAR_COLL_ALIAS_CHECK=0")
+    print(pbstitle, "\n")
+
