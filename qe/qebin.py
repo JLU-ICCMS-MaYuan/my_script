@@ -1,13 +1,12 @@
-qebin_path = "/home/mayuan/mysoftware/q-e-qe-7.1/bin"
-qe_source_libs = "/home/mayuan/mysoftware/all_pbe_UPF_v1.5"
-eliashberg_x_path = "/home/mayuan/mycode/my_script/qe/eliashberg/eliashberg.x"
+qebin_path = "/work/home/may/software/qe-7.1/bin"
+qe_source_libs = "/work/home/may/POT/qe-pp/all_pbe_UPF_v1.5"
+eliashberg_x_path = "/work/home/may/code/my_script/qe/eliashberg/eliashberg.x"
 
-vaspbin_path = "/home/mayuan/mysoftware/vasp.6.1.0/bin/vasp_std"
-potcar_source_libs = "/home/mayuan/mysoftware/pot"
-
+vaspbin_path = "/work/home/may/software/vasp.6.1.0/bin/vasp_std"
+potcar_source_libs = "/work/home/may/POT/vasp_pot1/potpaw_PBE54"
 
 bashtitle = '''#!/bin/sh   
-source /opt/intel/oneapi/setvars.sh --force  
+source /work/home/may/intel/oneapi/setvars.sh --force
 ulimit -s unlimited
 '''
 
@@ -20,8 +19,9 @@ slurmtitle = '''#!/bin/sh
 #SBATCH  --ntasks=48                          
 #SBATCH  --ntasks-per-node=48                          
 #SBATCH  --cpus-per-task=1                         
-source /work/home/may/intel/oneapi/setvars.sh --force      
-#source /work/home/mayuan/intel/oneapi/setvars.sh --force      
+source /public/home/mayuan/intel/oneapi/setvars.sh --force
+export I_MPI_ADJUST_REDUCE=3
+export MPIR_CVAR_COLL_ALIAS_CHECK=0
 ulimit -s unlimited
 '''
 
@@ -32,6 +32,8 @@ pbstitle = '''#!/bin/sh
 #PBS -j    oe                                      
 #PBS -V  
 source /public/home/mayuan/intel/oneapi/setvars.sh --force
+export I_MPI_ADJUST_REDUCE=3
+export MPIR_CVAR_COLL_ALIAS_CHECK=0
 ulimit -s unlimited        
 cd $PBS_O_WORKDIR                  
 #killall -9 pw.x ph.x
