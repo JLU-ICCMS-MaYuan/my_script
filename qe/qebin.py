@@ -1,13 +1,18 @@
-qebin_path = "/home/mayuan/mysoftware/q-e-qe-7.1/bin"
-qe_source_libs = "/home/mayuan/mysoftware/all_pbe_UPF_v1.5"
-eliashberg_x_path = "/home/mayuan/mycode/my_script/qe/eliashberg/eliashberg.x"
+qebin_path = "/public/software/apps/quantum-espresso/intelmpi/6.7/bin"
+qe_source_libs = "/public/home/liuhanyu/workplace/mayuan/qe_pp/all_pbe_UPF_v1.5"
+eliashberg_x_path = "/public/home/liuhanyu/workplace/mayuan/my_script/qe/eliashberg/eliashberg.x"
 
-vaspbin_path = "/home/mayuan/mysoftware/vasp.6.1.0/bin/vasp_std"
-potcar_source_libs = "/home/mayuan/mysoftware/pot"
+vaspbin_path = "/public/software/apps/vasp/intelmpi/5.4.4/bin/vasp_std"
+potcar_source_libs = "/public/home/liuhanyu/workplace/mayuan/vasp_potpaw_PBE"
 
 
 bashtitle = '''#!/bin/sh   
-source /opt/intel/oneapi/setvars.sh --force  
+export I_MPI_FABRICS=shm
+export MKL_DEBUG_CPU_TYPE=5
+
+source /public/env/mpi_intelmpi-2021.3.0.sh
+source /public/env/compiler_intel-compiler-2021.3.0.sh
+
 ulimit -s unlimited
 '''
 
@@ -15,13 +20,19 @@ slurmtitle = '''#!/bin/sh
 #SBATCH  --job-name=mayqe                      
 #SBATCH  --output=log.out                       
 #SBATCH  --error=log.err                       
-#SBATCH  --partition=lhy          
+#SBATCH  --partition=normal
 #SBATCH  --nodes=1                          
-#SBATCH  --ntasks=48                          
-#SBATCH  --ntasks-per-node=48                          
+#SBATCH  --ntasks=64
+#SBATCH  --ntasks-per-node=64
 #SBATCH  --cpus-per-task=1                         
-source /work/home/may/intel/oneapi/setvars.sh --force      
+
+#source /work/home/may/intel/oneapi/setvars.sh --force      
 #source /work/home/mayuan/intel/oneapi/setvars.sh --force      
+
+export I_MPI_FABRICS=shm
+export MKL_DEBUG_CPU_TYPE=5
+source /public/env/mpi_intelmpi-2021.3.0.sh
+source /public/env/compiler_intel-compiler-2021.3.0.sh
 ulimit -s unlimited
 '''
 
