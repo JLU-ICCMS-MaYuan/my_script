@@ -1,7 +1,7 @@
 from argparse import ArgumentParser
 from ast import parse
 
-from generator_methods import generator_methods
+from structuregenerator.generator_methods import generator_methods
 
 def set_more_args(parser: ArgumentParser):
 

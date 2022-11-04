@@ -29,7 +29,7 @@ from pymatgen.io.ase import AseAtomsAdaptor
 from ase.formula import Formula
 from ase import Atoms
 
-from psolib.utils.sort_atoms import sort_atoms
+from structuregenerator.psolib.utils.sort_atoms import sort_atoms
 
 logger = logging.getLogger(__name__)
 

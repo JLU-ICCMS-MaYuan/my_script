@@ -4,8 +4,8 @@ import logging
 import time
 
 from pathlib import Path
-from unittest.util import sorted_list_difference
-from qe_inputpara import qe_inputpara
+
+from qe.qe_inputpara import qe_inputpara
 
 logger = logging.getLogger("qe_submitjob")
 

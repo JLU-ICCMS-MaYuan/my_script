@@ -4,12 +4,12 @@ from argparse import ArgumentParser
 
 from pymatgen.io.ase import AseAtomsAdaptor
 
-from config import config
-from specify_wyckoffs import specify_wyckoffs
-from split_wyckoffs import split_wyckoffs
-from substitution import substitution
-from pso import pso
-from psolib.utils.sort_atoms import sort_atoms
+from structuregenerator.config import config
+from structuregenerator.specify_wyckoffs import specify_wyckoffs
+from structuregenerator.split_wyckoffs import split_wyckoffs
+from structuregenerator.substitution import substitution
+from structuregenerator.pso import pso
+from structuregenerator.psolib.utils.sort_atoms import sort_atoms
 
 logger = logging.getLogger(__name__)
 

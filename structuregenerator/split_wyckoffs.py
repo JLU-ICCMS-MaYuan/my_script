@@ -27,7 +27,7 @@ from pyxtal.tolerance import Tol_matrix
 from ase.formula import Formula
 from ase import Atoms
 
-from checkstructure import check
+from structuregenerator.checkstructure import check
 
 logger = logging.getLogger(__name__)
 

@@ -21,10 +21,10 @@ from pyxtal import pyxtal
 from pyxtal.tolerance import Tol_matrix
 
 from vasp.vasptools.parser_vasp import VASPOutcarFormat, VASPPoscarFormat
-from psolib.utils.convert import dict2Atoms
-from psolib.utils.get_enthalpy import get_enthalpy
-from psolib.utils.sort_atoms import sort_atoms
-from psolib.finger.mixins import FingerPrintMixin, UpdateBestMixin
+from structuregenerator.psolib.utils.convert import dict2Atoms
+from structuregenerator.psolib.utils.get_enthalpy import get_enthalpy
+from structuregenerator.psolib.utils.sort_atoms import sort_atoms
+from structuregenerator.psolib.finger.mixins import FingerPrintMixin, UpdateBestMixin
 # from psolib.lib_so.f90sym3dgenerator import Spgcrylat
 
 

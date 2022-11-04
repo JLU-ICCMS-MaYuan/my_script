@@ -1,6 +1,6 @@
 from argparse import ArgumentParser, RawTextHelpFormatter
 
-from vasp_run import vasp_relax, vasp_phono, vaspbatch_relax, vaspbatch_phono, vasp_processdata
+from vasp.vasp_run import vasp_relax, vasp_phono, vaspbatch_relax, vaspbatch_phono, vasp_processdata
 
 def set_more_args(parser: ArgumentParser):
 

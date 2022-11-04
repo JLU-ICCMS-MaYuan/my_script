@@ -1,6 +1,6 @@
 from argparse import ArgumentParser, RawTextHelpFormatter
 
-from qe_run import *
+from qe.qe_run import *
 
 def set_more_args(parser: ArgumentParser):
 

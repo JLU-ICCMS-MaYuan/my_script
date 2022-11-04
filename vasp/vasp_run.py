@@ -8,13 +8,13 @@ from itertools import chain
 from ase.io import read
 from pymatgen.io.ase import AseAtomsAdaptor
 
-from config import config
-from vasp_base import vasp_base
-from vasp_inputpara import vasp_inputpara, vasp_phonopara 
-from vasp_writeincar import vasp_writeincar
-from vasp_writekpoints import vasp_writekpoints
-from vasp_writesubmit import vasp_writesubmit
-from vasp_submitjob import vasp_submitjob
+from vasp.config import config
+from vasp.vasp_base import vasp_base
+from vasp.vasp_inputpara import vasp_inputpara, vasp_phonopara 
+from vasp.vasp_writeincar import vasp_writeincar
+from vasp.vasp_writekpoints import vasp_writekpoints
+from vasp.vasp_writesubmit import vasp_writesubmit
+from vasp.vasp_submitjob import vasp_submitjob
 
 logger = logging.getLogger("vasp_run")
 

@@ -8,7 +8,7 @@ from ase.io import read
 from pymatgen.io.ase import AseAtomsAdaptor
 
 
-from vasp_base import vasp_base 
+from vasp.vasp_base import vasp_base 
 
 class vasp_inputpara(vasp_base):
     """

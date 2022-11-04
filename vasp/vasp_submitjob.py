@@ -2,7 +2,7 @@ from asyncio.log import logger
 import os
 import re
 import shutil
-from vasp_inputpara import vasp_inputpara 
+from vasp.vasp_inputpara import vasp_inputpara 
 
 
 class vasp_submitjob:

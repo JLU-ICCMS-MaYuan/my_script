@@ -1,0 +1,8 @@
+numpy==1.23.3
+pymatgen==2022.9.21
+ase==3.22.1
+matplotlib==3.6.0
+f90wrap==0.2.8
+Cython==0.29.32
+pyxtal==0.5.3
+scikit-learn==1.1.2

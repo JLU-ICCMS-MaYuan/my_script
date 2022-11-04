@@ -4,8 +4,8 @@ from typing import List, Tuple, Union
 import numpy as np
 from ase import Atoms
 
-from psolib.finger.fp_base import BaseFingerPrint
-from psolib.lib_so.f90LegacyFingerPrint import Bondcrt
+from structuregenerator.psolib.finger.fp_base import BaseFingerPrint
+from structuregenerator.psolib.lib_so.f90LegacyFingerPrint import Bondcrt
 
 logger = logging.getLogger("CCF")
 

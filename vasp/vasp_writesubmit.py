@@ -1,7 +1,7 @@
 import os
 
-from vasp_inputpara import vasp_inputpara
-from vaspbin import vaspbin_path, intel_compiler
+from vasp.vasp_inputpara import vasp_inputpara
+from vasp.vaspbin import vaspbin_path, intel_compiler
 
 
 class vasp_writesubmit:

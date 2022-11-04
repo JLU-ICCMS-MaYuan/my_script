@@ -1,6 +1,6 @@
 import os
 
-from vasp_inputpara import vasp_inputpara 
+from vasp.vasp_inputpara import vasp_inputpara 
 
 class vasp_writeincar:
     

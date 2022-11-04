@@ -11,8 +11,8 @@ from pymatgen.io.ase import AseAtomsAdaptor
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from pymatgen.io.vasp import Poscar
 
-from vaspbin import potcar_source_libs
-from config import config
+from vasp.vaspbin import potcar_source_libs
+from vasp.config import config
 
 logger = logging.getLogger("vaspbase")
 

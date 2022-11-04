@@ -99,7 +99,7 @@ pso_ratio=0.5
 import logging
 from argparse import ArgumentParser
 
-from set_args import set_more_args
+from structuregenerator.set_args import set_more_args
 
 logging.basicConfig(level = logging.INFO,format = '%(asctime)s|%(name)s|%(levelname)s|%(message)s')
 logger = logging.getLogger(__name__)

@@ -5,11 +5,11 @@ from argparse import ArgumentParser
 from pathlib import Path
 from itertools import chain
 
-from config import config
-from qe_inputpara import * 
-from qe_writeinput import qe_writeinput
-from qe_writesubmit import qe_writesubmit
-from qe_submitjob import qe_submitjob
+from qe.config import config
+from qe.qe_inputpara import * 
+from qe.qe_writeinput import qe_writeinput
+from qe.qe_writesubmit import qe_writesubmit
+from qe.qe_submitjob import qe_submitjob
 
 
 def check_pid_jobid(ids: list, submit_job_system):

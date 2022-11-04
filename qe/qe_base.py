@@ -12,8 +12,8 @@ from pymatgen.io.ase import AseAtomsAdaptor
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from pymatgen.io.vasp import Poscar
 
-from qebin import qe_source_libs
-from config import config
+from qe.qebin import qe_source_libs
+from qe.config import config
 
 logger = logging.getLogger("qe_base")
 

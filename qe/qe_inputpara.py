@@ -8,7 +8,7 @@ from math import ceil
 
 import numpy as np
 
-from qe_base import qe_base
+from qe.qe_base import qe_base
 
 logging.basicConfig(
     level = logging.INFO, 

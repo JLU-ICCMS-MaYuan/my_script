@@ -41,7 +41,7 @@ import logging
 from argparse import ArgumentParser
 from argparse import RawTextHelpFormatter
 
-from set_args import set_more_args
+from qe.set_args import set_more_args
 
 logging.basicConfig(level = logging.INFO,format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)

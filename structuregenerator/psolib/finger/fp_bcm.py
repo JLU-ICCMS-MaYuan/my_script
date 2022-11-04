@@ -6,9 +6,9 @@ import numpy as np
 from ase import Atoms
 from scipy.special import sph_harm
 
-from psolib.utils.sort_atoms import sort_atoms
-from psolib.finger.fp_base import BaseFingerPrint
-from psolib.lib_so.f90LegacyFingerPrint import Bondcharmatrix
+from structuregenerator.psolib.utils.sort_atoms import sort_atoms
+from structuregenerator.psolib.finger.fp_base import BaseFingerPrint
+from structuregenerator.psolib.lib_so.f90LegacyFingerPrint import Bondcharmatrix
 
 logger = logging.getLogger("BCM")
 

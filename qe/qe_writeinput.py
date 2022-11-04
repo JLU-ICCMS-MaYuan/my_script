@@ -4,8 +4,8 @@ import logging
 import subprocess
 from pathlib import Path
 
-from qe_inputpara import qe_inputpara
-from qe_base import get_pps_for_a_element
+from qe.qe_inputpara import qe_inputpara
+from qe.qe_base import get_pps_for_a_element
 
 from pymatgen.core.periodic_table import Element
 

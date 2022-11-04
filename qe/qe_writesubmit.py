@@ -2,8 +2,8 @@ import os
 import re
 import logging
 from pathlib import Path
-from qe_inputpara import qe_inputpara
-from qebin import qebin_path, qe_source_libs, eliashberg_x_path, bashtitle, slurmtitle, pbstitle
+from qe.qe_inputpara import qe_inputpara
+from qe.qebin import qebin_path, qe_source_libs, eliashberg_x_path, bashtitle, slurmtitle, pbstitle
 
 logger = logging.getLogger("qe_writesubmit")
 
