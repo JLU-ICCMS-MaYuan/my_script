@@ -6,3 +6,4 @@ f90wrap==0.2.8
 Cython>=0.29.30
 pyxtal==0.5.3
 scikit-learn==1.1.2
+spglib>=1.16.5
