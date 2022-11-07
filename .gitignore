@@ -29,8 +29,8 @@
 /my_script.egg-info
 
 #files
-/work/home/may/code/my_script/qe/qebin.py
-/work/home/may/code/my_script/vasp/vaspbin.py
+qe/qebin.py
+vasp/vaspbin.py
 /calypso/.idea/inspectionProfiles/Project_Default.xml
 /calypso/.idea/inspectionProfiles/profiles_settings.xml
 /calypso/.idea/vcs.xml
@@ -62,5 +62,6 @@ structuregenerator/psolib/fortran_src/LegacyFingerPrint/src.macosx-10.9-x86_64-3
 structuregenerator/psolib/fortran_src/LegacyFingerPrint/src.macosx-10.9-x86_64-3.9/src.macosx-10.9-x86_64-3.9/fortranobject.o
 structuregenerator/psolib/fortran_src/LegacyFingerPrint/src.macosx-10.9-x86_64-3.9/src.macosx-10.9-x86_64-3.9/fortranobject.o.d
 .DS_Store
+
 
 

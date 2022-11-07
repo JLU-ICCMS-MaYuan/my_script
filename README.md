@@ -1,39 +1,104 @@
 # my_script
 
-#### 介绍
-{**以下是 Gitee 平台说明，您可以替换此简介**
-Gitee 是 OSCHINA 推出的基于 Git 的代码托管平台（同时支持 SVN）。专为开发者提供稳定、高效、安全的云端软件开发协作平台
-无论是个人、团队、或是企业，都能够用 Gitee 实现代码托管、项目管理、协作开发。企业项目请看 [https://gitee.com/enterprises](https://gitee.com/enterprises)}
+## 介绍
+该软件是一个计算qe，vasp的小程序。也可以用来产生结构
 
-#### 软件架构
-软件架构说明
+## 软件架构
+qe, vasp, structuregenerator是三个独立的项目，互相不耦合。可以独立开发，使用。
 
 
-#### 安装教程
+## 安装教程
 
-无需安装，只需要修改每个脚本的头就行。
-例如：#!/work/home/mayuan/miniconda3/envs/cage/bin/python3 指定了python解释器
-修改为你的python解释器路径即可
+方法1：
+```shell
+    python setup.py develop
+```
+方法2：
+```shell
+    pip install -e .
+```
 
-#### 使用说明
+## qe使用说明
+### 基本输入选项。一定要设置的部分：
+```shell
+qe_main.py -i 输入文件路径 -w 工作目录 -p 压强 -j 运行方式
+```
+说明：输入文件路径：
+1. 如果输入文件是relax.out, 那么工作目录会被强行限制为输入文件是relax.out的上一级路径。
+2. 如果输入文件是其它路径, 那么工作目录是-w指定的目录+-p指定的压强组成的路径。比如: -w test -p 200。那么最终路径就是/test/200.0。所有的文件都会在这个路径下运行。
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+说明：压强
+1. 指定结构优化的压强，单位是GPa.
 
-#### 参与贡献
+说明：运行方式
+1. bash 代表本地使用bash shell运行。
+2. slurm 代表使用slurm脚本运行。
+3. pbs 代表使用pbs脚本运行。
 
-1.  Fork 本仓库
-2.  新建 Feat_xxx 分支
-3.  提交代码
-4.  新建 Pull Request
+### 具体其它详细的任务模式说明：
+**WARNING1 queue存在则会运行，queue不存在则只会产生输入文件和提交任务的脚本文件。**
+**WARNING2 如果你使用-j bash, 那么一定注意core设置的不要太大，小心把主节点搞崩溃了。**
+
+结构弛豫：
+```shell
+relax -m mode=relax-vc kpoints_dense="20 20 20" core=48 npool=4  queue=lhy
+```
+自洽
+```shell
+scf -m mode=scffit kpoints_dense='24 24 24' core=48 npool=4  queue=lhy
+```
+```shell
+scf -m mode=scf kpoints_sparse='12 12 12' core=48 npool=4  queue=lhy
+```
+
+不分q点计算声子
+```shell
+phono -m mode=nosplit qpoints='6 6 6' dyn0_flag=False queue=lhy core=48 npool=4  queue=lhy
+```
+分q点计算声子 : split_dyn0模式
+```shell
+phono -m mode=nosplit qpoints='6 6 6' dyn0_flag=True core=1 npool=1 queue=local
+```
+```shell
+phono -m mode=split_dyn0 qpoints='6 6 6' dyn0_flag=True core=48 npool=4 queue=local
+```
+
+合并声子文件
+```shell
+phono -m mode=merge core=1 queue=local
+```
+
+计算力常数
+```shell
+phono -m mode=q2r qpoints='6 6 6' core=1 npool=1 queue=local
+```
+计算动力学矩阵元
+```shell
+phono -m mode=matdyn qpoints='6 6 6' core=1 npool=1 queue=local qinserted=50
+```
+计算态密度
+```shell
+dos -m mode=matdyn_dos core=1 npool=1 queue=local qpoints='8 8 8' ndos=500 
+```
+
+计算超导
+```shell
+sc -m mode=McAD core=1 npool=1 queue=local top_freq=80 deguass=0.5 screen_constant=0.1 smearing_method=1
+```
+```shell
+sc -m mode=eliashberg core=1 npool=1 queue=local temperature_points=10000 a2F_dos=a2F.dos3
+```
+
+批量计算
+```shell
+prepare -m mode="relax-vc scffit scf nosplit" dyn0_flag=True qpoints='6 6 6' core=4 npool=1 queue=local
+```
+```shell
+prepare -m mode="relax-vc scffit scf        " dyn0_flag=True qpoints='6 6 6' core=4 npool=1 queue=local
+```
+
+## vasp使用说明
+
+## structuregenerator使用说明
 
 
-#### 特技
-
-1.  使用 Readme\_XXX.md 来支持不同的语言，例如 Readme\_en.md, Readme\_zh.md
-2.  Gitee 官方博客 [blog.gitee.com](https://blog.gitee.com)
-3.  你可以 [https://gitee.com/explore](https://gitee.com/explore) 这个地址来了解 Gitee 上的优秀开源项目
-4.  [GVP](https://gitee.com/gvp) 全称是 Gitee 最有价值开源项目，是综合评定出的优秀开源项目
-5.  Gitee 官方提供的使用手册 [https://gitee.com/help](https://gitee.com/help)
-6.  Gitee 封面人物是一档用来展示 Gitee 会员风采的栏目 [https://gitee.com/gitee-stars/](https://gitee.com/gitee-stars/)
