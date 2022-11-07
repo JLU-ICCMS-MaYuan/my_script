@@ -1,6 +1,6 @@
 from argparse import ArgumentParser, RawTextHelpFormatter
 
-from vasp.vasp_run import vasp_relax, vasp_phono, vaspbatch_relax, vaspbatch_phono, vasp_processdata
+from vasp.vasp_run import vasp_relax, vasp_phono, vaspbatch_relax, vaspbatch_phono, vasp_processdata, vasp_clear
 
 def set_more_args(parser: ArgumentParser):
 
@@ -139,8 +139,8 @@ def set_more_args(parser: ArgumentParser):
     parser_batch_relax.set_defaults(vasp_workflow=vaspbatch_relax) 
 
     # 批量声子谱
-    parser_batch_relax = subparsers.add_parser("batchphono", formatter_class=RawTextHelpFormatter)
-    parser_batch_relax.add_argument(
+    parser_batch_phono = subparsers.add_parser("batchphono", formatter_class=RawTextHelpFormatter)
+    parser_batch_phono.add_argument(
         '-m',
         '--more-argments-about-batch-relax',
         type=str,
@@ -165,11 +165,11 @@ def set_more_args(parser: ArgumentParser):
             "mode = None,  you have `disp` and `dfpt`  \n"
             "queue = xieyu\n"
     )
-    parser_batch_relax.set_defaults(vasp_workflow=vaspbatch_phono) 
+    parser_batch_phono.set_defaults(vasp_workflow=vaspbatch_phono) 
 
     # 处理数据 
-    parser_batch_relax = subparsers.add_parser("data", formatter_class=RawTextHelpFormatter)
-    parser_batch_relax.add_argument(
+    parser_data = subparsers.add_parser("data", formatter_class=RawTextHelpFormatter)
+    parser_data.add_argument(
         '-m',
         '--more-argments-about-batch-relax',
         type=str,
@@ -186,9 +186,20 @@ def set_more_args(parser: ArgumentParser):
             "       It mainly determines whether or not to calculate the total-dos and project-dos\n"
 
     )
-    parser_batch_relax.set_defaults(vasp_workflow=vasp_processdata) 
+    parser_data.set_defaults(vasp_workflow=vasp_processdata) 
 
-
+    # 数据清理
+    parser_clear = subparsers.add_parser("clear", formatter_class=RawTextHelpFormatter)
+    parser_clear.add_argument(
+        '-m',
+        '--more-argments-about-clear',
+        type=str,
+        dest='more_args',
+        nargs='+',
+        help="输入更多关于清理数据的参数\n"
+           "清理全部数据，除了 'POSCAR', 'PPOSCAR', 'POTCAR', 'OUTCAR', 'INCAR*', '*.sh', '*.vasp', '*.slurm'\n"
+    )
+    parser_clear.set_defaults(vasp_workflow=vasp_clear) 
 
 
     args = parser.parse_args()

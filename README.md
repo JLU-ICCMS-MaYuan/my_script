@@ -118,6 +118,24 @@ vasp_main.py -i 输入文件路径 -w 工作目录 -p 压强 -j 运行方式
 2. slurm 代表使用slurm脚本运行。
 3. pbs 代表使用pbs脚本运行。
 
+### 具体其它详细的任务模式说明：
+
+清理数据, 保留:'POSCAR', 'PPOSCAR', 'POTCAR', 'OUTCAR', 'INCAR*', '*.sh', '*.vasp', '*.slurm'
+```shell
+vasp_main.py -w ./ clear -m mode=all
+```
+
+批量结构弛豫
+```shell
+vasp_main.py -i ./ -w ./ -p 200 -j slurm batchrelax -m mode=rv3 core=1 
+```
+
+```shell
+vasp_main.py -i ./POSCAR -j bash phono -m supercell=[2,2,2] kpoints='2 2 2' mode=disp core=1 queue=local
+```
+
+
+
 
 ## structuregenerator使用说明
 

@@ -203,46 +203,6 @@ class qe_submitjob:
                 logger.info(f"finish submit {jobname}, jobids = {''.join(jobids)}")
         os.chdir(cwd)
 
-        if self.mode =="matdyn":
-            dst_files = Path(self.work_underpressure).glob("matdyn.in")
-            for dst_file in dst_files:
-                if dst_file.exists():
-                    cwd = dst_file.cwd()
-                    dst_dir = dst_file.parent.absolute()
-                    os.chdir(dst_dir)
-                    os.system(f"{self.submit_order} {jobname}")
-                    logger.info("qe matdyn is running")
-                    os.chdir(cwd)
-        if self.mode =="matdyn_dos":
-            dst_files = Path(self.work_underpressure).glob("matdyn_dos.in")
-            for dst_file in dst_files:
-                if dst_file.exists():
-                    cwd = dst_file.cwd()
-                    dst_dir = dst_file.parent.absolute()
-                    os.chdir(dst_dir)
-                    os.system(f"{self.submit_order} {jobname}")
-                    logger.info("qe matdyn_dos is running")
-                    os.chdir(cwd)
-        if self.mode =="McAD":
-            dst_files = Path(self.work_underpressure).glob("lambda.in")
-            for dst_file in dst_files:
-                if dst_file.exists():
-                    cwd = dst_file.cwd()
-                    dst_dir = dst_file.parent.absolute()
-                    os.chdir(dst_dir)
-                    os.system(f"{self.submit_order} {jobname}")
-                    logger.info("qe lambda is running")
-                    os.chdir(cwd)
-        if self.mode =="eliashberg":   
-            dst_files = list(Path(self.work_underpressure).glob("ALPHA2F.OUT"))
-            if len(dst_files) == 1:
-                cwd = dst_files[0].cwd()
-                dst_dir = dst_files[0].parent.absolute()
-                os.chdir(dst_dir)
-                os.system(f"{self.submit_order} {jobname}")
-                logger.info("qe lambda is running")
-                os.chdir(cwd)
-
 
 
     @staticmethod

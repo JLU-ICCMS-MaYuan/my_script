@@ -7,7 +7,7 @@ from pathlib import Path
 from ase.io import read
 from pymatgen.io.ase import AseAtomsAdaptor
 
-from vasp.vasp_base import vasp_base 
+from vasp.vasp_base import vasp_base, vaspbatch_base
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +33,10 @@ class vasp_inputpara(vasp_base):
             input_file_path,
             mode,
             )
+
+        self.set_default_inputpara(kwargs)
+
+    def set_default_inputpara(self, kwargs):
 
         for key, value in kwargs.items():
             if key != "work_path" and \
@@ -87,7 +91,6 @@ class vasp_inputpara(vasp_base):
         if not hasattr(self, "core"):
             raise ValueError("You must specify the number of core, such as 'core=48'")
 
-
     @classmethod
     def init_from_config1(cls, config: dict):
 
@@ -135,7 +138,12 @@ class vasp_phonopara(vasp_inputpara):
             mode, 
             **kwargs
             )
-   
+        
+        self.set_default_inputpara(kwargs)
+        self.set_default_phonoinputpara(kwargs)
+
+    def set_default_phonoinputpara(self, kwargs):
+
         if hasattr(self, "kpoints"):
             _kpoints = kwargs['kpoints'].split()
             self.kpoints = list(map(int, _kpoints))
@@ -169,3 +177,69 @@ class vasp_phonopara(vasp_inputpara):
             elif self.mode == 'disp':
                 shutil.copy(poscar_file, poscar_init)
                 
+
+class vaspbatch_inputpara(vaspbatch_base, vasp_inputpara):
+
+    def __init__(
+        self, 
+        work_path: str, 
+        press: int, 
+        submit_job_system: str, 
+        input_file_path: Path, 
+        mode: str,
+        **kwargs: dict,
+        ) -> None:
+
+        super(vaspbatch_inputpara, self).__init__(
+            work_path, 
+            press, 
+            submit_job_system, 
+            input_file_path, mode
+            )
+        
+        '''
+            由于第一次使用多继承, 这里做一点简短的说明
+            根据多继承的mro链顺序, 得到vaspbatch_inputpara类的mro顺序为 : 
+            [
+                <class '__main__.vaspbatch_inputpara'>, 
+                <class 'vasp.vasp_base.vaspbatch_base'>, 
+                <class '__main__.vasp_inputpara'>, 
+                <class 'vasp.vasp_base.vasp_base'>,
+                <class 'object'>
+            ]
+            所有在使用super调用继承init方法时, 会优先寻找vaspbatch_inputpara中的init方法, 
+            如果vaspbatch_inputpara中的init方法不存在, 则会寻找vasp_inputpara的init方法.
+            但是vaspbatch_inputpara类继承的是vasp_base类。那么vaspbatch_inputpara类会不会继承vaspbatch_inputpara类的父类vasp_base类呢？
+            答应是 : 不会。
+            因为python3的新类继承遵循的原则是 : 广度优先。不会追根溯源的继承最根本的父类的。所有vaspbatch_inputpara继承到vaspbatch_inputpara就停止了.
+        '''
+
+        self.set_default_inputpara(kwargs)
+        self.set_default_phonoinputpara(kwargs)
+
+
+class vaspbatch_phonopara(vaspbatch_base, vasp_phonopara):
+
+    def __init__(
+        self, 
+        work_path: str, 
+        press: int, 
+        submit_job_system: str, 
+        input_file_path: Path, 
+        mode: str,
+        **kwargs: dict,
+        ) -> None:
+
+        super(vaspbatch_phonopara, self).__init__(
+            work_path, 
+            press, 
+            submit_job_system, 
+            input_file_path, mode
+            )
+        
+        self.set_default_inputpara(kwargs)
+        self.set_default_phonoinputpara(kwargs)
+
+
+if __name__ == "__main__":
+    print(vaspbatch_inputpara.mro())

@@ -61,13 +61,17 @@ class vasp_writesubmit:
             mode=self.mode
 
         if mode == 'rvf':
-            self.Fopt(self.work_underpressure)
+            jobname = self.Fopt(self.work_underpressure)
+            return jobname
         elif mode == 'rv3':
-            self.threeopt(self.work_underpressure)
+            jobname = self.threeopt(self.work_underpressure)
+            return jobname
         elif mode == 'disp':
-            self.disp(self.work_underpressure)
+            jobname = self.disp(self.work_underpressure)
+            return jobname
         elif mode == 'dfpt':
-            self.dfpt(self.work_underpressure)
+            jobname = self.dfpt(self.work_underpressure)
+            return jobname
 
 
     # submit job scripts

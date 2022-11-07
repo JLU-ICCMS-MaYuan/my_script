@@ -43,7 +43,7 @@ class vasp_base:
         
         self.input_file_name   = self.input_file_path.name.split(".")[0]
         if self.work_path is None:
-            self.work_underpressure = Path("./")
+            self.work_underpressure = Path.cwd()
             self.work_path = self.work_underpressure.parent
         else:
             self.work_underpressure= Path(self.work_path).joinpath(str(self.press))
@@ -55,8 +55,8 @@ class vasp_base:
         self.get_struct_info(self.struct_type, self.work_underpressure)
         
         ############################ prepare pp directory #########################
-        logger.info(f"create potcar dir in {self.work_path}")
-        self.workpath_pppath = Path(self.work_path).joinpath("potcar_lib")
+        logger.info(f"create potcar dir in {self.work_underpressure}")
+        self.workpath_pppath = Path(self.work_underpressure).joinpath("potcar_lib")
         if not self.workpath_pppath.exists():
             self.workpath_pppath.mkdir()
         # 准备赝势 
@@ -177,13 +177,55 @@ class vasp_base:
                             src_potcar_path_list.append(pot)
             dst_potcar = dst_potcar_path.joinpath("POTCAR")
             logger.info(f"POTCAR merge order is: {src_potcar_path_list}")
-            # 将多个POTCAR写入总的POTCAR中
-            f = open(dst_potcar, "w")
+            # 将多个POTCAR写入总的POTCAR中 方法1
+            # f = open(dst_potcar, "w")
+            # for potcar_indi in src_potcar_path_list:
+            #     for line in open(potcar_indi):
+            #         f.writelines(line)
+            # f.close()
+            # os.system("grep TITEL {}".format(dst_potcar))
+            # print("完成了一个POTCAR\n\n\n")
+            # 将多个POTCAR写入总的POTCAR中 方法2
+            os.system(f"rm -fr {str(dst_potcar)}")
             for potcar_indi in src_potcar_path_list:
-                for line in open(potcar_indi):
-                    f.writelines(line)
-            f.close()
-            os.system("grep TITEL {}".format(dst_potcar))
-            print("完成了一个POTCAR\n\n\n")
+                os.system(f"cat {str(potcar_indi)} >> {str(dst_potcar)}")
         else:
             print("POSCAR not exist")
+
+class vaspbatch_base(vasp_base):
+
+    def __init__(
+        self,
+        work_path: str,
+        press: int,
+        submit_job_system: str,
+        input_file_path: Path,
+        mode: str,
+    ) -> None:
+
+        self.work_path         = work_path
+        self.press             = press          
+        self.submit_job_system = submit_job_system
+        self.input_file_path   = input_file_path
+        self.mode              = mode
+        
+        self.input_file_name   = self.input_file_path.name.split(".")[0]
+        if self.work_path is None:
+            self.work_underpressure = Path.cwd().joinpath(self.input_file_name, str(self.press))
+            self.work_path = self.work_underpressure.parent
+        else:
+            self.work_underpressure= Path(self.work_path).joinpath(self.input_file_name, str(self.press))
+            if not self.work_underpressure.exists():
+                self.work_underpressure.mkdir(parents=True)
+
+        self.ase_type          = read(self.input_file_path)
+        self.struct_type       = AseAtomsAdaptor.get_structure(self.ase_type)
+        self.get_struct_info(self.struct_type, self.work_underpressure)
+        
+        ############################ prepare pp directory #########################
+        logger.info(f"create potcar dir in {self.work_underpressure}")
+        self.workpath_pppath = Path(self.work_underpressure).joinpath("potcar_lib")
+        if not self.workpath_pppath.exists():
+            self.workpath_pppath.mkdir()
+        # 准备赝势 
+        self.get_potcar(self.work_underpressure)   

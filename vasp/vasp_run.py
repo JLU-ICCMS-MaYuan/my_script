@@ -10,7 +10,7 @@ from pymatgen.io.ase import AseAtomsAdaptor
 
 from vasp.config import config
 from vasp.vasp_base import vasp_base
-from vasp.vasp_inputpara import vasp_inputpara, vasp_phonopara 
+from vasp.vasp_inputpara import vasp_inputpara, vasp_phonopara, vaspbatch_inputpara, vaspbatch_phonopara
 from vasp.vasp_writeincar import vasp_writeincar
 from vasp.vasp_writekpoints import vasp_writekpoints
 from vasp.vasp_writesubmit import vasp_writesubmit
@@ -31,7 +31,7 @@ class vasp_relax:
         # init the INCAR
         self.vasp_writeincar  = vasp_writeincar.init_from_relaxinput(self.relax_inputpara)
         if self.relax_inputpara.mode == 'rvf':
-            self.vasp_writeincar.opt_fine_incar(self.work_underpressure) 
+            self.vasp_writeincar.opt_fine_incar(self.relax_inputpara.self.work_underpressure) 
         elif self.relax_inputpara.mode == 'rv3':
             self.vasp_writeincar.opt_incar1(self.relax_inputpara.work_underpressure)
             self.vasp_writeincar.opt_incar2(self.relax_inputpara.work_underpressure)
@@ -43,7 +43,6 @@ class vasp_relax:
         self.vasp_submitjob = vasp_submitjob.init_from_relaxinput(self.relax_inputpara)
         if self.relax_inputpara.queue is not None:
             self.vasp_submitjob.submit_mode1(jobname)
-
 
 
 class vaspbatch_relax:
@@ -61,7 +60,7 @@ class vaspbatch_relax:
             mode              = self._config['mode']             ; del self._config['mode']
             for input_file_path in self.input_files_path:
                 # prepare the POSCAR POTCAR  
-                self.relax_inputpara  = vasp_inputpara(
+                self.relax_inputpara  = vaspbatch_inputpara(
                     work_path=work_path,
                     press=press,
                     submit_job_system=submit_job_system,
@@ -73,11 +72,11 @@ class vaspbatch_relax:
                 # init the INCAR
                 self.vasp_writeincar  = vasp_writeincar.init_from_relaxinput(self.relax_inputpara)
                 if self.relax_inputpara.mode == 'rvf':
-                    self.vasp_writeincar.opt_fine_incar(self.work_underpressure) 
+                    self.vasp_writeincar.opt_fine_incar(self.relax_inputpara.work_underpressure) 
                 elif self.relax_inputpara.mode == 'rv3':
-                    self.vasp_writeincar.opt_incar1(self.work_underpressure)
-                    self.vasp_writeincar.opt_incar2(self.work_underpressure)
-                    self.vasp_writeincar.opt_incar3(self.work_underpressure)
+                    self.vasp_writeincar.opt_incar1(self.relax_inputpara.work_underpressure)
+                    self.vasp_writeincar.opt_incar2(self.relax_inputpara.work_underpressure)
+                    self.vasp_writeincar.opt_incar3(self.relax_inputpara.work_underpressure)
                 # init the submit job script
                 self.vasp_writesubmit = vasp_writesubmit.init_from_relaxinput(self.relax_inputpara)
                 jobname = self.vasp_writesubmit.write_submit_scripts()
@@ -85,6 +84,7 @@ class vaspbatch_relax:
                 self.vasp_submitjob   = vasp_submitjob.init_from_relaxinput(self.relax_inputpara)
                 if self.relax_inputpara.queue is not None:
                     self.vasp_submitjob.submit_mode1(jobname)
+
 
 class vasp_phono:
 
@@ -98,20 +98,21 @@ class vasp_phono:
 
         # init the INCAR
         self.vasp_writeincar  = vasp_writeincar.init_from_phonoinput(self.phono_inputpara)
-        if self.mode == 'disp':
-            self.vasp_writeincar.disp_incar(self.work_underpressure)
-        elif self.mode == 'dfpt':
-            self.vasp_writeincar.dfpt_incar(self.work_underpressure)
+        if self.phono_inputpara.mode == 'disp':
+            self.vasp_writeincar.disp_incar(self.phono_inputpara.work_underpressure)
+        elif self.phono_inputpara.mode == 'dfpt':
+            self.vasp_writeincar.dfpt_incar(self.phono_inputpara.work_underpressure)
 
         # init the KPOINTS
-        self.vasp_kpoints     = vasp_writekpoints.init_from_inputpara(self.phono_inputpara)
+        self.vasp_kpoints   = vasp_writekpoints.init_from_inputpara(self.phono_inputpara)
 
         # init the submit job script
         self.vasp_writesubmit = vasp_writesubmit.init_from_phonoinput(self.phono_inputpara)
-
+        jobname = self.vasp_writesubmit.write_submit_scripts()
         # submit the job
         self.vasp_submitjob   = vasp_submitjob.init_from_phonoinput(self.phono_inputpara)
-
+        if self.phono_inputpara.queue is not None:
+            self.vasp_submitjob.submit_mode2(jobname)
 
 class vaspbatch_phono(vasp_phono):
 
@@ -128,7 +129,7 @@ class vaspbatch_phono(vasp_phono):
             mode              = self._config['mode']             ; del self._config['mode']
             for input_file_path in self.input_files_path:
                 # prepare the POSCAR POTCAR  
-                self.phono_inputpara  = vasp_phonopara(
+                self.phono_inputpara  = vaspbatch_phonopara(
                     work_path=work_path,
                     press=press,
                     submit_job_system=submit_job_system,
@@ -139,18 +140,20 @@ class vaspbatch_phono(vasp_phono):
 
                 # init the INCAR
                 self.vasp_writeincar  = vasp_writeincar.init_from_phonoinput(self.phono_inputpara)
-                if self.mode == 'disp':
-                    self.vasp_writeincar.disp_incar(self.work_underpressure)
-                elif self.mode == 'dfpt':
-                    self.vasp_writeincar.dfpt_incar(self.work_underpressure)
+                if self.phono_inputpara.mode == 'disp':
+                    self.vasp_writeincar.disp_incar(self.phono_inputpara.work_underpressure)
+                elif self.phono_inputpara.mode == 'dfpt':
+                    self.vasp_writeincar.dfpt_incar(self.phono_inputpara.work_underpressure)
                 # init the KPOINTS
                 self.vasp_kpoints     = vasp_writekpoints.init_from_inputpara(self.phono_inputpara)
 
                 # init the submit job script
                 self.vasp_writesubmit = vasp_writesubmit.init_from_phonoinput(self.phono_inputpara)
-
+                jobname = self.vasp_writesubmit.write_submit_scripts()
                 # submit the job
                 self.vasp_submitjob   = vasp_submitjob.init_from_phonoinput(self.phono_inputpara)
+                if self.phono_inputpara.queue is not None:
+                    self.vasp_submitjob.submit_mode2(jobname)
 
 
 class vasp_processdata(vasp_base):
@@ -193,8 +196,6 @@ class vasp_processdata(vasp_base):
             self.post_progress_phono_spectrum()
         if self.dos:
             self.post_progress_phono_dos()
-
-
 
     def post_progress_phono_spectrum(self):
 
@@ -324,8 +325,6 @@ class vasp_processdata(vasp_base):
             f.write("BAND_LABELS={}          \n".format(' '.join(special_points)))
             path_coords = list(chain.from_iterable(path_coords)); path_coords=list(map(str, path_coords))
             f.write("BAND={}                 \n".format(' '.join(path_coords)))
-
-
 
     def post_progress_phono_dos(self):
 
@@ -457,3 +456,38 @@ class vasp_processdata(vasp_base):
             f.write("MP ={}                  \n".format(' '.join(__mp)))
             f.write("FORCE_CONSTANTS = READ  \n")
             f.write("PDOS = {}               \n".format(pdos))
+
+
+class vasp_clear:
+
+    def __init__(self, args: ArgumentParser) -> None:
+
+        # read input para
+        self._config = config(args).read_config()
+        self.work_path       = Path(self._config['work_path'])
+        self.mode            = self._config['mode']
+        if self.mode == "all":
+            self.clear_all()
+
+    def clear_all(self):
+        """
+        delete all except "POSCAR", "PPOSCAR", "POTCAR", "OUTCAR", "INCAR*", "*.sh", "*.vasp", "*.slurm"
+        """
+        reserved_files = ["POSCAR", "PPOSCAR", "POTCAR", "OUTCAR",]
+        current_files = os.listdir(self.work_path)
+        for file in current_files:
+            if file in reserved_files:
+                pass
+            elif "INCAR" in file:
+                pass
+            elif Path(self.work_path).joinpath(file).suffix == ".sh":
+                pass
+            elif Path(self.work_path).joinpath(file).suffix == ".vasp":
+                pass
+            elif Path(self.work_path).joinpath(file).suffix == ".slurm":
+                pass
+            else:
+                os.system(f"rm -fr {str(Path(self.work_path).joinpath(file))}")
+
+        
+

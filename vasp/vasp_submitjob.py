@@ -1,5 +1,6 @@
 import os
 import re
+import time
 import shutil
 import logging
 
@@ -62,7 +63,7 @@ class vasp_submitjob:
             dfpt
             disp
         """
-        inputfilename = ["INCAR", "POSCAR", "POTCAR"]
+        inputfilename = ["POSCAR", "POTCAR"]
         for input_name in inputfilename:
             input_file = Path(self.work_underpressure).joinpath(input_name)
             if not input_file.exists():
@@ -91,46 +92,42 @@ class vasp_submitjob:
             raise ValueError(f"The vasp didn't run ! Because the jobids={jobids}. The program will exit! The order you use is {self.submit_order} {jobname}")
         return jobids
 
-    def slurm_submitjob(self):
-        if self.mode == "rvf":
-            cwd = os.getcwd()
-            os.chdir(self.work_underpressure)
-            os.system("sbatch slurmFopt.sh")
+    def submit_mode2(self, jobname):
+
+        patter = re.compile(r"POSCAR\-[0-9]{3}")
+        poscar_files = os.listdir(self.work_underpressure)
+        poscar_number_list = [patter.match(x).group() for x in poscar_files if patter.match(x)]
+        for poscar_number in poscar_number_list:
+            dst_number_dir = Path(self.work_underpressure).joinpath("disp-" + poscar_number.split("-")[-1])
+            if not os.path.exists(dst_number_dir):
+                os.makedirs(dst_number_dir)
+            src_poscar = Path(self.work_underpressure).joinpath(poscar_number) ; dst_poscar = Path(dst_number_dir).joinpath("POSCAR"); shutil.copy(src_poscar, dst_poscar)
+            src_potcar = Path(self.work_underpressure).joinpath("POTCAR")      ; dst_potcar = Path(dst_number_dir).joinpath("POTCAR"); shutil.copy(src_potcar, dst_potcar)
+            src_incar  = Path(self.work_underpressure).joinpath("INCAR_disp")  ; dst_incar  = Path(dst_number_dir).joinpath("INCAR" ); shutil.copy(src_incar, dst_incar )
+            src_kpoints= Path(self.work_underpressure).joinpath("KPOINTS")     ; dst_kpoints= Path(dst_number_dir).joinpath("KPOINTS"); shutil.copy(src_kpoints, dst_kpoints)
+            src_submit = Path(self.work_underpressure).joinpath(jobname)       ; dst_submit = Path(dst_number_dir).joinpath(jobname);  shutil.copy(src_submit, dst_submit)
+            cwd = src_poscar.cwd()
+            dst_dir = dst_number_dir.absolute()
+            os.chdir(dst_dir)
+            if self.submit_job_system == "bash":
+                logger.info(f"nohup {self.submit_order} {jobname} > bash.log 2>&1 &")
+                res = os.popen(f"nohup {self.submit_order} {jobname} > bash.log 2>&1 &").read()
+                jobids = self.getpid()
+            else:
+                logger.info(f"{self.submit_order} {jobname}")
+                res = os.popen(f"{self.submit_order} {jobname}").read()
+                jobids = re.findall(r"\d+", res)
+
+            logger.info(f"{jobname} is running. pid or jobids = {jobids}")
             os.chdir(cwd)
-        elif self.mode == "rv3":
-            cwd = os.getcwd()
-            os.chdir(self.work_underpressure)
-            os.system("sbatch slurm3opt.sh")
-            os.chdir(cwd)
-        elif self.mode == "disp":
-            patter = re.compile(r"POSCAR\-[0-9]{3}")
-            poscar_files = os.listdir(self.work_underpressure)
-            poscar_number_list = [patter.match(x).group() for x in poscar_files if patter.match(x)]
-            for poscar_number in poscar_number_list:
-                dst_number_dir = os.path.join(self.work_underpressure, "disp-" + poscar_number.split("-")[-1])
-                if not os.path.exists(dst_number_dir):
-                    os.makedirs(dst_number_dir)
-                src_poscar = os.path.join(self.work_underpressure, poscar_number) ; dst_poscar = os.path.join(dst_number_dir, "POSCAR");     shutil.copy(src_poscar, dst_poscar)
-                src_potcar = os.path.join(self.work_underpressure, "POTCAR")      ; dst_potcar = os.path.join(dst_number_dir, "POTCAR");     shutil.copy(src_potcar, dst_potcar)
-                src_incar  = os.path.join(self.work_underpressure, "INCAR_disp")  ; dst_incar  = os.path.join(dst_number_dir, "INCAR" );     shutil.copy(src_incar, dst_incar )
-                src_kpoints= os.path.join(self.work_underpressure, "KPOINTS")     ; dst_kpoints= os.path.join(dst_number_dir,"KPOINTS");     shutil.copy(src_kpoints, dst_kpoints)
-                src_slurm  = os.path.join(self.work_underpressure, "slurmdisp.sh"); dst_slurm  = os.path.join(dst_number_dir,"slurmdisp.sh");shutil.copy(src_slurm, dst_slurm)
-                cwd = os.getcwd()
-                os.chdir(dst_number_dir)
-                os.system("sbatch slurmdisp.sh")
-                os.chdir(cwd) 
-        elif self.mode == "dfpt":
-            cwd = os.getcwd()
-            os.chdir(self.work_underpressure)
-            os.system("sbatch slurmdfpt.sh")
-            os.chdir(cwd) 
+
 
     @staticmethod
     def getpid():
         """get pid number"""
         jobids = []
-        logger.info("wait 6s, The program will tell you PID"); time.sleep(6); 
-        osawk = """ps -ef | grep -E "pw.x|ph.x|matdyn.x|lambda.x|q2r.x" |  grep -v grep | awk '{print $2}'""" # return a series of number, such as: 423423 324233 423424
+        logger.info("wait 3s, The program will tell you PID"); time.sleep(3); 
+        osawk = """ps -ef | grep -E "vasp_std" |  grep -v grep | awk '{print $2}'""" # return a series of number, such as: 423423 324233 423424
         # ps -ef ps -ef用于查看全格式的全部进程，其中“ps”是在Linux中是查看进程的命令，“-e ”参数代表显示所有进程，“-f”参数代表全格式。
         # grep -E  ‘grep’ ‘-E’ 选项表示使用扩展的正则表达式。如果你使用 ‘grep’ 命令时带 ‘-E’，你只需要用途 ‘|’ 来分隔OR条件。 grep -E 'pattern1|pattern2' filename
         # grep -v grep 这里可以比较看出，多出了一个进程号，这是grep时所多出来的进程，通过grep -v grep去除包含grep文本的进程行 ，避免影响最终数据的正确性
