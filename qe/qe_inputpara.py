@@ -52,13 +52,14 @@ class qe_inputpara(qe_base):
         if not hasattr(self, "queue"):
             self.queue = None
 
-        # qe 设置的一些基本参数
+        # &CONTROL
         if not hasattr(self, "forc_conv_thr"):
             self.forc_conv_thr = "1.0d-5"
         
         if not hasattr(self, "etot_conv_thr"):
             self.etot_conv_thr = "1.0d-7"
         
+        # &SYSTEM
         if not hasattr(self, "smearing"):
             self.smearing = "gauss"
             # self.smearing = methfessel-paxton 做scffit 和 scf 时候用这个参数
@@ -71,6 +72,10 @@ class qe_inputpara(qe_base):
         if not hasattr(self, "ecutrho"):
             self.ecutrho = "720"
         
+        if not hasattr(self, "lspinorb"):
+            self.lspinorb = False
+            
+        # &ELECTRONS
         if not hasattr(self, "diagonalization"):
             self.diagonalization = "david"
         
@@ -81,9 +86,12 @@ class qe_inputpara(qe_base):
         if not hasattr(self, "mixing_beta"):
             self.mixing_beta = "0.7"
             #  做scffit 和 scf 时候用0.8
+
+        # &CELL
         if not hasattr(self, "press_conv_thr"):
             self.press_conv_thr = "0.01"
 
+        # &kpoints
         if hasattr(self, "kpoints_dense"):
             _kpoints_dense = self.kpoints_dense.split()
             self.kpoints_dense = list(map(int, _kpoints_dense))

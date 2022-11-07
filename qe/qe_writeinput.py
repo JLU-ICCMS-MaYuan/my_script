@@ -61,6 +61,7 @@ class qe_writeinput:
             conv_thr=other_class.conv_thr,
             mixing_beta=other_class.mixing_beta,
             press_conv_thr=other_class.press_conv_thr,
+            lspinorb=other_class.lspinorb,
         )
         return self
 
@@ -94,6 +95,7 @@ class qe_writeinput:
             conv_thr=other_class.conv_thr,
             mixing_beta=other_class.mixing_beta,
             press_conv_thr=other_class.press_conv_thr,
+            lspinorb=other_class.lspinorb,
         )
         return self
 
@@ -288,6 +290,7 @@ class qe_writeinput:
             qe.write(" degauss = {},                   \n".format(self.degauss))
             qe.write(" ecutwfc = {},                   \n".format(self.ecutwfc))
             qe.write(" ecutrho = {},                   \n".format(self.ecutrho))
+            qe.write(" lspinorb = {},                   \n".format(self.lspinorb))
             qe.write("/\n")
 
             qe.write("&ELECTRONS\n")
@@ -351,6 +354,7 @@ class qe_writeinput:
             qe.write(" degauss = {},                   \n".format(self.degauss))
             qe.write(" ecutwfc = {},                   \n".format(self.ecutwfc))
             qe.write(" ecutrho = {},                   \n".format(self.ecutrho))
+            qe.write(" lspinorb = {},                   \n".format(self.lspinorb))
             qe.write(" la2F = .true.,                  \n")
             qe.write("/\n")
 
@@ -404,6 +408,7 @@ class qe_writeinput:
             qe.write(" degauss = {},                   \n".format(self.degauss))
             qe.write(" ecutwfc = {},                   \n".format(self.ecutwfc))
             qe.write(" ecutrho = {},                   \n".format(self.ecutrho))
+            qe.write(" lspinorb = {},                   \n".format(self.lspinorb))
             qe.write("/\n")
 
             qe.write("&ELECTRONS\n")
@@ -456,6 +461,7 @@ class qe_writeinput:
             qe.write(" occupations = 'tetrahedra',     \n")
             qe.write(" ecutwfc = {},                   \n".format(self.ecutwfc))
             qe.write(" ecutrho = {},                   \n".format(self.ecutrho))
+            qe.write(" lspinorb = {},                   \n".format(self.lspinorb))
             qe.write("/\n")
 
             qe.write("&ELECTRONS\n")
