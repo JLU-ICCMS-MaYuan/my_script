@@ -16,7 +16,7 @@ from vasp.vasp_writekpoints import vasp_writekpoints
 from vasp.vasp_writesubmit import vasp_writesubmit
 from vasp.vasp_submitjob import vasp_submitjob
 
-logger = logging.getLogger("vasp_run")
+logger = logging.getLogger(__name__)
 
 class vasp_relax:
 
@@ -30,12 +30,20 @@ class vasp_relax:
 
         # init the INCAR
         self.vasp_writeincar  = vasp_writeincar.init_from_relaxinput(self.relax_inputpara)
-
+        if self.relax_inputpara.mode == 'rvf':
+            self.vasp_writeincar.opt_fine_incar(self.work_underpressure) 
+        elif self.relax_inputpara.mode == 'rv3':
+            self.vasp_writeincar.opt_incar1(self.relax_inputpara.work_underpressure)
+            self.vasp_writeincar.opt_incar2(self.relax_inputpara.work_underpressure)
+            self.vasp_writeincar.opt_incar3(self.relax_inputpara.work_underpressure)
         # init the submit job script
         self.vasp_writesubmit = vasp_writesubmit.init_from_relaxinput(self.relax_inputpara)
-
+        jobname = self.vasp_writesubmit.write_submit_scripts()
         # submit the job
-        self.vasp_submitjob   = vasp_submitjob.init_from_relaxinput(self.relax_inputpara)
+        self.vasp_submitjob = vasp_submitjob.init_from_relaxinput(self.relax_inputpara)
+        if self.relax_inputpara.queue is not None:
+            self.vasp_submitjob.submit_mode1(jobname)
+
 
 
 class vaspbatch_relax:
@@ -64,13 +72,19 @@ class vaspbatch_relax:
 
                 # init the INCAR
                 self.vasp_writeincar  = vasp_writeincar.init_from_relaxinput(self.relax_inputpara)
-
+                if self.relax_inputpara.mode == 'rvf':
+                    self.vasp_writeincar.opt_fine_incar(self.work_underpressure) 
+                elif self.relax_inputpara.mode == 'rv3':
+                    self.vasp_writeincar.opt_incar1(self.work_underpressure)
+                    self.vasp_writeincar.opt_incar2(self.work_underpressure)
+                    self.vasp_writeincar.opt_incar3(self.work_underpressure)
                 # init the submit job script
                 self.vasp_writesubmit = vasp_writesubmit.init_from_relaxinput(self.relax_inputpara)
-
+                jobname = self.vasp_writesubmit.write_submit_scripts()
                 # submit the job
                 self.vasp_submitjob   = vasp_submitjob.init_from_relaxinput(self.relax_inputpara)
-
+                if self.relax_inputpara.queue is not None:
+                    self.vasp_submitjob.submit_mode1(jobname)
 
 class vasp_phono:
 
@@ -84,6 +98,10 @@ class vasp_phono:
 
         # init the INCAR
         self.vasp_writeincar  = vasp_writeincar.init_from_phonoinput(self.phono_inputpara)
+        if self.mode == 'disp':
+            self.vasp_writeincar.disp_incar(self.work_underpressure)
+        elif self.mode == 'dfpt':
+            self.vasp_writeincar.dfpt_incar(self.work_underpressure)
 
         # init the KPOINTS
         self.vasp_kpoints     = vasp_writekpoints.init_from_inputpara(self.phono_inputpara)
@@ -121,7 +139,10 @@ class vaspbatch_phono(vasp_phono):
 
                 # init the INCAR
                 self.vasp_writeincar  = vasp_writeincar.init_from_phonoinput(self.phono_inputpara)
-
+                if self.mode == 'disp':
+                    self.vasp_writeincar.disp_incar(self.work_underpressure)
+                elif self.mode == 'dfpt':
+                    self.vasp_writeincar.dfpt_incar(self.work_underpressure)
                 # init the KPOINTS
                 self.vasp_kpoints     = vasp_writekpoints.init_from_inputpara(self.phono_inputpara)
 

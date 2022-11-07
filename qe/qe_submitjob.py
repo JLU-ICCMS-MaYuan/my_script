@@ -130,7 +130,7 @@ class qe_submitjob:
         # 检查任务是否成功提交，成功提交的话，应该会有进程号或者任务号返回。
         # 如果没有成功提交任务就跳出程序
         if not jobids:
-            raise ValueError(f"The ph.x didn't run ! Because the jobids={jobids}. The program will exit! The order you use is {self.submit_order} {jobname}")
+            raise ValueError(f"The *.x of qe didn't run ! Because the jobids={jobids}. The program will exit! The order you use is {self.submit_order} {jobname}")
         return jobids
 
     def submit_mode2(self, inputfilename, jobname):

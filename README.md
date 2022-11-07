@@ -99,6 +99,26 @@ prepare -m mode="relax-vc scffit scf        " dyn0_flag=True qpoints='6 6 6' cor
 
 ## vasp使用说明
 
+### 基本输入选项。一定要设置的部分：
+```shell
+vasp_main.py -i 输入文件路径 -w 工作目录 -p 压强 -j 运行方式
+```
+说明：输入文件路径：
+1. 指定输入的POSCAR
+
+说明：工作目录
+1. 如果指定工作目录，那么工作目录是-w指定的目录+-p指定的压强组成的路径。比如: -w test -p 200。那么最终路径就是/test/200.0。所有的文件都会在这个路径下运行。
+2. 如果没有指定工作路径，那么工作路径就是当前路径，不会产生压强目录。
+
+说明：压强
+1. 指定结构优化的压强，单位是GPa.
+
+说明：运行方式
+1. bash 代表本地使用bash shell运行。
+2. slurm 代表使用slurm脚本运行。
+3. pbs 代表使用pbs脚本运行。
+
+
 ## structuregenerator使用说明
 
 

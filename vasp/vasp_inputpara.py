@@ -1,14 +1,15 @@
 import os
 import re
 import shutil
+import logging
 from pathlib import Path
-
 
 from ase.io import read
 from pymatgen.io.ase import AseAtomsAdaptor
 
-
 from vasp.vasp_base import vasp_base 
+
+logger = logging.getLogger(__name__)
 
 class vasp_inputpara(vasp_base):
     """
@@ -80,7 +81,11 @@ class vasp_inputpara(vasp_base):
             self.mode = None 
         
         if not hasattr(self, "queue"):
-            self.queue = "xieyu"
+            self.queue = None
+            logger.info("You didn't specify queue, so the program will not submit the job in any way")
+
+        if not hasattr(self, "core"):
+            raise ValueError("You must specify the number of core, such as 'core=48'")
 
 
     @classmethod

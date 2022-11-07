@@ -10,17 +10,6 @@ class vasp_writeincar:
         for key, value in kwargs.items():
             setattr(self, key, value)
 
-        if self.mode == 'rvf':
-            self.opt_fine_incar(self.work_underpressure) 
-        elif self.mode == 'rv3':
-            self.opt_incar1(self.work_underpressure)
-            self.opt_incar2(self.work_underpressure)
-            self.opt_incar3(self.work_underpressure)
-        elif self.mode == 'disp':
-            self.disp_incar(self.work_underpressure)
-        elif self.mode == 'dfpt':
-            self.dfpt_incar(self.work_underpressure)
-
     @classmethod
     def init_from_relaxinput(cls, other_class: vasp_inputpara):
         self = cls(

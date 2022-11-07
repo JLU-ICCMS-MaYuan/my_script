@@ -42,10 +42,13 @@ class vasp_base:
         self.mode              = mode
         
         self.input_file_name   = self.input_file_path.name.split(".")[0]
-
-        self.work_underpressure= Path(self.work_path).joinpath(self.input_file_name +"-"+ self.mode +"-"+ str(self.press))
-        if not self.work_underpressure.exists():
-            self.work_underpressure.mkdir(parents=True)
+        if self.work_path is None:
+            self.work_underpressure = Path("./")
+            self.work_path = self.work_underpressure.parent
+        else:
+            self.work_underpressure= Path(self.work_path).joinpath(str(self.press))
+            if not self.work_underpressure.exists():
+                self.work_underpressure.mkdir(parents=True)
 
         self.ase_type          = read(self.input_file_path)
         self.struct_type       = AseAtomsAdaptor.get_structure(self.ase_type)

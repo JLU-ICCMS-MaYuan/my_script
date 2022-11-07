@@ -51,6 +51,8 @@ class qe_inputpara(qe_base):
  
         if not hasattr(self, "queue"):
             self.queue = None
+            logger.info("You didn't specify queue, so the program will not submit the job in any way")
+
 
         # &CONTROL
         if not hasattr(self, "forc_conv_thr"):

@@ -1,9 +1,13 @@
-from asyncio.log import logger
 import os
 import re
 import shutil
+import logging
+
+from pathlib import Path
+
 from vasp.vasp_inputpara import vasp_inputpara 
 
+logger = logging.getLogger(__name__)
 
 class vasp_submitjob:
     
@@ -19,9 +23,13 @@ class vasp_submitjob:
         self.mode = mode
 
         if self.submit_job_system == "slurm":
-            self.slurm_submitjob()
+            self.submit_order = "sbatch"
         elif self.submit_job_system == "pbs":
-            self.pbs_submitjob()
+            self.submit_order = "qsub"
+        elif self.submit_job_system == "bash":
+            self.submit_order = "bash"
+        else:
+            self.submit_order = ''
 
     @classmethod
     def init_from_relaxinput(cls, other_class: vasp_inputpara):
@@ -44,6 +52,44 @@ class vasp_submitjob:
         )
         
         return self
+
+
+    def submit_mode1(self, jobname):
+        """
+        submit_mode1 can be used to submit:
+            rvf
+            rv3
+            dfpt
+            disp
+        """
+        inputfilename = ["INCAR", "POSCAR", "POTCAR"]
+        for input_name in inputfilename:
+            input_file = Path(self.work_underpressure).joinpath(input_name)
+            if not input_file.exists():
+                raise FileExistsError(f" {input_name} doesn't exist")
+                
+        job_file = Path(self.work_underpressure).joinpath(jobname)
+        if not job_file.exists():
+            raise FileExistsError(f" {jobname} doesn't exist")
+        cwd = input_file.cwd()
+        dst_dir = input_file.parent.absolute()
+        os.chdir(dst_dir)
+        if self.submit_job_system == "bash":
+            logger.info(f"nohup {self.submit_order} {jobname} > bash.log 2>&1 &")
+            res = os.popen(f"nohup {self.submit_order} {jobname} > bash.log 2>&1 &").read()
+            jobids = self.getpid()
+        else:
+            logger.info(f"{self.submit_order} {jobname}")
+            res = os.popen(f"{self.submit_order} {jobname}").read()
+            jobids = re.findall(r"\d+", res)
+
+        logger.info(f"{jobname} is running. pid or jobids = {jobids}")
+        os.chdir(cwd)
+        # 检查任务是否成功提交，成功提交的话，应该会有进程号或者任务号返回。
+        # 如果没有成功提交任务就跳出程序
+        if not jobids:
+            raise ValueError(f"The vasp didn't run ! Because the jobids={jobids}. The program will exit! The order you use is {self.submit_order} {jobname}")
+        return jobids
 
     def slurm_submitjob(self):
         if self.mode == "rvf":
@@ -79,40 +125,16 @@ class vasp_submitjob:
             os.system("sbatch slurmdfpt.sh")
             os.chdir(cwd) 
 
-    def pbs_submitjob(self):
-        if self.mode == "rvf":
-            cwd = os.getcwd()
-            os.chdir(self.work_underpressure)
-            os.system("qsub pbsFopt.sh")
-            logger.info(" vasp optfine is running.")
-            os.chdir(cwd)
-        elif self.mode == "rv3":
-            cwd = os.getcwd()
-            os.chdir(self.work_underpressure)
-            os.system("qsub pbs3opt.sh")
-            os.chdir(cwd)
-            logger.info(" vasp opt3 is running.")
-        elif self.mode == "disp":
-            patter = re.compile(r"POSCAR\-[0-9]{3}")
-            poscar_files = os.listdir(self.work_underpressure)
-            poscar_number_list = [patter.match(x).group() for x in poscar_files if patter.match(x)]
-            for poscar_number in poscar_number_list:
-                dst_number_dir = os.path.join(self.work_underpressure, "disp-" + poscar_number.split("-")[-1])
-                if not os.path.exists(dst_number_dir):
-                    os.makedirs(dst_number_dir)
-                src_poscar = os.path.join(self.work_underpressure, poscar_number) ; dst_poscar = os.path.join(dst_number_dir, "POSCAR");     shutil.copy(src_poscar, dst_poscar)
-                src_potcar = os.path.join(self.work_underpressure, "POTCAR")      ; dst_potcar = os.path.join(dst_number_dir, "POTCAR");     shutil.copy(src_potcar, dst_potcar)
-                src_incar  = os.path.join(self.work_underpressure, "INCAR_disp")  ; dst_incar  = os.path.join(dst_number_dir, "INCAR" );     shutil.copy(src_incar, dst_incar )
-                src_kpoints= os.path.join(self.work_underpressure, "KPOINTS")     ; dst_kpoints= os.path.join(dst_number_dir,"KPOINTS");     shutil.copy(src_kpoints, dst_kpoints)
-                src_pbs    = os.path.join(self.work_underpressure, "pbsdisp.sh")  ; dst_pbs  = os.path.join(dst_number_dir,"pbsdisp.sh");    shutil.copy(src_pbs, dst_pbs)
-                cwd = os.getcwd()
-                os.chdir(dst_number_dir)
-                os.system("qsub pbsdisp.sh")
-                logger.info(" vasp phono-disp is running.")
-                os.chdir(cwd) 
-        elif self.mode == "dfpt":
-            cwd = os.getcwd()
-            os.chdir(self.work_underpressure)
-            os.system("qsub pbsdfpt.sh")
-            logger.info(" vasp phono-dfpt is running.")
-            os.chdir(cwd) 
+    @staticmethod
+    def getpid():
+        """get pid number"""
+        jobids = []
+        logger.info("wait 6s, The program will tell you PID"); time.sleep(6); 
+        osawk = """ps -ef | grep -E "pw.x|ph.x|matdyn.x|lambda.x|q2r.x" |  grep -v grep | awk '{print $2}'""" # return a series of number, such as: 423423 324233 423424
+        # ps -ef ps -ef用于查看全格式的全部进程，其中“ps”是在Linux中是查看进程的命令，“-e ”参数代表显示所有进程，“-f”参数代表全格式。
+        # grep -E  ‘grep’ ‘-E’ 选项表示使用扩展的正则表达式。如果你使用 ‘grep’ 命令时带 ‘-E’，你只需要用途 ‘|’ 来分隔OR条件。 grep -E 'pattern1|pattern2' filename
+        # grep -v grep 这里可以比较看出，多出了一个进程号，这是grep时所多出来的进程，通过grep -v grep去除包含grep文本的进程行 ，避免影响最终数据的正确性
+        #  awk '{print $2}' 这样，就可以抓取PID号
+        _jobids = os.popen(osawk).read()  # return a string; such as '423423\n324233\n423424\n'
+        jobids = _jobids.strip("\n").split("\n")
+        return jobids
