@@ -73,7 +73,7 @@ class qe_inputpara(qe_base):
             self.ecutrho = "720"
         
         if not hasattr(self, "lspinorb"):
-            self.lspinorb = False
+            self.lspinorb = ".false."
             
         # &ELECTRONS
         if not hasattr(self, "diagonalization"):
