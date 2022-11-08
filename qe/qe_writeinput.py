@@ -142,6 +142,7 @@ class qe_writeinput:
             conv_thr=other_class.conv_thr,
             mixing_beta=other_class.mixing_beta,
             press_conv_thr=other_class.press_conv_thr,
+            lspinorb=other_class.lspinorb,
         )
         return self
 
@@ -165,6 +166,7 @@ class qe_writeinput:
 
             qpoints=other_class.qpoints,
             ndos=other_class.ndos,
+            lspinorb=other_class.lspinorb,
         )
         return self
 
@@ -200,6 +202,7 @@ class qe_writeinput:
             conv_thr=other_class.conv_thr,
             mixing_beta=other_class.mixing_beta,
             press_conv_thr=other_class.press_conv_thr,
+            lspinorb=other_class.lspinorb,
 
         )
         return self
