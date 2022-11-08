@@ -76,7 +76,7 @@ class vasp_writesubmit:
 
     # submit job scripts
     def Fopt(self, submit_dirpath):
-        jobname = "Fopt.sh"
+        jobname = "fopt.sh"
         submit_script_filepath = os.path.join(submit_dirpath, jobname)
         with open(submit_script_filepath, "w") as submit:
             submit.writelines(self.jobtitle)

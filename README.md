@@ -131,11 +131,18 @@ vasp_main.py -i ./ -w ./ -p 200 -j slurm batchrelax -m mode=rv3 core=1
 ```
 
 ```shell
-vasp_main.py -i ./POSCAR -j bash phono -m supercell=[2,2,2] kpoints='2 2 2' mode=disp core=1 queue=local
+vasp_main.py -i ./POSCAR -j bash phono -m supercell='2 2 2' kpoints='2 2 2' mode=disp core=1 queue=local
 ```
 
+disp声子计算
+```shell
+vasp_main.py -i ./test/POSCAR -w ./test/ -j slurm phono -m supercell='2 2 2' kpoints='40 40 40' mode=disp  
+```
 
-
+dfpt声子计算
+```shell
+vasp_main.py -i ./test/POSCAR -w ./test/ -j slurm phono -m supercell='2 2 2' kpoints='40 40 40' mode=dfpt
+```
 
 ## structuregenerator使用说明
 
