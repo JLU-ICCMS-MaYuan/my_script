@@ -1,4 +1,4 @@
-from asyncio.log import logger
+import logging
 import os
 import math
 
@@ -6,6 +6,7 @@ from pymatgen.io.vasp import Kpoints
 
 from vasp.vasp_inputpara import vasp_inputpara
 
+logger = logging.getLogger(__name__)
 
 class vasp_writekpoints:
     def __init__(
