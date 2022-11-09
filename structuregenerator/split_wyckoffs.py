@@ -97,7 +97,7 @@ class split_wyckoffs:
 
         wyckoffpositions : Dict[str, bool],
         nonH_upper_limit : str,
-        # H_lower_limit : str,
+        H_lower_limit : str,
         sitesoccupiedrange: list[int],
         popsize: int,
         maxlimit: int,
@@ -110,7 +110,7 @@ class split_wyckoffs:
 
         self.wyckoffpositions   = wyckoffpositions
         self.nonH_upper_limit   = nonH_upper_limit
-        # self.H_lower_limit      = H_lower_limit
+        self.H_lower_limit      = H_lower_limit
         self.sitesoccupiedrange = sitesoccupiedrange
 
         self.work_path          = Path(work_path)
@@ -126,7 +126,7 @@ class split_wyckoffs:
             self.wyckoffpositions,
             self.sitesoccupiedrange,
             self.nonH_upper_limit,
-            # self.H_lower_limit,
+            self.H_lower_limit,
             )
         self.structs = []
 
@@ -136,16 +136,16 @@ class split_wyckoffs:
         wyckoffpositions,
         sitesoccupiedrange,
         nonH_upper_limit,
-        # H_lower_limit,
+        H_lower_limit,
         ):
 
-        if   len(nameofatoms) == 2:
+        if len(nameofatoms) == 2:
             _group = self.binary_hydrides(
                 nameofatoms,
                 sitesoccupiedrange,
                 wyckoffpositions,
                 nonH_upper_limit,
-                # H_lower_limit,
+                H_lower_limit,
             )
             return _group
         elif len(nameofatoms) == 3:
@@ -154,11 +154,17 @@ class split_wyckoffs:
                 sitesoccupiedrange,
                 wyckoffpositions,
                 nonH_upper_limit,
-                # H_lower_limit,
+                H_lower_limit,
             )
             return _group
         elif len(nameofatoms) == 4:
-            self.quaternary_hydrides()
+            self.quaternary_hydrides(
+                nameofatoms,
+                sitesoccupiedrange,
+                wyckoffpositions,
+                nonH_upper_limit,
+                H_lower_limit,
+            )
         
 
     def binary_hydrides(
@@ -167,7 +173,7 @@ class split_wyckoffs:
         sitesoccupiedrange,
         wyckoffpositions,
         nonH_upper_limit,
-        # H_lower_limit,
+        H_lower_limit,
         ):
         _group = defaultdict(list)
         # 判断 H元素 是否为最后一个元素
@@ -185,8 +191,8 @@ class split_wyckoffs:
             for nonH1_wps, nonH1_rest in self.get_NonHwps(list(wyckoffpositions.keys()) ,wyckoffpositions, nonH1_num, nonH_upper_limit):
 
                 for H_num in range(H_range[0], H_range[-1]+1):
-                    # for H_wps, H_rest in self.get_Hwps(list(wyckoffpositions.keys()), nonH1_rest, H_num, H_lower_limit):
-                    for H_wps, H_rest in self.get_Hwps(nonH1_rest, H_num):
+                    for H_wps, H_rest in self.get_Hwps(list(wyckoffpositions.keys()), nonH1_rest, H_num, H_lower_limit):
+                    # for H_wps, H_rest in self.get_Hwps(nonH1_rest, H_num):
                         wyckps  = [nonH1_wps, H_wps]
                         nelems  = self.get_natoms([nonH1_wps, H_wps])
                         formula = ''.join(map(str, chain.from_iterable(zip(nameofatoms, nelems))))
@@ -196,14 +202,13 @@ class split_wyckoffs:
         _group = dict(_group)
         return _group
 
-
     def ternary_hydrides(
         self,
         nameofatoms,
         sitesoccupiedrange,
         wyckoffpositions,
         nonH_upper_limit,
-        # H_lower_limit,
+        H_lower_limit,
         ):
         # 考虑该非氢元素可能占据的wps的个数的范围从 `nonH_list1[0]~nonH_list1[-1]+1`
         # 例如： 
@@ -225,8 +230,8 @@ class split_wyckoffs:
                     for nonH2_wps, nonH2_rest in self.get_NonHwps(list(wyckoffpositions.keys()), nonH1_rest, nonH2_num, nonH_upper_limit):
 
                         for H_num in range(H_range[0], H_range[-1]+1):
-                            # for H_wps, H_rest in self.get_Hwps(list(wyckoffpositions.keys()), nonH2_rest, H_num, H_lower_limit):
-                            for H_wps, H_rest in self.get_Hwps(nonH2_rest, H_num):
+                            for H_wps, H_rest in self.get_Hwps(list(wyckoffpositions.keys()), nonH2_rest, H_num, H_lower_limit):
+                            # for H_wps, H_rest in self.get_Hwps(nonH2_rest, H_num):
                                 wyckps  = [nonH1_wps, nonH2_wps, H_wps]
                                 nelems  = self.get_natoms([nonH1_wps, nonH2_wps, H_wps])
                                 formula = ''.join(map(str, chain.from_iterable(zip(nameofatoms, nelems))))
@@ -267,8 +272,8 @@ class split_wyckoffs:
                             for nonH3_wps, nonH3_rest in self.get_NonHwps(list(wyckoffpositions.keys()), nonH2_rest, nonH3_num, nonH_upper_limit):
 
                                 for H_num in range(H_range[0], H_range[-1]+1):
-                                    # for H_wps, H_rest in self.get_Hwps(list(wyckoffpositions.keys()), nonH3_rest, H_num, H_lower_limit):
-                                    for H_wps, H_rest in self.get_Hwps(nonH3_rest, H_num):
+                                    for H_wps, H_rest in self.get_Hwps(list(wyckoffpositions.keys()), nonH3_rest, H_num, H_lower_limit):
+                                    # for H_wps, H_rest in self.get_Hwps(nonH3_rest, H_num):
                                         wyckps  = [nonH1_wps, nonH2_wps, nonH3_wps, H_wps]
                                         nelems  = self.get_natoms([nonH1_wps, nonH2_wps, nonH3_wps, H_wps])
                                         formula = ''.join(map(str, chain.from_iterable(zip(nameofatoms, nelems))))
@@ -308,23 +313,7 @@ class split_wyckoffs:
                 rest_dict = {key : value for key, value in wps.items() if key in restwps}
                 yield comb_list, rest_dict
 
-    # def get_Hwps(self, original_wps:List, wps:dict, num:int, H_lower_limit):
-    #     allwps = list(wps.keys())
-    #     for comb_list in combinations_with_replacement(allwps, num):
-    #         for item in set(comb_list):
-    #             if (wps[item] == False) and (comb_list.count(item) != 1): # False 代表该wps占位只能占据一次
-    #                 break
-    #             if original_wps.index(item) < original_wps.index(H_lower_limit):
-    #                 break
-    #         else:
-    #             comb_list = sorted(list(comb_list))
-                
-    #             restwps = set(allwps) - set(comb_list)
-    #             rest_dict = {key : value for key, value in wps.items() if key in restwps}
-                
-    #             yield comb_list, rest_dict
-
-    def get_Hwps(self, wps:dict, num:int):
+    def get_Hwps(self, original_wps:List, wps:dict, num:int, H_lower_limit):
         """
         input parameter:
             wps: It is a dictionary of wyckoff positions for non-H specie. For example:
@@ -342,6 +331,8 @@ class split_wyckoffs:
         for comb_list in combinations_with_replacement(allwps, num):
             for item in set(comb_list):
                 if (wps[item] == False) and (comb_list.count(item) != 1): # False 代表该wps占位只能占据一次
+                    break
+                if original_wps.index(item) < original_wps.index(H_lower_limit):
                     break
             else:
                 comb_list = sorted(list(comb_list))
@@ -464,7 +455,7 @@ class split_wyckoffs:
             nameofatoms=config_d["nameofatoms"], 
             wyckoffpositions=config_d["wyckoffpositions"], 
             nonH_upper_limit=config_d["nonh_upper_limit"],
-            # H_lower_limit=config_d["h_lower_limit"],
+            H_lower_limit=config_d["h_lower_limit"],
             sitesoccupiedrange=config_d["sitesoccupiedrange"],
             popsize=config_d["popsize"],
             maxlimit=config_d["maxlimit"],
