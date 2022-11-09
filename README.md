@@ -86,11 +86,16 @@ dos -m mode=dos core=1 npool=1 queue=local qpoints='8 8 8' ndos=500
 ```
 
 计算超导
+不指定最高频率
 ```shell
-sc -m mode=McAD core=1 npool=1 queue=local top_freq=80 deguass=0.5 screen_constant=0.1 smearing_method=1
+sc -m mode=McAD core=1 npool=1 queue=local deguass=0.5 screen_constant=0.1 smearing_method=1 qpoints='6 6 6'
+```
+指定最高频率
+```shell
+sc -m mode=McAD core=1 npool=1 queue=local top_freq=80 deguass=0.5 screen_constant=0.1 smearing_method=1 qpoints='6 6 6'
 ```
 ```shell
-sc -m mode=eliashberg core=1 npool=1 queue=local temperature_points=10000 a2F_dos=a2F.dos3
+sc -m mode=eliashberg core=1 npool=1 queue=local temperature_points=10000 a2F_dos=a2F.dos3 qpoints='6 6 6'
 ```
 
 批量计算
