@@ -685,7 +685,7 @@ class qe_writeinput:
         return inputfilename
 
     def write_alpha2f_out(self):
-        alpha2f_out = Path(self.work_underpressure).joinpath("ALPHA2F.out").absolute()
+        alpha2f_out = Path(self.work_underpressure).joinpath("ALPHA2F.OUT").absolute()
         if self.a2F_dos is not None:
             a2F_dos_path = Path(self.work_underpressure).joinpath(self.a2F_dos).absolute()
             if not a2F_dos_path.exists():
