@@ -54,7 +54,7 @@ def get_energy_sigma_0(outcar_path):
                 energy_sigma_0_list.append(energy)
     return energy_sigma_0_list[-1]   
 
-def plot_encut_or_kspacing(path_dat, path_jpeg):
+def plot(path_dat, path_jpeg):
     import pandas as pd
     import matplotlib.pyplot as plt
 
@@ -64,8 +64,9 @@ def plot_encut_or_kspacing(path_dat, path_jpeg):
     df = df.sort_values(by=["name"])
     df['energy_per_atoms_sep']=df['energy_per_atoms'].diff()
     print(path_dat, "\n", df)
-    df.plot(x="name", y=["energy_per_atoms", "energy_per_atoms_sep"])
-    
+    df.to_csv(path_dat, index=False)
+    # df.plot(x="name", y=["energy_per_atoms", "energy_per_atoms_sep"])
+    df.plot(x="name", y=["energy_per_atoms"])
     plt.savefig(path_jpeg)
 
 if __name__ == "__main__":
@@ -98,7 +99,7 @@ if __name__ == "__main__":
         help="检查结构优化后的目录中的enthalpy"
     )
     parser.add_argument(
-        "-et",
+        "-encut",
         "--encut-test",
         default=False,
         action="store_true",
@@ -106,12 +107,20 @@ if __name__ == "__main__":
         help="检查测试encut后的能量"
     )
     parser.add_argument(
-        "-kp",
+        "-kspacing",
         "--kspacing-test",
         default=False,
         action="store_true",
         dest="test_kspacing",
         help="检查测试kspacing后的能量"
+    )
+    parser.add_argument(
+        "-sigma",
+        "--sigma-test",
+        default=False,
+        action="store_true",
+        dest="test_sigma",
+        help="检查测试sigma后的能量"
     )
     parser.add_argument(
         '-plot',
@@ -126,6 +135,7 @@ if __name__ == "__main__":
     structure_opt      = args.structure_opt
     test_encut         = args.test_encut
     test_kspacing      = args.test_kspacing
+    test_sigma         = args.test_sigma
     plot_flag          = args.plot_flag
 
     if directory_vasp_run is not None:
@@ -165,10 +175,10 @@ if __name__ == "__main__":
         df.to_excel("enthalpy_sorted.xlsx")
 
     if test_encut:
-        if os.path.exists("test_encut.dat"):
-            os.remove("test_encut.dat")
-        with open("test_encut.dat", "w") as file:
-            file.write("{:<10} {:<20} {:<20}\n".format("name", "energy", "energy_per_atoms"))
+        if os.path.exists("encut.dat"):
+            os.remove("encut.dat")        
+        with open("encut.dat", "w") as file:
+            file.write("{:<10} {:<20} {:<20}\n".format("name", "energy", "energy_per_atoms"))     
         for root, dirs, files in os.walk(dir_vr):
             if "OUTCAR" in files and "POSCAR" in files:
                 outcar_path = os.path.join(root, "OUTCAR")
@@ -177,15 +187,13 @@ if __name__ == "__main__":
                 struct = Structure.from_file(poscar_path);  atoms_amount     = struct.composition.num_atoms
                 energy = get_free_energy(outcar_path)    ;  energy_per_atoms = float(energy) / atoms_amount
                 name   = (root.split("/")[-1])
-                with open("test_encut.dat", "a") as file:
+                with open("encut.dat", "a") as file:
                     file.write("{:<10} {:<20} {:<20}\n".format(name, energy, energy_per_atoms))
-
     if test_kspacing:
-        if os.path.exists("test_kspacing.dat"):
-            os.remove("test_kspacing.dat")
-        with open("test_kspacing.dat", "w") as file:
+        if os.path.exists("kspacing.dat"):
+            os.remove("kspacing.dat")
+        with open("kspacing.dat", "w") as file:
             file.write("{:<10} {:<20} {:<20}\n".format("name", "energy", "energy_per_atoms"))    
-
         for root, dirs, files in os.walk(dir_vr):
             if "OUTCAR" in files and "POSCAR" in files:
                 outcar_path = os.path.join(root, "OUTCAR")
@@ -194,11 +202,27 @@ if __name__ == "__main__":
                 struct = Structure.from_file(poscar_path);  atoms_amount     = struct.composition.num_atoms
                 energy = get_free_energy(outcar_path)    ;  energy_per_atoms = float(energy) / atoms_amount
                 name   = root.split("/")[-1]
-                with open("test_kspacing.dat", "a") as file:
+                with open("kspacing.dat", "a") as file:
+                    file.write("{:<10} {:<20} {:<20}\n".format(name, energy, energy_per_atoms))      
+    if test_sigma:
+        if os.path.exists("sigma.dat"):
+            os.remove("sigma.dat")
+        with open("sigma.dat", "w") as file:
+            file.write("{:<10} {:<20} {:<20}\n".format("name", "energy", "energy_per_atoms"))    
+        for root, dirs, files in os.walk(dir_vr):
+            if "OUTCAR" in files and "POSCAR" in files:
+                outcar_path = os.path.join(root, "OUTCAR")
+                poscar_path = os.path.join(root, "POSCAR")
+                print(outcar_path)
+                struct = Structure.from_file(poscar_path);  atoms_amount     = struct.composition.num_atoms
+                energy = get_free_energy(outcar_path)    ;  energy_per_atoms = float(energy) / atoms_amount
+                name   = root.split("/")[-1]
+                with open("sigma.dat", "a") as file:
                     file.write("{:<10} {:<20} {:<20}\n".format(name, energy, energy_per_atoms))      
 
-
-    if os.path.exists("test_encut.dat") and plot_flag and test_encut:
-        plot_encut_or_kspacing("test_encut.dat", "test_encut.jpeg")
-    elif os.path.exists("test_kspacing.dat") and plot_flag and test_kspacing:
-        plot_encut_or_kspacing("test_kspacing.dat", "test_kspacing.jpeg")
+    if os.path.exists("encut.dat") and plot_flag and test_encut:
+        plot("encut.dat", "encut.jpeg")
+    elif os.path.exists("kspacing.dat") and plot_flag and test_kspacing:
+        plot("kspacing.dat", "kspacing.jpeg")
+    elif os.path.exists("sigma.dat") and plot_flag and test_sigma:
+        plot("sigma.dat", "sigma.jpeg")

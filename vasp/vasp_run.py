@@ -30,7 +30,7 @@ class vasp_relax:
 
         # init the INCAR
         self.vasp_writeincar  = vasp_writeincar.init_from_relaxinput(self.relax_inputpara)
-        if self.relax_inputpara.mode == 'rvf':
+        if self.relax_inputpara.mode == 'rvf' or self.relax_inputpara.mode == 'rv1':
             self.vasp_writeincar.opt_fine_incar(self.relax_inputpara.work_underpressure) 
         elif self.relax_inputpara.mode == 'rv3':
             self.vasp_writeincar.opt_incar1(self.relax_inputpara.work_underpressure)
@@ -71,7 +71,7 @@ class vaspbatch_relax:
 
                 # init the INCAR
                 self.vasp_writeincar  = vasp_writeincar.init_from_relaxinput(self.relax_inputpara)
-                if self.relax_inputpara.mode == 'rvf':
+                if self.relax_inputpara.mode == 'rvf' or self.relax_inputpara.mode == 'rv1':
                     self.vasp_writeincar.opt_fine_incar(self.relax_inputpara.work_underpressure) 
                 elif self.relax_inputpara.mode == 'rv3':
                     self.vasp_writeincar.opt_incar1(self.relax_inputpara.work_underpressure)

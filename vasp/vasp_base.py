@@ -211,10 +211,10 @@ class vaspbatch_base(vasp_base):
         
         self.input_file_name   = self.input_file_path.name.split(".")[0]
         if self.work_path is None:
-            self.work_underpressure = Path.cwd().joinpath(self.input_file_name, str(self.press))
+            self.work_underpressure = Path.cwd().joinpath(str(self.press), self.input_file_name)
             self.work_path = self.work_underpressure.parent
         else:
-            self.work_underpressure= Path(self.work_path).joinpath(self.input_file_name, str(self.press))
+            self.work_underpressure= Path(self.work_path).joinpath(str(self.press), self.input_file_name)
             if not self.work_underpressure.exists():
                 self.work_underpressure.mkdir(parents=True)
 

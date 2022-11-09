@@ -215,7 +215,7 @@ class vaspbatch_inputpara(vaspbatch_base, vasp_inputpara):
         '''
 
         self.set_default_inputpara(kwargs)
-        self.set_default_phonoinputpara(kwargs)
+
 
 
 class vaspbatch_phonopara(vaspbatch_base, vasp_phonopara):

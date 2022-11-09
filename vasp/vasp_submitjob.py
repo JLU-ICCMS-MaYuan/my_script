@@ -103,7 +103,7 @@ class vasp_submitjob:
                 os.makedirs(dst_number_dir)
             src_poscar = Path(self.work_underpressure).joinpath(poscar_number) ; dst_poscar = Path(dst_number_dir).joinpath("POSCAR"); shutil.copy(src_poscar, dst_poscar)
             src_potcar = Path(self.work_underpressure).joinpath("POTCAR")      ; dst_potcar = Path(dst_number_dir).joinpath("POTCAR"); shutil.copy(src_potcar, dst_potcar)
-            src_incar  = Path(self.work_underpressure).joinpath("INCAR_disp")  ; dst_incar  = Path(dst_number_dir).joinpath("INCAR" ); shutil.copy(src_incar, dst_incar )
+            src_incar  = Path(self.work_underpressure).joinpath("INCAR")       ; dst_incar  = Path(dst_number_dir).joinpath("INCAR" ); shutil.copy(src_incar, dst_incar )
             src_kpoints= Path(self.work_underpressure).joinpath("KPOINTS")     ; dst_kpoints= Path(dst_number_dir).joinpath("KPOINTS"); shutil.copy(src_kpoints, dst_kpoints)
             src_submit = Path(self.work_underpressure).joinpath(jobname)       ; dst_submit = Path(dst_number_dir).joinpath(jobname);  shutil.copy(src_submit, dst_submit)
             cwd = src_poscar.cwd()

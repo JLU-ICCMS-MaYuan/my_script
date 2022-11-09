@@ -61,7 +61,10 @@ class vasp_writesubmit:
             mode=self.mode
 
         if mode == 'rvf':
-            jobname = self.Fopt(self.work_underpressure)
+            jobname = self.fopt(self.work_underpressure)
+            return jobname
+        elif mode == "rv1":
+            jobname = self.oneopt(self.work_underpressure)
             return jobname
         elif mode == 'rv3':
             jobname = self.threeopt(self.work_underpressure)
@@ -75,12 +78,11 @@ class vasp_writesubmit:
 
 
     # submit job scripts
-    def Fopt(self, submit_dirpath):
+    def fopt(self, submit_dirpath):
         jobname = "fopt.sh"
         submit_script_filepath = os.path.join(submit_dirpath, jobname)
         with open(submit_script_filepath, "w") as submit:
             submit.writelines(self.jobtitle)
-            submit.write('cp INCAR_fine INCAR                           \n')                    
             submit.write('num=0                                         \n')                                                                               
             submit.write('while true;do                                 \n')              
             submit.write('        let num+=1                            \n')                   
@@ -101,6 +103,13 @@ class vasp_writesubmit:
             submit.write('done                                                       \n')  
         return jobname
 
+    def oneopt(self, submit_dirpath):
+        jobname = "oneopt.sh"
+        submit_script_filepath = os.path.join(submit_dirpath, jobname)
+        with open(submit_script_filepath, "w") as submit:
+            submit.writelines(self.jobtitle)
+            submit.write('mpirun -n {} {} > vasp.log 2>&1    \n'.format(self.core, vaspbin_path))                                                                         
+        return jobname
 
     def threeopt(self, submit_dirpath):
         jobname = "threeopt.sh"
@@ -123,7 +132,6 @@ class vasp_writesubmit:
         with open(submit_script_filepath, "w") as submit:
             submit.writelines(self.jobtitle)
             submit.write('echo "run fine DFPT"                \n')
-            submit.write('cp -f INCAR_dfpt INCAR              \n')
             submit.write('cp -f SPOSCAR POSCAR                \n')
             submit.write('mpirun -np {} {} > vasp.log 2>&1    \n'.format(self.core, vaspbin_path))                        
         return jobname

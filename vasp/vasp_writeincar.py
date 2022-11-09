@@ -113,7 +113,7 @@ class vasp_writeincar:
             incar.write("PSTRESS  = {}   \n".format(str(float(self.press)*10)))    
 
     def opt_fine_incar(self, incar_dirpath):
-        incar_filepath = os.path.join(incar_dirpath, "INCAR_fine")
+        incar_filepath = os.path.join(incar_dirpath, "INCAR")
         with open(incar_filepath, "w") as incar:
             incar.write("ISTART   = 0    \n")   
             incar.write("ICHARG   = 2    \n")   
@@ -135,7 +135,7 @@ class vasp_writeincar:
             incar.write("PSTRESS  = {}   \n".format(str(float(self.press)*10)))    
             
     def disp_incar(self, incar_dirpath):
-        incar_filepath = os.path.join(incar_dirpath, "INCAR_disp")
+        incar_filepath = os.path.join(incar_dirpath, "INCAR")
         with open(incar_filepath, "w") as incar:
             incar.write("ISTART   = 0    \n")   
             incar.write("ICHARG   = 2    \n")   
@@ -156,7 +156,7 @@ class vasp_writeincar:
             incar.write("ADDGRID  = .TRUE.\n")
 
     def dfpt_incar(self, incar_dirpath):
-        incar_filepath = os.path.join(incar_dirpath, "INCAR_dfpt")
+        incar_filepath = os.path.join(incar_dirpath, "INCAR")
         with open(incar_filepath, "w") as incar:
             incar.write("ISTART   = 0      \n")   
             incar.write("ICHARG   = 2      \n")   
