@@ -47,7 +47,7 @@ class qe_base:
         self.input_file_path   = Path(input_file_path)
 
         # 设置underpressure
-        if "relax.out" in self.input_file_path.name:
+        if ("relax.out" in self.input_file_path.name) or ("scf.out" in self.input_file_path.name) or ("scffit.out" in self.input_file_path.name):
             self.work_underpressure= Path(self.input_file_path).parent
         else:
             self.work_underpressure= Path(self.work_path).joinpath(str(self.press))
