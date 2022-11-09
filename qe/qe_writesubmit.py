@@ -141,8 +141,8 @@ class qe_writesubmit:
         if mode =="matdyn":
             jobname = self.s7_matdyn(self.work_underpressure, inpufilename)
             return jobname
-        if mode =="matdyn_dos":
-            jobname = self.s8_matdyn_dos(self.work_underpressure, inpufilename)
+        if mode =="dos":
+            jobname = self.s8_dos(self.work_underpressure, inpufilename)
             return jobname
         if mode =="McAD":
             jobname = self.s9_lambda(self.work_underpressure, inpufilename)
@@ -246,10 +246,10 @@ class qe_writesubmit:
             j.write('mpirun -np {} {}/matdyn.x -npool {} <{}> {} \n'.format(self.core, qebin_path, self.npool, _inpufilename, _outputfilename))
         return jobname
 
-    def s8_matdyn_dos(self, _dirpath, inputfilename):
+    def s8_dos(self, _dirpath, inputfilename):
         _inpufilename = inputfilename
         _outputfilename = _inpufilename.split(".")[0] + ".out"
-        jobname = "s8_matdyn_dos.sh"
+        jobname = "s8_dos.sh"
         _script_filepath = os.path.join(_dirpath, jobname)
         with open(_script_filepath, "w") as j:
             j.writelines(self.jobtitle)

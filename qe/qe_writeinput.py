@@ -253,8 +253,8 @@ class qe_writeinput:
         if mode =="matdyn":
             inputfilename = self.write_matdyn_in()
             return inputfilename
-        if mode =="matdyn_dos":
-            inputfilename = self.write_matdyn_dos_in()
+        if mode =="dos":
+            inputfilename = self.write_dos_in()
             return inputfilename
         if mode =="McAD":
             inputfilename = self.write_lambda_in()
@@ -469,7 +469,7 @@ class qe_writeinput:
 
             qe.write("&ELECTRONS\n")
             qe.write(" conv_thr = 1.0d-12,             \n")
-            qe.write(" diagonalization='divid,         \n")
+            qe.write(" diagonalization = '{}'          \n".format(self.diagonalization))
             qe.write(" mixing_mode = 'plain',          \n")
             qe.write(" mixing_beta = 0.8d0,            \n")
             qe.write("/\n")
@@ -623,10 +623,10 @@ class qe_writeinput:
                 qe.write(" {:<15} {:<15} {:<15} {:<5}                   \n".format(str(coord[0]), str(coord[1]), str(coord[2]), str(inserted_qpoints_number)))
         return inputfilename
 
-    def write_matdyn_dos_in(self):
-        inputfilename = "matdyn_dos.in"
-        matdyn_dos_in = os.path.join(self.work_underpressure, inputfilename) 
-        with open(matdyn_dos_in, "w") as qe:
+    def write_dos_in(self):
+        inputfilename = "dos.in"
+        dos_in = os.path.join(self.work_underpressure, inputfilename) 
+        with open(dos_in, "w") as qe:
             qe.write("&input                                             \n")
             qe.write("   asr = 'simple',                                 \n")                                 
             for i, species_name in enumerate(self.composition.keys()):

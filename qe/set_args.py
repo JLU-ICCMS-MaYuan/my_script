@@ -150,7 +150,7 @@ def set_more_args(parser: ArgumentParser):
             "qpoints='x x x' (尽量密一点, 比如是声子计算的2倍) \n"
             "   `x`=`path\POSCAR`\n"
             "   `y`=`the position of directory where KPOINTS will be put`\n"
-            "   mode=matdyn_dos\n"
+            "   mode=dos\n"
     )
     parser_dos.set_defaults(qe_workflow=qe_dos)
 

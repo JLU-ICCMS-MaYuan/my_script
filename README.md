@@ -50,6 +50,10 @@ scf -m mode=scffit kpoints_dense='24 24 24' core=48 npool=4  queue=lhy
 ```shell
 scf -m mode=scf kpoints_sparse='12 12 12' core=48 npool=4  queue=lhy
 ```
+非自洽计算
+```shell
+qe_main.py -i relax.out -j bash scf -m mode=nscf kpoints_dense='32 32 32' core=2 queue=local
+```
 
 不分q点计算声子
 ```shell
@@ -76,9 +80,9 @@ phono -m mode=q2r qpoints='6 6 6' core=1 npool=1 queue=local
 ```shell
 phono -m mode=matdyn qpoints='6 6 6' core=1 npool=1 queue=local qinserted=50
 ```
-计算态密度
+计算态密度, 计算态密度时要用更密的q点网格，这需设置nk1, nk2, nk3   
 ```shell
-dos -m mode=matdyn_dos core=1 npool=1 queue=local qpoints='8 8 8' ndos=500 
+dos -m mode=dos core=1 npool=1 queue=local qpoints='8 8 8' ndos=500 
 ```
 
 计算超导

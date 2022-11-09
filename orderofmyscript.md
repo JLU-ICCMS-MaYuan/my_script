@@ -103,7 +103,7 @@ tool_main.py -i Ba3Si23.cif -w ./ convert -m vasp
 
     qe_main.py -i ./200.0/relax.out -w ./200.0/ -p 200 -j bash  phono -m mode=q2r        core=1 npool=1 queue=local
     qe_main.py -i ./200.0/relax.out -w ./200.0/ -p 200 -j bash  phono -m mode=matdyn     core=1 npool=1 queue=local qinserted=50
-    qe_main.py -i ./200.0/relax.out -w ./200.0/ -p 200 -j bash  dos   -m mode=matdyn_dos core=1 npool=1 queue=local qpoints='8 8 8' ndos=500 
+    qe_main.py -i ./200.0/relax.out -w ./200.0/ -p 200 -j bash  dos   -m mode=dos core=1 npool=1 queue=local qpoints='8 8 8' ndos=500 
 
     qe_main.py -i ./200.0/relax.out -w ./200.0 -p 200 -j bash   sc    -m mode=McAD       core=1 npool=1 queue=local top_freq=80 deguass=0.5 screen_constant=0.1 smearing_method=1
     qe_main.py -i ./200.0/relax.out -w ./200.0 -p 200 -j bash   sc    -m mode=eliashberg core=1 npool=1 queue=local temperature_points=10000 a2F_dos=a2F.dos3
