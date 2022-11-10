@@ -217,7 +217,6 @@ class vaspbatch_inputpara(vaspbatch_base, vasp_inputpara):
         self.set_default_inputpara(kwargs)
 
 
-
 class vaspbatch_phonopara(vaspbatch_base, vasp_phonopara):
 
     def __init__(

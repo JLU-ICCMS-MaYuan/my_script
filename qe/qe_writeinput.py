@@ -166,7 +166,10 @@ class qe_writeinput:
 
             qpoints=other_class.qpoints,
             ndos=other_class.ndos,
-            lspinorb=other_class.lspinorb,
+            # lspinorb=other_class.lspinorb,
+            DeltaE=other_class.DeltaE,
+            emin=other_class.emin,
+            emax=other_class.emax,
         )
         return self
 
@@ -253,8 +256,14 @@ class qe_writeinput:
         if mode =="matdyn":
             inputfilename = self.write_matdyn_in()
             return inputfilename
-        if mode =="dos":
-            inputfilename = self.write_dos_in()
+        if mode =="eletdos":
+            inputfilename = self.write_eletdos_in()
+            return inputfilename
+        if mode =="elepdos":
+            inputfilename = self.write_elepdos_in()
+            return inputfilename
+        if mode =="phonodos":
+            inputfilename = self.write_phonodos_in()
             return inputfilename
         if mode =="McAD":
             inputfilename = self.write_lambda_in()
@@ -623,10 +632,39 @@ class qe_writeinput:
                 qe.write(" {:<15} {:<15} {:<15} {:<5}                   \n".format(str(coord[0]), str(coord[1]), str(coord[2]), str(inserted_qpoints_number)))
         return inputfilename
 
-    def write_dos_in(self):
-        inputfilename = "dos.in"
-        dos_in = os.path.join(self.work_underpressure, inputfilename) 
-        with open(dos_in, "w") as qe:
+    def write_eletdos_in(self):
+        inputfilename = "eletdos.in"
+        eledos_in = os.path.join(self.work_underpressure, inputfilename) 
+        with open(eledos_in, "w") as qe:
+            qe.write("&dos                                               \n")
+            qe.write("   prefix = '{}',                                  \n".format(self.system_name))                                                          
+            qe.write("   outdir = './tmp',                               \n")                                                                                    
+            qe.write("   fildos = '{}.tdos',                              \n".format(self.system_name))
+            qe.write("   DeltaE = 0.01,                                  \n".format(self.DeltaE))                                    
+            qe.write("   emin = {},                                      \n".format(self.emin))
+            qe.write("   emax = {},                                      \n".format(self.emax))
+            qe.write("/                                                  \n")                                                                
+        return inputfilename
+
+    def write_elepdos_in(self):
+        inputfilename = "elepdos.in"
+        eledos_in = os.path.join(self.work_underpressure, inputfilename) 
+        with open(eledos_in, "w") as qe:
+            qe.write("&projwfc                                           \n")
+            qe.write("   prefix = '{}',                                  \n".format(self.system_name))                                                          
+            qe.write("   outdir = './tmp',                               \n")                                                                                    
+            qe.write("   filpdos= '{}',                                  \n".format(self.system_name))
+            qe.write("   filproj= '{}',                                  \n".format(self.system_name))
+            qe.write("   DeltaE = 0.01,                                  \n".format(self.DeltaE))                                    
+            qe.write("   emin = {},                                      \n".format(self.emin))
+            qe.write("   emax = {},                                      \n".format(self.emax))
+            qe.write("/                                                  \n")                                                                
+        return inputfilename
+
+    def write_phonodos_in(self):
+        inputfilename = "phonodos.in"
+        phonodos_in = os.path.join(self.work_underpressure, inputfilename) 
+        with open(phonodos_in, "w") as qe:
             qe.write("&input                                             \n")
             qe.write("   asr = 'simple',                                 \n")                                 
             for i, species_name in enumerate(self.composition.keys()):
@@ -637,7 +675,7 @@ class qe_writeinput:
             qe.write("   flfrq = '{}.freq',                              \n".format(self.system_name))                                         
             qe.write("   la2F = .true.,                                  \n")                                
             qe.write("   dos = .true.,                                   \n")  # 计算声子态密度,dos必须设置为.true.                           
-            qe.write("   fldos = '{}.dos',                               \n".format(self.system_name))                                       
+            qe.write("   fldos = '{}.dos',                               \n".format(self.system_name+"_phono"))                                       
             qe.write("   nk1={}, nk2={}, nk3={},                         \n".format(self.qpoints[0], self.qpoints[1], self.qpoints[2]))  # 计算态密度时要用更密的q点网格，这需设置nk1, nk2, nk3                                      
             qe.write("   ndos={},                                        \n".format(self.ndos))  # 态密度的能量刻度上的点的数目                       
             qe.write("/                                                  \n")                                                                

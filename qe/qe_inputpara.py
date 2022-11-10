@@ -142,11 +142,16 @@ class qephono_inputpara(qe_inputpara):
             **kwargs
             )
         
+        dyn0_names = Path(self.work_underpressure).joinpath(f"{self.system_name}.dyn0")
         if hasattr(self, "qpoints"):
             _qpoints = self.qpoints.split()
             self.qpoints = list(map(int, _qpoints))
             self.kpoints_sparse= [kp*2 for kp in self.qpoints]
             self.kpoints_dense = [kp*4 for kp in self.qpoints]
+        elif dyn0_names.exists():
+            self.qpoints = self.get_qpoints(dyn0_path=dyn0_names)
+            self.kpoints_sparse= [kp*2 for kp in self.qpoints]
+            self.kpoints_dense = [kp*4 for kp in self.qpoints] 
         else:
             self.qpoints = [4,4,4]
             self.kpoints_sparse= [kp*2 for kp in self.qpoints]
@@ -166,13 +171,12 @@ class qephono_inputpara(qe_inputpara):
         else:
             self.dyn0_flag = eval(self.dyn0_flag)
 
-        dyn0_names = list(Path(self.work_underpressure).glob("*.dyn0"))
-        if len(dyn0_names)==1:
-            dyn0_path = str(dyn0_names[0].absolute())
-            self.qtot, self.qirreduced, self.qirreduced_coords= self.get_q_from_dyn0(dyn0_path=dyn0_path) 
+        dyn0_names = Path(self.work_underpressure).joinpath(f"{self.system_name}.dyn0")
+        if dyn0_names.exists():
+            self.qtot, self.qirreduced, self.qirreduced_coords= self.get_q_from_dyn0(dyn0_path=dyn0_names) 
             # 获得 self.qtot, self.qirreduced, self.qirreduced_coords, self.qweights 
         else:
-            logger.warning("No exist *.dyn0! ")
+            logger.warning(f"{self.system_name}.dyn0 doesn't exist in {self.work_underpressure}")
 
         if not hasattr(self, "qtot"):
             self.qtot = None
@@ -216,6 +220,22 @@ class qephono_inputpara(qe_inputpara):
         return self.qtot,    self.q_non_irreducible_amount, \
                self.q_coordinate_list, self.q_weight_list
 
+    def get_qpoints(self, dyn0_path):
+        '''
+        input  : dir        dyn0文件的路径
+                 
+        return : self.qtot 总q点数
+                 self.qirreduced 不可约q点数
+                 self.qirreduced_coords 不可约q点坐标
+        '''
+        if not os.path.exists(dyn0_path):
+            raise FileExistsError ("dyn0 file doesn't exist!")
+        content = open(dyn0_path, "r").readlines()
+        # check qtot is right or not! 
+        qpoints = list(map(int, content[0].strip("\n").split()))
+
+        return qpoints
+
     def get_q_from_dyn0(self, dyn0_path):
         '''
         input  : dir        dyn0文件的路径
@@ -228,8 +248,8 @@ class qephono_inputpara(qe_inputpara):
             raise FileExistsError ("dyn0 file doesn't exist!")
         content = open(dyn0_path, "r").readlines()
         # check qtot is right or not! 
-        _q_total_amount = content[0].strip("\n").split()
-        qtot  = list(map(int, _q_total_amount))
+        qpoints = list(map(int, content[0].strip("\n").split()))
+        qtot  = list(map(int, qpoints))
         if qtot != self.qpoints:
             logger.error(f"qtot = {qtot}")
             logger.error(f"self.qpoints = {self.qpoints}")
@@ -350,16 +370,31 @@ class qedos_inputpara(qe_inputpara):
             input_file_path, 
             **kwargs
             )
-            
+        
+        # 电子态密度设置
+        if not hasattr(self, "DeltaE"):
+            self.DeltaE = 0.01
+            logger.warning("You didn't set `DeltaE` for eledos.in, the program will use default value: DeltaE=0.01")
+        if not hasattr(self, "emin"):
+            self.emin = -10
+            logger.warning("You didn't set `emin`   for eledos.in, the program will use default value: emin=-10")
+        if not hasattr(self, "emax"):
+            self.emax = 30
+            logger.warning("You didn't set `emax`   for eledos.in, the program will use default value: emax=30 ")
+
+        # 声子态密度设置
         if hasattr(self, "qpoints"):
             _qpoints = self.qpoints.split()
             self.qpoints = list(map(int, _qpoints))
         else:
-            raise ValueError("You have to set qpoints with more density values !!!")
-
+            self.qpoints = None
+            logger.warning("if you want to calculate phonodos, you have not set `qpoints`! ")
+            logger.warning("----Its `qpoints` had better be set more densely than `qpoints` in `ph.in`")
+            logger.warning("----For example, In ph.in, qpoints='8 8 8', then in phono_dos.in, qpoints='16 16 16' ")
+            logger.warning("----You didn't set `qpoints`, the program will use default value: qpoints=None. The program will broken up")
         if not hasattr(self, "ndos"):
-            logger.info("You didn't set ndos, the program will set ndos=500")
             self.ndos = 500
+            logger.info("You didn't set `ndos`, the program will use default value: ndos=500")
 
 
 class qesc_inputpara(qephono_inputpara):
@@ -382,7 +417,7 @@ class qesc_inputpara(qephono_inputpara):
         
         # Mc-A-D and Eliashberg
         if not hasattr(self, "screen_constant"):
-            logger.warning("you have to specify the screen_constant ! The program will set default 0.13")
+            logger.warning("You didn't set the `screen_constant` ! The program will use default value: screen_constant=0.13")
             self.screen_constant = 0.13
 
         # Mc-A-D
@@ -396,29 +431,32 @@ class qesc_inputpara(qephono_inputpara):
         
         # Mc-A-D
         if not hasattr(self, "top_freq"):
-            dosfile = Path(self.work_underpressure).joinpath(self.system_name+".dos")
-            if dosfile.exists():
-                self.top_freq = self.get_top_freq(dosfile=dosfile)
+            logger.warning(f"You didn't set the `top_freq` ! The program will read {self.system_name}_phono.dos file")
+            phonodos_file = Path(self.work_underpressure).joinpath(self.system_name+"_phono.dos")
+            if phonodos_file.exists():
+                self.top_freq = self.get_top_freq(dosfile=phonodos_file)
         
         # Mc-A-D
         if not hasattr(self, "deguass"):
-            logger.warning("you have to specify the deguass ! The program will set default 0.12")
             self.deguass = 0.12
+            logger.warning("You didn't set the `deguass` ! The program will use default value: deguass=0.12")
 
         # Mc-A-D
         if not hasattr(self, "smearing_method"):
-            logger.warning("you have to specify the smearing_method ! The program will set default 1")
             self.smearing_method = 1
-        
+            logger.warning("You didn't set the `smearing_method` ! The program will use default value: smearing_method=1")
+
         # Eliashberg
         if not hasattr(self, "temperature_points"):
-            logger.warning("If you use Eliashberg method, you have to specify the temperature_points ! The program will set default `5000`")
             self.temperature_points = 5000
-        
+            logger.warning("If you use Eliashberg method, you have to specify the temperature_points !")
+            logger.warning("You didn't set the `temperature_points`. The program will use default value: temperature_points=5000")
+
         # Eliashberg
         if not hasattr(self, "a2F_dos"):
-            logger.warning("If you use Eliashberg method, you may not specify the a2f_dos* ! Please specify it ! The program will set default `None`")
             self.a2F_dos = None
+            logger.warning("If you use Eliashberg method, you may not specify the a2f_dos* ! Please specify it !")
+            logger.warning("You didn't set the `a2F_dos`. The program will use default value: a2F_dos=None")
 
 
 class qeprepare_inputpara(qephono_inputpara):

@@ -141,8 +141,14 @@ class qe_writesubmit:
         if mode =="matdyn":
             jobname = self.s7_matdyn(self.work_underpressure, inpufilename)
             return jobname
-        if mode =="dos":
-            jobname = self.s8_dos(self.work_underpressure, inpufilename)
+        if mode =="eletdos":
+            jobname = self.s8_eletdos(self.work_underpressure, inpufilename)
+            return jobname
+        if mode =="elepdos":
+            jobname = self.s8_elepdos(self.work_underpressure, inpufilename)
+            return jobname
+        if mode == "phonodos":
+            jobname = self.s8_phonodos(self.work_underpressure, inpufilename)
             return jobname
         if mode =="McAD":
             jobname = self.s9_lambda(self.work_underpressure, inpufilename)
@@ -246,14 +252,34 @@ class qe_writesubmit:
             j.write('mpirun -np {} {}/matdyn.x -npool {} <{}> {} \n'.format(self.core, qebin_path, self.npool, _inpufilename, _outputfilename))
         return jobname
 
-    def s8_dos(self, _dirpath, inputfilename):
+    def s8_eletdos(self, _dirpath, inputfilename):
         _inpufilename = inputfilename
         _outputfilename = _inpufilename.split(".")[0] + ".out"
-        jobname = "s8_dos.sh"
+        jobname = "s8_eletdos.sh"
         _script_filepath = os.path.join(_dirpath, jobname)
         with open(_script_filepath, "w") as j:
             j.writelines(self.jobtitle)
-            j.write('mpirun -np {} {}/matdyn.x -npool {} <{}> {}  \n'.format(self.core, qebin_path, self.npool, _inpufilename, _outputfilename))
+            j.write('mpirun -np {} {}/dos.x <{}> {}  \n'.format(self.core, qebin_path,  _inpufilename, _outputfilename))
+        return jobname
+
+    def s8_elepdos(self, _dirpath, inputfilename):
+        _inpufilename = inputfilename
+        _outputfilename = _inpufilename.split(".")[0] + ".out"
+        jobname = "s8_elepdos.sh"
+        _script_filepath = os.path.join(_dirpath, jobname)
+        with open(_script_filepath, "w") as j:
+            j.writelines(self.jobtitle)
+            j.write('mpirun -np {} {}/projwfc.x <{}> {}  \n'.format(self.core, qebin_path,  _inpufilename, _outputfilename))
+        return jobname
+
+    def s8_phonodos(self, _dirpath, inputfilename):
+        _inpufilename = inputfilename
+        _outputfilename = _inpufilename.split(".")[0] + ".out"
+        jobname = "s8_phonodos.sh"
+        _script_filepath = os.path.join(_dirpath, jobname)
+        with open(_script_filepath, "w") as j:
+            j.writelines(self.jobtitle)
+            j.write('mpirun -np {} {}/matdyn.x  <{}> {}  \n'.format(self.core, qebin_path, _inpufilename, _outputfilename))
         return jobname
 
     def s9_lambda(self, _dirpath, inputfilename):
@@ -263,7 +289,7 @@ class qe_writesubmit:
         _script_filepath = os.path.join(_dirpath, jobname)
         with open(_script_filepath, "w") as j:
             j.writelines(self.jobtitle)
-            j.write('mpirun -np {} {}/lambda.x -npool {} <{}> {}  \n'.format(self.core, qebin_path, self.npool, _inpufilename, _outputfilename))
+            j.write('mpirun -np {} {}/lambda.x <{}> {}  \n'.format(self.core, qebin_path, _inpufilename, _outputfilename))
         return jobname
 
     def s9_eliashberg(self, _dirpath, inputfilename):

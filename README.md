@@ -105,6 +105,33 @@ prepare -m mode="relax-vc scffit scf nosplit" dyn0_flag=True qpoints='6 6 6' cor
 ```shell
 prepare -m mode="relax-vc scffit scf        " dyn0_flag=True qpoints='6 6 6' core=4 npool=1 queue=local
 ```
+### 如何增加新的功能模块(以增加ele-dos计算的功能模块为例子说明，修改这需要添加哪些内容)
+
+#### 第1步：在qe_writeinput.py中, class qe_writeinput中增加写电子态密度计算.in文件的实例方法
+#### 第2步：在qe_writeinput.py中, class qe_writeinput的dos的init_from_dosinput的类方法中，新增需要用到的新的输入参数
+```python
+DeltaE=other_class.DeltaE,
+emin=other_class.emin,
+emax=other_class.emax,
+```
+#### 第3步: 在qedos_inputpara.py中补充关于新的输入参数的默认变量设置class qedos_inputpara(qe_inputpara)
+```python
+# 电子态密度设置
+if not hasattr(self, "DeltaE"):
+    self.DeltaE = 0.01
+    logger.warning("You didn't set `DeltaE`, the program will use default value: DeltaE=0.01")
+
+# 电子态密度设置
+if not hasattr(self, "emin"):
+    self.emin = -10
+    logger.warning("You didn't set `emin`, the program will use default value: emin=-10")
+
+# 电子态密度设置
+if not hasattr(self, "emax"):
+    self.emax = 30
+    logger.warning("You didn't set `emax`, the program will use default value: emax=30 ")
+```
+#### 第4步: 
 
 ## vasp使用说明
 
