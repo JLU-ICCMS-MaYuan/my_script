@@ -105,7 +105,7 @@ class qe_submitjob:
         logger.warning("!!!!!!!! Please Attention, You have been source your Intel Compiler !!!!!!!!")
         jobids = os.popen(f"nohup {qebin_path}/ph.x <{inputfilename}> {outputfilename} 2>&1 & echo $!").read()
         logger.info(f"ph.x is running. pid or jobids = {jobids}")
-        return jobids 
+        return jobids, outputfilename
 
     def submit_mode1(self, inputfilename, jobname):
         """
@@ -161,7 +161,7 @@ class qe_submitjob:
                 sys.exit(0)
             else:
                 # 在运行ph.x之前，如果dyn0文件不存在， 那么就执行ph.x的运行
-                jobids = self.submit_mode0(inputfilename)
+                jobids, outputfilename = self.submit_mode0(inputfilename)
                 # 如果执行完ph.x的运行后，检查返回的任务号不为空，说明ph.x的运行没有问题。
                 while True:
                     # 然后检查dyn0文件是否存在，一旦产生就退出ph.x的运行。
@@ -170,6 +170,9 @@ class qe_submitjob:
                         logger.info("The *.dyn0 has been created just now !!! The program will run `killall -9 ph.x`")
                         os.system("killall -9 ph.x")
                         break
+                    if self.checkerror(self.work_underpressure, outputfilename):
+                        logger.info("The {outputfilename} has ERROR !!! The program will exit")
+                        sys.exit(1)
         else:
             # 检查是否只是为了获得dyn0文件，如果否：
             logger.info(f"You set dyn0_flag = {self.dyn0_flag}. The program will just simply run ph.x ")
@@ -243,4 +246,21 @@ class qe_submitjob:
         for file in files_underdir:
             if Path(file).suffix == suffix:
                 return True
+
+    @staticmethod
+    def checkerror(directory_path, outputfilename):
+        outputfile_path = Path(directory_path).joinpath(outputfilename)
+        crash_file = Path(directory_path).joinpath("CRASH")
+        if outputfile_path.exists():
+            content = open(outputfile_path, "r").read()
+            if ("Error" in content) or ("error" in content) or ("stopping" in content):
+                logger.error(f"{outputfilename} output some wrong results. The program will exit!!!") 
+                sys.exit(1)
+            elif crash_file.exists():
+                logger.error(f"{outputfilename} output some wrong results. The program will exit!!!") 
+                sys.exit(1)
+        else:
+            logger.info(f"{outputfilename} doesn't exist temporarily!")
+
+
 
