@@ -23,9 +23,11 @@ qe, vasp, structuregenerator是三个独立的项目，互相不耦合。可以�
 ```shell
 qe_main.py -i 输入文件路径 -w 工作目录 -p 压强 -j 运行方式
 ```
-说明：输入文件路径：
+说明：输入文件路径 和工作路径说明 ：
 1. 如果输入文件是relax.out, 那么工作目录会被强行限制为输入文件是relax.out的上一级路径。
-2. 如果输入文件是其它路径, 那么工作目录是-w指定的目录+-p指定的压强组成的路径。比如: -w test -p 200。那么最终路径就是/test/200.0。所有的文件都会在这个路径下运行。
+2. 如果输入文件是其它路径:
+    1. 如果指定了-w ，那么就是在-w指定的路径下创建一个压强值命名的目录，在该压强值命名的目录下开展计算
+    2. 如果没有指定-w, 那么就默认所有的计算都在当前指定qe_main.py命令的目录下运行. 并不会额外创建一个压强值命名的目录作为最终工作目录
 
 说明：压强
 1. 指定结构优化的压强，单位是GPa.
@@ -34,6 +36,8 @@ qe_main.py -i 输入文件路径 -w 工作目录 -p 压强 -j 运行方式
 1. bash 代表本地使用bash shell运行。
 2. slurm 代表使用slurm脚本运行。
 3. pbs 代表使用pbs脚本运行。
+
+说明: 赝势文件最终存放在压强命名的目录的下面
 
 ### 具体其它详细的任务模式说明：
 **WARNING1 queue存在则会运行，queue不存在则只会产生输入文件和提交任务的脚本文件。**
@@ -64,7 +68,11 @@ phono -m mode=nosplit qpoints='6 6 6' dyn0_flag=False queue=lhy core=48 npool=4 
 phono -m mode=nosplit qpoints='6 6 6' dyn0_flag=True core=1 npool=1 queue=local
 ```
 ```shell
-phono -m mode=split_dyn0 qpoints='6 6 6' dyn0_flag=True core=48 npool=4 queue=local
+phono -m mode=split_dyn0 qpoints='6 6 6' core=48 npool=4 queue=local
+```
+分q点计算声子 : split_assignQ模式
+```shell
+phono -m mode=split_assignQ qpoints='6 6 6' core=1 npool=1 queue=local
 ```
 
 合并声子文件

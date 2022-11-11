@@ -26,20 +26,22 @@ class qe_base:
         input_file_path: Path,
     ) -> None:
         '''
-        initial the qe_base, only different quantity the parameters
-        work_path: decide 3 thing:
-            1. the position directory filename/press
-            2. the position of ppdirectory
+        qe_main.py -i 输入文件路径 -w 工作目录 -p 压强 -j 运行方式
+        说明: 输入文件路径 和工作路径说明 : 
+        1. 如果输入文件是relax.out, 那么工作目录会被强行限制为输入文件是relax.out的上一级路径。
+        2. 如果输入文件是其它路径:
+            1. 如果指定了-w,   那么就是在-w指定的路径下创建一个压强值命名的目录, 在该压强值命名的目录下开展计算
+            2. 如果没有指定-w, 那么就默认所有的计算都在当前指定qe_main.py命令的目录下运行. 并不会额外创建一个压强值命名的目录作为最终工作目录
 
-        input_file_path:
-            1. if relax.out: then the program will not create directory filename/press under the work_path,
-               the parents of input_file_path will be work_underpressure
-            2. if others:  then the program will create directory `/press`, it will be named work_underpressure
-            ####3. if None  :  then input_file_path = Path(self.work_path).joinpath("relax.out")
-        if you do "relax":
-            you must specify: 1. work_path, 2. press, 3. submit_job_system, 4. input_file_path
-        if you do "scf":
-            you must specify: 1. work_path,           3. submit_job_system  4. input_file_path
+        说明: 压强
+        1. 指定结构优化的压强, 单位是GPa.
+
+        说明: 运行方式
+        1. bash 代表本地使用bash shell运行。
+        2. slurm 代表使用slurm脚本运行。
+        3. pbs 代表使用pbs脚本运行。
+
+        说明: 赝势文件最终存放在压强命名的目录的下面
         '''
         self.work_path         = work_path
         self.press             = press          
@@ -49,6 +51,8 @@ class qe_base:
         # 设置underpressure
         if ("relax.out" in self.input_file_path.name) or ("scf.out" in self.input_file_path.name) or ("scffit.out" in self.input_file_path.name):
             self.work_underpressure= Path(self.input_file_path).parent
+        elif self.work_path is None:
+            self.work_underpressure= Path.cwd()
         else:
             self.work_underpressure= Path(self.work_path).joinpath(str(self.press))
             if not self.work_underpressure.exists():
@@ -193,7 +197,7 @@ def get_pps_for_a_element(species_name:str, pp_files:list):
     species_name: 元素名
     pp_files    : 存储着赝势名的列表
     该函数可以从存储着赝势名的列表中挑选出指定元素的全部赝势
-    支持识别的赝势名称格式分别为：
+    支持识别的赝势名称格式分别为: 
         H.pbe-van_bm.UPF.txt  首字母大写的元素名.****
         h_pbe_v1.uspp.F.UPF   首字母小写的元素名_****
     """
