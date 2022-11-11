@@ -114,6 +114,7 @@ class vasp_phono:
         if self.phono_inputpara.queue is not None:
             self.vasp_submitjob.submit_mode2(jobname)
 
+
 class vaspbatch_phono(vasp_phono):
 
     def __init__(self, args: ArgumentParser) -> None:
@@ -473,12 +474,14 @@ class vasp_clear:
         """
         delete all except "POSCAR", "PPOSCAR", "POTCAR", "OUTCAR", "INCAR*", "*.sh", "*.vasp", "*.slurm"
         """
-        reserved_files = ["POSCAR", "PPOSCAR", "POTCAR", "OUTCAR",]
+        reserved_files = ["POTCAR", "OUTCAR", "CONTCAR"]
         current_files = os.listdir(self.work_path)
         for file in current_files:
             if file in reserved_files:
                 pass
             elif "INCAR" in file:
+                pass
+            elif "POSCAR" in file:
                 pass
             elif Path(self.work_path).joinpath(file).suffix == ".sh":
                 pass
