@@ -57,7 +57,7 @@ qe_main.py -i relax.out -j bash scf -m mode=nscf kpoints_dense='32 32 32' core=2
 
 不分q点计算声子
 ```shell
-phono -m mode=nosplit qpoints='6 6 6' dyn0_flag=False queue=lhy core=48 npool=4  queue=lhy
+phono -m mode=nosplit qpoints='6 6 6' dyn0_flag=False queue=lhy core=48 npool=4  queue=lhy el_ph_nsigma=
 ```
 分q点计算声子 : split_dyn0模式
 ```shell

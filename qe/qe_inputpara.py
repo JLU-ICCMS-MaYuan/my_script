@@ -1,5 +1,6 @@
 import os
 import re
+import sys
 import shutil
 import logging
 from pathlib import Path
@@ -149,6 +150,7 @@ class qephono_inputpara(qe_inputpara):
             self.kpoints_sparse= [kp*2 for kp in self.qpoints]
             self.kpoints_dense = [kp*4 for kp in self.qpoints]
         elif dyn0_names.exists():
+            logger.info(f"You didn't set the `qpoints` ! The program will qpoints in read {self.system_name}.dyn0 file")
             self.qpoints = self.get_qpoints(dyn0_path=dyn0_names)
             self.kpoints_sparse= [kp*2 for kp in self.qpoints]
             self.kpoints_dense = [kp*4 for kp in self.qpoints] 
@@ -159,13 +161,16 @@ class qephono_inputpara(qe_inputpara):
 
         if not hasattr(self, "tr2_ph"):
             self.tr2_ph = "1.0d-16"
+            logger.info(f"You didn't set the `tr2_ph` ! The program will use default value: tr2_ph=1.0d-16")
         if not hasattr(self, "el_ph_nsigma"):
-            self.el_ph_nsigma = "50"
+            self.el_ph_nsigma = "10"
+            logger.info(f"You didn't set the `el_ph_nsigma` ! The program will use default value: el_ph_nsigma=10")
         if not hasattr(self, "el_ph_sigma"):
             self.el_ph_sigma = "0.005"
+            logger.info(f"You didn't set the `el_ph_sigma` ! The program will use default value: el_ph_sigma=0.005")
         if not hasattr(self, "alpha_mix"):
             self.alpha_mix = "0.5"
-
+            logger.info(f"You didn't set the `alpha_mix` ! The program will use default value: alpha_mix=0.5")
         if not hasattr(self, "dyn0_flag"):
             self.dyn0_flag = False
         else:
@@ -176,13 +181,17 @@ class qephono_inputpara(qe_inputpara):
             self.qtot, self.qirreduced, self.qirreduced_coords= self.get_q_from_dyn0(dyn0_path=dyn0_names) 
             # 获得 self.qtot, self.qirreduced, self.qirreduced_coords, self.qweights 
         else:
-            logger.warning(f"{self.system_name}.dyn0 doesn't exist in {self.work_underpressure}")
+            logger.warning(f"{self.system_name}.dyn0 doesn't exist in {self.work_underpressure}. The qtot, qirreduced, qirreduced_coords will not get values.")
 
         if not hasattr(self, "qtot"):
             self.qtot = None
+        else:
+            logger.info(f"You didn't set the `qtot` ! Of course you don't need to set it! The program will get from {self.system_name}.dyn0. qtot={self.qtot}")
         
         if not hasattr(self, "qirreduced"):
             self.qirreduced = None
+        else:
+            logger.info(f"You didn't set the `qirreduced` ! Of course you don't need to set it! The program will get from {self.system_name}.dyn0. qirreduced={self.qirreduced}")
 
         if not hasattr(self, "qinserted"):
             self.qinserted = None
@@ -191,6 +200,8 @@ class qephono_inputpara(qe_inputpara):
 
         if not hasattr(self, "qirreduced_coords"):
             self.qirreduced_coords = None
+        else:
+            logger.info(f"You didn't set the `qirreduced_coords` ! Of course you don't need to set it! The program will get from {self.system_name}.dyn0.")
 
         if not hasattr(self, "path_name_coords"):
             self.path_name_coords = None
@@ -349,6 +360,7 @@ class qephono_inputpara(qe_inputpara):
         # convert cm-1 to Thz
         frequents = map(lambda x:x/33.3, frequents)
         top_freq  = ceil(max(frequents))
+
         return top_freq
 
 
@@ -458,6 +470,24 @@ class qesc_inputpara(qephono_inputpara):
             logger.warning("If you use Eliashberg method, you may not specify the a2f_dos* ! Please specify it !")
             logger.warning("You didn't set the `a2F_dos`. The program will use default value: a2F_dos=None")
 
+
+    def identify_converge_Tc(self):
+        '''
+        根据四面体的非自洽方法计算得到的TDOS。
+        然后取scf.out里面的费米能级。
+        然后给TDOS中的横坐标能量减去一个费米能级得到最终可以出图的数据。(千万注意不能用.tdos中的费米能级, 它是qe做非自洽计算得到的。它并不准确。一定要取自洽计算得到的费米能级)
+
+        无论是用Mc-A-D公式还是用Eliashberg公式计算超导, 都需要取一个合理的展宽对应的lambda对应的Tc
+        那么如何得到这个合理的展宽呢???我们可以计算TDOS, 找到费米能级处的总态密度, 然后对应找到该态密度在lamda.out文件中对应的费米能级处态密度。
+        在lamda.out文件中对应的费米能级处态密度 还对应着一个lambda值, 这个lambda值在lamda.out中对应着一个Tc。这个Tc就是最终收敛的Tc
+            (注意: lamda.out中费米能级处的态密度是:  states/Ry/A3/Unit Cell/spin  )
+            (注意: 但是qe用非自洽计算出的DOS的单位是: states/Ry/A3/Unit Cell       )
+        '''
+        tdos_file = Path(self.work_underpressure).joinpath(f"{self.system_name}.tdos")
+        if not tdos_file.exists():
+            logger.warning(f"{self.system_name}.tdos doesn't exist !!! The program will exit")
+            sys.exit(1)
+        
 
 class qeprepare_inputpara(qephono_inputpara):
 
