@@ -171,6 +171,11 @@ vasp_main.py -i 输入文件路径 -w 工作目录 -p 压强 -j 运行方式
 
 ### 具体其它详细的任务模式说明：
 
+结构弛豫
+```shell
+relax -m mode=rv1 core=1 queue=local 
+```
+
 清理数据, 保留:'POSCAR', 'PPOSCAR', 'POTCAR', 'OUTCAR', 'INCAR*', '*.sh', '*.vasp', '*.slurm'
 ```shell
 vasp_main.py -w ./ clear -m mode=all
@@ -178,21 +183,21 @@ vasp_main.py -w ./ clear -m mode=all
 
 批量结构弛豫
 ```shell
-vasp_main.py -i ./ -w ./ -p 200 -j slurm batchrelax -m mode=rv3 core=1 
+batchrelax -m mode=rv3 core=1 
 ```
 
 ```shell
-vasp_main.py -i ./POSCAR -j bash phono -m supercell='2 2 2' kpoints='2 2 2' mode=disp core=1 queue=local
+phono -m supercell='2 2 2' kpoints='2 2 2' mode=disp core=1 queue=local
 ```
 
 disp声子计算
 ```shell
-vasp_main.py -i ./test/POSCAR -w ./test/ -j slurm phono -m supercell='2 2 2' kpoints='40 40 40' mode=disp  
+phono -m supercell='2 2 2' kpoints='40 40 40' mode=disp  
 ```
 
 dfpt声子计算
 ```shell
-vasp_main.py -i ./test/POSCAR -w ./test/ -j slurm phono -m supercell='2 2 2' kpoints='40 40 40' mode=dfpt
+phono -m supercell='2 2 2' kpoints='40 40 40' mode=dfpt
 ```
 
 ## structuregenerator使用说明

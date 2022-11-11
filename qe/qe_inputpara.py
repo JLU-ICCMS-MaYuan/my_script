@@ -536,10 +536,19 @@ class qesc_inputpara(qephono_inputpara):
         然后给TDOS中的横坐标能量减去一个费米能级得到最终可以出图的数据。(千万注意不能用.tdos中的费米能级, 它是qe做非自洽计算得到的。它并不准确。一定要取自洽计算得到的费米能级)
 
         无论是用Mc-A-D公式还是用Eliashberg公式计算超导, 都需要取一个合理的展宽对应的lambda对应的Tc
-        那么如何得到这个合理的展宽呢???我们可以计算TDOS, 找到费米能级处的总态密度, 然后对应找到该态密度在lamda.out文件中对应的费米能级处态密度。
-        在lamda.out文件中对应的费米能级处态密度 还对应着一个lambda值, 这个lambda值在lamda.out中对应着一个Tc。这个Tc就是最终收敛的Tc
+        那么如何得到这个合理的展宽呢???我们可以做非自洽计算得到TDOS, 找到费米能级处的总态密度, 然后对应找到该态密度在lamda.out文件中对应的费米能级处态密度。
+        在lamda.out文件中对应的费米能级处态密度 还对应着一个lambda值, 这个lambda值在lamda.out中对应着一个Tc。这个Tc就是最终收敛的Tc.
+        此时得到的Tc是通过Mc-A-D公式计算得到的。如果该Tc对应的lambda是一个大于1.5的值, 那么最好用eliashberg方程去求解Tc
             (注意: lamda.out中费米能级处的态密度是:  states/Ry/A3/Unit Cell/spin  )
             (注意: 但是qe用非自洽计算出的DOS的单位是: states/Ry/A3/Unit Cell       )
+
+        那么如何得到 eliashberg方法中的Tc呢? 你需要手动选择一个合适的a2f.dos*. 
+        如果你在计算声子的时候得到10个展宽, 那么在计算目录中计算phonodos时就会 得到10个a2f.dos*文件。
+        通过前面计算非自洽的dos, 你可以在lamda.out中找到一个和非自洽dos的N(Ef)最接近的N(Ef), 这个N(Ef)对应的展宽就是一个合适的展宽。
+        如果这个展宽是从大到小排列第7个展宽, 那么在选择a2f.dos*文 件时, 就选择a2f.dos7这个文件作为eliashberg的输入。
+
+        但是现在有一个问题。为什么我在计算声子时，在ph.in文件中取了50个展宽，却只得到了10个a2f.dos文件
+
         '''
         tdos_file = Path(self.work_underpressure).joinpath(f"{self.system_name}.tdos")
         if not tdos_file.exists():
