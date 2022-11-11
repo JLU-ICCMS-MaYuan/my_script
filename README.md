@@ -88,11 +88,18 @@ phono -m mode=q2r qpoints='6 6 6' core=1 npool=1 queue=local
 ```shell
 phono -m mode=matdyn qpoints='6 6 6' core=1 npool=1 queue=local qinserted=50
 ```
-计算态密度, 计算态密度时要用更密的q点网格，这需设置nk1, nk2, nk3   
+计算phonodos, 计算态密度时要用更密的q点网格，这需设置nk1, nk2, nk3   
 ```shell
 dos -m mode=dos core=1 npool=1 queue=local qpoints='8 8 8' ndos=500 
 ```
-
+计算eletdos
+```shell
+dos -m mode=eletdos core=1 npool=1 queue=local qpoints='8 8 8' ndos=500 
+```
+计算elepdos
+```shell
+dos -m mode=elepdos core=1 npool=1 queue=local qpoints='8 8 8' ndos=500 
+```
 计算超导
 不指定最高频率
 ```shell

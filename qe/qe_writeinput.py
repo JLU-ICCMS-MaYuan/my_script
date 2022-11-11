@@ -53,15 +53,18 @@ class qe_writeinput:
             # basic parameter of control precision
             forc_conv_thr=other_class.forc_conv_thr,
             etot_conv_thr=other_class.etot_conv_thr,
+            occupations=other_class.occupations,
             smearing=other_class.smearing,
             degauss=other_class.degauss,
             ecutwfc=other_class.ecutwfc,
             ecutrho=other_class.ecutrho,
+            la2F=other_class.la2F,
+            lspinorb=other_class.lspinorb,
             diagonalization=other_class.diagonalization,
             conv_thr=other_class.conv_thr,
             mixing_beta=other_class.mixing_beta,
+            electron_maxstep=other_class.electron_maxstep,
             press_conv_thr=other_class.press_conv_thr,
-            lspinorb=other_class.lspinorb,
         )
         return self
 
@@ -87,15 +90,18 @@ class qe_writeinput:
             # basic parameter of control precision
             forc_conv_thr=other_class.forc_conv_thr,
             etot_conv_thr=other_class.etot_conv_thr,
+            occupations=other_class.occupations,
             smearing=other_class.smearing,
             degauss=other_class.degauss,
             ecutwfc=other_class.ecutwfc,
             ecutrho=other_class.ecutrho,
+            la2F=other_class.la2F,
+            lspinorb=other_class.lspinorb,
             diagonalization=other_class.diagonalization,
             conv_thr=other_class.conv_thr,
             mixing_beta=other_class.mixing_beta,
+            electron_maxstep=other_class.electron_maxstep,
             press_conv_thr=other_class.press_conv_thr,
-            lspinorb=other_class.lspinorb,
         )
         return self
 
@@ -118,6 +124,7 @@ class qe_writeinput:
             fractional_sites=other_class.fractional_sites,
 
             tr2_ph=other_class.tr2_ph,
+            electron_phonon=other_class.electron_phonon,
             el_ph_nsigma=other_class.el_ph_nsigma,
             el_ph_sigma=other_class.el_ph_sigma,
             alpha_mix=other_class.alpha_mix,
@@ -134,15 +141,18 @@ class qe_writeinput:
             # basic parameter of control precision
             forc_conv_thr=other_class.forc_conv_thr,
             etot_conv_thr=other_class.etot_conv_thr,
+            occupations=other_class.occupations,
             smearing=other_class.smearing,
             degauss=other_class.degauss,
             ecutwfc=other_class.ecutwfc,
             ecutrho=other_class.ecutrho,
+            la2F=other_class.la2F,
+            lspinorb=other_class.lspinorb,
             diagonalization=other_class.diagonalization,
             conv_thr=other_class.conv_thr,
             mixing_beta=other_class.mixing_beta,
+            electron_maxstep=other_class.electron_maxstep,
             press_conv_thr=other_class.press_conv_thr,
-            lspinorb=other_class.lspinorb,
         )
         return self
 
@@ -296,13 +306,13 @@ class qe_writeinput:
             qe.write(" ibrav=0,                        \n")  # 设置ibrav=0，这时需要在输入文件中写入CELL_PARAMETERS，即CELL的基矢量. alat bohr angstrom alat 由 celldm(1)或A定义的晶格常数单位
             qe.write(" nat={},                         \n".format(self.all_atoms_quantity))
             qe.write(" ntyp={},                        \n".format(self.species_quantity))
-            qe.write(" occupations = 'smearing',       \n")
+            qe.write(" occupations = '{}',             \n".format(self.occupations))
             # qe.write(" smearing = 'methfessel-paxton'  \n")
             qe.write(" smearing = '{}',                \n".format(self.smearing))
             qe.write(" degauss = {},                   \n".format(self.degauss))
             qe.write(" ecutwfc = {},                   \n".format(self.ecutwfc))
             qe.write(" ecutrho = {},                   \n".format(self.ecutrho))
-            qe.write(" lspinorb = {},                   \n".format(self.lspinorb))
+            qe.write(" lspinorb = .{}.,                \n".format(self.lspinorb))
             qe.write("/\n")
 
             qe.write("&ELECTRONS\n")
@@ -361,13 +371,13 @@ class qe_writeinput:
             qe.write(" ibrav=0,                        \n")  # 设置ibrav=0，这时需要在输入文件中写入CELL_PARAMETERS，即CELL的基矢量. alat bohr angstrom alat 由 celldm(1)或A定义的晶格常数单位
             qe.write(" nat={},                         \n".format(self.all_atoms_quantity))
             qe.write(" ntyp={},                        \n".format(self.species_quantity))
-            qe.write(" occupations = 'smearing',       \n")
+            qe.write(" occupations = '{}',             \n".format(self.occupations))
             qe.write(" smearing = '{}',                \n".format(self.smearing))
             qe.write(" degauss = {},                   \n".format(self.degauss))
             qe.write(" ecutwfc = {},                   \n".format(self.ecutwfc))
             qe.write(" ecutrho = {},                   \n".format(self.ecutrho))
-            qe.write(" lspinorb = {},                   \n".format(self.lspinorb))
-            qe.write(" la2F = .true.,                  \n")
+            qe.write(" lspinorb = .{}.,                \n".format(self.lspinorb))
+            qe.write(" la2F = .{}.,                    \n".format(self.la2F))
             qe.write("/\n")
 
             qe.write("&ELECTRONS\n")
@@ -420,7 +430,7 @@ class qe_writeinput:
             qe.write(" degauss = {},                   \n".format(self.degauss))
             qe.write(" ecutwfc = {},                   \n".format(self.ecutwfc))
             qe.write(" ecutrho = {},                   \n".format(self.ecutrho))
-            qe.write(" lspinorb = {},                   \n".format(self.lspinorb))
+            qe.write(" lspinorb = .{}.,                \n".format(self.lspinorb))
             qe.write("/\n")
 
             qe.write("&ELECTRONS\n")
@@ -473,7 +483,7 @@ class qe_writeinput:
             qe.write(" occupations = 'tetrahedra',     \n")
             qe.write(" ecutwfc = {},                   \n".format(self.ecutwfc))
             qe.write(" ecutrho = {},                   \n".format(self.ecutrho))
-            qe.write(" lspinorb = {},                   \n".format(self.lspinorb))
+            qe.write(" lspinorb = .{}.,                \n".format(self.lspinorb))
             qe.write("/\n")
 
             qe.write("&ELECTRONS\n")
@@ -515,7 +525,7 @@ class qe_writeinput:
             qe.write("  tr2_ph={},                                       \n".format(str(self.tr2_ph)))              
             qe.write("  prefix='{}',                                     \n".format(self.system_name))                
             qe.write("  fildvscf='{}.dv',                                \n".format(self.system_name))                     
-            qe.write("  electron_phonon='interpolated',                  \n")                              
+            qe.write("  electron_phonon='{}',                            \n".format(self.electron_phonon))                              
             qe.write("  el_ph_sigma={},                                  \n".format(str(self.el_ph_sigma)))                
             qe.write("  el_ph_nsigma={},                                 \n".format(str(self.el_ph_nsigma)))
             qe.write("  alpha_mix(1)={},                                 \n".format(str(self.alpha_mix)))  # 可以修改的更小一些, 如果用vasp计算声子谱稳定, 可以修改为0.3
@@ -551,7 +561,7 @@ class qe_writeinput:
             qe.write("  tr2_ph={},                                       \n".format(str(self.tr2_ph)))              
             qe.write("  prefix='{}',                                     \n".format(self.system_name))                
             qe.write("  fildvscf='{}.dv',                                \n".format(self.system_name))                     
-            qe.write("  electron_phonon='interpolated',                  \n")                              
+            qe.write("  electron_phonon='{}',                            \n".format(self.electron_phonon))                              
             qe.write("  el_ph_sigma={},                                  \n".format(str(self.el_ph_sigma)))                
             qe.write("  el_ph_nsigma={},                                 \n".format(str(self.el_ph_nsigma)))
             qe.write("  alpha_mix(1)={},                                 \n".format(str(self.alpha_mix)))  # 可以修改的更小一些, 如果用vasp计算声子谱稳定, 可以修改为0.3
@@ -577,8 +587,8 @@ class qe_writeinput:
             qe.write("  tr2_ph={},                                       \n".format(str(self.tr2_ph)))              
             qe.write("  prefix='{}',                                     \n".format(self.system_name))                
             qe.write("  fildvscf='{}.dv',                                \n".format(self.system_name))                     
-            qe.write("  electron_phonon='interpolated',                  \n")                              
-            qe.write("  el_ph_sigma=0.005,                               \n")                 
+            qe.write("  electron_phonon='{}',                            \n".format(self.electron_phonon))                              
+            qe.write("  el_ph_sigma={},                                  \n".format(str(self.el_ph_sigma)))                
             qe.write("  el_ph_nsigma={},                                 \n".format(str(self.el_ph_nsigma)))
             qe.write("  alpha_mix(1)={},                                 \n".format(str(self.alpha_mix)))  # 可以修改的更小一些, 如果用vasp计算声子谱稳定, 可以修改为0.3
             for i, species_name in enumerate(self.composition.keys()):

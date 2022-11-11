@@ -54,45 +54,73 @@ class qe_inputpara(qe_base):
             self.queue = None
             logger.info("You didn't specify queue, so the program will not submit the job in any way")
 
-
+        print('\n'); logger.info("if you want to run `relax` `scffit` `fit`, you had better set these values!")
         # &CONTROL
         if not hasattr(self, "forc_conv_thr"):
             self.forc_conv_thr = "1.0d-5"
-        
+            logger.warning("You didn't set the `forc_conv_thr` ! The program will use default value: forc_conv_thr=1.0d-5")
+
         if not hasattr(self, "etot_conv_thr"):
             self.etot_conv_thr = "1.0d-7"
-        
+            logger.warning("You didn't set the `etot_conv_thr` ! The program will use default value: etot_conv_thr=1.0d-7")
+
         # &SYSTEM
+        if not hasattr(self, "occupations"):
+            self.occupations = "smearing"
+            logger.warning("You didn't set the `occupations` !   The program will use default value: occupations=smearing")
+
         if not hasattr(self, "smearing"):
             self.smearing = "gauss"
-            # self.smearing = methfessel-paxton 做scffit 和 scf 时候用这个参数
+            logger.warning("You didn't set the `smearing` !      The program will use default value: smearing=gauss")
+
+        # self.smearing = methfessel-paxton 做scffit 和 scf 时候用这个参数
         if not hasattr(self, "degauss"):
             self.degauss = "0.005"
-        
+            logger.warning("You didn't set the `degauss` !       The program will use default value: degauss=0.005")
+
         if not hasattr(self, "ecutwfc"):
             self.ecutwfc = "60"
-        
+            logger.warning("You didn't set the `ecutwfc` !       The program will use default value: ecutwfc=60")
+
         if not hasattr(self, "ecutrho"):
             self.ecutrho = "720"
-        
+            logger.warning("You didn't set the `ecutrho` !       The program will use default value: ecutrho=720")
+
         if not hasattr(self, "lspinorb"):
-            self.lspinorb = ".false."
-            
+            self.lspinorb = "false"
+            logger.warning("You didn't set the `lspinorb` !      The program will use default value: lspinorb=false")
+        else:
+            logger.warning("Please carefully check the bool value of `lspinorb` you just set. Its format must be `false` or `true` without capital")
+
+        if not hasattr(self, "la2F"):
+            self.la2F = "true"
+            logger.warning("You didn't set the `la2F` !          The program will use default value: la2F=true. ")
+            logger.warning("But in relax mode and scf mode, it doesn't exist ! It only exist in scffit mode")
+        else:
+            logger.warning("Please carefully check the bool value of `la2F` you just set. Its format must be `false` or `true` without capital")
+
         # &ELECTRONS
         if not hasattr(self, "diagonalization"):
             self.diagonalization = "david"
+            logger.warning("You didn't set the `diagonalization`! The program will use default value: diagonalization=david")
         
         if not hasattr(self, "conv_thr"):
             self.conv_thr = "1.0d-8"
+            logger.warning("You didn't set the `conv_thr` !      The program will use default value: conv_thr=1.0d-8")
             #  做结构弛豫 1.0-d8
             #  做scffit 和 scf 时候用1.0d-9
         if not hasattr(self, "mixing_beta"):
             self.mixing_beta = "0.7"
+            logger.warning("You didn't set the `mixing_beta` !   The program will use default value: mixing_beta=0.7")
             #  做scffit 和 scf 时候用0.8
+        if not hasattr(self, "electron_maxstep"):
+            self.electron_maxstep = "200"
+            logger.warning("You didn't set the `electron_maxstep`! The program will use default value: electron_maxstep=200")
 
         # &CELL
         if not hasattr(self, "press_conv_thr"):
             self.press_conv_thr = "0.01"
+            logger.warning("You didn't set the `press_conv_thr`! The program will use default value: press_conv_thr=0.01")
 
         # &kpoints
         if hasattr(self, "kpoints_dense"):
@@ -143,6 +171,7 @@ class qephono_inputpara(qe_inputpara):
             **kwargs
             )
         
+        print('\n'); logger.info("if you want to run `phono`, you had better set these values!")
         dyn0_names = Path(self.work_underpressure).joinpath(f"{self.system_name}.dyn0")
         if hasattr(self, "qpoints"):
             _qpoints = self.qpoints.split()
@@ -150,7 +179,7 @@ class qephono_inputpara(qe_inputpara):
             self.kpoints_sparse= [kp*2 for kp in self.qpoints]
             self.kpoints_dense = [kp*4 for kp in self.qpoints]
         elif dyn0_names.exists():
-            logger.info(f"You didn't set the `qpoints` ! The program will qpoints in read {self.system_name}.dyn0 file")
+            logger.info(f"You didn't set the `qpoints` !        The program will qpoints in read {self.system_name}.dyn0 file")
             self.qpoints = self.get_qpoints(dyn0_path=dyn0_names)
             self.kpoints_sparse= [kp*2 for kp in self.qpoints]
             self.kpoints_dense = [kp*4 for kp in self.qpoints] 
@@ -161,18 +190,27 @@ class qephono_inputpara(qe_inputpara):
 
         if not hasattr(self, "tr2_ph"):
             self.tr2_ph = "1.0d-16"
-            logger.info(f"You didn't set the `tr2_ph` ! The program will use default value: tr2_ph=1.0d-16")
+            logger.info(f"You didn't set the `tr2_ph` !          The program will use default value: tr2_ph=1.0d-16")
+
+        if not hasattr(self, "electron_phonon"):
+            self.electron_phonon="interpolated"
+            logger.info(f"You didn't set the `electron_phonon` ! The program will use default value: electron_phonon=interpolated")
+
         if not hasattr(self, "el_ph_nsigma"):
             self.el_ph_nsigma = "10"
-            logger.info(f"You didn't set the `el_ph_nsigma` ! The program will use default value: el_ph_nsigma=10")
+            logger.info(f"You didn't set the `el_ph_nsigma` !    The program will use default value: el_ph_nsigma=10")
+            
         if not hasattr(self, "el_ph_sigma"):
             self.el_ph_sigma = "0.005"
-            logger.info(f"You didn't set the `el_ph_sigma` ! The program will use default value: el_ph_sigma=0.005")
+            logger.info(f"You didn't set the `el_ph_sigma` !     The program will use default value: el_ph_sigma=0.005")
+        
         if not hasattr(self, "alpha_mix"):
             self.alpha_mix = "0.5"
-            logger.info(f"You didn't set the `alpha_mix` ! The program will use default value: alpha_mix=0.5")
+            logger.info(f"You didn't set the `alpha_mix` !       The program will use default value: alpha_mix=0.5")
+        
         if not hasattr(self, "dyn0_flag"):
             self.dyn0_flag = False
+        
         else:
             self.dyn0_flag = eval(self.dyn0_flag)
 
@@ -383,6 +421,7 @@ class qedos_inputpara(qe_inputpara):
             **kwargs
             )
         
+        print('\n'); logger.info("if you want to run `dos`, you had better set these values!")
         # 电子态密度设置
         if not hasattr(self, "DeltaE"):
             self.DeltaE = 0.01
@@ -399,14 +438,33 @@ class qedos_inputpara(qe_inputpara):
             _qpoints = self.qpoints.split()
             self.qpoints = list(map(int, _qpoints))
         else:
-            self.qpoints = None
-            logger.warning("if you want to calculate phonodos, you have not set `qpoints`! ")
+            dyn0_names = Path(self.work_underpressure).joinpath(f"{self.system_name}.dyn0")
+            qpoints = self.get_qpoints(dyn0_path=dyn0_names)
+            self.qpoints = [q*2 for q in qpoints]
+            logger.warning("if you want to calculate phonodos, you had better set `qpoints`! ")
             logger.warning("----Its `qpoints` had better be set more densely than `qpoints` in `ph.in`")
             logger.warning("----For example, In ph.in, qpoints='8 8 8', then in phono_dos.in, qpoints='16 16 16' ")
-            logger.warning("----You didn't set `qpoints`, the program will use default value: qpoints=None. The program will broken up")
+            logger.warning(f"----You didn't set `qpoints`, the program will use `qpoints` in {self.system_name}.dyn0, and then multiply 2 for qpoints")
+
         if not hasattr(self, "ndos"):
             self.ndos = 500
             logger.info("You didn't set `ndos`, the program will use default value: ndos=500")
+
+    def get_qpoints(self, dyn0_path):
+        '''
+        input  : dir        dyn0文件的路径
+                 
+        return : self.qtot 总q点数
+                 self.qirreduced 不可约q点数
+                 self.qirreduced_coords 不可约q点坐标
+        '''
+        if not os.path.exists(dyn0_path):
+            raise FileExistsError ("dyn0 file doesn't exist!")
+        content = open(dyn0_path, "r").readlines()
+        # check qtot is right or not! 
+        qpoints = list(map(int, content[0].strip("\n").split()))
+
+        return qpoints
 
 
 class qesc_inputpara(qephono_inputpara):
