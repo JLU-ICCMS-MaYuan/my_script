@@ -8,6 +8,7 @@ import logging
 from pathlib import Path
 
 from qe.qe_inputpara import qe_inputpara
+from qe.qebin import qebin_path
 
 logger = logging.getLogger("qe_submitjob")
 
@@ -96,6 +97,15 @@ class qe_submitjob:
 
         return self 
 
+    def submit_mode0(self, inputfilename):
+        input_file = Path(self.work_underpressure).joinpath(inputfilename)
+        if not input_file.exists():
+            raise FileExistsError(f" {inputfilename} doesn't exist")
+        outputfilename = inputfilename.split(".")[0] + ".out"
+        logger.warning("!!!!!!!! Please Attention, You have been source your Intel Compiler !!!!!!!!")
+        jobids = os.popen(f"nohup {qebin_path}/ph.x <{inputfilename}> {outputfilename} 2>&1 & echo $!").read()
+        logger.info(f"ph.x is running. pid or jobids = {jobids}")
+        return jobids 
 
     def submit_mode1(self, inputfilename, jobname):
         """
@@ -151,11 +161,11 @@ class qe_submitjob:
                 sys.exit(0)
             else:
                 # 在运行ph.x之前，如果dyn0文件不存在， 那么就执行ph.x的运行
-                jobids = self.submit_mode1(inputfilename, jobname)
+                jobids = self.submit_mode0(inputfilename)
                 # 如果执行完ph.x的运行后，检查返回的任务号不为空，说明ph.x的运行没有问题。
                 while True:
                     # 然后检查dyn0文件是否存在，一旦产生就退出ph.x的运行。
-                    time.sleep(5)
+                    time.sleep(3)
                     if self.checksuffix(self.work_underpressure, ".dyn0"):
                         logger.info("The *.dyn0 has been created just now !!! The program will run `killall -9 ph.x`")
                         os.system("killall -9 ph.x")
