@@ -146,22 +146,37 @@ if __name__ == "__main__":
         if os.path.exists("enthalpy.dat"):
             os.remove("enthalpy.dat")
         with open("enthalpy.dat", "w") as file:
-            file.write("{:<60} {:<20} {:<20} \n".format("formula", "enthalpy", "enthalpy_per_atoms")) 
+            file.write("{:<10} {:<20} {:<20} {:<20} \n".format("Number", "formula", "enthalpy", "enthalpy_per_atoms")) 
 
+        i = 100000
         for root, dirs, files in os.walk(dir_vr):
             if "OUTCAR" in files and "POSCAR" in files:
                 outcar_path = os.path.join(root, "OUTCAR")
                 poscar_path = os.path.join(root, "POSCAR")
                 # print(outcar_path)
-                struct   = Structure.from_file(poscar_path);    atoms_amount       = struct.composition.num_atoms;
-                enthalpy = get_enthalpy(outcar_path)       ;    enthalpy_per_atoms = float(enthalpy)/atoms_amount
-                name     =  root.split("/")[-1]            ;    formula  = re.search(r"[A-Za-z]{1,2}\d+[A-Za-z]{1,2}\d+", name).group()
-
-                enthalpy_dict[name]["formula"]            = formula
-                enthalpy_dict[name]["enthalpy"]           = enthalpy
-                enthalpy_dict[name]["enthalpy_per_atoms"] = enthalpy_per_atoms
-                # with open("enthalpy.dat", "a") as file:
-                #     file.write("{:<60} {:<20} {:<20} \n".format(root.split("/")[-1], enthalpy, enthalpy_per_atoms)) 
+                struct = Structure.from_file(poscar_path)   
+                atoms_amount = struct.composition.num_atoms
+                formula = struct.composition.iupac_formula
+                try:
+                    enthalpy = get_enthalpy(outcar_path)
+                    enthalpy_per_atoms = float(enthalpy) / atoms_amount
+                    number = re.findall(r"\d{3,3}", root.split("/")[-1])
+                    if number:
+                        enthalpy_dict[formula]["Number"] = number[0]
+                        number = number[0]
+                    else:
+                        i += 1
+                        enthalpy_dict[formula]["Number"] = i
+                        number = i 
+                    enthalpy_dict[formula]["formula"]    = formula
+                    enthalpy_dict[formula]["enthalpy"]   = enthalpy
+                    enthalpy_dict[formula]["enthalpy_per_atoms"] = enthalpy_per_atoms
+                    with open("enthalpy.dat", "a") as file:
+                        file.write("{:<10} {:<20} {:<20} {:<20} \n".format(number, formula, enthalpy, enthalpy_per_atoms)) 
+                except Exception as e:
+                    print(e.args)
+                    print(f"error in {root}")
+                    continue                
                 
         import pandas as pd
         # import pprint
@@ -172,7 +187,7 @@ if __name__ == "__main__":
             ascending=[True], # 按照升序排列
             inplace=True
             )
-        df.to_excel("enthalpy_sorted.xlsx")
+        df.to_csv("enthalpy_sorted.csv", index=False)
 
     if test_encut:
         if os.path.exists("encut.dat"):
@@ -183,9 +198,14 @@ if __name__ == "__main__":
             if "OUTCAR" in files and "POSCAR" in files:
                 outcar_path = os.path.join(root, "OUTCAR")
                 poscar_path = os.path.join(root, "POSCAR")
-                print(outcar_path)
+
                 struct = Structure.from_file(poscar_path);  atoms_amount     = struct.composition.num_atoms
-                energy = get_free_energy(outcar_path)    ;  energy_per_atoms = float(energy) / atoms_amount
+                try:
+                    energy = get_free_energy(outcar_path)
+                    energy_per_atoms = float(energy) / atoms_amount
+                except:
+                    print(root)
+                    continue
                 name   = (root.split("/")[-1])
                 with open("encut.dat", "a") as file:
                     file.write("{:<10} {:<20} {:<20}\n".format(name, energy, energy_per_atoms))
