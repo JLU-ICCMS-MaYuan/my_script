@@ -49,10 +49,10 @@ logger = logging.getLogger(__name__)
 if __name__ == "__main__":
 
 
-    logger.info("Start qe calculate")
+    print("Start qe calculate")
 
     parser = ArgumentParser(prog="run_vasp", formatter_class=RawTextHelpFormatter)
     args = set_more_args(parser)
 
-    logger.info(f"{args} \n")
+    print(f"{args} \n")
     qe = args.qe_workflow(args)

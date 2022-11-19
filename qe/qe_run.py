@@ -161,8 +161,8 @@ class qe_superconduct:
 
         # prepare input parameter
         self.sc_inputpara  = qesc_inputpara.init_from_config(self._config)
-        # init the input
 
+        # init the input
         self.qe_writeinput  = qe_writeinput.init_from_scinput(self.sc_inputpara)
         inputfilename = self.qe_writeinput.writeinput()
 
@@ -196,12 +196,12 @@ class qe_prepare:
             self.qe_submitjob = qe_submitjob.init_from_relaxinput(self.prepare_inputpara)
             if self.prepare_inputpara.queue is not None:
                 ids = self.qe_submitjob.submit_mode1(inputfilename, jobname)
-            logger.info("The program is running relax")
+            print("The program is running relax")
             try:
                 check_pid_jobid(ids, self.qe_submitjob.submit_job_system)
             except:
-                logger.info(f"ids={None}")
-            logger.info("The program finished relax")
+                print(f"ids={None}")
+            print("The program finished relax")
             ids = []
 
         # 读入结构弛豫的输出文件进行自洽计算和声子计算
@@ -228,12 +228,12 @@ class qe_prepare:
             self.qe_submitjob = qe_submitjob.init_from_scfinput(self.prepare_inputpara)
             if self.prepare_inputpara.queue is not None:
                 ids = self.qe_submitjob.submit_mode1(inputfilename, jobname)
-            logger.info("The program is running scffit")
+            print("The program is running scffit")
             try:
                 check_pid_jobid(ids, self.qe_submitjob.submit_job_system)
             except:
-                logger.info(f"ids={None}")
-            logger.info("The program finished scffit")
+                print(f"ids={None}")
+            print("The program finished scffit")
             ids = []
 
         if "scf" in self.prepare_inputpara.mode:
@@ -247,12 +247,12 @@ class qe_prepare:
             self.qe_submitjob = qe_submitjob.init_from_scfinput(self.prepare_inputpara)
             if self.prepare_inputpara.queue is not None:
                 ids = self.qe_submitjob.submit_mode1(inputfilename, jobname)
-            logger.info("The program is running scf")
+            print("The program is running scf")
             try:
                 check_pid_jobid(ids, self.qe_submitjob.submit_job_system)
             except:
-                logger.info(f"ids={None}")
-            logger.info("The program finished scf")
+                print(f"ids={None}")
+            print("The program finished scf")
             ids = []
         
         if "nosplit" in self.prepare_inputpara.mode and self.prepare_inputpara.dyn0_flag:

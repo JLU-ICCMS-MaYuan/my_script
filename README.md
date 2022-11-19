@@ -100,17 +100,26 @@ dos -m mode=eletdos core=1 npool=1 queue=local qpoints='8 8 8' ndos=500
 ```shell
 dos -m mode=elepdos core=1 npool=1 queue=local qpoints='8 8 8' ndos=500 
 ```
-计算超导
-不指定最高频率
+使用McAD方法计算超导
+不指定最高频率, 将会自动读取最高频率文件
 ```shell
 sc -m mode=McAD core=1 npool=1 queue=local deguass=0.5 screen_constant=0.1 smearing_method=1 qpoints='6 6 6'
 ```
-指定最高频率
+使用McAD方法超导转变温度指定最高频率
 ```shell
 sc -m mode=McAD core=1 npool=1 queue=local top_freq=80 deguass=0.5 screen_constant=0.1 smearing_method=1 qpoints='6 6 6'
 ```
+使用eliashberg方法超导转变温度, 指定a2F.dos*文件
 ```shell
 sc -m mode=eliashberg core=1 npool=1 queue=local temperature_points=10000 a2F_dos=a2F.dos3 qpoints='6 6 6'
+```
+使用eliashberg方法超导转变温度, 指定使用alpha2F.dat文件中使用哪一列的degauss对应的alpha2F数值。使用degauss_column来指定
+```shell
+sc -m mode=eliashberg core=1 npool=1 queue=local temperature_points=10000 degauss_column=7 qpoints='6 6 6'
+```
+获得eliashberg计算得到的超导转变温度
+```shell
+sc -m mode=eliashberg Tc=output core=1
 ```
 
 批量计算

@@ -104,7 +104,7 @@ class qe_submitjob:
         outputfilename = inputfilename.split(".")[0] + ".out"
         logger.warning("!!!!!!!! Please Attention, You have been source your Intel Compiler !!!!!!!!")
         jobids = os.popen(f"nohup {qebin_path}/ph.x <{inputfilename}> {outputfilename} 2>&1 & echo $!").read()
-        logger.info(f"ph.x is running. pid or jobids = {jobids}")
+        print(f"ph.x is running. pid or jobids = {jobids}")
         return jobids, outputfilename
 
     def submit_mode1(self, inputfilename, jobname):
@@ -127,15 +127,15 @@ class qe_submitjob:
         dst_dir = input_file.parent.absolute()
         os.chdir(dst_dir)
         if self.submit_job_system == "bash":
-            logger.info(f"nohup {self.submit_order} {jobname} > bash.log 2>&1 &")
+            print(f"nohup {self.submit_order} {jobname} > bash.log 2>&1 &")
             res = os.popen(f"nohup {self.submit_order} {jobname} > bash.log 2>&1 &").read()
             jobids = self.getpid()
         else:
-            logger.info(f"{self.submit_order} {jobname}")
+            print(f"{self.submit_order} {jobname}")
             res = os.popen(f"{self.submit_order} {jobname}").read()
             jobids = re.findall(r"\d+", res)
 
-        logger.info(f"{jobname} is running. pid or jobids = {jobids}")
+        print(f"{jobname} is running. pid or jobids = {jobids}")
         os.chdir(cwd)
         # 检查任务是否成功提交，成功提交的话，应该会有进程号或者任务号返回。
         # 如果没有成功提交任务就跳出程序
@@ -152,7 +152,7 @@ class qe_submitjob:
         # 检查是否只是为了获得dyn0文件
         if self.dyn0_flag:
             # 检查是否只是为了获得dyn0文件，如果是：
-            logger.info(f"You set dyn0_flag = {self.dyn0_flag}. So When the dyn0 appears, the program will kill ph.x")
+            print(f"You set dyn0_flag = {self.dyn0_flag}. So When the dyn0 appears, the program will kill ph.x")
             # 在运行ph.x之前，检查dyn0文件是否已经存在
             if self.checksuffix(self.work_underpressure, ".dyn0"):
                 # 在运行ph.x之前，如果dyn0文件已经存在， 那么就直接退出程序
@@ -167,15 +167,15 @@ class qe_submitjob:
                     # 然后检查dyn0文件是否存在，一旦产生就退出ph.x的运行。
                     time.sleep(3)
                     if self.checksuffix(self.work_underpressure, ".dyn0"):
-                        logger.info("The *.dyn0 has been created just now !!! The program will run `killall -9 ph.x`")
+                        print("The *.dyn0 has been created just now !!! The program will run `killall -9 ph.x`")
                         os.system("killall -9 ph.x")
                         break
                     if self.checkerror(self.work_underpressure, outputfilename):
-                        logger.info("The {outputfilename} has ERROR !!! The program will exit")
+                        print("The {outputfilename} has ERROR !!! The program will exit")
                         sys.exit(1)
         else:
             # 检查是否只是为了获得dyn0文件，如果否：
-            logger.info(f"You set dyn0_flag = {self.dyn0_flag}. The program will just simply run ph.x ")
+            print(f"You set dyn0_flag = {self.dyn0_flag}. The program will just simply run ph.x ")
             jobids = self.submit_mode1(inputfilename, jobname)
 
 
@@ -194,7 +194,7 @@ class qe_submitjob:
                 print(f"{self.submit_order} {jobname}")
                 res = os.popen(f"{self.submit_order} {jobname}").read()
                 jobids = re.findall(r"\d+", res)
-            logger.info(f"finish submit {jobname}, jobids = {''.join(jobids)}")
+            print(f"finish submit {jobname}, jobids = {''.join(jobids)}")
             os.chdir(cwd)
 
 
@@ -213,7 +213,7 @@ class qe_submitjob:
                 print(f"{self.submit_order} {jobname}")
                 res = os.popen(f"{self.submit_order} {jobname}").read()
                 jobids = re.findall(r"\d+", res)
-                logger.info(f"finish submit {jobname}, jobids = {''.join(jobids)}")
+                print(f"finish submit {jobname}, jobids = {''.join(jobids)}")
         os.chdir(cwd)
 
 
@@ -222,7 +222,7 @@ class qe_submitjob:
     def getpid():
         """get pid number"""
         jobids = []
-        logger.info("wait 6s, The program will tell you PID"); time.sleep(6); 
+        print("wait 6s, The program will tell you PID"); time.sleep(6); 
         osawk = """ps -ef | grep -E "pw.x|ph.x|matdyn.x|lambda.x|q2r.x|eliashberg.x|dos.x|pp.x|projwfc.x" |  grep -v grep | awk '{print $2}'""" # return a series of number, such as: 423423 324233 423424
         # ps -ef ps -ef用于查看全格式的全部进程，其中“ps”是在Linux中是查看进程的命令，“-e ”参数代表显示所有进程，“-f”参数代表全格式。
         # grep -E  ‘grep’ ‘-E’ 选项表示使用扩展的正则表达式。如果你使用 ‘grep’ 命令时带 ‘-E’，你只需要用途 ‘|’ 来分隔OR条件。 grep -E 'pattern1|pattern2' filename
@@ -260,7 +260,7 @@ class qe_submitjob:
                 logger.error(f"{outputfilename} output some wrong results. The program will exit!!!") 
                 sys.exit(1)
         else:
-            logger.info(f"{outputfilename} doesn't exist temporarily!")
+            print(f"{outputfilename} doesn't exist temporarily!")
 
 
 

@@ -63,7 +63,7 @@ class qe_base:
         self.get_struct_info(self.struct_type, self.work_underpressure)
         
         ############################ prepare pp directory #########################
-        logger.info(f"create potcar dir in {self.work_path}")
+        print(f"create potcar dir in {self.work_path}")
         self.workpath_pppath = Path(self.work_underpressure).joinpath("pp")
         if not self.workpath_pppath.exists():
             self.workpath_pppath.mkdir(parents=True)
@@ -137,12 +137,12 @@ class qe_base:
             elif len(dst_pps) == 1:
                 self.final_choosed_pp.append(dst_pps[0])
             elif len(dst_pps) == 0:
-                logger.info(f"to prepare {species_name} uspp! ")
+                print(f"to prepare {species_name} uspp! ")
                 dst_pp = self.get_single_uspp(species_name, workpath_pppath)
                 self.final_choosed_pp.append(dst_pp)
             else:
                 logger.error(f"find many POTCARs {dst_pps}")
-            logger.info(f"species_name {species_name}")
+            print(f"species_name {species_name}")
 
     def get_single_uspp(self, species_name, workpath_pppath):
         '''
@@ -180,7 +180,7 @@ class qe_base:
         """
 
         if not scffit_out.exists():
-            logger.warning("You have run scffit for getting `scffit.out`")
+            print("Warning ! You have run scffit for getting `scffit.out`")
             return None
             
         reciprocal_lattice = []

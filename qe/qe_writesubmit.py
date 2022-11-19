@@ -127,7 +127,7 @@ class qe_writesubmit:
                     raise FileExistsError (f"There is no {split_ph_dir}")
                 jobname = self.s5_PhSplitDyn0(split_ph_dir, inname)
                 jobnames.append(jobname)
-                logger.info(f"finish submit job script in {i+1}")
+                print(f"finish submit job script in {i+1}")
             return jobnames
         if mode =="split_assignQ":
             jobnames = []

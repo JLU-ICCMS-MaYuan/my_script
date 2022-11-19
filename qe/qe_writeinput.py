@@ -203,6 +203,7 @@ class qe_writeinput:
             smearing_method=other_class.smearing_method,
             temperature_points=other_class.temperature_points,
             a2F_dos=other_class.a2F_dos,
+            degauss_column=other_class.degauss_column,
 
             # basic parameter of control precision
             forc_conv_thr=other_class.forc_conv_thr,
@@ -250,7 +251,7 @@ class qe_writeinput:
                 scf_name    = self.write_scf_in(split_ph_dir)
                 ph_name     = self.write_split_ph_dyn0(split_ph_dir, q3)
                 inputfilename.append([scffit_name, scf_name, ph_name])
-                logger.info(f"finish input files in {i+1}")
+                print(f"finish input files in {i+1}")
             return inputfilename     
         if mode =="split_assignQ":
             inputfilename = []
@@ -258,7 +259,7 @@ class qe_writeinput:
                 for i in range(int(self.qirreduced)):
                     ph_name     = self.write_split_phassignQ(self.work_underpressure, i+1, i+1)
                     inputfilename.append(ph_name)
-                logger.info(f"finish input files {i+1}")            
+                print(f"finish input files {i+1}")            
             return inputfilename
         if mode =="q2r":
             inputfilename = self.write_q2r_in()
@@ -335,7 +336,7 @@ class qe_writeinput:
             for species_name in self.composition.keys():
                 species_pseudo = get_pps_for_a_element(species_name, self.final_choosed_pp)
                 if len(species_pseudo)==1:
-                    logger.info(f"write USPP for species in relax.in: {species_pseudo[0]}") 
+                    print(f"write USPP for species in relax.in: {species_pseudo[0]}") 
                     element      = Element(species_name)
                     species_mass = str(element.atomic_mass).strip("amu")
                     qe.write(" {:<5}  {:<10}  {:<50} \n".format(species_name, species_mass, species_pseudo[0]))
@@ -389,7 +390,7 @@ class qe_writeinput:
             for species_name in self.composition.keys():
                 species_pseudo = get_pps_for_a_element(species_name, self.final_choosed_pp)
                 if len(species_pseudo)==1:
-                    logger.info(f"write USPP for species in scffit.in: {species_pseudo[0]}") 
+                    print(f"write USPP for species in scffit.in: {species_pseudo[0]}") 
                     element      = Element(species_name)
                     species_mass = str(element.atomic_mass).strip("amu")
                     qe.write(" {:<5}  {:<10}  {:<50} \n".format(species_name, species_mass, species_pseudo[0]))
@@ -442,7 +443,7 @@ class qe_writeinput:
             for species_name in self.composition.keys():
                 species_pseudo = get_pps_for_a_element(species_name, self.final_choosed_pp)
                 if len(species_pseudo)==1:
-                    logger.info(f"write USPP for species in scf.in: {species_pseudo[0]}") 
+                    print(f"write USPP for species in scf.in: {species_pseudo[0]}") 
                     element      = Element(species_name)
                     species_mass = str(element.atomic_mass).strip("amu")
                     qe.write(" {:<5}  {:<10}  {:<50} \n".format(species_name, species_mass, species_pseudo[0]))
@@ -497,7 +498,7 @@ class qe_writeinput:
             for species_name in self.composition.keys():
                 species_pseudo = get_pps_for_a_element(species_name, self.final_choosed_pp)
                 if len(species_pseudo)==1:
-                    logger.info(f"write USPP for species in relax.in: {species_pseudo[0]}") 
+                    print(f"write USPP for species in relax.in: {species_pseudo[0]}") 
                     element      = Element(species_name)
                     species_mass = str(element.atomic_mass).strip("amu")
                     qe.write(" {:<5}  {:<10}  {:<50} \n".format(species_name, species_mass, species_pseudo[0]))
@@ -734,11 +735,23 @@ class qe_writeinput:
 
     def write_alpha2f_out(self):
         alpha2f_out = Path(self.work_underpressure).joinpath("ALPHA2F.OUT").absolute()
-        if self.a2F_dos is not None:
-            a2F_dos_path = Path(self.work_underpressure).joinpath(self.a2F_dos).absolute()
+        alpha2F_dat = Path(self.work_underpressure).joinpath("alpha2F.dat").absolute()
+        # 方法1 不计算声子的态密度, 直接处理 alpha2F.dat 来计算超导
+        if self.degauss_column is not None:
+            if not alpha2F_dat.exists():
+                raise FileExistsError(f"{alpha2F_dat.name} doesn't exist !")
+            alpha2F_dat = str(alpha2F_dat)
+            alpha2f_out = str(alpha2f_out)
+            awk_order   = '''sed '1,1d' %s | awk '{print $1/6579.684, $%s}' > %s''' %(alpha2F_dat, str(self.degauss_column), alpha2f_out)
+            os.system(awk_order)
+        # 方法2 通过计算声子态密度, 获得a2F.dos*文件, 然后选择一个合适的文件用来计算超导
+        elif self.a2F_dos is not None:
+            a2F_dos_path = Path(self.work_underpressure).joinpath(self.a2F_dos)
             if not a2F_dos_path.exists():
                 raise FileExistsError(f"{self.a2f_dos} doesn't exist !")
+            a2F_dos_path = str(a2F_dos_path)
+            alpha2f_out = str(alpha2f_out)
+            os.system(f"sed '1,5d' {a2F_dos_path} | sed '/lambda/d' | awk '{'{print $1/2, $2}'}' > {alpha2f_out}")
+        else:
+            raise("You haven't set either degauss_column or a2F_dos* !!!")
 
-        a2F_dos_path = str(a2F_dos_path)
-        alpha2f_out = str(alpha2f_out)
-        os.system(f"sed '1,5d' {a2F_dos_path} | sed '/lambda/d' | awk '{'{print $1/2, $2}'}' > {alpha2f_out}")
