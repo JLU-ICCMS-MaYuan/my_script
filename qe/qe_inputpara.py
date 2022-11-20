@@ -92,12 +92,12 @@ class qe_inputpara(qe_base):
         else:
             print("Please carefully check the bool value of `lspinorb` you just set. Its format must be `false` or `true` without capital")
 
-        if not hasattr(self, "noncolin"):
-            self.noncolin = "false"
-            print("You didn't set the `noncolin` !      The program will use default value: noncolin=false")
-        elif self.lspinorb == "true":
+        if self.lspinorb == "true":
             self.noncolin = "true"
             print("Because lspinorb = true, so the noncolin=true")
+        elif not hasattr(self, "noncolin"):
+            self.noncolin = "false"
+            print("You didn't set the `noncolin` !      The program will use default value: noncolin=false")
         else:
             print("Please carefully check the bool value of `noncolin` you just set. Its format must be `false` or `true` without capital")
 
