@@ -320,7 +320,7 @@ class qe_writeinput:
             qe.write(" diagonalization = '{}'          \n".format(self.diagonalization))
             qe.write(" conv_thr = {},                  \n".format(self.conv_thr))
             qe.write(" mixing_beta = {},               \n".format(self.mixing_beta))
-            qe.write(" electron_maxstep = {} .         \n".format(self.electron_maxstep))
+            qe.write(" electron_maxstep = {},          \n".format(self.electron_maxstep))
             qe.write("/\n")
 
             qe.write("&ions                            \n")
@@ -385,7 +385,7 @@ class qe_writeinput:
             qe.write("&ELECTRONS\n")
             qe.write(" conv_thr = {},                  \n".format(self.conv_thr))
             qe.write(" mixing_beta = {},               \n".format(self.mixing_beta))
-            qe.write(" electron_maxstep = {} .         \n".format(self.electron_maxstep))
+            qe.write(" electron_maxstep = {},          \n".format(self.electron_maxstep))
             qe.write("/\n")
 
             qe.write("ATOMIC_SPECIES                   \n")
@@ -439,7 +439,7 @@ class qe_writeinput:
             qe.write("&ELECTRONS\n")
             qe.write(" conv_thr = {},                  \n".format(self.conv_thr))
             qe.write(" mixing_beta = {},               \n".format(self.mixing_beta))
-            qe.write(" electron_maxstep = {} .         \n".format(self.electron_maxstep))
+            qe.write(" electron_maxstep = {},          \n".format(self.electron_maxstep))
             qe.write("/\n")
 
             qe.write("ATOMIC_SPECIES                   \n")
