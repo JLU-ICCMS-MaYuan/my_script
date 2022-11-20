@@ -60,6 +60,7 @@ class qe_writeinput:
             ecutrho=other_class.ecutrho,
             la2F=other_class.la2F,
             lspinorb=other_class.lspinorb,
+            noncolin=other_class.noncolin,
             diagonalization=other_class.diagonalization,
             conv_thr=other_class.conv_thr,
             mixing_beta=other_class.mixing_beta,
@@ -97,6 +98,7 @@ class qe_writeinput:
             ecutrho=other_class.ecutrho,
             la2F=other_class.la2F,
             lspinorb=other_class.lspinorb,
+            noncolin=other_class.noncolin,
             diagonalization=other_class.diagonalization,
             conv_thr=other_class.conv_thr,
             mixing_beta=other_class.mixing_beta,
@@ -148,6 +150,7 @@ class qe_writeinput:
             ecutrho=other_class.ecutrho,
             la2F=other_class.la2F,
             lspinorb=other_class.lspinorb,
+            noncolin=other_class.noncolin,
             diagonalization=other_class.diagonalization,
             conv_thr=other_class.conv_thr,
             mixing_beta=other_class.mixing_beta,
@@ -212,12 +215,12 @@ class qe_writeinput:
             degauss=other_class.degauss,
             ecutwfc=other_class.ecutwfc,
             ecutrho=other_class.ecutrho,
+            lspinorb=other_class.lspinorb,
+            noncolin=other_class.noncolin,
             diagonalization=other_class.diagonalization,
             conv_thr=other_class.conv_thr,
             mixing_beta=other_class.mixing_beta,
             press_conv_thr=other_class.press_conv_thr,
-            lspinorb=other_class.lspinorb,
-
         )
         return self
 
@@ -314,6 +317,7 @@ class qe_writeinput:
             qe.write(" ecutwfc = {},                   \n".format(self.ecutwfc))
             qe.write(" ecutrho = {},                   \n".format(self.ecutrho))
             qe.write(" lspinorb = .{}.,                \n".format(self.lspinorb))
+            qe.write(" noncolin = .{}.,                \n".format(self.noncolin))
             qe.write("/\n")
 
             qe.write("&ELECTRONS\n")
@@ -379,6 +383,7 @@ class qe_writeinput:
             qe.write(" ecutwfc = {},                   \n".format(self.ecutwfc))
             qe.write(" ecutrho = {},                   \n".format(self.ecutrho))
             qe.write(" lspinorb = .{}.,                \n".format(self.lspinorb))
+            qe.write(" noncolin = .{}.,                \n".format(self.noncolin))
             qe.write(" la2F = .{}.,                    \n".format(self.la2F))
             qe.write("/\n")
 
@@ -434,6 +439,7 @@ class qe_writeinput:
             qe.write(" ecutwfc = {},                   \n".format(self.ecutwfc))
             qe.write(" ecutrho = {},                   \n".format(self.ecutrho))
             qe.write(" lspinorb = .{}.,                \n".format(self.lspinorb))
+            qe.write(" noncolin = .{}.,                \n".format(self.noncolin))
             qe.write("/\n")
 
             qe.write("&ELECTRONS\n")
@@ -488,6 +494,7 @@ class qe_writeinput:
             qe.write(" ecutwfc = {},                   \n".format(self.ecutwfc))
             qe.write(" ecutrho = {},                   \n".format(self.ecutrho))
             qe.write(" lspinorb = .{}.,                \n".format(self.lspinorb))
+            qe.write(" noncolin = .{}.,                \n".format(self.noncolin))
             qe.write("/\n")
 
             qe.write("&ELECTRONS\n")
