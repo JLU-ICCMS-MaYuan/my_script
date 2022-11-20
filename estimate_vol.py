@@ -4,12 +4,19 @@ import sys
 import numpy as np
 print("-----------------------------------------HELP------------------------------------------")
 print("You can use this scripts by example:")
-print("distancematrix.py '2.8, 1.8, 1.1' ")
+print("estimate.py '2.8, 1.8, 1.1' '2, 4, 20'")
 print("'2.8, 1.8, 1.1' represents the value of RCORE in POTCAR, its unit is Bohr unit !!!")
+print("'2, 4, 20' respresents the value of NUMBER of every specie")
 print("-----------------------------------------HELP------------------------------------------")
 print("\n")
-# bohr -> Angstrom
-rcore   = np.array([eval(sys.argv[1])]) * 0.529
-dists_m = rcore + rcore.T
-for row in dists_m:
-    print(np.round(row[0],decimals=3), np.round(row[1],decimals=3), np.round(row[2],decimals=3),)
+
+rcore = np.array(eval(sys.argv[1]))
+num   = np.array(eval(sys.argv[2]))
+
+if len(rcore) != len(num):
+    raise ValueError("rcore != num")
+
+v = [4*np.power(r*0.529, 3)*np.pi*n/3 for r, n in zip(rcore, num)]
+volume = np.asarray(v).sum(axis=0)
+print("volume=%s"%(volume))
+
