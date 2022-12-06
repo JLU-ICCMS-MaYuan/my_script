@@ -1,8 +1,8 @@
 #!/bin/bash
-# how to use:
-# 	3handle.sh step_1 
-#	that means to create a directory named step_1
-mkdir $1
-cp POSCAR_* $1/
-cp CONTCAR_* $1/
-cp OUTCAR_* $1/
+
+for i in {1..300}; do
+cp $i/POSCAR_$i POSCAR_$i
+cp $i/CONTCAR CONTCAR_$i
+cp $i/OUTCAR OUTCAR_$i
+done
+

@@ -1,6 +1,5 @@
 #!/bin/sh                                     
 
-
 rm -fr {1..300}
 
 for i in {1..300}; do 
