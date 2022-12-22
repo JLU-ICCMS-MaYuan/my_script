@@ -99,6 +99,10 @@ pso_ratio=0.5
 import logging
 from argparse import ArgumentParser
 
+# 临时加一行不要add
+import sys
+sys.path.append("/Users/macbookpro/my_code/my_script/")
+
 from structuregenerator.set_args import set_more_args
 
 logging.basicConfig(level = logging.INFO,format = '%(asctime)s|%(name)s|%(levelname)s|%(message)s')
