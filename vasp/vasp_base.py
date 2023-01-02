@@ -223,8 +223,8 @@ class vaspbatch_base(vasp_base):
         self.get_struct_info(self.struct_type, self.work_underpressure)
         
         ############################ prepare pp directory #########################
-        logger.info(f"create potcar dir in {self.work_underpressure}")
-        self.workpath_pppath = Path(self.work_underpressure).joinpath("potcar_lib")
+        logger.info(f"create potcar dir in {self.work_path}")
+        self.workpath_pppath = Path(self.work_path).joinpath("potcar_lib")
         if not self.workpath_pppath.exists():
             self.workpath_pppath.mkdir()
         # 准备赝势 

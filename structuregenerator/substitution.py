@@ -43,14 +43,14 @@ class substitution:
 
         elements_list1 = self.replacement[0]
         elements_list2 = self.replacement[1]
+        parent_ele1    = elements_list1[0]
+        parent_ele2    = elements_list2[0]
         logger.info(f"The program will create {len(elements_list1)*len(elements_list2)} structutrs")
         num = 0
         serialnumber_formular = []
-        for son_ele1 in elements_list1:
-            parent_ele1 = elements_list1[0]
-            for son_ele2 in elements_list2:
+        for son_ele1 in elements_list1[1:]:
+            for son_ele2 in elements_list2[1:]:
                 num_formula = {}
-                parent_ele2 = elements_list2[0]
                 pstruct_copy = self.prototype_pstruct.copy()
                 pstruct_copy.replace_species(
                     {
@@ -64,7 +64,7 @@ class substitution:
                 num_formula["formula"] = "".join(pstruct_copy.composition.formula.split())
                 serialnumber_formular.append(num_formula)
                 #output_name = self.work_path.joinpath("POSCAR_"+str(num))
-                output_name = self.work_path.joinpath(str(num)+'.'+num_formula["formula"]+".vasp")
+                output_name = self.work_path.joinpath(str(num)+'_'+num_formula["formula"]+".vasp")
                 Poscar(pstruct_copy).write_file(output_name)
         
         struct_pd = pd.DataFrame(serialnumber_formular)
