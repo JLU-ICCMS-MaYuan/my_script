@@ -608,6 +608,3 @@ class qeprepare_inputpara(qephono_inputpara):
             input_file_path, 
             **kwargs
             )
-
-        if hasattr(self, "mode"):
-            self.mode = self.mode.split()

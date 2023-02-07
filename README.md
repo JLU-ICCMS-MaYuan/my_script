@@ -124,10 +124,10 @@ sc -m mode=eliashberg Tc=output core=1
 
 批量计算
 ```shell
-prepare -m mode="relax-vc scffit scf nosplit" dyn0_flag=True qpoints='6 6 6' electron_maxstep=1000 core=4 npool=1 queue=local
+prepare -m mode=prepare electron_maxstep=1000 core=4 npool=1 queue=local
 ```
 ```shell
-prepare -m mode="relax-vc scffit scf        " dyn0_flag=True qpoints='6 6 6' electron_maxstep=1000 core=4 npool=1 queue=local
+prepare -m mode=prepare electron_maxstep=1000 core=4 npool=1 queue=local
 ```
 ### 如何增加新的功能模块(以增加ele-dos计算的功能模块为例子说明，修改这需要添加哪些内容)
 
