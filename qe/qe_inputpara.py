@@ -575,18 +575,24 @@ class qesc_inputpara(qephono_inputpara):
             # sys.exit(1)
         
         # 获得eliashberg方法计算得到的Tc
-        print("运行可能报错, 建议仔细检查ELIASHBERG_GAP_T.OUT文件的第二列, 有些数据本来应该是0.1666489645E-265, 但是实际可能为0.1666489645-265, 导致numpy无法将其转化为数字。")
+        # 运行可能报错, 建议仔细检查ELIASHBERG_GAP_T.OUT文件的第二列, 有些数据本来应该是0.1666489645E-265, 但是实际可能为0.1666489645-265, 导致numpy无法将其转化为数字
+        print("-------------------------------------WARING--------------------------------------")
+        print("It is recommended to carefully check the second column of the ELIASHBERG_GAP_T.OUT file. ")
+        print("Some data should be 0.1666489645E-265, but it may actually be 0.1666489645-265, causing numpy to fail to turn it into a number.")
+        print("-------------------------------------WARING--------------------------------------")
         eliashberg_gap_t_out = Path(self.work_underpressure).joinpath("ELIASHBERG_GAP_T.OUT")
+        process_eliashberg_gap_t_out = Path(self.work_underpressure).joinpath("process_ELIASHBERG_GAP_T.OUT")
         if not eliashberg_gap_t_out.exists():
             print(f"ELIASHBERG_GAP_T.OUT doesn't exist !!! The program will exit")
-        gap_t   = np.loadtxt(eliashberg_gap_t_out)
+        os.system(f"sed '/E/!d' {eliashberg_gap_t_out} > {process_eliashberg_gap_t_out}") # 将不包含字符串E的行都删掉
+        gap_t   = np.loadtxt(process_eliashberg_gap_t_out)
         Tc      = gap_t[:, 0]
         gap     = gap_t[:, 1]
         dgap    = abs(np.gradient(gap, Tc))
         dgap_id = np.where(dgap < 1e-8)[0]
         gap_id  = np.where(gap  < 1e-8)[0]
         Tc_id   = [i for i in dgap_id if i in gap_id]
-        print(f'Tc收敛温度为 {Tc[Tc_id[0]]} K (结果仅供参考, 请以Tc-GAP图像为准)')
+        print(f'Tc = {Tc[Tc_id[0]]} K (The results are for reference only; please refer to the Tc-GAP image)')
         sys.exit(0)
 
 

@@ -90,7 +90,7 @@ phono -m mode=matdyn qpoints='6 6 6' core=1 npool=1 queue=local qinserted=50
 ```
 计算phonodos, 计算态密度时要用更密的q点网格，这需设置nk1, nk2, nk3   
 ```shell
-dos -m mode=dos core=1 npool=1 queue=local qpoints='8 8 8' ndos=500 
+dos -m mode=phonodos core=1 npool=1 queue=local qpoints='8 8 8' ndos=500 
 ```
 计算eletdos
 ```shell
@@ -103,7 +103,7 @@ dos -m mode=elepdos core=1 npool=1 queue=local qpoints='8 8 8' ndos=500
 使用McAD方法计算超导
 不指定最高频率, 将会自动读取最高频率文件
 ```shell
-sc -m mode=McAD core=1 npool=1 queue=local deguass=0.5 screen_constant=0.1 smearing_method=1 qpoints='6 6 6'
+sc -m mode=McAD core=1 npool=1 queue=local             deguass=0.5 screen_constant=0.1 smearing_method=1 qpoints='6 6 6'
 ```
 使用McAD方法超导转变温度指定最高频率
 ```shell
