@@ -92,11 +92,11 @@ phono -m mode=matdyn qpoints='6 6 6' core=1 npool=1 queue=local qinserted=50
 ```shell
 dos -m mode=phonodos core=1 npool=1 queue=local qpoints='8 8 8' ndos=500 
 ```
-计算eletdos
+计算eletdos(这里计算电子的dos也用qpoints其实非常不合理)
 ```shell
 dos -m mode=eletdos core=1 npool=1 queue=local qpoints='8 8 8' ndos=500 
 ```
-计算elepdos
+计算elepdos(这里计算电子的dos也用qpoints其实非常不合理)
 ```shell
 dos -m mode=elepdos core=1 npool=1 queue=local qpoints='8 8 8' ndos=500 
 ```
@@ -111,11 +111,12 @@ sc -m mode=McAD core=1 npool=1 queue=local top_freq=80 deguass=0.5 screen_consta
 ```
 使用eliashberg方法超导转变温度, 指定a2F.dos*文件
 ```shell
-sc -m mode=eliashberg core=1 npool=1 queue=local temperature_points=10000 a2F_dos=a2F.dos3 qpoints='6 6 6'
+sc -m mode=eliashberg core=1 npool=1 queue=local temperature_steps=100 a2F_dos=a2F.dos3 qpoints='6 6 6'
 ```
 使用eliashberg方法超导转变温度, 指定使用alpha2F.dat文件中使用哪一列的degauss对应的alpha2F数值。使用degauss_column来指定
+(这个方法生成ALPHA2F.OUT可能有问题导致 ELIASHBERG_GAP_T.OUT 中出现NAN。所以更推荐上面那种处理方法。)
 ```shell
-sc -m mode=eliashberg core=1 npool=1 queue=local temperature_points=10000 degauss_column=7 qpoints='6 6 6'
+sc -m mode=eliashberg core=1 npool=1 queue=local temperature_steps=100 degauss_column=7 qpoints='6 6 6'
 ```
 获得eliashberg计算得到的超导转变温度
 ```shell

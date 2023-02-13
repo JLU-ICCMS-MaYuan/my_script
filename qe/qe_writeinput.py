@@ -204,7 +204,7 @@ class qe_writeinput:
             top_freq=other_class.top_freq,
             deguass=other_class.deguass,
             smearing_method=other_class.smearing_method,
-            temperature_points=other_class.temperature_points,
+            temperature_steps=other_class.temperature_steps,
             a2F_dos=other_class.a2F_dos,
             degauss_column=other_class.degauss_column,
 
@@ -736,11 +736,11 @@ class qe_writeinput:
     def write_eliashberg_in(self):
 
         screen_constant = self.screen_constant
-        temperature_points = self.temperature_points
+        temperature_steps = self.temperature_steps
         inputfilename = "INPUT"
         eliashberg_in = os.path.join(self.work_underpressure, inputfilename)
         with open(eliashberg_in, "w") as qe:
-            qe.write("{:<10} {:<10}".format(screen_constant, temperature_points))
+            qe.write("{:<10} {:<10}".format(screen_constant, temperature_steps))
         return inputfilename
 
     def write_alpha2f_out(self):

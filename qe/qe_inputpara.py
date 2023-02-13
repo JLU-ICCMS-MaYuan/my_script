@@ -526,13 +526,13 @@ class qesc_inputpara(qephono_inputpara):
             print("You didn't set the `smearing_method`!  The program will use default value: smearing_method=1")
 
         # Eliashberg
-        print("If you use Eliashberg method, you have to specify the temperature_points !")
+        print("If you use Eliashberg method, you have to specify the temperature_steps !")
         print("If you use Eliashberg method, you may not specify the a2f_dos* !")
         print("If you use Eliashberg method, you may not specify the degauss_column* !")
         print("\tIf you set a2f_dos*,then you don't need set degauss_column !\n\tIf you set both, the program will run in the way of `degauss_column*`")
-        if not hasattr(self, "temperature_points"):
-            self.temperature_points = 5000
-            print("You didn't set the `temperature_points`.The program will use default value: temperature_points=5000")
+        if not hasattr(self, "temperature_steps"):
+            self.temperature_steps = 5000
+            print("You didn't set the `temperature_steps`.The program will use default value: temperature_steps=5000")
 
         # Eliashberg
         if not hasattr(self, "a2F_dos"):

@@ -29,7 +29,7 @@ j=0;x=1; for i in `squeue | awk '{print $1}'`; do  let j+=x; done; echo $j
     qe_main.py -i ./200.0/relax.out -w ./200.0/ -p 200 -j bash  dos   -m mode=dos core=1 npool=1 queue=local qpoints='8 8 8' ndos=500 
 
     qe_main.py -i ./200.0/relax.out -w ./200.0 -p 200 -j bash   sc    -m mode=McAD       core=1 npool=1 queue=local top_freq=80 deguass=0.5 screen_constant=0.1 smearing_method=1
-    qe_main.py -i ./200.0/relax.out -w ./200.0 -p 200 -j bash   sc    -m mode=eliashberg core=1 npool=1 queue=local temperature_points=10000 a2F_dos=a2F.dos3
+    qe_main.py -i ./200.0/relax.out -w ./200.0 -p 200 -j bash   sc    -m mode=eliashberg core=1 npool=1 queue=local temperature_steps=10000 a2F_dos=a2F.dos3
 
 
     # 完成了批量化任务提交。可以一次性完成relax, scffit, scf, nosplit-dyn0flag=True。
