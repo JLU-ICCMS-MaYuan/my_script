@@ -1,0 +1,18 @@
+START   = 0        
+ICHARG   = 2                                                                                              
+ENCUT    = 600   
+PREC     = A      
+NCORE    = 1   
+KSPACING = 0.3   
+ISMEAR   = 0   
+SIGMA    = 0.01   
+NELM     = 200   
+NELMIN   = 6    
+EDIFF    = 1e-08   
+EDIFFG   = -0.01   
+NSW      = 500  
+IBRION   = 2   
+ISIF     = 3   
+POTIM    = 0.1   
+PSTRESS  = 3000.0   
+
