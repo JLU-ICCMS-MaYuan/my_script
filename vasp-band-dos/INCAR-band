@@ -1,0 +1,31 @@
+# Explicit k-points input for VASP
+# Note that VASP uses the FIRST occurence of a keyword
+#SYSTEM = (NaB3)4  (P1) ~ C:/Users/dell/Desktop/B60Na4-Pri.cif (VASP)
+
+    PREC = Accurate
+   ENCUT = 850
+  IBRION = -1
+     NSW = 0
+    ISIF = 0
+  NELMIN = 2
+   EDIFF = 1.0e-08
+ VOSKOWN = 1
+  NWRITE = 1
+    NELM = 100
+    ALGO = Normal (blocked Davidson)
+   ISPIN = 1
+  INIWAV = 1
+  ISTART = 0
+ #NBANDS = 64
+  ICHARG = 11
+   LWAVE = .FALSE.
+  LCHARG = .FALSE.
+ ADDGRID = .FALSE.
+LHYPERFINE = .FALSE.
+   LREAL = .FALSE.
+#RWIGS = 1.54 0.82
+ 
+#PSTRESS = 1000
+
+# Default options for parallel
+    NPAR = 4
