@@ -1,26 +1,5 @@
 #!/usr/bin/env python
 
-'''
-vasp_main.py -i ./test/POSCAR          -w ./test/ -j pbs -p 200 relax -m encut=400 kspacing=0.3 mode=rv3
-vasp_main.py -i ./test/POSCAR          -w ./test/ -j pbs -p 200 relax -m encut=400 kspacing=0.3 mode=rvf
-vasp_main.py -i ./test/POSCAR          -w ./test/ -j pbs -p 200 phono -m supercell=[2,2,2] kpoints=[40,40,40] ismear=1 mode=disp   
-vasp_main.py -i ./test/POSCAR          -w ./test/ -j pbs -p 200 phono -m supercell=[2,2,2] kpoints=[40,40,40] ismear=1 mode=dfpt
-vasp_main.py -i ./test/0.0/POSCAR-init -w ./test/        -p 200 phono -m mode=dispprog supercell=[2,2,2]
-vasp_main.py -i ./test/0.0/POSCAR-init -w ./test/        -p 200 phono -m mode=dfptprog supercell=[2,2,2]
-vasp_main.py -i ./test                 -w ./opt   -j pbs -p 200 batchrelax -m encut=400 kspacing=0.3 mode=rv3
-vasp_main.py -i ./test                 -w ./opt   -j pbs -p 200 batchrelax -m encut=400 kspacing=0.3 mode=rvf
-
-
-vasp_main.py -i ./test/POSCAR -w ./test/ -j slurm relax -m encut=400 kspacing=0.3 mode=rv3 queue=lhy
-vasp_main.py -i ./test/POSCAR -w ./test/ -j slurm relax -m encut=400 kspacing=0.3 mode=rvf queue=xieyu
-vasp_main.py -i ./test/POSCAR -w ./test/ -j slurm phono -m supercell=[2,2,2] kpoints=[40,40,40] mode=disp  
-vasp_main.py -i ./test/POSCAR -w ./test/ -j slurm phono -m supercell=[2,2,2] kpoints=[40,40,40] mode=dfpt
-
--i 指定poscar-init的路径
--w 指定到压强那一级的路径
-vasp_main.py -i ./CONTCAR/210.0/POSCAR-init -w ./CONTCAR/210.0/ data -m mode=dispprog supercell=[2,2,2]
-'''
-
 import os
 import logging
 from pathlib import Path
