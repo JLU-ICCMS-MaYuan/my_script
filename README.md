@@ -197,7 +197,7 @@ vasp_main.py -i 输入文件路径 -w 工作目录 -p 压强 -j 运行方式
 
 ### 结构弛豫
 ```shell
-relax -m mode=rv1 core=1 queue=local 
+relax -m mode=rvf core=28 ediff=1e-8 ediffg=-0.001 ismear=1 kspacing=0.18 encut=800
 ```
 
 ### 清理数据, 保留:'POSCAR', 'PPOSCAR', 'POTCAR', 'OUTCAR', 'INCAR*', '*.sh', '*.vasp', '*.slurm'
@@ -207,18 +207,18 @@ vasp_main.py -w ./ clear -m mode=all
 
 ### 批量结构弛豫
 ```shell
-batchrelax -m mode=rv3 core=1 
+batchrelax -m mode=rvf core=28 ediff=1e-8 ediffg=-0.001 ismear=1 kspacing=0.18 encut=800
 ```
 
 
 ### 有限位移法计算声子谱
 ```shell
-phono -m supercell='2 2 2' kpoints='40 40 40' mode=disp  
+phono -m supercell='2 2 2' kpoints='18 18 18' mode=disp core=48 ismear=1 encut=800 ediff=1E-08 ediffg=-0.001 queue=lhy
 ```
 
 ### 密度泛函微扰DFPT法计算声子谱
 ```shell
-phono -m supercell='2 2 2' kpoints='40 40 40' mode=dfpt
+phono -m supercell='2 2 2' kpoints='18 18 18' mode=dfpt core=48 ismear=1 encut=800 ediff=1e-08 ediffg=-0.001 queue=lhy
 ```
 
 ### 有限位移法计算声子谱——数据处理band

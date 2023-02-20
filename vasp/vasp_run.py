@@ -164,7 +164,10 @@ class vasp_processdata(vasp_base):
         # read input para
         self._config = config(args).read_config()
         self.input_file_path = Path(self._config['input_file_path'])
-        self.work_path       = Path(self._config['work_path'])
+        if self._config['work_path']:
+            self.work_path = Path(self._config['work_path'])
+        else:
+            self.work_path = Path.cwd()
         self.mode            = self._config['mode']
         # the default value of spectrum and dos is False, 
         # that means the program will not create the phono-spectrum, total-dos, pdos
