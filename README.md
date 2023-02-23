@@ -230,3 +230,15 @@ data -m mode=dispprog supercell='2 2 2' spectrum=True
 ```shell
 data -m mode=dfptprog supercell='2 2 2' spectrum=True
 ```
+
+# <div align="center"> <span style="color:red"> mytoolkit篇 </span> </div>
+
+## 格式转化
+```shell
+tool_main.py -i 输入文件名称 -w ./ convert -m dst_format=输出文件名称
+```
+
+### POSCAR -> cif, dst_format现在支持的参数为: cif, vasp, struct(wien2k格式)
+```shell
+tool_main.py -i CaH6.vasp -w ./ convert -m dst_format=CaH6.cif
+```
