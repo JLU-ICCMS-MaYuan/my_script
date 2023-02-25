@@ -68,7 +68,8 @@ class specify_wyckoffs:
         sitesoccupiedrange: list[int],
         popsize: int,
         maxlimit: int,
-        distancematrix: list[list[float]]
+        distancematrix: list[list[float]],
+        hydrogen_content: float,
         ):
         
         self.spacegroup_number   = spacegroup_number
@@ -81,6 +82,7 @@ class specify_wyckoffs:
         self.popsize            = popsize
         self.maxlimit           = maxlimit
         self.distancematrix     = np.array(distancematrix)
+        self.hydrogen_content   = hydrogen_content
         self._group             = self.get_group(self.nameofatoms, self.optionalsites, self.sitesoccupiedrange)
         self.structs = []
 
@@ -293,5 +295,6 @@ class specify_wyckoffs:
             popsize=config_d["popsize"],
             maxlimit=config_d["maxlimit"],
             distancematrix=config_d["distancematrix"],
+            hydrogen_content=config_d['hydrogen_content'],
         )
         return self
