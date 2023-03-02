@@ -2,7 +2,7 @@ from pymatgen.core.structure import Structure
 
 from structuregenerator.clathrate import HydrideClathrate
 
-def checkclathrate(pmg_struct: Structure, hydrogen_content):
+def checkclathrate(pmg_struct: Structure):
     clathrate = HydrideClathrate(pmg_struct)
     if clathrate.remain_H_ratio > 0.44:
         return False
@@ -17,8 +17,6 @@ def checkclathrate(pmg_struct: Structure, hydrogen_content):
     if clathrate.h2h_1nearest[0][0] < 0.9:
         return False
     if clathrate.nonh2nonh_1nearest[0][0] < 2.2:
-        return False
-    if clathrate.hydrogen_content < hydrogen_content:
         return False
     
     return True

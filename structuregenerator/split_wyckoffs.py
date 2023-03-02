@@ -18,8 +18,8 @@ from itertools import *
 from collections import defaultdict
 from pathlib import Path
 import signal
-from tkinter.messagebox import NO
 from typing import *
+from fractions import Fraction
 
 import numpy as np
 from pyxtal import pyxtal
@@ -30,6 +30,7 @@ from ase.formula import Formula
 from ase import Atoms
 
 from structuregenerator.checkstructure import checkclathrate
+from structuregenerator.msg import Formula_Specified_Error
 
 logger = logging.getLogger(__name__)
 
@@ -95,25 +96,25 @@ class split_wyckoffs:
         self              ,
         work_path: Path,
         spacegroup_number: List[List[int]],
-        nameofatoms: list[str], 
-
+        nameofatoms: List[str], 
+        numberofatoms: List,
         nonH_upper_mult: int,
         nonH_floor_mult: int,
         H_upper_mult: int,
         H_floor_mult: int,
 
-        sitesoccupiedrange: list[List[int]],
+        sitesoccupiedrange: List[List[int]],
         popsize: int,
         maxlimit: int,
-        distancematrix: list[list[float]],
+        distancematrix: List[List[float]],
         clathrate_ratio : float,
 
         hydrogen_content : float
         ):
         
-        self.spacegroup_number  = spacegroup_number
-        self.nameofatoms        = nameofatoms
-
+        self.spacegroup_number = spacegroup_number
+        self.nameofatoms       = nameofatoms
+        self.numberofatoms     = numberofatoms
         self.nonH_upper_mult    = nonH_upper_mult
         self.nonH_floor_mult    = nonH_floor_mult
         self.H_upper_mult       = H_upper_mult
@@ -132,7 +133,16 @@ class split_wyckoffs:
 
         self.structs = []
         self.satisfied_spgs, self.wyckoffpositions = self.get_spgs(self.spacegroup_number, self.nonH_upper_mult)
-
+        self._group = self.get_group(
+            self.satisfied_spgs,
+            self.wyckoffpositions,
+            self.nameofatoms,
+            self.nonH_upper_mult,  
+            self.nonH_floor_mult, 
+            self.H_upper_mult,     
+            self.H_floor_mult,
+            self.sitesoccupiedrange,
+            )
 
     def get_spgs(self, spacegroup_number, nonH_upper_mult):
         '''
@@ -157,6 +167,7 @@ class split_wyckoffs:
                         wyckoffpositions[spgnum][wpstr] = False
             else:
                 unsatified_spgs.append(spgnum)
+
         print("The multiplicity of wyckoff position of these spacegroup numbers is not satisfy with the requirement that `nonH_upper_mult` < the lowest multiplicity of these spacegroups")           
         print(unsatified_spgs)
 
@@ -177,45 +188,41 @@ class split_wyckoffs:
         H_floor_mult: int,
         sitesoccupiedrange,
         ):
-            picked_spgnum = random.choice(satisfied_spgs)
-            wyckpos_picked = wyckoffpositions[picked_spgnum]
-            # print(picked_spgnum); input()
             if len(nameofatoms) == 2:
                 _group = self.binary_hydrides(
                     nameofatoms,
                     sitesoccupiedrange,
-                    wyckpos_picked,
+                    satisfied_spgs,
+                    wyckoffpositions,
                     nonH_upper_mult,  
                     nonH_floor_mult, 
                     H_upper_mult,     
                     H_floor_mult,
                 )
-                # from pprint import pprint
-                # pprint(_group); input()
-                return picked_spgnum, _group
-            # elif len(nameofatoms) == 3:
-            #     _group = self.ternary_hydrides(
-            #         nameofatoms,
-            #         sitesoccupiedrange,
-            #         wyckoffpositions,
-            #         nonH_upper_limit,
-            #         H_lower_limit,
-            #     )
-            #     return _group
-            # elif len(nameofatoms) == 4:
-                # self.quaternary_hydrides(
-                #     nameofatoms,
-                #     sitesoccupiedrange,
-                #     wyckoffpositions,
-                #     nonH_upper_limit,
-                #     H_lower_limit,
-                # )
+                return _group
+                # elif len(nameofatoms) == 3:
+                #     _group = self.ternary_hydrides(
+                #         nameofatoms,
+                #         sitesoccupiedrange,
+                #         wyckoffpositions,
+                #         nonH_upper_limit,
+                #         H_lower_limit,
+                #     )
+                #     return _group
+                # elif len(nameofatoms) == 4:
+                    # self.quaternary_hydrides(
+                    #     nameofatoms,
+                    #     sitesoccupiedrange,
+                    #     wyckoffpositions,
+                    #     nonH_upper_limit,
+                    #     H_lower_limit,
+                    # )
         
-
     def binary_hydrides(
         self,
         nameofatoms,
         sitesoccupiedrange,
+        satisfied_spgs,
         wyckoffpositions,
         nonH_upper_mult,  
         nonH_floor_mult, 
@@ -234,33 +241,53 @@ class split_wyckoffs:
         #   nonH1_range = [1, 3]
         # 那么:
         #   range(nonH1_range[0], nonH1_range[-1]+1) = [1, 2, 3]
-        for nonH1_num in range(nonH1_range[0], nonH1_range[-1]+1):
-            # 考虑非氢元素占据 1, 2, 3个wp占位时，所有可能的排列组合情况
-            for nonH1_wps, nonH1_rest in self.get_NonHwps(
-                list(wyckoffpositions.keys()), 
-                wyckoffpositions,
-                nonH1_num,
-                nonH_upper_mult,
-                nonH_floor_mult,
-                ):
-
-                for H_num in range(H_range[0], H_range[-1]+1):
-                    for H_wps, H_rest in self.get_Hwps(
-                        list(wyckoffpositions.keys()), 
-                        nonH1_rest, 
-                        H_num,
-                        H_upper_mult,
-                        H_floor_mult,
-                        ):
-                    # for H_wps, H_rest in self.get_Hwps(nonH1_rest, H_num):
-                        wyckps  = [nonH1_wps, H_wps]
-                        nelems  = self.get_natoms([nonH1_wps, H_wps])
-                        formula = ''.join(map(str, chain.from_iterable(zip(nameofatoms, nelems))))
-                        formula = Formula(formula).format("metal") # 这里的分子式是没有经过约化的。是多少就是多少，8:8:80 不会变成1:1:10
-                        _group[formula].append([nelems, wyckps])
-        
+        for spg in satisfied_spgs:
+            wyck_pos = wyckoffpositions[spg]
+            for nonH1_num in range(nonH1_range[0], nonH1_range[-1]+1):
+                # 考虑非氢元素占据 1, 2, 3个wp占位时，所有可能的排列组合情况
+                for nonH1_wps, nonH1_rest in self.get_NonHwps(
+                    list(wyck_pos.keys()), 
+                    wyck_pos,
+                    nonH1_num,
+                    nonH_upper_mult,
+                    nonH_floor_mult,
+                    ):
+                    for H_num in range(H_range[0], H_range[-1]+1):
+                        for H_wps, H_rest in self.get_Hwps(
+                            list(wyck_pos.keys()), 
+                            nonH1_rest, 
+                            H_num,
+                            H_upper_mult,
+                            H_floor_mult,
+                            ):
+                            wyckps  = [nonH1_wps, H_wps]
+                            nelems  = self.get_natoms([nonH1_wps, H_wps])
+                            # 这里all()函数可以接受一个可迭代对象例如列表元组集合，也可以接受一个生成器表达式，例如左面写的那种
+                            # 判断这个可迭代对象中所有元素是否都为 True。如果所有元素都为 True，则返回 True，否则返回 False。   all(i is not None for i in self.numberofatoms)
+                            if all(self.numberofatoms) == True:
+                                if Fraction(self.numberofatoms[0], self.numberofatoms[1]) == Fraction(nelems[0], nelems[1]):
+                                    formula = ''.join(map(str, chain.from_iterable(zip(nameofatoms, nelems))))
+                                    formula = Formula(formula).format("metal") # 这里的分子式是没有经过约化的。是多少就是多少，8:8:80 不会变成1:1:10
+                                    # 计算氢含量
+                                    current_hydrogen_content = nelems[-1] / sum(nelems)
+                                    if current_hydrogen_content >= self.hydrogen_content:
+                                        _group[formula].append([spg, nelems, wyckps])
+                                else:
+                                    continue
+                            else:
+                                formula = ''.join(map(str, chain.from_iterable(zip(nameofatoms, nelems))))
+                                formula = Formula(formula).format("metal") # 这里的分子式是没有经过约化的。是多少就是多少，8:8:80 不会变成1:1:10
+                                # 计算氢含量
+                                current_hydrogen_content = nelems[-1] / sum(nelems)
+                                if current_hydrogen_content >= self.hydrogen_content:
+                                    _group[formula].append([spg, nelems, wyckps])
         _group = dict(_group)
-        return _group
+        if _group:
+            # print(_group); input("_group")
+            return _group
+        else:  # 有可能指定的配比在当前空间群和wyckoff组合下并不存在，所以需要提示错误
+            msg = f"The specified chemical formula {self.nameofatoms} doesn't exist"
+            Formula_Specified_Error(msg)
 
     def ternary_hydrides(
         self,
@@ -363,16 +390,10 @@ class split_wyckoffs:
         for comb_list in combinations_with_replacement(allwps, num):
             # print("comb_list", comb_list); input()
             for item in set(comb_list):
-                # print("comb_list.count(item)", comb_list.count(item))
                 if (wps[item] == False) and (comb_list.count(item) > 1): # False 代表该wps占位只能占据一次
                     # 检查：在将wps排列组合的列表里面, 检查占据情况为False并且存在1次以上
                     # 那么这个wps排列组合的列表就是不正确的
                     break
-                # print("多重度",int(re.search(r'\d+', item).group()))
-                # print(int(re.search(r'\d+', item).group()) < nonH_floor_mult)
-                # print(int(re.search(r'\d+', item).group()) > nonH_upper_mult)
-                # print("final logic bool", (int(re.search(r'\d+', item).group()) < nonH_floor_mult) and (int(re.search(r'\d+', item).group()) > nonH_upper_mult))
-                # input()
                 if (int(re.search(r'\d+', item).group()) < nonH_floor_mult) or (int(re.search(r'\d+', item).group()) > nonH_upper_mult):
                     # 检查：在将wps排列组合的列表里面, 包含过高 或者or 过低多重度的wps
                     # 那么这个wps排列组合的列表就是不符合要求的
@@ -387,9 +408,6 @@ class split_wyckoffs:
                 # 这样全部的wps减去被金属使用过的wps
                 restwps = set(allwps) - set(comb_used)
                 rest_dict = {key : value for key, value in wps.items() if key in restwps}
-                # print("comb_list in else", comb_list)
-                # print("rest_dict in else", rest_dict)
-                # input("yield")
                 yield comb_list, rest_dict
 
     def get_Hwps(self, original_wps:List, wps:dict, num:int, H_upper_mult:int, H_floor_mult:int):
@@ -439,27 +457,13 @@ class split_wyckoffs:
         Function:
             create a structure by randomly choosing a formula from `self._group` dictionary !!!
         '''
-        self.picked_spgnum, self._group = self.get_group(
-            self.satisfied_spgs,
-            self.wyckoffpositions,
-            self.nameofatoms,
-            self.nonH_upper_mult,  
-            self.nonH_floor_mult, 
-            self.H_upper_mult,     
-            self.H_floor_mult,
-            self.sitesoccupiedrange,
-            )
-        picked_spgnum = self.picked_spgnum
+        formula = random.choice(list(self._group.keys()))
+        spg_amounts_sites = random.choice(self._group[formula])
+        spg     = spg_amounts_sites[0]
+        amounts = spg_amounts_sites[1]
+        wyck    = spg_amounts_sites[2]
         nameofatoms = self.nameofatoms
-        # from pprint import pprint
-        # pprint(self._group)
-        # input("self._group")
-        fomula = random.choice(list(self._group.keys()))
-        species_amounts_sites = random.choice(self._group[fomula])
-
-        amounts = species_amounts_sites[0]
-        wyck = species_amounts_sites[1]
-
+        
         if sum(amounts) > float(self.maxlimit):
             return None, None
 
@@ -470,10 +474,10 @@ class split_wyckoffs:
 
         struc = pyxtal()
         # try:
-        logger.info(f"try {picked_spgnum}-spacegroup {amounts} {wyck}")
+        logger.info(f"try {spg}-spacegroup {amounts} {wyck}")
         struc.from_random(
             3,
-            picked_spgnum,
+            spg,
             nameofatoms,
             amounts,
             factor=2.0,
@@ -482,7 +486,7 @@ class split_wyckoffs:
         struct_pmg = struc.to_pymatgen()
 
         if self.clathrate_ratio > np.random.uniform():
-            if checkclathrate(struct_pmg, self.hydrogen_content):
+            if checkclathrate(struct_pmg):
                 return (struct_pmg, "clathrate")
             else:
                 return None, None
@@ -545,7 +549,8 @@ class split_wyckoffs:
         self = cls(
             work_path=config_d["work_path"],
             spacegroup_number=config_d["spacegroup_number"],
-            nameofatoms=config_d["nameofatoms"], 
+            nameofatoms=config_d["nameofatoms"],
+            numberofatoms=config_d["numberofatoms"],
             nonH_upper_mult=config_d["nonh_upper_mult"], 
             nonH_floor_mult=config_d["nonh_floor_mult"],
             H_upper_mult=config_d["h_upper_mult"],
@@ -564,21 +569,22 @@ if __name__ == "__main__":
 
     spl_wps = split_wyckoffs(
         work_path='.',
-        spacegroup_number = [[1,10], [15,20]],
+        spacegroup_number = [[2, 230]],
         nameofatoms = ["Ca", "H"],
+        numberofatoms = [1, 6],
         nonH_upper_mult = 4,
         nonH_floor_mult = 1,
         H_upper_mult = 80,
         H_floor_mult = 2,
         sitesoccupiedrange=[[1,2],
-                            [1,2],
-                            [1,3],],
+                            [1,2]],
         popsize=30,
         maxlimit=150,
         distancematrix=[[2.014, 1.908, 1.590],
                         [1.908, 1.802, 1.483],
                         [1.590, 1.483, 1.116],],
         clathrate_ratio=0.0,
+        hydrogen_content=0.75
     )
     struct, struct_type = spl_wps._gen_randomly()
     print(struct, struct_type)

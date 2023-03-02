@@ -33,7 +33,7 @@ class generator_methods:
                     _struct_ase = AseAtomsAdaptor.get_atoms(stru)
                     struct_ase = sort_atoms(_struct_ase, spe_wps.nameofatoms)
                     spe_wps.structs.append(struct_ase)
-                    logger.info(f"new you have successfully create No.{len(spl_wps.structs)}-{str(_struct_ase.symbols)} !")
+                    logger.info(f"new you have successfully create No.{len(spl_wps.structs)+1}-{str(_struct_ase.symbols)} !")
             # write all the structures to the `work_path` by the format `.vasp` 
             if len(spe_wps.structs) == spe_wps.popsize:
                 for i, struct in enumerate(spe_wps.structs):
