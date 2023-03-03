@@ -188,35 +188,46 @@ class split_wyckoffs:
         H_floor_mult: int,
         sitesoccupiedrange,
         ):
-            if len(nameofatoms) == 2:
-                _group = self.binary_hydrides(
-                    nameofatoms,
-                    sitesoccupiedrange,
-                    satisfied_spgs,
-                    wyckoffpositions,
-                    nonH_upper_mult,  
-                    nonH_floor_mult, 
-                    H_upper_mult,     
-                    H_floor_mult,
-                )
-                return _group
-                # elif len(nameofatoms) == 3:
-                #     _group = self.ternary_hydrides(
-                #         nameofatoms,
-                #         sitesoccupiedrange,
-                #         wyckoffpositions,
-                #         nonH_upper_limit,
-                #         H_lower_limit,
-                #     )
-                #     return _group
-                # elif len(nameofatoms) == 4:
-                    # self.quaternary_hydrides(
-                    #     nameofatoms,
-                    #     sitesoccupiedrange,
-                    #     wyckoffpositions,
-                    #     nonH_upper_limit,
-                    #     H_lower_limit,
-                    # )
+            # check whether the file 'composition.json' exist or not
+            import json
+            composition_json = self.work_path.joinpath("composition.json")
+            read_flag = input("Test the existance of `composition.json`, do you want to read it and not generate it by program(y/Y/yes/Yes)? If you input another words, the program will generate composition.json\n")
+            if composition_json.exists() and (read_flag == 'y' or read_flag == 'yes' or read_flag == 'Y' or read_flag == 'Yes'):
+                with open(composition_json, 'r') as f:
+                    _group = json.load(f)
+                    return _group
+            else:
+                if len(nameofatoms) == 2:
+                    _group = self.binary_hydrides(
+                        nameofatoms,
+                        sitesoccupiedrange,
+                        satisfied_spgs,
+                        wyckoffpositions,
+                        nonH_upper_mult,  
+                        nonH_floor_mult, 
+                        H_upper_mult,     
+                        H_floor_mult,
+                    )
+                    with open(composition_json, 'w') as f:
+                        json.dump(_group, f)
+                    return _group
+                    # elif len(nameofatoms) == 3:
+                    #     _group = self.ternary_hydrides(
+                    #         nameofatoms,
+                    #         sitesoccupiedrange,
+                    #         wyckoffpositions,
+                    #         nonH_upper_limit,
+                    #         H_lower_limit,
+                    #     )
+                    #     return _group
+                    # elif len(nameofatoms) == 4:
+                        # self.quaternary_hydrides(
+                        #     nameofatoms,
+                        #     sitesoccupiedrange,
+                        #     wyckoffpositions,
+                        #     nonH_upper_limit,
+                        #     H_lower_limit,
+                        # )
         
     def binary_hydrides(
         self,
@@ -282,8 +293,8 @@ class split_wyckoffs:
                                 if current_hydrogen_content >= self.hydrogen_content:
                                     _group[formula].append([spg, nelems, wyckps])
         _group = dict(_group)
+
         if _group:
-            # print(_group); input("_group")
             return _group
         else:  # 有可能指定的配比在当前空间群和wyckoff组合下并不存在，所以需要提示错误
             msg = f"The specified chemical formula {self.nameofatoms} doesn't exist"
@@ -480,7 +491,7 @@ class split_wyckoffs:
             spg,
             nameofatoms,
             amounts,
-            factor=2.0,
+            factor=1.5,
             sites=wyck,
         )
         struct_pmg = struc.to_pymatgen()

@@ -4,8 +4,8 @@ from structuregenerator.clathrate import HydrideClathrate
 
 def checkclathrate(pmg_struct: Structure):
     clathrate = HydrideClathrate(pmg_struct)
-    if clathrate.remain_H_ratio > 0.44:
-        return False
+    # if clathrate.remain_H_ratio > 0.44:
+    #     return False
     # if clathrate.fraction_of_hydrogen_volume < 0.3:
     #     return False
     # if clathrate.shr_num_avg < 1.6:
