@@ -484,28 +484,28 @@ class split_wyckoffs:
         #     tm.set_tol(ele_r1[0], ele_r2[0], ele_r1[1]+ele_r2[1])
 
         struc = pyxtal()
-        # try:
-        logger.info(f"try {spg}-spacegroup {amounts} {wyck}")
-        struc.from_random(
-            3,
-            spg,
-            nameofatoms,
-            amounts,
-            factor=1.5,
-            sites=wyck,
-        )
-        struct_pmg = struc.to_pymatgen()
+        try:
+            logger.info(f"try {spg}-spacegroup {amounts} {wyck}")
+            struc.from_random(
+                3,
+                spg,
+                nameofatoms,
+                amounts,
+                factor=1.5,
+                sites=wyck,
+            )
+            struct_pmg = struc.to_pymatgen()
 
-        if self.clathrate_ratio > np.random.uniform():
-            if checkclathrate(struct_pmg):
-                return (struct_pmg, "clathrate")
+            if self.clathrate_ratio > np.random.uniform():
+                if checkclathrate(struct_pmg):
+                    return (struct_pmg, "clathrate")
+                else:
+                    return None, None
             else:
-                return None, None
-        else:
-            return (struct_pmg, "ramdom structure")
-        # except:
-            # logger.info(f"Generating failed !!!")
-            # return None, None
+                return (struct_pmg, "ramdom structure")
+        except:
+            logger.info(f"Generating failed !!!")
+            return None, None
 
     # @set_timeout(120, after_timeout)
     def _gen_specify_symbols(self, input_atoms: Atoms):
