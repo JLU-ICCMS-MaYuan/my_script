@@ -57,6 +57,95 @@ def set_timeout(timeout, callback):
 def after_timeout(): 
     print("Time out!")
 
+def compare(x, y):
+    """
+    Compare whether two arrays are identical after dividing by their greatest common divisor
+    """
+    _x = np.array(x)
+    _y = np.array(y)
+
+    # 求_x的最大公约数
+    xf = 0
+    for i, xi in enumerate(_x):
+        xf = np.gcd(xf, xi)
+    if xf != 0:
+        _x = np.array(x) / xf
+        
+    # 求_y的最大公约数
+    yf = 0
+    for i, yi in enumerate(_y):
+        yf = np.gcd(yf, yi)
+    if yf != 0:
+        _y = np.array(y) / yf
+
+    if np.allclose(_x, _y):
+        return True
+    else:
+        return False
+
+def append_composition(group, nameofatoms, wyckoffpositons, spacegroup_number, nelem1, nelem2, hydrogen_content_upper_limit):
+    '''
+    Input Paramaters:
+        group: a dictory, its key is formula, its value is a list, which is 
+            group[formula] = [spacegroup_number, nelem2, wyckoffpositons]
+    
+        nameofatoms: the name of element
+            nameofatoms = [La, Be, H]
+
+        wyckoffpositons:
+            wyckoffpositons = [[2a], [2b, 2c], [6d]]
+
+        spacegroup_number: int
+            spacegroup_number = 9
+    
+        nelem1: User-defined chemical composition typically includes three scenarios
+            nelem1 = [1,2,3]
+            nelem1 = [1,None,3]
+            nelem1 = [None, None, None]
+
+        nelem2: The program arranges Wyckoff positions based on a certain space group's permutation and combination,
+                and then output a number of atoms for each element. Usually, it's not the simplest format.
+            nelem2 = [2,4,6]
+            nelem2 = [7,9,21]  Although the second number is not proportional to the other numbers, 
+                               the first number and the third number satisfy a ratio of 1:3
+            nelem2 = [2,4,9]
+
+        hydrogen_content_upper_limit: the upper limit of hydrogen content
+            hydrogen_content_upper_limit = 0.7
+        
+    '''
+    append_flag = False
+    if all(nelem1) == True:
+        if compare(nelem1, nelem2):
+            formula = ''.join(map(str, chain.from_iterable(zip(nameofatoms, nelem2))))
+            formula = Formula(formula).format("metal") # 这里的分子式是没有经过约化的。是多少就是多少，8:8:80 不会变成1:1:10
+            current_hydrogen_content = nelem2[-1] / sum(nelem2)
+            if current_hydrogen_content >= hydrogen_content_upper_limit:
+                group[formula].append([spacegroup_number, nelem2, wyckoffpositons])
+                append_flag = True
+    elif any(nelem1) == True:
+        ids_of_num = [id for id, num in enumerate(nelem1) if num is not None ]
+        numberofato_exceptNone = [num for id, num in enumerate(nelem1) if id in ids_of_num]
+        nelems_exceptNone = [num for id, num in enumerate(nelem2) if id in ids_of_num]
+        if compare(numberofato_exceptNone, nelems_exceptNone):
+            formula = ''.join(map(str, chain.from_iterable(zip(nameofatoms, nelem2))))
+            formula = Formula(formula).format("metal") # 这里的分子式是没有经过约化的。是多少就是多少，8:8:80 不会变成1:1:10
+            current_hydrogen_content = nelem2[-1] / sum(nelem2)
+            if current_hydrogen_content >= hydrogen_content_upper_limit:
+                group[formula].append([spacegroup_number, nelem2, wyckoffpositons])
+                append_flag = True
+    else:
+        formula = ''.join(map(str, chain.from_iterable(zip(nameofatoms, nelem2))))
+        formula = Formula(formula).format("metal") # 这里的分子式是没有经过约化的。是多少就是多少，8:8:80 不会变成1:1:10
+        current_hydrogen_content = nelem2[-1] / sum(nelem2)
+        if current_hydrogen_content >= hydrogen_content_upper_limit:
+            group[formula].append([spacegroup_number, nelem2, wyckoffpositons])
+            append_flag = True
+
+    if append_flag:
+        return 1
+    else:
+        return 0
 
 class split_wyckoffs:
     '''
@@ -191,8 +280,7 @@ class split_wyckoffs:
             # check whether the file 'composition.json' exist or not
             import json
             composition_json = self.work_path.joinpath("composition.json")
-            read_flag = input("Test the existance of `composition.json`, do you want to read it and not generate it by program(y/Y/yes/Yes)? If you input another words, the program will generate composition.json\n")
-            if composition_json.exists() and (read_flag == 'y' or read_flag == 'yes' or read_flag == 'Y' or read_flag == 'Yes'):
+            if composition_json.exists():
                 with open(composition_json, 'r') as f:
                     _group = json.load(f)
                     return _group
@@ -211,15 +299,20 @@ class split_wyckoffs:
                     with open(composition_json, 'w') as f:
                         json.dump(_group, f)
                     return _group
-                    # elif len(nameofatoms) == 3:
-                    #     _group = self.ternary_hydrides(
-                    #         nameofatoms,
-                    #         sitesoccupiedrange,
-                    #         wyckoffpositions,
-                    #         nonH_upper_limit,
-                    #         H_lower_limit,
-                    #     )
-                    #     return _group
+                if len(nameofatoms) == 3:
+                    _group = self.ternary_hydrides(
+                        nameofatoms,
+                        sitesoccupiedrange,
+                        satisfied_spgs,
+                        wyckoffpositions,
+                        nonH_upper_mult,  
+                        nonH_floor_mult, 
+                        H_upper_mult,     
+                        H_floor_mult,
+                    )
+                    with open(composition_json, 'w') as f:
+                        json.dump(_group, f)
+                    return _group
                     # elif len(nameofatoms) == 4:
                         # self.quaternary_hydrides(
                         #     nameofatoms,
@@ -252,8 +345,10 @@ class split_wyckoffs:
         #   nonH1_range = [1, 3]
         # 那么:
         #   range(nonH1_range[0], nonH1_range[-1]+1) = [1, 2, 3]
+        all_posibility = 0
         for spg in satisfied_spgs:
             wyck_pos = wyckoffpositions[spg]
+            special_spg_posibility = 0
             for nonH1_num in range(nonH1_range[0], nonH1_range[-1]+1):
                 # 考虑非氢元素占据 1, 2, 3个wp占位时，所有可能的排列组合情况
                 for nonH1_wps, nonH1_rest in self.get_NonHwps(
@@ -273,25 +368,12 @@ class split_wyckoffs:
                             ):
                             wyckps  = [nonH1_wps, H_wps]
                             nelems  = self.get_natoms([nonH1_wps, H_wps])
-                            # 这里all()函数可以接受一个可迭代对象例如列表元组集合，也可以接受一个生成器表达式，例如左面写的那种
-                            # 判断这个可迭代对象中所有元素是否都为 True。如果所有元素都为 True，则返回 True，否则返回 False。   all(i is not None for i in self.numberofatoms)
-                            if all(self.numberofatoms) == True:
-                                if Fraction(self.numberofatoms[0], self.numberofatoms[1]) == Fraction(nelems[0], nelems[1]):
-                                    formula = ''.join(map(str, chain.from_iterable(zip(nameofatoms, nelems))))
-                                    formula = Formula(formula).format("metal") # 这里的分子式是没有经过约化的。是多少就是多少，8:8:80 不会变成1:1:10
-                                    # 计算氢含量
-                                    current_hydrogen_content = nelems[-1] / sum(nelems)
-                                    if current_hydrogen_content >= self.hydrogen_content:
-                                        _group[formula].append([spg, nelems, wyckps])
-                                else:
-                                    continue
-                            else:
-                                formula = ''.join(map(str, chain.from_iterable(zip(nameofatoms, nelems))))
-                                formula = Formula(formula).format("metal") # 这里的分子式是没有经过约化的。是多少就是多少，8:8:80 不会变成1:1:10
-                                # 计算氢含量
-                                current_hydrogen_content = nelems[-1] / sum(nelems)
-                                if current_hydrogen_content >= self.hydrogen_content:
-                                    _group[formula].append([spg, nelems, wyckps])
+                            n       = append_composition(_group, self.nameofatoms, wyckps, spg, self.numberofatoms, nelems, self.hydrogen_content)
+                            special_spg_posibility = n + special_spg_posibility
+            all_posibility = all_posibility + special_spg_posibility
+            print(f"when considering the spg-{spg}, {special_spg_posibility} scenarios just are given!")
+        print(f"when considering the all spg , {all_posibility} scenarios just are given!")
+
         _group = dict(_group)
 
         if _group:
@@ -304,9 +386,12 @@ class split_wyckoffs:
         self,
         nameofatoms,
         sitesoccupiedrange,
+        satisfied_spgs,
         wyckoffpositions,
-        nonH_upper_limit,
-        H_lower_limit,
+        nonH_upper_mult,
+        nonH_floor_mult,
+        H_upper_mult,
+        H_floor_mult,
         ):
         # 考虑该非氢元素可能占据的wps的个数的范围从 `nonH_list1[0]~nonH_list1[-1]+1`
         # 例如： 
@@ -321,65 +406,93 @@ class split_wyckoffs:
         
         nonH1_range, nonH2_range = sitesoccupiedrange[:-1]
         H_range = sitesoccupiedrange[-1]
-        for nonH1_num in range(nonH1_range[0], nonH1_range[-1]+1):
-            for nonH1_wps, nonH1_rest in self.get_NonHwps(list(wyckoffpositions.keys()) ,wyckoffpositions, nonH1_num, nonH_upper_limit):
-
-                for nonH2_num in range(nonH2_range[0], nonH2_range[-1]+1):
-                    for nonH2_wps, nonH2_rest in self.get_NonHwps(list(wyckoffpositions.keys()), nonH1_rest, nonH2_num, nonH_upper_limit):
-
-                        for H_num in range(H_range[0], H_range[-1]+1):
-                            for H_wps, H_rest in self.get_Hwps(list(wyckoffpositions.keys()), nonH2_rest, H_num, H_lower_limit):
-                            # for H_wps, H_rest in self.get_Hwps(nonH2_rest, H_num):
-                                wyckps  = [nonH1_wps, nonH2_wps, H_wps]
-                                nelems  = self.get_natoms([nonH1_wps, nonH2_wps, H_wps])
-                                formula = ''.join(map(str, chain.from_iterable(zip(nameofatoms, nelems))))
-                                formula = Formula(formula).format("metal") # 这里的分子式是没有经过约化的。是多少就是多少，8:8:80 不会变成1:1:10
-                                _group[formula].append([nelems, wyckps])
-        
+        all_posibility = 0
+        for spg in satisfied_spgs:
+            wyck_pos = wyckoffpositions[spg]
+            special_spg_posibility = 0
+            for nonH1_num in range(nonH1_range[0], nonH1_range[-1]+1):
+                for nonH1_wps, nonH1_rest in self.get_NonHwps(
+                    list(wyck_pos.keys()), 
+                    wyck_pos,
+                    nonH1_num,
+                    nonH_upper_mult,
+                    nonH_floor_mult,
+                    ):
+                    for nonH2_num in range(nonH2_range[0], nonH2_range[-1]+1):
+                        for nonH2_wps, nonH2_rest in self.get_NonHwps(
+                            list(wyck_pos.keys()), 
+                            wyck_pos,
+                            nonH1_num,
+                            nonH_upper_mult,
+                            nonH_floor_mult,
+                            ):
+                            for H_num in range(H_range[0], H_range[-1]+1):
+                                for H_wps, H_rest in self.get_Hwps(
+                                    list(wyck_pos.keys()), 
+                                    nonH1_rest, 
+                                    H_num,
+                                    H_upper_mult,
+                                    H_floor_mult,
+                                    ):
+                                    wyckps  = [nonH1_wps, nonH2_wps, H_wps]
+                                    nelems  = self.get_natoms([nonH1_wps, nonH2_wps, H_wps])
+                                    n       = append_composition(_group, self.nameofatoms, wyckps, spg, self.numberofatoms, nelems, self.hydrogen_content)
+                                    special_spg_posibility = special_spg_posibility + n
+            all_posibility = all_posibility + special_spg_posibility
+            print(f"when considering the spg-{spg}, {special_spg_posibility} scenarios just are given!")
+        print(f"when considering the all spg , {all_posibility} scenarios just are given!")
+                               
         _group = dict(_group)
-        return _group
+        if _group:
+            return _group
+        else:  # 有可能指定的配比在当前空间群和wyckoff组合下并不存在，所以需要提示错误
+            msg = f"The specified chemical formula {self.nameofatoms} doesn't exist"
+            Formula_Specified_Error(msg)
 
-    def quaternary_hydrides(
-        self,
-        nameofatoms,
-        sitesoccupiedrange,
-        wyckoffpositions,
-        nonH_upper_limit,
-        H_lower_limit,
-        ):
-        # 考虑该非氢元素可能占据的wps的个数的范围从 `nonH_list1[0]~nonH_list1[-1]+1`
-        # 例如： 
-        #   nonH_list1 = [1, 3]
-        # 那么:
-        #   range(nonH_list1[0], nonH_list1[-1]+1) = [1, 2, 3]
-        # 判断 H元素 是否为最后一个元素
-        _group = defaultdict(list)
+    # def quaternary_hydrides(
+    #     self,
+    #     nameofatoms,
+    #     sitesoccupiedrange,
+    #     satisfied_spgs,
+    #     wyckoffpositions,
+    #     nonH_upper_mult,
+    #     nonH_floor_mult,
+    #     H_upper_mult,
+    #     H_floor_mult,
+    #     ):
+    #     # 考虑该非氢元素可能占据的wps的个数的范围从 `nonH_list1[0]~nonH_list1[-1]+1`
+    #     # 例如： 
+    #     #   nonH_list1 = [1, 3]
+    #     # 那么:
+    #     #   range(nonH_list1[0], nonH_list1[-1]+1) = [1, 2, 3]
+    #     # 判断 H元素 是否为最后一个元素
+    #     _group = defaultdict(list)
 
-        if not nameofatoms[-1] == 'H':
-            raise ValueError("you have to set nameofatoms in order as `H element is the last one` !!! Just like nameofatoms=['Ar', 'Ne', 'H']")
+    #     if not nameofatoms[-1] == 'H':
+    #         raise ValueError("you have to set nameofatoms in order as `H element is the last one` !!! Just like nameofatoms=['Ar', 'Ne', 'H']")
         
-        nonH1_range, nonH2_range, nonH3_range = sitesoccupiedrange[:-1]
-        H_range = sitesoccupiedrange[-1]
-        for nonH1_num in range(nonH1_range[0], nonH1_range[-1]+1):
-            for nonH1_wps, nonH1_rest in self.get_NonHwps(list(wyckoffpositions.keys()) ,wyckoffpositions, nonH1_num, nonH_upper_limit):
+    #     nonH1_range, nonH2_range, nonH3_range = sitesoccupiedrange[:-1]
+    #     H_range = sitesoccupiedrange[-1]
+    #         for nonH1_num in range(nonH1_range[0], nonH1_range[-1]+1):
+    #             for nonH1_wps, nonH1_rest in self.get_NonHwps(list(wyckoffpositions.keys()) ,wyckoffpositions, nonH1_num, nonH_upper_limit):
 
-                for nonH2_num in range(nonH2_range[0], nonH2_range[-1]+1):
-                    for nonH2_wps, nonH2_rest in self.get_NonHwps(list(wyckoffpositions.keys()), nonH1_rest, nonH2_num, nonH_upper_limit):
+    #                 for nonH2_num in range(nonH2_range[0], nonH2_range[-1]+1):
+    #                     for nonH2_wps, nonH2_rest in self.get_NonHwps(list(wyckoffpositions.keys()), nonH1_rest, nonH2_num, nonH_upper_limit):
 
-                        for nonH3_num in range(nonH3_range[0], nonH3_range[-1]+1):
-                            for nonH3_wps, nonH3_rest in self.get_NonHwps(list(wyckoffpositions.keys()), nonH2_rest, nonH3_num, nonH_upper_limit):
+    #                         for nonH3_num in range(nonH3_range[0], nonH3_range[-1]+1):
+    #                             for nonH3_wps, nonH3_rest in self.get_NonHwps(list(wyckoffpositions.keys()), nonH2_rest, nonH3_num, nonH_upper_limit):
 
-                                for H_num in range(H_range[0], H_range[-1]+1):
-                                    for H_wps, H_rest in self.get_Hwps(list(wyckoffpositions.keys()), nonH3_rest, H_num, H_lower_limit):
-                                    # for H_wps, H_rest in self.get_Hwps(nonH3_rest, H_num):
-                                        wyckps  = [nonH1_wps, nonH2_wps, nonH3_wps, H_wps]
-                                        nelems  = self.get_natoms([nonH1_wps, nonH2_wps, nonH3_wps, H_wps])
-                                        formula = ''.join(map(str, chain.from_iterable(zip(nameofatoms, nelems))))
-                                        formula = Formula(formula).format("metal") # 这里的分子式是没有经过约化的。是多少就是多少，8:8:80 不会变成1:1:10
-                                        _group[formula].append([nelems, wyckps])
+    #                                 for H_num in range(H_range[0], H_range[-1]+1):
+    #                                     for H_wps, H_rest in self.get_Hwps(list(wyckoffpositions.keys()), nonH3_rest, H_num, H_lower_limit):
+    #                                     # for H_wps, H_rest in self.get_Hwps(nonH3_rest, H_num):
+    #                                         wyckps  = [nonH1_wps, nonH2_wps, nonH3_wps, H_wps]
+    #                                         nelems  = self.get_natoms([nonH1_wps, nonH2_wps, nonH3_wps, H_wps])
+    #                                         formula = ''.join(map(str, chain.from_iterable(zip(nameofatoms, nelems))))
+    #                                         formula = Formula(formula).format("metal") # 这里的分子式是没有经过约化的。是多少就是多少，8:8:80 不会变成1:1:10
+    #                                         _group[formula].append([nelems, wyckps])
         
-        _group = dict(_group)
-        return _group
+    #     _group = dict(_group)
+    #     return _group
 
     def get_NonHwps(self, original_wps:List, wps:dict, num:int, nonH_upper_mult:int, nonH_floor_mult:int):
         """

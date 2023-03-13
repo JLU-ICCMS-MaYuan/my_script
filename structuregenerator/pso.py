@@ -193,7 +193,7 @@ class pso(UpdateBestMixin):
         step_file = Path(work_path).joinpath("step")
         if not step_file.exists():
             # raise FileExistsError("step file doesn't exist")
-            logger.info("There is no `step` file. So the program will create by itself and write `2` into it!")
+            print("There is no `step` file. So the program will create by itself and write `2` into it!")
             with open(step_file, "w") as f:
                 f.write("2")
         
@@ -286,7 +286,7 @@ class pso(UpdateBestMixin):
                     atoms_outcar.info['column']   = int(col)
                     self.set_fp(atoms_outcar)
                 except Exception as e:
-                    logger.info(f"No.{col} structures's OUTCAR has problems, its POSCAR will be tried to substitue it! ")
+                    print(f"No.{col} structures's OUTCAR has problems, its POSCAR will be tried to substitue it! ")
                     try:
                         data = VASPPoscarFormat().from_poscar(file_name=poscar)
                         atoms_outcar = dict2Atoms(data, self.nameofatoms)
@@ -298,7 +298,7 @@ class pso(UpdateBestMixin):
                         raise ValueError(f"No.{col} substituted POSCAR still has problems !!!")
             # if the OUTCAR doesn't exist, then the program will use the corresponding POSCAR instead of its OUTCAR just like beforce.
             else:
-                logger.info(f"No.{col+1} structures's OUTCAR doesn't exist, its POSCAR will be tried to substitue it! ")
+                print(f"No.{col+1} structures's OUTCAR doesn't exist, its POSCAR will be tried to substitue it! ")
                 try:
                     data = VASPPoscarFormat().from_poscar(file_name=poscar)
                     atoms_outcar = dict2Atoms(data, self.nameofatoms)
@@ -309,7 +309,7 @@ class pso(UpdateBestMixin):
                 except Exception as e:
                     raise ValueError(f"No.{col} substituted POSCAR still has problems !!!")
 
-            logger.info(f"finish read No.{col + 1 } structure")
+            print(f"finish read No.{col + 1 } structure")
 
             if isinstance(atoms_poscar, Atoms):
                 self.data[col][0] = atoms_poscar
@@ -340,7 +340,7 @@ class pso(UpdateBestMixin):
         '''
         # check the existance of the global minima file of laste step 
         if Path(last_step_gbest).exists():
-            logger.info(f"The program will read the {self.last_step}_step gbest and generate the {self.current_step}_step gbest")
+            print(f"The program will read the {self.last_step}_step gbest and generate the {self.current_step}_step gbest")
             old_gbest_list = read(last_step_gbest, ':', 'extxyz')
             for col, _atoms in enumerate(old_gbest_list):
                 _atoms = sort_atoms(atoms=_atoms, elems=self.nameofatoms)
@@ -352,7 +352,7 @@ class pso(UpdateBestMixin):
                     self.lbest, # `self.lbest` will determine the number of structures about this symbols.
                 )
         else:
-            logger.info("The program will read the 1_step structure and generate the 2_step structure")
+            print("The program will read the 1_step structure and generate the 2_step structure")
 
         for col, atoms in enumerate(self.data):
             self.pbest[col] = self.update_best(self.pbest[col] + [atoms[1]], 1)
@@ -360,8 +360,8 @@ class pso(UpdateBestMixin):
                 self.gbest.get(str(atoms[1].symbols), []) + [atoms[1]], self.lbest
             )
 
-        logger.info(f"Now there are {len(self.gbest.keys())} stoichiometry")
-        logger.info(f"They are respectively:")
+        print(f"Now there are {len(self.gbest.keys())} stoichiometry")
+        print(f"They are respectively:")
         pprint(list(self.gbest.keys()))
 
     def update_next_step(self, work_path):
@@ -419,11 +419,11 @@ class pso(UpdateBestMixin):
             outcar = Path(work_path).joinpath(f"OUTCAR_{col+1}")
             contcar= Path(work_path).joinpath(f"CONTCAR_{col+1}")
             if not poscar.exists() :
-                logger.warning(f"POSCAR_{col+1}  didn't exist! So the program can't store POSCAR_{col+1}")
+                print(f"POSCAR_{col+1}  didn't exist! So the program can't store POSCAR_{col+1}")
             if not outcar.exists():
-                logger.warning(f"OUTCAR_{col+1}  didn't exist! So the program can't store OUTCAR_{col+1}")
+                print(f"OUTCAR_{col+1}  didn't exist! So the program can't store OUTCAR_{col+1}")
             if not contcar.exists():
-                logger.warning(f"CONTCAR_{col+1} didn't exist! So the program can't store CONTCAR_{col+1}")
+                print(f"CONTCAR_{col+1} didn't exist! So the program can't store CONTCAR_{col+1}")
 
             # 3. extract the enthalpy of the OUTCAR to `atoms_outcar` 
             data = VASPPoscarFormat().from_poscar(file_name=poscar)
@@ -551,9 +551,9 @@ class pso(UpdateBestMixin):
             poscar = Path(work_path).joinpath(f"POSCAR_{col+1}")
             if atoms:
                 write(poscar, atoms, format="vasp")
-                logger.info(f"try successfully write POSCAR_{col+1}")
+                print(f"try successfully write POSCAR_{col+1}")
             else:
-                logger.warning(f"The `Class Atoms` for POSCAR_{col+1} doesn't exist !!! So the program can't write it !!!")
+                print(f"The `Class Atoms` for POSCAR_{col+1} doesn't exist !!! So the program can't write it !!!")
 
 
     def generate_step(
@@ -568,7 +568,7 @@ class pso(UpdateBestMixin):
         gen_structures_list = []
         for column, current_atoms in enumerate(current_atoms_list):
             if pbest_list[column]:
-                logger.info(f"generate No.{column+1} {pbest_list[column][0].symbols}")
+                print(f"generate No.{column+1} {pbest_list[column][0].symbols}")
                 gen_one = self.generate_one(
                     id_list[column],
                     pbest_list[column],
@@ -578,7 +578,7 @@ class pso(UpdateBestMixin):
                 )
                 gen_structures_list.append(gen_one)
             else:
-                logger.warning(f"pbest_list {pbest_list[column]}")
+                print(f"pbest_list {pbest_list[column]}")
         
         return gen_structures_list
 
@@ -606,7 +606,7 @@ class pso(UpdateBestMixin):
         current_atoms: list[Atoms],
         fp_mats,
     ):
-        logger.info(f"create the structure by PSO for {current_atoms[0].symbols}")
+        print(f"create the structure by PSO for {current_atoms[0].symbols}")
         distance_of_ion = self.distancematrix
         init_atoms = current_atoms[0]
         opt_atoms = current_atoms[1]
@@ -654,7 +654,7 @@ class pso(UpdateBestMixin):
             #   opt_volume is the volume of optimized structure
             #   spacegroupid is the space group ID
             #   after Spgcryla().spggenlat() is running, the `lattice` will be assigned new volume !!!
-            # logger.warning("This lattice may not be physical.")
+            # print("This lattice may not be physical.")
 
             new_atoms = Atoms(
                 symbols=opt_symbol,
@@ -668,15 +668,15 @@ class pso(UpdateBestMixin):
                 is_bond_reasonable(new_atoms, self.nameofatoms, distance_of_ion)
                 and not self.get_similarity(fp, fp_mats)[2]  # not is_sim
             ):
-                logger.info(f"attempt {_+1} for {opt_symbol} succeeded !!!")
+                print(f"attempt {_+1} for {opt_symbol} succeeded !!!")
                 break
             else:
-                logger.info(f"attempt {_+1} for {opt_symbol} failed !!!")
+                print(f"attempt {_+1} for {opt_symbol} failed !!!")
         else:
             # 
             __ini_atoms = sort_atoms(init_atoms, self.nameofatoms)
-            logger.warning(f"The structure may not be physical.")
-            logger.warning("But the program will still adopt this structure !!!")
+            print(f"The structure may not be physical.")
+            print("But the program will still adopt this structure !!!")
 
         self.set_fp(new_atoms)
         return new_atoms
@@ -702,7 +702,7 @@ class pso(UpdateBestMixin):
             tm.set_tol(ele_r1[0], ele_r2[0], ele_r1[1]+ele_r2[1])
 
         struct = pyxtal()
-        logger.info(f"create the structure by RANDOM for {current_atoms[0].symbols}")
+        print(f"create the structure by RANDOM for {current_atoms[0].symbols}")
         for i in range(1000):
             try:
                 spacegroup_number = self.random_get_spacegroup(self.spacegroup_number)
@@ -718,9 +718,9 @@ class pso(UpdateBestMixin):
                 new_atoms = sort_atoms(_new_atoms, self.nameofatoms)
                 return new_atoms
             except Exception as e:
-                logger.warning(f"create structure No.{i+1} failed !!!")
+                print(f"create structure No.{i+1} failed !!!")
         else:
-            logger.warning(f"Its input information can't create the random {current_atoms[0].symbols}")
+            print(f"Its input information can't create the random {current_atoms[0].symbols}")
             return None
 
     def __random_gen(self):
@@ -742,7 +742,7 @@ class pso(UpdateBestMixin):
                 if hasattr(stru, "is_ordered"): # 判断结构是否是分数占据的无序结构
                     _new_atoms = AseAtomsAdaptor.get_atoms(stru)
                     new_atoms = sort_atoms(_new_atoms, self.nameofatoms)
-                    logger.info(f"The program successfully created a structuere by `__random_gen` {new_atoms.symbols}")
+                    print(f"The program successfully created a structuere by `__random_gen` {new_atoms.symbols}")
                     return new_atoms
         elif self.splitwps:
             while True:
@@ -750,7 +750,7 @@ class pso(UpdateBestMixin):
                 if hasattr(stru, "is_ordered"): # 判断结构是否是分数占据的无序结构
                     _new_atoms = AseAtomsAdaptor.get_atoms(stru)
                     new_atoms = sort_atoms(_new_atoms, self.nameofatoms)
-                    logger.info(f"The program successfully created a structuere by `__random_gen` {new_atoms.symbols}")
+                    print(f"The program successfully created a structuere by `__random_gen` {new_atoms.symbols}")
                     return new_atoms
 
     def random_get_spacegroup(self, spacegroup_number):

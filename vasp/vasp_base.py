@@ -46,7 +46,7 @@ class vasp_base:
             self.work_underpressure = Path.cwd()
             self.work_path = self.work_underpressure.parent
         else:
-            self.work_underpressure= Path(self.work_path).joinpath(str(self.press))
+            self.work_underpressure= Path(self.work_path).joinpath(str(int(self.press)))
             if not self.work_underpressure.exists():
                 self.work_underpressure.mkdir(parents=True)
 

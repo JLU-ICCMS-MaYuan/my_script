@@ -54,7 +54,7 @@ class qe_base:
         elif self.work_path is None:
             self.work_underpressure= Path.cwd()
         else:
-            self.work_underpressure= Path(self.work_path).joinpath(str(self.press))
+            self.work_underpressure= Path(self.work_path).joinpath(str(int(self.press)))
             if not self.work_underpressure.exists():
                 self.work_underpressure.mkdir(parents=True, exist_ok=True)
 
