@@ -54,7 +54,7 @@ class qe_base:
         elif self.work_path is None:
             self.work_underpressure= Path.cwd()
         else:
-            self.work_underpressure= Path(self.work_path).joinpath(str(self.press))
+            self.work_underpressure= Path(self.work_path).joinpath(str(int(self.press)))
             if not self.work_underpressure.exists():
                 self.work_underpressure.mkdir(parents=True, exist_ok=True)
 
@@ -127,7 +127,10 @@ class qe_base:
                 # 如果目标元素已经有多个赝势放在pp目录中. 例如S元素的三个赝势都放在了pp目录中，你需要手动选择哪个赝势用作计算
                 choosed_flag  = False
                 while not choosed_flag:
-                    choosed_pp = input(f"The pp directory has the {dst_pps}! please input you want one\n")
+                    for i, p in enumerate(dst_pps):
+                        print(f"{i+1}.  ", p)
+                    choosed_pp_number = int(input("please input you want one(Enter the previous number, such as 1,2,3...)\n"))
+                    choosed_pp = dst_pps[choosed_pp_number-1]
                     if choosed_pp in dst_pps:
                         choosed_flag = True
                         self.final_choosed_pp.append(choosed_pp)
@@ -135,6 +138,7 @@ class qe_base:
                         choosed_flag = False
                 print(self.final_choosed_pp)
             elif len(dst_pps) == 1:
+                # 如果目标元素只有1个赝势放在pp目录中. 直接将其加入self.final_choosed_pp即可
                 self.final_choosed_pp.append(dst_pps[0])
             elif len(dst_pps) == 0:
                 print(f"to prepare {species_name} uspp! ")
@@ -162,7 +166,10 @@ class qe_base:
         targetppnames    = [pp for pp in targetppfiles]
         choosed_flag  = False
         while not choosed_flag:
-            choosed_pp = input(f"{targetppnames}, \nplease input you want one\n")
+            for i, p in enumerate(targetppnames):
+                print(f"{i+1}.  ", p)
+            choosed_pp_number = int(input("please input you want one(Enter the previous number, such as 1,2,3...)\n"))
+            choosed_pp = targetppnames[choosed_pp_number-1]
             if choosed_pp in targetppnames:
                 src_pp = Path(qe_USPP).joinpath(choosed_pp)
                 dst_pp = Path(workpath_pppath).joinpath(choosed_pp)

@@ -41,6 +41,7 @@ then
         grep 'CELL_' -A $StruLine $fname |tail -n `expr $StruLine + 1`
         # 除了显示符合范本样式的那一行之外，并显示该行之后的内容
 else
-        grep 'CELL_' -A $StruLine $fname |tail -n `expr $StruLine + 1` > $2 echo "The lastest structure in the file \"$2\""
+        grep 'CELL_' -A $StruLine $fname |tail -n `expr $StruLine + 1` > $2 
+        echo "The lastest structure in the file \"$2\""
         echo "INFO-FOR-Script: IonStep ( $IonSteps ), Nat ( $Nat ), IonConverged ( $CONVERGED ).awk should print \$4,\$8,\$12"
 fi

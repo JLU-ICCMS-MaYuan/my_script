@@ -1,13 +1,14 @@
-# my_script
+# <div align="center"> **my_script**  </div>
 
-## 介绍
+
+# 介绍
 该软件是一个计算qe，vasp的小程序。也可以用来产生结构
 
-## 软件架构
+# 软件架构
 qe, vasp, structuregenerator是三个独立的项目，互相不耦合。可以独立开发，使用。
 
 
-## 安装教程
+# 安装教程
 
 方法1：
 ```shell
@@ -18,8 +19,9 @@ qe, vasp, structuregenerator是三个独立的项目，互相不耦合。可以�
     pip install -e .
 ```
 
-## qe使用说明
-### 基本输入选项。一定要设置的部分：
+
+# <div align="center"> <span style="color:red"> QE篇 </span> </div>
+## 基本输入选项。一定要设置的部分：
 ```shell
 qe_main.py -i 输入文件路径 -w 工作目录 -p 压强 -j 运行方式
 ```
@@ -39,96 +41,108 @@ qe_main.py -i 输入文件路径 -w 工作目录 -p 压强 -j 运行方式
 
 说明: 赝势文件最终存放在压强命名的目录的下面
 
-### 具体其它详细的任务模式说明：
+## 具体其它详细的任务模式说明：
 **WARNING1 queue存在则会运行，queue不存在则只会产生输入文件和提交任务的脚本文件。**
 **WARNING2 如果你使用-j bash, 那么一定注意core设置的不要太大，小心把主节点搞崩溃了。**
 
-结构弛豫：
+### 结构弛豫：
 ```shell
 relax -m mode=relax-vc kpoints_dense="20 20 20" core=48 npool=4  queue=lhy
 ```
-自洽
+### 自洽
 ```shell
 scf -m mode=scffit kpoints_dense='24 24 24' core=48 npool=4  queue=lhy
 ```
+
 ```shell
 scf -m mode=scf kpoints_sparse='12 12 12' core=48 npool=4  queue=lhy
 ```
-非自洽计算
+
+### 非自洽计算
 ```shell
 qe_main.py -i relax.out -j bash scf -m mode=nscf kpoints_dense='32 32 32' core=2 queue=local
 ```
 
-不分q点计算声子
+### 不分q点计算声子
 ```shell
 phono -m mode=nosplit qpoints='6 6 6' dyn0_flag=False queue=lhy core=48 npool=4  queue=lhy el_ph_nsigma=
 ```
-分q点计算声子 : split_dyn0模式
+
+### 分q点计算声子 : split_dyn0模式
 ```shell
 phono -m mode=nosplit qpoints='6 6 6' dyn0_flag=True core=1 npool=1 queue=local
 ```
 ```shell
 phono -m mode=split_dyn0 qpoints='6 6 6' core=48 npool=4 queue=local
 ```
-分q点计算声子 : split_assignQ模式
+
+### 分q点计算声子 : split_assignQ模式
 ```shell
 phono -m mode=split_assignQ qpoints='6 6 6' core=1 npool=1 queue=local
 ```
 
-合并声子文件
+### 合并声子文件
 ```shell
 phono -m mode=merge core=1 queue=local
 ```
 
-计算力常数
+### 计算力常数
 ```shell
 phono -m mode=q2r qpoints='6 6 6' core=1 npool=1 queue=local
 ```
-计算动力学矩阵元
+
+### 计算动力学矩阵元
 ```shell
 phono -m mode=matdyn qpoints='6 6 6' core=1 npool=1 queue=local qinserted=50
 ```
-计算phonodos, 计算态密度时要用更密的q点网格，这需设置nk1, nk2, nk3   
+
+### 计算phonodos, 计算态密度时要用更密的q点网格，这需设置nk1, nk2, nk3   
 ```shell
-dos -m mode=dos core=1 npool=1 queue=local qpoints='8 8 8' ndos=500 
+dos -m mode=phonodos core=1 npool=1 queue=local qpoints='8 8 8' ndos=500 
 ```
-计算eletdos
+
+### 计算eletdos(这里计算电子的dos也用qpoints其实非常不合理)
 ```shell
 dos -m mode=eletdos core=1 npool=1 queue=local qpoints='8 8 8' ndos=500 
 ```
-计算elepdos
+
+### 计算elepdos(这里计算电子的dos也用qpoints其实非常不合理)
 ```shell
 dos -m mode=elepdos core=1 npool=1 queue=local qpoints='8 8 8' ndos=500 
 ```
-使用McAD方法计算超导
-不指定最高频率, 将会自动读取最高频率文件
+
+### 使用McAD方法计算超导
+#### 不指定最高频率, 将会自动读取最高频率文件
 ```shell
-sc -m mode=McAD core=1 npool=1 queue=local deguass=0.5 screen_constant=0.1 smearing_method=1 qpoints='6 6 6'
+sc -m mode=McAD core=1 npool=1 queue=local             deguass=0.5 screen_constant=0.1 smearing_method=1 qpoints='6 6 6'
 ```
-使用McAD方法超导转变温度指定最高频率
+#### 使用McAD方法超导转变温度指定最高频率
 ```shell
 sc -m mode=McAD core=1 npool=1 queue=local top_freq=80 deguass=0.5 screen_constant=0.1 smearing_method=1 qpoints='6 6 6'
 ```
-使用eliashberg方法超导转变温度, 指定a2F.dos*文件
+#### 使用eliashberg方法超导转变温度, 指定a2F.dos*文件
 ```shell
-sc -m mode=eliashberg core=1 npool=1 queue=local temperature_points=10000 a2F_dos=a2F.dos3 qpoints='6 6 6'
+sc -m mode=eliashberg core=1 npool=1 queue=local temperature_steps=100 a2F_dos=a2F.dos3 qpoints='6 6 6'
 ```
-使用eliashberg方法超导转变温度, 指定使用alpha2F.dat文件中使用哪一列的degauss对应的alpha2F数值。使用degauss_column来指定
+#### 使用eliashberg方法超导转变温度, 指定使用alpha2F.dat文件中使用哪一列的degauss对应的alpha2F数值。使用degauss_column来指定
+(这个方法生成ALPHA2F.OUT可能有问题导致 ELIASHBERG_GAP_T.OUT 中出现NAN。所以更推荐上面那种处理方法。)
 ```shell
-sc -m mode=eliashberg core=1 npool=1 queue=local temperature_points=10000 degauss_column=7 qpoints='6 6 6'
+sc -m mode=eliashberg core=1 npool=1 queue=local temperature_steps=100 degauss_column=7 qpoints='6 6 6'
 ```
-获得eliashberg计算得到的超导转变温度
+#### 获得eliashberg计算得到的超导转变温度
 ```shell
 sc -m mode=eliashberg Tc=output core=1
 ```
 
-批量计算
+### 批量计算
 ```shell
-prepare -m mode="relax-vc scffit scf nosplit" dyn0_flag=True qpoints='6 6 6' electron_maxstep=1000 core=4 npool=1 queue=local
+prepare -m mode=prepare electron_maxstep=1000 core=4 npool=1 queue=local
 ```
 ```shell
-prepare -m mode="relax-vc scffit scf        " dyn0_flag=True qpoints='6 6 6' electron_maxstep=1000 core=4 npool=1 queue=local
+prepare -m mode=prepare electron_maxstep=1000 core=4 npool=1 queue=local
 ```
+
+
 ### 如何增加新的功能模块(以增加ele-dos计算的功能模块为例子说明，修改这需要添加哪些内容)
 
 #### 第1步：在qe_writeinput.py中, class qe_writeinput中增加写电子态密度计算.in文件的实例方法
@@ -155,11 +169,12 @@ if not hasattr(self, "emax"):
     self.emax = 30
     logger.warning("You didn't set `emax`, the program will use default value: emax=30 ")
 ```
-#### 第4步: 
 
-## vasp使用说明
 
-### 基本输入选项。一定要设置的部分：
+
+# <div align="center"> <span style="color:red"> VASP篇 </span> </div>
+
+## 基本输入选项。一定要设置的部分：
 ```shell
 vasp_main.py -i 输入文件路径 -w 工作目录 -p 压强 -j 运行方式
 ```
@@ -178,37 +193,52 @@ vasp_main.py -i 输入文件路径 -w 工作目录 -p 压强 -j 运行方式
 2. slurm 代表使用slurm脚本运行。
 3. pbs 代表使用pbs脚本运行。
 
-### 具体其它详细的任务模式说明：
+## 具体其它详细的任务模式说明：
 
-结构弛豫
+### 结构弛豫
 ```shell
-relax -m mode=rv1 core=1 queue=local 
+relax -m mode=rvf core=28 ediff=1e-8 ediffg=-0.001 ismear=1 kspacing=0.18 encut=800
 ```
 
-清理数据, 保留:'POSCAR', 'PPOSCAR', 'POTCAR', 'OUTCAR', 'INCAR*', '*.sh', '*.vasp', '*.slurm'
+### 清理数据, 保留:'POSCAR', 'PPOSCAR', 'POTCAR', 'OUTCAR', 'INCAR*', '*.sh', '*.vasp', '*.slurm'
 ```shell
 vasp_main.py -w ./ clear -m mode=all
 ```
 
-批量结构弛豫
+### 批量结构弛豫
 ```shell
-batchrelax -m mode=rv3 core=1 
+batchrelax -m mode=rvf core=28 ediff=1e-8 ediffg=-0.001 ismear=1 kspacing=0.18 encut=800
 ```
 
+
+### 有限位移法计算声子谱
 ```shell
-phono -m supercell='2 2 2' kpoints='2 2 2' mode=disp core=1 queue=local
+phono -m supercell='2 2 2' kpoints='18 18 18' mode=disp core=48 ismear=1 encut=800 ediff=1E-08 ediffg=-0.001 queue=lhy
 ```
 
-disp声子计算
+### 密度泛函微扰DFPT法计算声子谱
 ```shell
-phono -m supercell='2 2 2' kpoints='40 40 40' mode=disp  
+phono -m supercell='2 2 2' kpoints='18 18 18' mode=dfpt core=48 ismear=1 encut=800 ediff=1e-08 ediffg=-0.001 queue=lhy
 ```
 
-dfpt声子计算
+### 有限位移法计算声子谱——数据处理band
 ```shell
-phono -m supercell='2 2 2' kpoints='40 40 40' mode=dfpt
+data -m mode=dispprog supercell='2 2 2' spectrum=True 
 ```
 
-## structuregenerator使用说明
+### 密度泛函微扰DFPT法计算声子谱——数据处理band
+```shell
+data -m mode=dfptprog supercell='2 2 2' spectrum=True
+```
 
+# <div align="center"> <span style="color:red"> mytoolkit篇 </span> </div>
 
+## 格式转化
+```shell
+tool_main.py -i 输入文件名称 -w ./ convert -m dst_format=输出文件名称
+```
+
+### POSCAR -> cif, dst_format现在支持的参数为: cif, vasp, struct(wien2k格式)
+```shell
+tool_main.py -i CaH6.vasp -w ./ convert -m dst_format=CaH6.cif
+```

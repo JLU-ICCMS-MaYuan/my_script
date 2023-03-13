@@ -526,13 +526,13 @@ class qesc_inputpara(qephono_inputpara):
             print("You didn't set the `smearing_method`!  The program will use default value: smearing_method=1")
 
         # Eliashberg
-        print("If you use Eliashberg method, you have to specify the temperature_points !")
+        print("If you use Eliashberg method, you have to specify the temperature_steps !")
         print("If you use Eliashberg method, you may not specify the a2f_dos* !")
         print("If you use Eliashberg method, you may not specify the degauss_column* !")
         print("\tIf you set a2f_dos*,then you don't need set degauss_column !\n\tIf you set both, the program will run in the way of `degauss_column*`")
-        if not hasattr(self, "temperature_points"):
-            self.temperature_points = 5000
-            print("You didn't set the `temperature_points`.The program will use default value: temperature_points=5000")
+        if not hasattr(self, "temperature_steps"):
+            self.temperature_steps = 5000
+            print("You didn't set the `temperature_steps`.The program will use default value: temperature_steps=5000")
 
         # Eliashberg
         if not hasattr(self, "a2F_dos"):
@@ -575,18 +575,24 @@ class qesc_inputpara(qephono_inputpara):
             # sys.exit(1)
         
         # 获得eliashberg方法计算得到的Tc
-        print("运行可能报错, 建议仔细检查ELIASHBERG_GAP_T.OUT文件的第二列, 有些数据本来应该是0.1666489645E-265, 但是实际可能为0.1666489645-265, 导致numpy无法将其转化为数字。")
+        # 运行可能报错, 建议仔细检查ELIASHBERG_GAP_T.OUT文件的第二列, 有些数据本来应该是0.1666489645E-265, 但是实际可能为0.1666489645-265, 导致numpy无法将其转化为数字
+        print("-------------------------------------WARING--------------------------------------")
+        print("It is recommended to carefully check the second column of the ELIASHBERG_GAP_T.OUT file. ")
+        print("Some data should be 0.1666489645E-265, but it may actually be 0.1666489645-265, causing numpy to fail to turn it into a number.")
+        print("-------------------------------------WARING--------------------------------------")
         eliashberg_gap_t_out = Path(self.work_underpressure).joinpath("ELIASHBERG_GAP_T.OUT")
+        process_eliashberg_gap_t_out = Path(self.work_underpressure).joinpath("process_ELIASHBERG_GAP_T.OUT")
         if not eliashberg_gap_t_out.exists():
             print(f"ELIASHBERG_GAP_T.OUT doesn't exist !!! The program will exit")
-        gap_t   = np.loadtxt(eliashberg_gap_t_out)
+        os.system(f"sed '/E/!d' {eliashberg_gap_t_out} > {process_eliashberg_gap_t_out}") # 将不包含字符串E的行都删掉
+        gap_t   = np.loadtxt(process_eliashberg_gap_t_out)
         Tc      = gap_t[:, 0]
         gap     = gap_t[:, 1]
         dgap    = abs(np.gradient(gap, Tc))
         dgap_id = np.where(dgap < 1e-8)[0]
         gap_id  = np.where(gap  < 1e-8)[0]
         Tc_id   = [i for i in dgap_id if i in gap_id]
-        print(f'Tc收敛温度为 {Tc[Tc_id[0]]} K (结果仅供参考, 请以Tc-GAP图像为准)')
+        print(f'Tc = {Tc[Tc_id[0]]} K (The results are for reference only; please refer to the Tc-GAP image)')
         sys.exit(0)
 
 
@@ -608,6 +614,3 @@ class qeprepare_inputpara(qephono_inputpara):
             input_file_path, 
             **kwargs
             )
-
-        if hasattr(self, "mode"):
-            self.mode = self.mode.split()

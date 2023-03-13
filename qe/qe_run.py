@@ -183,89 +183,22 @@ class qe_prepare:
         # read input para
         self._config = config(args).read_config()
 
-        #进行结构弛豫
         self.prepare_inputpara  = qeprepare_inputpara.init_from_config(self._config)
-        if "relax-vc" in self.prepare_inputpara.mode:
-            self.qe_writeinput  = qe_writeinput.init_from_relaxinput(self.prepare_inputpara)
-            inputfilename = self.qe_writeinput.writeinput(mode="relax-vc")
-            # init the submit job script
-            self.qe_writesubmit = qe_writesubmit.init_from_relaxinput(self.prepare_inputpara)
-            jobname = self.qe_writesubmit.write_submit_scripts(inputfilename, mode="relax-vc")
-            
-            # submit the job. If we didn't set the parameter of `queue`, it will be set `None` in `qe_inputpara`
-            self.qe_submitjob = qe_submitjob.init_from_relaxinput(self.prepare_inputpara)
-            if self.prepare_inputpara.queue is not None:
-                ids = self.qe_submitjob.submit_mode1(inputfilename, jobname)
-            print("The program is running relax")
-            try:
-                check_pid_jobid(ids, self.qe_submitjob.submit_job_system)
-            except:
-                print(f"ids={None}")
-            print("The program finished relax")
-            ids = []
+        # 准备relax.in,  scffit.in,  scf.in 的输入文件
 
-        # 读入结构弛豫的输出文件进行自洽计算和声子计算
-        if self.prepare_inputpara.input_file_path.name != "relax.out":
-            input_file_path = Path(self.prepare_inputpara.work_underpressure).joinpath("relax.out")
-        else:
-            input_file_path = self.prepare_inputpara.input_file_path
-        if not input_file_path.exists():
-            raise FileExistsError(f"{input_file_path.absolute()} doesn't exist!!! ")
-        self.prepare_inputpara  = qeprepare_inputpara(
-            work_path=self.prepare_inputpara.work_path,
-            press=self.prepare_inputpara.press,
-            submit_job_system=self.prepare_inputpara.submit_job_system,
-            input_file_path=input_file_path,
-            **self._config,)
-        if "scffit" in self.prepare_inputpara.mode:
-            self.qe_writeinput  = qe_writeinput.init_from_scfinput(self.prepare_inputpara)
-            inputfilename = self.qe_writeinput.writeinput(mode="scffit")
-            # init the submit job script
-            self.qe_writesubmit = qe_writesubmit.init_from_scfinput(self.prepare_inputpara)
-            jobname = self.qe_writesubmit.write_submit_scripts(inputfilename, mode="scffit")
-            
-            # submit the job. If we didn't set the parameter of `queue`, it will be set `None` in `qe_inputpara`
-            self.qe_submitjob = qe_submitjob.init_from_scfinput(self.prepare_inputpara)
-            if self.prepare_inputpara.queue is not None:
-                ids = self.qe_submitjob.submit_mode1(inputfilename, jobname)
-            print("The program is running scffit")
-            try:
-                check_pid_jobid(ids, self.qe_submitjob.submit_job_system)
-            except:
-                print(f"ids={None}")
-            print("The program finished scffit")
-            ids = []
+        self.qe_writeinput  = qe_writeinput.init_from_relaxinput(self.prepare_inputpara)
+        inputfilename1 = self.qe_writeinput.writeinput(mode="relax-vc")
 
-        if "scf" in self.prepare_inputpara.mode:
-            self.qe_writeinput  = qe_writeinput.init_from_scfinput(self.prepare_inputpara)
-            inputfilename = self.qe_writeinput.writeinput(mode="scf")
-            # init the submit job script
-            self.qe_writesubmit = qe_writesubmit.init_from_scfinput(self.prepare_inputpara)
-            jobname = self.qe_writesubmit.write_submit_scripts(inputfilename, mode="scf")
-            
-            # submit the job. If we didn't set the parameter of `queue`, it will be set `None` in `qe_inputpara`
-            self.qe_submitjob = qe_submitjob.init_from_scfinput(self.prepare_inputpara)
-            if self.prepare_inputpara.queue is not None:
-                ids = self.qe_submitjob.submit_mode1(inputfilename, jobname)
-            print("The program is running scf")
-            try:
-                check_pid_jobid(ids, self.qe_submitjob.submit_job_system)
-            except:
-                print(f"ids={None}")
-            print("The program finished scf")
-            ids = []
+        self.qe_writeinput  = qe_writeinput.init_from_scfinput(self.prepare_inputpara)
+        inputfilename2 = self.qe_writeinput.writeinput(mode="scffit")
         
-        if "nosplit" in self.prepare_inputpara.mode and self.prepare_inputpara.dyn0_flag:
-            self.qe_writeinput  = qe_writeinput.init_from_phonoinput(self.prepare_inputpara)
-            inputfilename = self.qe_writeinput.writeinput(mode="nosplit")
-
-            # init the submit job script
-            self.qe_writesubmit = qe_writesubmit.init_from_phonoinput(self.prepare_inputpara)
-            jobnames = self.qe_writesubmit.write_submit_scripts(inputfilename, mode="nosplit")
-
-            # submit the job
-            self.qe_submitjob = qe_submitjob.init_from_phonoinput(self.prepare_inputpara)
-            if self.prepare_inputpara.queue is not None :
-                self.qe_submitjob.submit_mode2(inputfilename, jobnames)
-            
-
+        self.qe_writeinput  = qe_writeinput.init_from_scfinput(self.prepare_inputpara)
+        inputfilename3 = self.qe_writeinput.writeinput(mode="scf")
+    
+        # init the submit job script
+        self.qe_writesubmit = qe_writesubmit.init_from_prepareinput(self.prepare_inputpara)
+        jobname = self.qe_writesubmit.write_submit_scripts([inputfilename1, inputfilename2, inputfilename3])
+        # submit the job
+        self.qe_submitjob   = qe_submitjob.init_from_scinput(self.prepare_inputpara)
+        if self.prepare_inputpara.queue is not None:
+            self.qe_submitjob.submit_mode1(inputfilename1, jobname)

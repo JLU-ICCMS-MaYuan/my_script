@@ -101,8 +101,26 @@ class qe_writesubmit:
         )
         return self
 
+    @classmethod
+    def init_from_prepareinput(cls, other_class: qe_inputpara):
+        
+        self = cls(
+            work_underpressure=other_class.work_underpressure,
+            submit_job_system=other_class.submit_job_system,
+            mode=other_class.mode,
+            queue=other_class.queue,
+            core=other_class.core,
+            npool=other_class.npool,
+        )
+        return self
 
     def write_submit_scripts(self, inpufilename, mode=None):
+
+        print("You can use the modes, please carefully compare your input mode is one of the above modes")
+        print("{:<10} {:<10} {:<10} {:<10}".format("relax-vc", "scffit", "scf", "prepare", "nscf"))
+        print("{:<10} {:<10} {:<10} {:<10}".format("nosplit", "split_dyn0", "split_assignQ", "q2r"))
+        print("{:<10} {:<10} {:<10} {:<10}".format("matdyn", "eletdos", "phonodos", "nscf"))
+        print("{:<10} {:<10}".format("McAD", "eliashberg"))
 
         if mode==None:
             mode=self.mode
@@ -115,6 +133,9 @@ class qe_writesubmit:
             return jobname
         if mode == "scf":
             jobname = self.s3_scf(self.work_underpressure, inpufilename)
+            return jobname
+        if mode =="prepare":
+            jobname = self.s123_prepare(self.work_underpressure, inpufilename)
             return jobname
         if mode =="nosplit":
             jobname = self.s4_PhNoSplit(self.work_underpressure, inpufilename)
@@ -192,6 +213,47 @@ class qe_writesubmit:
         with open(_script_filepath, "w") as j:
             j.writelines(self.jobtitle)
             j.write('mpirun -np {} {}/pw.x -npool {} <{}> {} \n'.format(self.core, qebin_path, self.npool, _inpufilename,  _outputfilename)) 
+        return jobname
+
+    def s123_prepare(self, _dirpath, inputfilenames):
+        _inpufilename   = inputfilenames
+        _outputfilename = [ipname.split(".")[0] + ".out" for ipname in _inpufilename]
+        input_output    = zip(_inpufilename, _outputfilename)
+        jobname = "s123_prepare.sh"
+        _script_filepath = os.path.join(_dirpath, jobname)
+        with open(_script_filepath, "w") as j:
+            j.writelines(self.jobtitle)
+            relax_in, relax_out = input_output.__next__()
+            j.write('mpirun -np {} {}/pw.x -npool {} <{}> {} \n'.format(self.core, qebin_path, self.npool, relax_in,  relax_out))
+            j.write("wait\n")
+            j.write("Nat=$(grep 'number of k points' -B 2 relax.out |head -n 1|awk {'print($1)'})\n")
+            j.write("StruLine=$(expr $Nat + 5)\n")
+            j.write("grep 'CELL_' -A $StruLine relax.out |tail -n `expr $StruLine + 1` > new_structure.out\n")
+            j.write("sed  -i '/^$/d' new_structure.out\n")
+            j.write("\n")
+            j.write("\n")
+            j.write("\n")
+            j.write("\n")
+            j.write("cell_parameters=$(grep -n 'CELL_PARAMETERS' scffit.in | awk -F : '{print $1}')\n")
+            j.write("k_points=$(grep -n 'K_POINTS' scffit.in | awk -F : '{print $1}')\n")
+            j.write("insert_position=$(expr $cell_parameters - 1)\n")
+            j.write("stop_delete_position=$(expr $k_points - 1)\n")
+            j.write('sed -i "${cell_parameters}, ${stop_delete_position}d" scffit.in\n')
+            j.write('sed -i "${insert_position}r new_structure.out" scffit.in\n')
+            scffit_in, scffit_out = input_output.__next__()
+            j.write('mpirun -np {} {}/pw.x -npool {} <{}> {} \n'.format(self.core, qebin_path, self.npool, scffit_in,  scffit_out))
+            j.write("\n")
+            j.write("\n")
+            j.write("\n")
+            j.write("\n")
+            j.write("cell_parameters=$(grep -n 'CELL_PARAMETERS' scf.in | awk -F : '{print $1}')\n")
+            j.write("k_points=$(grep -n 'K_POINTS' scf.in | awk -F : '{print $1}')\n")
+            j.write("insert_position=$(expr $cell_parameters - 1)\n")
+            j.write("stop_delete_position=$(expr $k_points - 1)\n")
+            j.write('sed -i "${cell_parameters}, ${stop_delete_position}d" scf.in\n')
+            j.write('sed -i "${insert_position}r new_structure.out" scf.in\n')
+            scf_in, scf_out = input_output.__next__()
+            j.write('mpirun -np {} {}/pw.x -npool {} <{}> {} \n'.format(self.core, qebin_path, self.npool, scf_in,  scf_out))
         return jobname
 
     def s4_PhNoSplit(self, _dirpath, inputfilename):

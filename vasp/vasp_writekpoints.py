@@ -40,6 +40,12 @@ class vasp_writekpoints:
         return self
 
     def create_kpoints(self, output_kpoints):
+        """
+        automatic_density_by_length方法 根据输入的结构(第一个参数), 各个维度k点的密度(第二个参数), 是否强制使用Gamma方法产生k点(第三个参数)
+        重点说说如何设置各个方向的密度。该方法依据的公式是: 
+            number of k points along this direction = density of k along this derection / parameter of this direction
+        所以用户需要根据超胞的大小, 合理估计一个k点密度, 然后得到该方向的k点数
+        """
         kpoints = Kpoints.automatic_density_by_lengths(
             self.sposcar_struct_type, 
             length_densities=self.kpoints,
