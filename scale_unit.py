@@ -1,4 +1,5 @@
-#!/public/home/mayuan/miniconda3/envs/cage/bin/python3
+#!/usr/bin/env python3
+
 import os
 import numpy as np
 from argparse import ArgumentParser
