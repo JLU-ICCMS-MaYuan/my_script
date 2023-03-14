@@ -150,6 +150,7 @@ if __name__ == "__main__":
 
         i = 100000
         for root, dirs, files in os.walk(dir_vr):
+            print(root)
             if "OUTCAR" in files and "POSCAR" in files:
                 outcar_path = os.path.join(root, "OUTCAR")
                 poscar_path = os.path.join(root, "POSCAR")
@@ -160,14 +161,14 @@ if __name__ == "__main__":
                 try:
                     enthalpy = get_enthalpy(outcar_path)
                     enthalpy_per_atoms = float(enthalpy) / atoms_amount
-                    number = re.findall(r"\d{3,3}", root.split("/")[-1])
+                    number = re.findall(r"\d{1,3}", root.split("/")[-1])
                     if number:
                         enthalpy_dict[formula]["Number"] = number[0]
                         number = number[0]
                     else:
                         i += 1
-                        enthalpy_dict[formula]["Number"] = i
-                        number = i 
+                        enthalpy_dict[formula]["Number"] = str(i) +"-"+ os.path.basename(root)
+                        number =  str(i) +"-"+ os.path.basename(root)
                     enthalpy_dict[formula]["formula"]    = formula
                     enthalpy_dict[formula]["enthalpy"]   = enthalpy
                     enthalpy_dict[formula]["enthalpy_per_atoms"] = enthalpy_per_atoms
