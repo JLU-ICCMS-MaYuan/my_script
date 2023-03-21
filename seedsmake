@@ -1,0 +1,29 @@
+#!/usr/bin/env python3
+
+import re
+import os
+import sys
+import shutil
+from pprint import pprint
+
+from pathlib import Path
+
+def seeds_make(dir_vr, custom_name, prefix_name=""):
+    custom_seeds_path = Path.cwd().joinpath(custom_name)
+    with open(custom_seeds_path, "a") as dst:
+        for id, file in enumerate(Path(dir_vr).glob("*.vasp")):
+            with open(file, "r") as src:
+                lines = src.readlines()
+            lines[0] = str(id+1)+ "-" + prefix_name+"-spg-"+re.search(r'\((\d+)\)', lines[0]).group(1) + "\n"
+            dst.writelines(lines)
+    
+
+
+if __name__ == "__main__":
+    # dir_vr = sys.argv[1]
+    # custom_name = sys.argv[2]
+    print("你必须制定2个输入参数")
+    dir_vr = input("结构文件存储的路径(可以指定多个路径, 也可以指定一个路径)\n")
+    custom_name = input("被制作的种子文件的名称(请注意, 仔细检查你指定的种子文件是否已经存在, 如果存在, 新的结构将会'追加'到该文件中)\n")
+    prefix_name = input('追加到你指定的文件中的POSCAR可以在其第一行添加前缀以进行区分, 如果你不想添加前缀, 直接输入enter即可\n')
+    seeds_make(dir_vr, custom_name, prefix_name)

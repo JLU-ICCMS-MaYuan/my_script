@@ -1,15 +1,15 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
-'''
-输出origin绘制convex hull 的数据
-plot_convexhull.py -i ./nnconvexhull.csv -hand Mg B H
-保存图片
-plot_convexhull.py -i ./nnconvexhull.csv -save
-展示图片
-plot_convexhull.py -i ./nnconvexhull.csv -show
-回收所有稳定结构
-plot_convexhull.py -i ./nnconvexhull.csv -collect
-'''
+# '''
+# 输出origin绘制convex hull 的数据
+# plot_convexhull.py -i ./nnconvexhull.csv -ebh 100 -hand Mg B H
+# 保存图片
+# plot_convexhull.py -i ./nnconvexhull.csv -ebh 100 -save
+# 展示图片
+# plot_convexhull.py -i ./nnconvexhull.csv -ebh 100 -show
+# 回收所有稳定结构
+# plot_convexhull.py -i ./nnconvexhull.csv -ebh 100 -cs -cu
+# '''
 
 import sys
 import os
@@ -36,7 +36,7 @@ parser.add_argument(
         "   请运行`cak3.py --vasp 得到所有的结构搜索到的文件`\n"
         "   然后运行`data_processer.py 得到nnconvexhull.csv 和 得到 nconvexhull.csv`\n"
         "\n"
-        "整个命令在执行命令后, 将会在屏幕上输出高于convex hull 0~50meV的结构 !!!"
+        "整个命令在执行命令后, 将会在屏幕上输出高于convex hull 0 ~ EnthalpyAboveHullValue meV 的结构 !!!"
 )
 parser.add_argument(
     "-save",
@@ -74,6 +74,13 @@ parser.add_argument(
         "将亚稳的结构(落在凸包图)上的结构提取出来放在一个叫`unstable_structs`的目录里\n"
 )
 parser.add_argument(
+    "-ebh",
+    type=int,
+    dest="EnthalpyAboveHullValue",
+    help="高于convex hull xxx emV 的能量的上限\n"
+        "在0 ~ EnthalpyAboveHullValue 这个范围内的亚稳的结构确定出来\n"
+)
+parser.add_argument(
     "-hand",
     "-hand-plot-dat",
     action="store",
@@ -99,7 +106,7 @@ show_pnd = args.show_png
 collect_stable = args.collect_stable
 collect_unstable = args.collect_unstable
 hand_plot_dat = args.hand_plot_dat
-
+EnthalpyAboveHullValue = args.EnthalpyAboveHullValue
 # 生成 凸包图对象
 convexhull_data = pd.read_csv(input_csv_path, header=0, sep=',') #  header表示第一行为标题行
 ini_entries = []
@@ -141,7 +148,7 @@ for entry in ini_entries:
     unstable_dict = {}
     energy_above_hull = ini_pd.get_e_above_hull(entry)*1000
     form_energy = ini_pd.get_form_energy(entry)
-    if 0.0 < energy_above_hull <= 50.0: # 这里取高于convex hull 能量在0~50个meV范围内的亚稳结构
+    if 0.0 < energy_above_hull <= EnthalpyAboveHullValue: # 这里取高于convex hull 能量在0~50个meV范围内的亚稳结构
         print("stoichiometry: {:<10}  No.{:<10} is above convell hull {:<10}".format(
             entry.name, 
             entry.entry_id,

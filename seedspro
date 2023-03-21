@@ -24,7 +24,7 @@ def read_enthalpy(dir_vr:str, endpoints:list):
             outcar_path = os.path.join(root, "OUTCAR")
             contcar_path= os.path.join(root, "CONTCAR")
             struct = Structure.from_file(contcar_path)
-            
+
             atoms_amount = struct.composition.num_atoms
             hcontent = float(struct.composition.get_el_amt_dict()['H']) / float(atoms_amount)
 
@@ -61,6 +61,9 @@ def read_enthalpy(dir_vr:str, endpoints:list):
 
 
 if __name__ == "__main__":
-    opt_dir = sys.argv[1]
-    endpoints = sys.argv[2:]
-    read_enthalpy(opt_dir, endpoints)
+    # opt_dir = sys.argv[1]
+    # endpoints = sys.argv[2:]
+    print("你必须制定2个输入参数")
+    dir_vr = input("结构优化的文件所在的目录路径\n")
+    endpoints = input("请指定相图的端点(比如: Lu N2 H2), 只可以使用空格间隔你的端点名称。确保你使用的端点名称在结构文件中存在\n").split()
+    read_enthalpy(dir_vr, endpoints)
