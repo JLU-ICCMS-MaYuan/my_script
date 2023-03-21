@@ -157,7 +157,7 @@ if __name__ == "__main__":
                 # print(outcar_path)
                 struct = Structure.from_file(poscar_path)   
                 atoms_amount = struct.composition.num_atoms
-                formula = struct.composition.iupac_formula
+                formula = str(struct.composition.iupac_formula).replace(" ", "")
                 try:
                     enthalpy = get_enthalpy(outcar_path)
                     enthalpy_per_atoms = float(enthalpy) / atoms_amount
