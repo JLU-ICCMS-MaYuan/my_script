@@ -84,7 +84,6 @@ def vaspbatch_relax(args: ArgumentParser) -> None:
                 _vasp_submitjob.submit_mode1(jobname)
 
 
-
 def vasp_phono(args: ArgumentParser) -> None:
 
     # read input para
@@ -112,47 +111,92 @@ def vasp_phono(args: ArgumentParser) -> None:
         vasp_submitjob.submit_mode2(jobname)
 
 
-class vaspbatch_phono(vasp_phono):
+def vaspbatch_phono(args: ArgumentParser) -> None:
 
-    def __init__(self, args: ArgumentParser) -> None:
+    _config = config(args).read_config()
+    input_dir_path = Path(_config['input_file_path'])
+    if input_dir_path.is_dir():
+        input_files_path = list(input_dir_path.glob("*.vasp"))
+        work_path         = _config['work_path']        ; del _config['work_path']
+        press             = _config['press']            ; del _config['press']
+        submit_job_system = _config['submit_job_system']; del _config['submit_job_system']
+        pass                                            ; del _config['input_file_path']
+        mode              = _config['mode']             ; del _config['mode']
+        for input_file_path in input_files_path:
+            # prepare the POSCAR POTCAR  
+            phono_inputpara  = vaspbatch_phonopara(
+                work_path=work_path,
+                press=press,
+                submit_job_system=submit_job_system,
+                input_file_path=input_file_path,
+                mode=mode,
+                **_config
+                )
 
-        self._config = config(args).read_config()
-        self.input_dir_path = Path(self._config['input_file_path'])
-        if self.input_dir_path.is_dir():
-            self.input_files_path = list(self.input_dir_path.glob("*.vasp"))
-            work_path         = self._config['work_path']        ; del self._config['work_path']
-            press             = self._config['press']            ; del self._config['press']
-            submit_job_system = self._config['submit_job_system']; del self._config['submit_job_system']
-            pass                                                 ; del self._config['input_file_path']
-            mode              = self._config['mode']             ; del self._config['mode']
-            for input_file_path in self.input_files_path:
-                # prepare the POSCAR POTCAR  
-                self.phono_inputpara  = vaspbatch_phonopara(
-                    work_path=work_path,
-                    press=press,
-                    submit_job_system=submit_job_system,
-                    input_file_path=input_file_path,
-                    mode=mode,
-                    **self._config
-                    )
+            # init the INCAR
+            _vasp_writeincar  = vasp_writeincar.init_from_phonoinput(phono_inputpara)
+            if phono_inputpara.mode == 'disp':
+                _vasp_writeincar.disp_incar(phono_inputpara.sub_workpath)
+            elif phono_inputpara.mode == 'dfpt':
+                _vasp_writeincar.dfpt_incar(phono_inputpara.sub_workpath)
+            # init the KPOINTS
+            phono_inputpara.create_kpoints_by_pymatgen(phono_inputpara.sub_workpath.joinpath("KPOINTS"))
+            # init the submit job script
+            _vasp_writesubmit = vasp_writesubmit.init_from_phonoinput(phono_inputpara)
+            jobname = _vasp_writesubmit.write_submit_scripts()
+            # submit the job
+            _vasp_submitjob   = vasp_submitjob.init_from_phonoinput(phono_inputpara)
+            if phono_inputpara.queue is not None:
+                _vasp_submitjob.submit_mode2(jobname)
 
-                # init the INCAR
-                self.vasp_writeincar  = vasp_writeincar.init_from_phonoinput(self.phono_inputpara)
-                if self.phono_inputpara.mode == 'disp':
-                    self.vasp_writeincar.disp_incar(self.phono_inputpara.sub_workpath)
-                elif self.phono_inputpara.mode == 'dfpt':
-                    self.vasp_writeincar.dfpt_incar(self.phono_inputpara.sub_workpath)
-                # init the KPOINTS
-                self.vasp_kpoints     = vasp_writekpoints.init_from_inputpara(self.phono_inputpara)
 
-                # init the submit job script
-                self.vasp_writesubmit = vasp_writesubmit.init_from_phonoinput(self.phono_inputpara)
-                jobname = self.vasp_writesubmit.write_submit_scripts()
-                # submit the job
-                self.vasp_submitjob   = vasp_submitjob.init_from_phonoinput(self.phono_inputpara)
-                if self.phono_inputpara.queue is not None:
-                    self.vasp_submitjob.submit_mode2(jobname)
+def vasp_properties(args):
+        
+    # read input para
+    _config = config(args).read_config()
 
+    # prepare the POSCAR POTCAR  
+    properties_inputpara = vasp_inputpara.init_from_config1(_config)
+
+    # init the INCAR
+    _vasp_writeincar  = vasp_writeincar.init_from_properties(properties_inputpara)
+    if properties_inputpara.mode == 'scf':
+        _vasp_writeincar.scf_incar(
+            properties_inputpara.sub_workpath
+            )
+        properties_inputpara.write_evenly_kpoints(
+            properties_inputpara.kspacing, 
+            properties_inputpara.sub_workpath
+            )
+        _vasp_writesubmit = vasp_writesubmit.init_from_properties(properties_inputpara)
+        jobname = _vasp_writesubmit.write_submit_scripts()
+        _vasp_submitjob = vasp_submitjob.init_from_relaxinput(properties_inputpara)
+        if properties_inputpara.queue is not None:
+            _vasp_submitjob.submit_mode1(jobname)
+    elif properties_inputpara.mode == 'eband':
+        properties_inputpara.write_highsymmetry_kpoints(
+            properties_inputpara.ase_type, 
+            properties_inputpara.sub_workpath.joinpath("KPOINTS"),
+            )
+        _vasp_writeincar.band_incar(properties_inputpara.sub_workpath)
+        _vasp_writesubmit = vasp_writesubmit.init_from_properties(properties_inputpara)
+        jobname = _vasp_writesubmit.write_submit_scripts()
+        _vasp_submitjob = vasp_submitjob.init_from_relaxinput(properties_inputpara)
+        if properties_inputpara.queue is not None:
+            _vasp_submitjob.submit_mode1(jobname)
+    elif properties_inputpara.mode == 'eledos':
+        properties_inputpara.write_evenly_kpoints(
+            properties_inputpara.kspacing, 
+            properties_inputpara.sub_workpath
+            )
+        _vasp_writeincar.eledos_incar(properties_inputpara.sub_workpath)
+        _vasp_writesubmit = vasp_writesubmit.init_from_properties(properties_inputpara)
+        jobname = _vasp_writesubmit.write_submit_scripts()
+        _vasp_submitjob = vasp_submitjob.init_from_relaxinput(properties_inputpara)
+        if properties_inputpara.queue is not None:
+            _vasp_submitjob.submit_mode1(jobname)
+    else:
+        print(vasp_writeincar.mode)
 
 class vasp_processdata(vasp_base):
 
@@ -457,44 +501,4 @@ class vasp_clear:
                 os.system(f"rm -fr {str(Path(self.work_path).joinpath(file))}")
 
 
-def vasp_properties(args):
-        
-    # read input para
-    _config = config(args).read_config()
-
-    # prepare the POSCAR POTCAR  
-    properties_inputpara = vasp_inputpara.init_from_config1(_config)
-
-    # init the INCAR
-    _vasp_writeincar  = vasp_writeincar.init_from_properties(properties_inputpara)
-    if properties_inputpara.mode == 'scf':
-        _vasp_writeincar.scf_incar(
-            properties_inputpara.sub_workpath
-            )
-        properties_inputpara.write_evenly_kpoints(properties_inputpara.kspacing, properties_inputpara.sub_workpath)
-        _vasp_writesubmit = vasp_writesubmit.init_from_properties(properties_inputpara)
-        jobname = _vasp_writesubmit.write_submit_scripts()
-        _vasp_submitjob = vasp_submitjob.init_from_relaxinput(properties_inputpara)
-        if properties_inputpara.queue is not None:
-            _vasp_submitjob.submit_mode1(jobname)
-    elif properties_inputpara.mode == 'eband':
-        properties_inputpara.write_highsymmetry_kpoints(
-            properties_inputpara.ase_type, 
-            properties_inputpara.sub_workpath.joinpath("KPOINTS"),
-            )
-        _vasp_writeincar.band_incar(properties_inputpara.sub_workpath)
-        _vasp_writesubmit = vasp_writesubmit.init_from_properties(properties_inputpara)
-        jobname = _vasp_writesubmit.write_submit_scripts()
-        _vasp_submitjob = vasp_submitjob.init_from_relaxinput(properties_inputpara)
-        if properties_inputpara.queue is not None:
-            _vasp_submitjob.submit_mode1(jobname)
-    elif properties_inputpara.mode == 'eledos':
-        _vasp_writeincar.eledos_incar(properties_inputpara.sub_workpath)
-        _vasp_writesubmit = vasp_writesubmit.init_from_properties(properties_inputpara)
-        jobname = _vasp_writesubmit.write_submit_scripts()
-        _vasp_submitjob = vasp_submitjob.init_from_relaxinput(properties_inputpara)
-        if properties_inputpara.queue is not None:
-            _vasp_submitjob.submit_mode1(jobname)
-    else:
-        print(vasp_writeincar.mode)
 
