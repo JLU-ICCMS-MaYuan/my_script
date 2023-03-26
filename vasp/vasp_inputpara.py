@@ -156,6 +156,7 @@ class vasp_phonopara(vasp_inputpara):
             _supercell = re.findall(r"\d+", kwargs['supercell'])
             self.supercell = list(map(int, _supercell))
         else:
+            print("If you didn't set supercell, the default will be `supercell='1 1 1'` ")
             self.supercell = [1, 1, 1]
         
         if self.mode == "disp" or self.mode == "dfpt":
@@ -174,9 +175,11 @@ class vasp_phonopara(vasp_inputpara):
             self.sposcar_ase_type    = read(sposcar_file)
             self.sposcar_struct_type = AseAtomsAdaptor.get_structure(self.sposcar_ase_type) 
             if self.mode == 'dfpt':
+                print("When mode=dfpt, the program will rename POSCAR to POSCAR-unit and copy SPOSCAR to POSCAR")
                 shutil.move(poscar_file, poscar_init) 
                 shutil.copy(sposcar_file, poscar_file)
             elif self.mode == 'disp':
+                print("When mode=disp, the program will copy POSCAR to POSCAR-init and note that SPOSCAR won't be copied to POSCAR")
                 shutil.copy(poscar_file, poscar_init)
                 
 
