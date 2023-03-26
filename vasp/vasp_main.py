@@ -17,6 +17,4 @@ if __name__ == "__main__":
     parser = ArgumentParser(prog="run_vasp", formatter_class=RawTextHelpFormatter)
     args = set_more_args(parser)
 
-    logger.info(f"{args} \n")
-
     vasp = args.vasp_workflow(args)

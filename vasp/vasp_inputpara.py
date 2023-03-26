@@ -4,6 +4,8 @@ import shutil
 import logging
 from pathlib import Path
 
+import numpy as np
+
 from ase.io import read
 from pymatgen.io.ase import AseAtomsAdaptor
 
@@ -86,7 +88,7 @@ class vasp_inputpara(vasp_base):
         
         if not hasattr(self, "queue"):
             self.queue = None
-            logger.info("You didn't specify queue, so the program will not submit the job in any way")
+            print("You didn't specify queue, so the program will not submit the job in any way")
 
         if not hasattr(self, "core"):
             raise ValueError("You must specify the number of core, such as 'core=48'")
@@ -158,7 +160,7 @@ class vasp_phonopara(vasp_inputpara):
         
         if self.mode == "disp" or self.mode == "dfpt":
             cwd = os.getcwd()
-            os.chdir(self.work_underpressure)
+            os.chdir(self.sub_workpath)
             os.system('phonopy -d --dim="{} {} {}"'.format(
                         self.supercell[0],
                         self.supercell[1],
@@ -166,9 +168,9 @@ class vasp_phonopara(vasp_inputpara):
                     ))
             os.chdir(cwd)
 
-            poscar_file = Path(self.work_underpressure).joinpath("POSCAR")
-            poscar_init = Path(self.work_underpressure).joinpath("POSCAR-init")
-            sposcar_file= Path(self.work_underpressure).joinpath("SPOSCAR")
+            poscar_file = Path(self.sub_workpath).joinpath("POSCAR")
+            poscar_init = Path(self.sub_workpath).joinpath("POSCAR-init")
+            sposcar_file= Path(self.sub_workpath).joinpath("SPOSCAR")
             self.sposcar_ase_type    = read(sposcar_file)
             self.sposcar_struct_type = AseAtomsAdaptor.get_structure(self.sposcar_ase_type) 
             if self.mode == 'dfpt':

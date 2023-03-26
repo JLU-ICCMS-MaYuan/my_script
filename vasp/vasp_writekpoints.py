@@ -12,12 +12,12 @@ class vasp_writekpoints:
     def __init__(
         self, 
         input_file_path: str,
-        work_underpressure: str,
+        sub_workpath: str,
         **kwargs, 
         ):
         self.input_file_path = input_file_path
-        self.work_underpressure = work_underpressure
-        self.output_kpoints = os.path.join(self.work_underpressure, "KPOINTS") 
+        self.sub_workpath = sub_workpath
+        self.output_kpoints = os.path.join(self.sub_workpath, "KPOINTS") 
         for key, value in kwargs.items():
             setattr(self, key, value)        
 
@@ -32,7 +32,7 @@ class vasp_writekpoints:
     def init_from_inputpara(cls, other_class: vasp_inputpara):
         self = cls(
             input_file_path=other_class.input_file_path,
-            work_underpressure=other_class.work_underpressure,
+            sub_workpath=other_class.sub_workpath,
             sposcar_struct_type=other_class.sposcar_struct_type,
             kpoints=other_class.kpoints,
             kspacing=other_class.kspacing,

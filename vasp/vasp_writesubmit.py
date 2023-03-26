@@ -8,17 +8,20 @@ class vasp_writesubmit:
     
     def __init__(
         self, 
-        work_underpressure: str, 
+        sub_workpath: str, 
         submit_job_system: str, 
         mode: str,
         queue: str,
         core: int,
+        **kwargs,
         ):
-        self.work_underpressure = work_underpressure
+        self.sub_workpath = sub_workpath
         self.submit_job_system = submit_job_system
         self.mode = mode
         self.queue = queue
         self.core = core
+        for key, value in kwargs.items():
+            setattr(self, key, value)
 
         if self.submit_job_system == "slurm":
             self.jobtitle =  slurmtitle
@@ -33,20 +36,33 @@ class vasp_writesubmit:
     def init_from_relaxinput(cls, other_class: vasp_inputpara):
         
         self = cls(
-            work_underpressure=other_class.work_underpressure,
+            sub_workpath=other_class.sub_workpath,
             submit_job_system=other_class.submit_job_system,
             mode=other_class.mode,
             queue=other_class.queue,
             core=other_class.core,
         )
-        
+    
         return self
     
+    @classmethod
+    def init_from_properties(cls, other_class: vasp_inputpara):
+        
+        self = cls(
+            sub_workpath=other_class.sub_workpath,
+            submit_job_system=other_class.submit_job_system,
+            mode=other_class.mode,
+            queue=other_class.queue,
+            core=other_class.core,
+        )
+    
+        return self
+
     @classmethod
     def init_from_phonoinput(cls, other_class: vasp_inputpara):
 
         self = cls(
-            work_underpressure=other_class.work_underpressure,
+            sub_workpath=other_class.sub_workpath,
             submit_job_system=other_class.submit_job_system,
             mode=other_class.mode,
             queue=other_class.queue,
@@ -61,21 +77,23 @@ class vasp_writesubmit:
             mode=self.mode
 
         if mode == 'rvf':
-            jobname = self.fopt(self.work_underpressure)
+            jobname = self.fopt(self.sub_workpath)
             return jobname
         elif mode == "rv1":
-            jobname = self.oneopt(self.work_underpressure)
+            jobname = self.oneopt(self.sub_workpath)
             return jobname
         elif mode == 'rv3':
-            jobname = self.threeopt(self.work_underpressure)
+            jobname = self.threeopt(self.sub_workpath)
             return jobname
         elif mode == 'disp':
-            jobname = self.disp(self.work_underpressure)
+            jobname = self.disp(self.sub_workpath)
             return jobname
         elif mode == 'dfpt':
-            jobname = self.dfpt(self.work_underpressure)
+            jobname = self.dfpt(self.sub_workpath)
             return jobname
-
+        elif mode in ['scf', 'eband', 'edos']:
+            jobname = self.scf_eband_eledos(self.sub_workpath)
+            return jobname
 
     # submit job scripts
     def fopt(self, submit_dirpath):
@@ -125,7 +143,6 @@ class vasp_writesubmit:
             submit.write("done                                 \n")
         return jobname
          
-
     def dfpt(self, submit_dirpath):
         jobname = "dfpt.sh"
         submit_script_filepath = os.path.join(submit_dirpath, jobname)
@@ -136,7 +153,6 @@ class vasp_writesubmit:
             submit.write('mpirun -np {} {} > vasp.log 2>&1    \n'.format(self.core, vaspbin_path))                        
         return jobname
 
-
     def disp(self, submit_dirpath):
         jobname = "disp.sh"
         submit_script_filepath = os.path.join(submit_dirpath, jobname)
@@ -146,4 +162,11 @@ class vasp_writesubmit:
             submit.write('echo "run Displacement" && pwd      \n')
             submit.write('mpirun -np {} {} > vasp.log 2>&1  \n'.format(self.core, vaspbin_path))   
         return jobname
- 
+
+    def scf_eband_eledos(self, submit_dirpath):
+        jobname = "scf-eband-eledos.sh"
+        submit_script_filepath = os.path.join(submit_dirpath, jobname)
+        with open(submit_script_filepath, "w") as submit:
+            submit.writelines(self.jobtitle)
+            submit.write('mpirun -n {} {} > vasp.log 2>&1    \n'.format(self.core, vaspbin_path))                                                                         
+        return jobname

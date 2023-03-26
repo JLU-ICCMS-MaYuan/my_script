@@ -6,6 +6,7 @@ import shutil
 from pathlib import Path
 from typing import List
 
+import numpy as np
 from ase.io import read
 from pymatgen.io.ase import AseAtomsAdaptor
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
@@ -23,8 +24,8 @@ class vasp_base:
         press
         input_file_path
         submit_job_system
-    create pressure directory (named work_underpressure) on the basis of work_path and press
-    Create pseudopotential directory (named workpath_pppath) in the work_underpressure
+    create pressure directory (named sub_workpath) on the basis of work_path and press
+    Create pseudopotential directory (named workpath_pppath) in the sub_workpath
     """
     def __init__(
         self,
@@ -40,28 +41,47 @@ class vasp_base:
         self.submit_job_system = submit_job_system
         self.input_file_path   = input_file_path
         self.mode              = mode
-        
-        self.input_file_name   = self.input_file_path.name.split(".")[0]
-        if self.work_path is None:
-            self.work_underpressure = Path.cwd()
-            self.work_path = self.work_underpressure.parent
-        else:
-            self.work_underpressure= Path(self.work_path).joinpath(str(int(self.press)))
-            if not self.work_underpressure.exists():
-                self.work_underpressure.mkdir(parents=True)
 
+        self.input_file_name   = self.input_file_path.name.split(".")[0]
         self.ase_type          = read(self.input_file_path)
         self.struct_type       = AseAtomsAdaptor.get_structure(self.ase_type)
-        self.get_struct_info(self.struct_type, self.work_underpressure)
         
-        ############################ prepare pp directory #########################
-        logger.info(f"create potcar dir in {self.work_underpressure}")
-        self.workpath_pppath = Path(self.work_underpressure).joinpath("potcar_lib")
+        print("Step 1 ------------------------------")
+        print("Create sub_workpath under the work_path.")
+        print("If you didn't specify the work_path, the default the sub_workpath is the current path and the work_path is its parent path !")
+        if self.work_path is None:
+            if self.mode in ['scf', 'eband', 'eledos']:
+                self.sub_workpath = Path.cwd()
+                self.work_path = self.sub_workpath.parent
+                if not self.sub_workpath.exists():
+                    self.sub_workpath.mkdir(parents=True)
+            else:
+                self.sub_workpath = Path.cwd()
+                self.work_path = self.sub_workpath.parent   
+        else:
+            if self.mode in ['scf', 'eband', 'eledos']:
+                self.sub_workpath= Path(self.work_path).joinpath(self.mode)
+                if not self.sub_workpath.exists():
+                    self.sub_workpath.mkdir(parents=True)
+            else:
+                self.sub_workpath= Path(self.work_path).joinpath(str(int(self.press)))
+                if not self.sub_workpath.exists():
+                    self.sub_workpath.mkdir(parents=True)
+        print("sub_workpath is \n {}".format(self.sub_workpath))
+
+
+        print("Step 2 ------------------------------")
+        print("Prepare the POSCAR and its coresponding primitive and conventional cell.")
+        self.get_struct_info(self.struct_type, self.sub_workpath)
+
+        print("Step 3 ------------------------------")
+        print("Prepare the directory of `potcar_lib` and merge POTCARs ")
+        self.workpath_pppath = Path(self.work_path).joinpath("potcar_lib")
         if not self.workpath_pppath.exists():
-            self.workpath_pppath.mkdir()
-        # 准备赝势 
-        self.get_potcar(self.work_underpressure)   
-        ############################# done pp directory ##########################
+            self.workpath_pppath.mkdir() 
+        self.get_potcar(self.sub_workpath)
+        print(f"potcar_lib is in \n {self.workpath_pppath}")
+
 
     def get_struct_info(self, struct, output_poscar):
         """
@@ -74,8 +94,8 @@ class vasp_base:
         # bstruct = spa.get_conventional_standard_structure()
         pstruct = spa.get_primitive_standard_structure()
         bstruct = spa.get_conventional_standard_structure()
-        Poscar(pstruct).write_file(output_poscar.joinpath("PPOSCAR"))
-        Poscar(bstruct).write_file(output_poscar.joinpath("BPOSCAR"))
+        Poscar(pstruct).write_file(output_poscar.joinpath("cell-primitive.vasp"))
+        Poscar(bstruct).write_file(output_poscar.joinpath("cell-conventional.vasp"))
         Poscar(struct).write_file(output_poscar.joinpath("POSCAR"))
 
         # 处理PPOSCAR的pymatgen对象
@@ -111,14 +131,12 @@ class vasp_base:
                 dst_pp = Path(self.workpath_pppath).joinpath(dst_pps[0])
                 self.final_choosed_potcar.append(dst_pp)
             elif len(dst_pps) == 0:
-                logger.info(f"to prepare {species_name} POTCAR! ")
+                print(f"to prepare {species_name} POTCAR! ")
                 dst_pp = self.get_single_potcar(species_name)
                 self.final_choosed_potcar.append(dst_pp)
             else:
                 logger.error(f"find many POTCARs {dst_pps}")
-        logger.info(f"the choosed pp is {self.final_choosed_potcar}")
         if len(self.final_choosed_potcar) == len(self.species):
-            logger.info("merge")
             self.merge_potcar(dst_potcar_path, self.final_choosed_potcar)
 
     def get_single_potcar(self, species_name):
@@ -144,7 +162,7 @@ class vasp_base:
                 dst_pp = Path(self.workpath_pppath).joinpath(species_name)
                 shutil.copy(src_pp, dst_pp)
                 with open(Path(self.workpath_pppath).joinpath("potcar.log"), "a") as log:
-                    log.write("{:<5}  {:<5}".format(species_name, choosed_pot))
+                    log.write("{:<10}  {:<10}\n".format(species_name, choosed_pot))
                 choosed_flag = True
             else:
                 choosed_flag = False
@@ -165,10 +183,10 @@ class vasp_base:
         # 第三步：将完成的POTCAR合并出来，并且合并到目标POSCAR所在的目录
         if not os.path.exists(self.workpath_pppath):
             raise FileExistsError("potcar_lib doesn't exist!")
-        if self.work_underpressure.joinpath("POSCAR").exists():
-            src_poscar = self.work_underpressure.joinpath("POSCAR") 
+        if self.sub_workpath.joinpath("POSCAR").exists():
+            src_poscar = self.sub_workpath.joinpath("POSCAR") 
             elements = open(src_poscar, "r").readlines()[5].split()
-            logger.info("The program will merge the POTCAR of element {}".format(elements))
+            print("The program will merge the POTCAR of element {}".format(elements))
             src_potcar_path_list = []
             for ele in elements:
                 for pot in final_choosed_potcar:
@@ -176,7 +194,9 @@ class vasp_base:
                         if pot.exists():  
                             src_potcar_path_list.append(pot)
             dst_potcar = dst_potcar_path.joinpath("POTCAR")
-            logger.info(f"POTCAR merge order is: {src_potcar_path_list}")
+            print(f"POTCAR merge order is:")
+            for path in src_potcar_path_list:
+                print(path.name)
             # 将多个POTCAR写入总的POTCAR中 方法1
             # f = open(dst_potcar, "w")
             # for potcar_indi in src_potcar_path_list:
@@ -191,6 +211,98 @@ class vasp_base:
                 os.system(f"cat {str(potcar_indi)} >> {str(dst_potcar)}")
         else:
             print("POSCAR not exist")
+
+    def write_evenly_kpoints(self, kspacing, position):
+        lattice = self.cell_parameters
+        a1 = lattice[0]
+        a2 = lattice[1]
+        a3 = lattice[2]
+        b1 = np.cross(a2, a3) / np.dot(a1, np.cross(a2, a3))
+        b2 = np.cross(a3, a1) / np.dot(a2, np.cross(a3, a1))
+        b3 = np.cross(a1, a2) / np.dot(a3, np.cross(a1, a2))
+        b1_mol = np.linalg.norm(b1)
+        b2_mol = np.linalg.norm(b2)
+        b3_mol = np.linalg.norm(b3)
+        N1 = np.ceil(b1_mol*2*np.pi / float(kspacing))
+        N2 = np.ceil(b2_mol*2*np.pi / float(kspacing))
+        N3 = np.ceil(b3_mol*2*np.pi / float(kspacing))
+
+        kpoints = Path(position).joinpath("KPOINTS")
+        with open(kpoints, "w") as kp:
+            kp.write("from kspacing is {}\n".format(kspacing))
+            kp.write("0\n")
+            kp.write("Gamma\n")
+            kp.write("{:<5} {:<5} {:<5}\n".format(str(N1), str(N2), str(N3)))
+            kp.write("{:<5} {:<5} {:<5}\n".format("0", "0", "0"))
+
+    def create_kpoints_by_pymatgen(self, output_kpoints):
+        """
+        automatic_density_by_length方法 根据输入的结构(第一个参数), 各个维度k点的密度(第二个参数), 是否强制使用Gamma方法产生k点(第三个参数)
+        重点说说如何设置各个方向的密度。该方法依据的公式是: 
+            number of k points along this direction = density of k along this derection / parameter of this direction
+        所以用户需要根据超胞的大小, 合理估计一个k点密度, 然后得到该方向的k点数
+        """
+        from pymatgen.io.vasp import Kpoints
+        print("")
+        kpoints = Kpoints.automatic_density_by_lengths(
+            self.sposcar_struct_type, 
+            length_densities=self.kpoints,
+            force_gamma=True)
+        kpoints.write_file(output_kpoints)
+        print(kpoints)
+
+    def get_hspp(self, ase_type):
+
+        from itertools import chain
+
+        ltype   = ase_type.cell.get_bravais_lattice()
+        pstring = ltype.special_path
+        _plist  = [[ p for p in pp] for pp in pstring.split(",")]
+
+        print(f"the high symmetry points path is {_plist}")
+
+        print(
+            "please input the mode you want\n",
+            "'all_points'\n",
+            "'main_points'\n",
+            "Nothing to input\n"
+            )
+        high_symmetry_type = input()
+
+        if not high_symmetry_type:
+            high_symmetry_type = "all_points" # default
+        if "," in pstring:
+            if high_symmetry_type == "all_points":
+                path_name_list = list(chain.from_iterable(_plist))
+            elif high_symmetry_type == "main_points":
+                path_name_list = max(_plist, key=len)
+        else:
+            path_name_list = [ pp for pp in pstring]
+        
+        # 这里的高对称点是指：这个倒空间的布里渊区有几种高对称点，并不是某一个路径的高对称点的列表。
+        # 如果想获得某一个路径下高对称点的坐标，需要按照path_name_list的顺序依次获得相应的坐标。
+        special_points   = ltype.get_special_points()
+        path_coords      = [list(special_points[pname]) for pname in path_name_list]
+        
+        print(f"the choosed high symmetry path is\n")
+        for name, coord in zip(path_name_list, path_coords):
+            print("{}      {:<5} {:<5} {:<5}".format(name, coord[0], coord[1], coord[2]))
+
+        return path_name_list, path_coords
+
+    def write_highsymmetry_kpoints(self, ase_type, kpoints_path):
+        path_name_list, path_coords = self.get_hspp(ase_type)
+        pair_two_names  = [[path_name_list[i], path_name_list[i+1]] for i in range(len(path_name_list)-1)]
+        pair_two_coords = [[path_coords[i], path_coords[i+1]] for i in range(len(path_coords)-1)]
+        with open(kpoints_path, "w") as kp:
+            kp.write("KPATH\n")
+            kp.write("50\n")
+            kp.write("Line-Mode\n")
+            kp.write("Reciprocal\n")
+            for two_names, two_coords in zip(pair_two_names, pair_two_coords):
+                kp.write("{:<10} {:<10} {:<10} ! ${:<10}$\n".format(two_coords[0][0],two_coords[0][1],two_coords[0][2], two_names[0]))
+                kp.write("{:<10} {:<10} {:<10} ! ${:<10}$\n".format(two_coords[1][0],two_coords[1][1],two_coords[1][2], two_names[0]))
+                kp.write("\n")
 
 class vaspbatch_base(vasp_base):
 
@@ -211,21 +323,21 @@ class vaspbatch_base(vasp_base):
         
         self.input_file_name   = self.input_file_path.name.split(".")[0]
         if self.work_path is None:
-            self.work_underpressure = Path.cwd().joinpath(str(self.press), self.input_file_name)
-            self.work_path = self.work_underpressure.parent
+            self.sub_workpath = Path.cwd().joinpath(str(self.press), self.input_file_name)
+            self.work_path = self.sub_workpath.parent
         else:
-            self.work_underpressure= Path(self.work_path).joinpath(str(self.press), self.input_file_name)
-            if not self.work_underpressure.exists():
-                self.work_underpressure.mkdir(parents=True)
+            self.sub_workpath= Path(self.work_path).joinpath(str(self.press), self.input_file_name)
+            if not self.sub_workpath.exists():
+                self.sub_workpath.mkdir(parents=True)
 
         self.ase_type          = read(self.input_file_path)
         self.struct_type       = AseAtomsAdaptor.get_structure(self.ase_type)
-        self.get_struct_info(self.struct_type, self.work_underpressure)
+        self.get_struct_info(self.struct_type, self.sub_workpath)
         
         ############################ prepare pp directory #########################
-        logger.info(f"create potcar dir in {self.work_path}")
+        print(f"create potcar dir in \n {self.work_path}")
         self.workpath_pppath = Path(self.work_path).joinpath("potcar_lib")
         if not self.workpath_pppath.exists():
             self.workpath_pppath.mkdir()
         # 准备赝势 
-        self.get_potcar(self.work_underpressure)   
+        self.get_potcar(self.sub_workpath)   

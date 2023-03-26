@@ -4,16 +4,16 @@ from vasp.vasp_inputpara import vasp_inputpara
 
 class vasp_writeincar:
     
-    def __init__(self, work_underpressure, **kwargs) -> None:
+    def __init__(self, sub_workpath, **kwargs) -> None:
 
-        self.work_underpressure = work_underpressure
+        self.sub_workpath = sub_workpath
         for key, value in kwargs.items():
             setattr(self, key, value)
 
     @classmethod
     def init_from_relaxinput(cls, other_class: vasp_inputpara):
         self = cls(
-            work_underpressure=other_class.work_underpressure,
+            sub_workpath=other_class.sub_workpath,
             encut=other_class.encut,
             kspacing=other_class.kspacing,
             ismear=other_class.ismear,
@@ -35,7 +35,7 @@ class vasp_writeincar:
     @classmethod
     def init_from_phonoinput(cls, other_class: vasp_inputpara):
         self = cls(
-            work_underpressure=other_class.work_underpressure,
+            sub_workpath=other_class.sub_workpath,
             encut=other_class.encut,
             ismear=other_class.ismear,
             sigma=other_class.sigma,
@@ -46,6 +46,23 @@ class vasp_writeincar:
             ncore=other_class.ncore,
             lreal=other_class.lreal,
             mode=other_class.mode,
+        )
+        return self
+
+    @classmethod
+    def init_from_properties(cls, other_class: vasp_inputpara):
+        self = cls(
+            sub_workpath=other_class.sub_workpath,
+            encut=other_class.encut,
+            ismear=other_class.ismear,
+            sigma=other_class.sigma,
+            ediff=other_class.ediff,
+            ediffg=other_class.ediffg,
+            nelm=other_class.nelm,
+            ncore=other_class.ncore,
+            lreal=other_class.lreal,
+            mode=other_class.mode,
+            kspacing=other_class.kspacing,
         )
         return self
 
@@ -178,11 +195,92 @@ class vasp_writeincar:
             incar.write("LCHARG   = .FALSE.\n") 
             incar.write("ADDGRID  = .TRUE. \n")
 
+    def scf_incar(self, incar_dirpath):
+        incar_filepath = os.path.join(incar_dirpath, "INCAR")
+        with open(incar_filepath, "w") as incar:
+            incar.write("ISTART   = 0      \n")   
+            incar.write("ICHARG   = 2      \n")   
+            incar.write("ENCUT    = {}     \n".format(str(self.encut)))        
+            incar.write("PREC     = Accurate\n")
+            incar.write("ISMEAR   = {}     \n".format(str(self.ismear)))   
+            incar.write("SIGMA    = {}     \n".format(str(self.sigma)))   
+            incar.write("NELM     = {}     \n".format(str(self.nelm)))   
+            incar.write("NELMIN   = 2      \n")   
+            incar.write("EDIFF    = {}     \n".format(self.ediff))
+            incar.write("EDIFFG   = {}     \n".format(self.ediffg))
+            incar.write("IBRION   = -1     \n")   
+            incar.write("NSW      = 0      \n")
+            incar.write("KSPACING = {}     \n".format(self.kspacing))
+            incar.write("KGAMMA   = .TRUE. \n") # Determines whether the k points (specified by the KSPACING tag ) include (KGAMMA=.TRUE.) the Γ\Gamma  point.
+            incar.write("VOSKOWN  = 1      \n")
+            incar.write("NBLOCK   = 1      \n")
+            incar.write("NWRITE   = 1      \n")
+            incar.write("ALGO     = Normal \n")
+            incar.write("ISPIN    = 1      \n")
+            incar.write("INIWAV   = 1      \n")
+            incar.write("#NBANDS   = 64     \n")
+            #incar.write("NCORE    = {}    \n".format(str(self.ncore)))         
+            incar.write("LREAL    = {}    \n".format(str(self.lreal)))
+            incar.write("LWAVE    = .FALSE.\n")  
+            incar.write("LCHARG   = .TRUE. \n") 
+            incar.write("ADDGRID  = .FALSE.\n")
+            incar.write("#RWIGS   = 1.54 0.82\n")
+            incar.write("LHYPERFINE = .FALSE.\n")
+            incar.write("NPAR     = 4      \n")
 
+    def band_incar(self, incar_dirpath):
+        incar_filepath = os.path.join(incar_dirpath, "INCAR")
+        with open(incar_filepath, "w") as incar:
+            incar.write("ISTART = 0           \n")
+            incar.write("ICHARG = 11          \n")
+            incar.write("ENCUT = 850          \n")             
+            incar.write("PREC = Accurate      \n") 
+            incar.write("NELM = 100           \n")                               
+            incar.write("NELMIN = 2           \n")
+            incar.write("EDIFF = 1.0e-08      \n")         
+            incar.write("IBRION = -1          \n")             
+            incar.write("NSW = 0              \n")                         
+            incar.write("VOSKOWN = 1          \n")       
+            incar.write("NWRITE = 1           \n")            
+            incar.write("ALGO = Normal        \n")                                  
+            incar.write("ISPIN = 1            \n")           
+            incar.write("INIWAV = 1           \n")            
+            incar.write("LREAL = .FALSE.      \n")
+            incar.write("#NBANDS = 64         \n")              
+            incar.write("LWAVE = .FALSE.      \n")                 
+            incar.write("LCHARG = .FALSE.     \n")                  
+            incar.write("ADDGRID = .FALSE.    \n")   
+            incar.write("#RWIGS = 1.54 0.82   \n")     
+            incar.write("LHYPERFINE = .FALSE. \n")                      
+            incar.write("NPAR = 4             \n")          
 
-
-
-
-
-
+    def eledos_incar(self, incar_dirpath):
+        incar_filepath = os.path.join(incar_dirpath, "INCAR")
+        with open(incar_filepath, "w") as incar:
+            incar.write("ISTART = 1           \n") # if a WAVECAR file exists
+            incar.write("ICHARG = 11          \n") # 从CHGCAR读取给定电荷密度的特征值(用于带结构图)或状态密度(DOS)。自洽CHGCAR文件必须事先通过一个跨越整个布里渊区的k点网格进行完全自洽计算来确定。
+            incar.write("ENCUT = 850          \n")             
+            incar.write("PREC = Accurate      \n") 
+            incar.write("ISMEAR  = -5         \n")
+            incar.write("SIGMA   = 0.01       \n")   
+            incar.write("NELM = 100           \n")                               
+            incar.write("NELMIN = 2           \n")
+            incar.write("EDIFF = 1.0e-08      \n")         
+            incar.write("IBRION = -1          \n")             
+            incar.write("NSW = 0              \n")                         
+            incar.write("VOSKOWN = 1          \n")       
+            incar.write("NWRITE = 1           \n")            
+            incar.write("ALGO = Normal        \n")                                  
+            incar.write("ISPIN = 1            \n")           
+            incar.write("INIWAV = 1           \n")            
+            incar.write("LREAL = .FALSE.      \n")
+            incar.write("#NBANDS = 64         \n")              
+            incar.write("LWAVE = .FALSE.      \n")                 
+            incar.write("LCHARG = .FALSE.     \n")                  
+            incar.write("ADDGRID = .FALSE.    \n")   
+            incar.write("#RWIGS = 1.54 0.82   \n")     
+            incar.write("LHYPERFINE = .FALSE. \n")                      
+            incar.write("NPAR = 4             \n")   
+            incar.write("NEDOS = 1201         \n") # NEDOS指定DOS被评估的网格点的数量
+            incar.write("LORBIT = 11          \n")
 

@@ -1,6 +1,6 @@
 from argparse import ArgumentParser, RawTextHelpFormatter
 
-from vasp.vasp_run import vasp_relax, vasp_phono, vaspbatch_relax, vaspbatch_phono, vasp_processdata, vasp_clear
+from vasp.vasp_run import vasp_relax, vasp_phono, vaspbatch_relax, vaspbatch_phono, vasp_processdata, vasp_clear, vasp_properties
 
 def set_more_args(parser: ArgumentParser):
 
@@ -83,6 +83,32 @@ def set_more_args(parser: ArgumentParser):
     )
     parser_relax.set_defaults(vasp_workflow=vasp_relax)
     
+    # 性质计算：自洽，能带，电子态密度
+    parser_relax = subparsers.add_parser("properties", formatter_class=RawTextHelpFormatter)
+    parser_relax.add_argument(
+        '-m',
+        '--more-argments-about-properties',
+        type=str,
+        dest='more_args',
+        nargs='+',
+        help="输入更多关于的性质计算：自洽，能带，电子态密度参数, 例如：\n"
+            "encut=600 (default)\n"
+            "kspacing = 0.3 \n"
+            "ismear = 0 \n"
+            "sigma = 0.01 \n"
+            "ediff = 1e-8 \n"
+            "ediffg = -0.01 \n"
+            "ibrion = 2 \n"
+            "isif = 3 \n"
+            "potim = 0.1 \n"
+            "nelm = 200 \n"
+            "ncore = 1 \n"
+            "lreal = Auto \n"
+            "mode = None, you can set it to be: rvf rv3 \n"
+            "queue = xieyu\n"
+    )
+    parser_relax.set_defaults(vasp_workflow=vasp_properties)
+
     # 计算声子谱
     parser_phono = subparsers.add_parser("phono", formatter_class=RawTextHelpFormatter)
     parser_phono.add_argument(
