@@ -242,3 +242,20 @@ tool_main.py -i 输入文件名称 -w ./ convert -m dst_format=输出文件名�
 ```shell
 tool_main.py -i CaH6.vasp -w ./ convert -m dst_format=CaH6.cif
 ```
+
+
+# <div align="center"> <span style="color:red"> 绘制convex hull篇 </span> </div>
+
+## 处理结构优化好的数据
+
+```shell
+VaspProcess.py -d ./ -opt
+```
+
+## 绘制convex hull
+
+-ebh 10 只关注energy above hull 10meV以内的结构
+-hand Lu N H 指定端点
+```shell
+plot_ternary_convexhull.py -i enthalpy_sorted.csv -hand Lu N H -ebh 10  -save 
+```

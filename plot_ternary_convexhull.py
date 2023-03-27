@@ -108,7 +108,8 @@ collect_unstable = args.collect_unstable
 hand_plot_dat = args.hand_plot_dat
 EnthalpyAboveHullValue = args.EnthalpyAboveHullValue
 # 生成 凸包图对象
-convexhull_data = pd.read_csv(input_csv_path, header=0, sep=',') #  header表示第一行为标题行
+# convexhull_data = pd.read_csv(input_csv_path, header=0, sep=',') #  header表示第一行为标题行
+convexhull_data = pd.read_table(input_csv_path, header=0, sep='\s+') #  header表示第一行为标题行
 ini_entries = []
 for idx, row in convexhull_data.iterrows():
     comp = Composition(row['formula'])
@@ -167,11 +168,11 @@ unstable_pd.to_csv("unstable.csv", index=False)
 
 
 if save_pnd:
-    plotter = PDPlotter(ini_pd, show_unstable=0.2, backend='matplotlib')
+    plotter = PDPlotter(ini_pd, show_unstable=EnthalpyAboveHullValue*0.001, backend='matplotlib')
     plotter.write_image('pd.png', image_format='png')
 
 if show_pnd:
-    plotter = PDPlotter(ini_pd, show_unstable=0.2, backend='plotly')
+    plotter = PDPlotter(ini_pd, show_unstable=EnthalpyAboveHullValue*0.001, backend='plotly')
     plotter.show()
 
 print("\n")
@@ -182,6 +183,7 @@ if collect_stable:
     if not stable_structs.exists():
         stable_structs.mkdir()
 
+    # calypso结构预测后结构搜集
     for ent in ini_pd.stable_entries:
         print(f"look for the position of N0.{ent.entry_id} structure!")
         for ana_out_dat in Path(input_csv_path).parent.rglob("Analysis_Output.dat"):
@@ -198,6 +200,12 @@ if collect_stable:
                     shutil.copy(src_vaspfile, dst_vaspfile)
                     print(src_vaspfile)
                     break
+    # 自定义结构优化后结构搜集
+    for ent in ini_pd.stable_entries:
+        src_vaspfile = Path.cwd().joinpath(str(ent.entry_id), "POSCAR")
+        dst_vaspfile = stable_structs.joinpath(f"{ent.entry_id}_{ent.composition.formula.replace(' ', '')}_.vasp")
+        shutil.copy(src_vaspfile, dst_vaspfile)
+        print(src_vaspfile)
 
 # 搜集所有亚稳的结构
 if collect_unstable:
@@ -226,6 +234,16 @@ if collect_unstable:
                         print(src_vaspfile)
                         break
 
+    # 自定义结构优化后结构搜集
+    for ent in ini_pd.ini_entries:
+        unstable_dict = {}
+        energy_above_hull = ini_pd.get_e_above_hull(entry)*1000
+        form_energy = ini_pd.get_form_energy(entry)        
+        if 0.0 < energy_above_hull <= 50.0:
+            src_vaspfile = Path.cwd().joinpath(str(ent.entry_id), "POSCAR")
+            dst_vaspfile = unstable_structs.joinpath(f"{ent.entry_id}_{ent.composition.formula.replace(' ', '')}_.vasp")
+            shutil.copy(src_vaspfile, dst_vaspfile)
+            print(src_vaspfile)
 
 
 if hand_plot_dat:

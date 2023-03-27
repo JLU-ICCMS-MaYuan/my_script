@@ -149,19 +149,21 @@ if __name__ == "__main__":
             file.write("{:<10} {:<20} {:<20} {:<20} \n".format("Number", "formula", "enthalpy", "enthalpy_per_atoms")) 
 
         i = 100000
+        print("提取文件的路径如下：")
         for root, dirs, files in os.walk(dir_vr):
-            print(root)
             if "OUTCAR" in files and "POSCAR" in files:
+                print(root)
                 outcar_path = os.path.join(root, "OUTCAR")
                 poscar_path = os.path.join(root, "POSCAR")
                 # print(outcar_path)
                 struct = Structure.from_file(poscar_path)   
                 atoms_amount = struct.composition.num_atoms
                 formula = str(struct.composition.iupac_formula).replace(" ", "")
+                comp_dict = dict(struct.composition.get_el_amt_dict())
                 try:
                     enthalpy = get_enthalpy(outcar_path)
                     enthalpy_per_atoms = float(enthalpy) / atoms_amount
-                    number = re.findall(r"\d{1,3}", root.split("/")[-1])
+                    number = re.findall(r"\d{1,4}", root.split("/")[-1])
                     if number:
                         enthalpy_dict[formula]["Number"] = number[0]
                         number = number[0]
@@ -171,24 +173,57 @@ if __name__ == "__main__":
                         number =  str(i) +"-"+ os.path.basename(root)
                     enthalpy_dict[formula]["formula"]    = formula
                     enthalpy_dict[formula]["enthalpy"]   = enthalpy
-                    enthalpy_dict[formula]["enthalpy_per_atoms"] = enthalpy_per_atoms
-                    with open("enthalpy.dat", "a") as file:
-                        file.write("{:<10} {:<20} {:<20} {:<20} \n".format(number, formula, enthalpy, enthalpy_per_atoms)) 
+                    enthalpy_dict[formula]["enthalpy/atoms"] = enthalpy_per_atoms
+                    for key, value in comp_dict.items():
+                        enthalpy_dict[formula][key] = value
                 except Exception as e:
                     print(e.args)
                     print(f"error in {root}")
                     continue                
-                
+
         import pandas as pd
         # import pprint
         # pprint.pprint(enthalpy_dict); input()
         df = pd.DataFrame(enthalpy_dict).T  # 分隔符的用法: \s表示由空格作为分隔符, +表示有多个空格
+        # 将所有的 NaN 值替换为 0
+        df = df.fillna(0)
+
+        try:
+            print("尝试处理端点值")
+            # (df.iloc[:, 4:] != 0) 可以返回一个布尔值的df，非零的位置是True，零的位置是False
+            # sum(axis=1) 对每一行相加（例如某一行是 False，True，True对应着0, 18, 0）,那么相加的结构是1就说明只有一个元素，说明提取到的这一行是单质的行。
+            endpoints_df = df[(df.iloc[:, 4:] != 0).sum(axis=1) == 1]
+
+            # 保留端点值中能量最低的结构，其余结构和能量都删除
+            # df['formula'].str.extract('([A-Za-z]+)', expand=False) 该行代码可以用于提取化学式中的化学元素符号。 expand=False就是返回第一个匹配到的内容， expand=True是返回所有匹配到的内容
+            idx = endpoints_df.groupby(endpoints_df['formula'].str.extract('([A-Za-z]+)', expand=False))['enthalpy/atoms'].idxmin()
+            endpoints_df = endpoints_df.loc[idx]
+            # 处理化合物的点
+            comppoints_df = df[(df.iloc[:, 4:] != 0).sum(axis=1) > 1]
+
+            print("端点处理好了，显示如下：")
+            print(endpoints_df)
+
+            # 拼接两个pandas
+            df = pd.concat([endpoints_df, comppoints_df], axis=0)
+        except Exception as e:
+            print("端点值处理失败，可能你提供的结构内不包含端点值")
+            print(e.args)
+  
         df.sort_values(
-            by=["enthalpy"],
-            ascending=[True], # 按照升序排列
+            by=["formula", "enthalpy/atoms"],
+            ascending=[True, True], # 按照升序排列
             inplace=True
             )
-        df.to_csv("enthalpy_sorted.csv", index=False)
+        # index=False表示不输出行索引 
+        # header=False表示不输出列名
+        # line_terminator='\n'表示使用换行符作为行分隔符
+        # 最后一个参数justify='left'指定左对齐。
+        df_string = df.to_string(index=False, justify='right', col_space=8)
+        # 将字符串写入文件
+        with open('enthalpy.dat', 'w') as file:
+            file.write(df_string)
+        # df.to_csv("enthalpy_sorted.csv", sep=' ', index=False, header=False, line_terminator='\n', justify='left')
 
     if test_encut:
         if os.path.exists("encut.dat"):

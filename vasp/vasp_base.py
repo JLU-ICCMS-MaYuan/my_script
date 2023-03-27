@@ -48,7 +48,8 @@ class vasp_base:
         
         print("Step 1 ------------------------------")
         print("Create sub_workpath under the work_path.")
-        print("If you didn't specify the work_path, the default the sub_workpath is the current path and the work_path is its parent path !")
+        print("If you didn't specify the work_path, the default sub_workpath is the current path and the work_path is its parent path !")
+        print("If you specify the work_path, the sub_workpath will be 'work_path+(press/scf/eband/eledos)' !")
         if self.work_path is None:
             if self.mode in ['scf', 'eband', 'eledos']:
                 self.sub_workpath = Path.cwd()
@@ -76,7 +77,7 @@ class vasp_base:
 
         print("Step 3 ------------------------------")
         print("Prepare the directory of `potcar_lib` and merge POTCARs ")
-        self.workpath_pppath = Path(self.work_path).joinpath("potcar_lib")
+        self.workpath_pppath = Path(self.sub_workpath).joinpath("potcar_lib")
         if not self.workpath_pppath.exists():
             self.workpath_pppath.mkdir() 
         self.get_potcar(self.sub_workpath)

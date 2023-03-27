@@ -20,7 +20,7 @@ def split_seeds(filename, dst_dir):
         raise FileExistsError(f"{filename} doesn't exist!")
     with open(filename) as f:
         lines = f.readlines()
-        ids = [i for i, line in enumerate(lines) if re.search(r'\d{1,6}-', line)]
+        ids = [i for i, line in enumerate(lines) if re.search(r'POSCAR-0\d{3}', line)]
         ids.append(len(lines))
         names_paths = []
         for i in range(len(ids)-1):
