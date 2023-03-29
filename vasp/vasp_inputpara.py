@@ -161,7 +161,11 @@ class vasp_phonopara(vasp_inputpara):
         else:
             print("If you didn't set supercell, the default will be `supercell='1 1 1'` ")
             self.supercell = [1, 1, 1]
-        
+
+        if not hasattr(self, "kdensity"):
+            self.kdensity = [40, 40, 40]
+            print("You didn't specify kdensity, so the program will set kdensity='40 40 40'")
+
         if self.mode == "disp" or self.mode == "dfpt":
             cwd = os.getcwd()
             os.chdir(self.sub_workpath)

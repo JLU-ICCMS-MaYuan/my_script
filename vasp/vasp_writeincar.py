@@ -209,6 +209,7 @@ class vasp_writeincar:
             incar.write("NELM     = {}     \n".format(str(self.nelm)))   
             incar.write("NELMIN   = 2      \n")   
             incar.write("EDIFF    = {}     \n".format(self.ediff))
+            incar.write("EDIFFG   = {}     \n".format(self.ediffg))
             incar.write("IBRION   = -1     \n")   
             incar.write("NSW      = 0      \n")
             incar.write("KSPACING = {}     \n".format(self.kspacing))

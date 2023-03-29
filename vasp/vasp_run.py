@@ -100,7 +100,11 @@ def vasp_phono(args: ArgumentParser) -> None:
         _vasp_writeincar.dfpt_incar(phono_inputpara.sub_workpath)
 
     # init the KPOINTS
-    vasp_kpoints   = phono_inputpara.create_kpoints_by_pymatgen(phono_inputpara.sub_workpath.joinpath("KPOINTS"))
+    phono_inputpara.create_kpoints_by_pymatgen(
+        phono_inputpara.sposcar_ase_type,
+        phono_inputpara.sub_workpath.joinpath("KPOINTS"),
+        phono_inputpara.kdensity,
+        )
 
     # init the submit job script
     _vasp_writesubmit = vasp_writesubmit.init_from_phonoinput(phono_inputpara)
@@ -140,7 +144,11 @@ def vaspbatch_phono(args: ArgumentParser) -> None:
             elif phono_inputpara.mode == 'dfpt':
                 _vasp_writeincar.dfpt_incar(phono_inputpara.sub_workpath)
             # init the KPOINTS
-            phono_inputpara.create_kpoints_by_pymatgen(phono_inputpara.sub_workpath.joinpath("KPOINTS"))
+            phono_inputpara.create_kpoints_by_pymatgen(
+                phono_inputpara.sposcar_ase_type,
+                phono_inputpara.sub_workpath.joinpath("KPOINTS"),
+                phono_inputpara.kdensity,
+                )
             # init the submit job script
             _vasp_writesubmit = vasp_writesubmit.init_from_phonoinput(phono_inputpara)
             jobname = _vasp_writesubmit.write_submit_scripts()
@@ -187,19 +195,21 @@ def vasp_properties(args):
         _vasp_submitjob = vasp_submitjob.init_from_relaxinput(properties_inputpara)
         if properties_inputpara.queue is not None:
             _vasp_submitjob.submit_mode1(jobname)
-        print("NOTES: ------------------------------ \n")
-        print("If you meet the erros in eband just like: \n")
-        print("    ERROR: charge density could not be read from file CHGCAR for ICHARG>10\n")
-        print("    ANALYSIS: Possible reason is that NGX, NGY, NGZ in scf/OUTCAR are different from those in eband/OUTCAR \n")
-        print("    SOLUTION: You can let NGX,NGY,NGZ in eledos/INCAR be the same as scf/OUTCAR\n")
-        print("If you meet the erros in eledos just like: \n")
-        print("    WARING: Your FFT grids (NGX,NGY,NGZ) are not sufficient for an accuratecalculation. Thus, the results might be wrong. \n")
-        print("    ANALYSIS: Possible reason is that NGX, NGY, NGZ you'v customized aren't matched with the PREC=Accurate \n")
-        print("    SOLUTION: You can let PREC=Normal eband/INCAR\n")
+        print("NOTES: ------------------------------ ")
+        print("If you meet the erros in eband just like: ")
+        print("    ERROR: charge density could not be read from file CHGCAR for ICHARG>10")
+        print("    ANALYSIS: Possible reason is that NGX, NGY, NGZ in scf/OUTCAR are different from those in eband/OUTCAR ")
+        print("    SOLUTION: You can let NGX,NGY,NGZ in eledos/INCAR be the same as scf/OUTCAR")
+        print("If you meet the erros in eledos just like: ")
+        print("    WARING: Your FFT grids (NGX,NGY,NGZ) are not sufficient for an accuratecalculation. Thus, the results might be wrong. ")
+        print("    ANALYSIS: Possible reason is that NGX, NGY, NGZ you'v customized aren't matched with the PREC=Accurate ")
+        print("    SOLUTION: You can let PREC=Normal eband/INCAR")
     elif properties_inputpara.mode == 'eledos':
         chgcar_src = properties_inputpara.work_path.joinpath("scf", "CHGCAR")
         chgcar_dst = properties_inputpara.work_path.joinpath("eledos", "CHGCAR")
         shutil.copy(chgcar_src, chgcar_dst)
+        print("NOTES:  ------------------------------ ")
+        print("    KSPACING in `eledos` have to be twice than that in `scf` ")
         properties_inputpara.write_evenly_kpoints(
             properties_inputpara.kspacing, 
             properties_inputpara.sub_workpath
@@ -210,15 +220,15 @@ def vasp_properties(args):
         _vasp_submitjob = vasp_submitjob.init_from_relaxinput(properties_inputpara)
         if properties_inputpara.queue is not None:
             _vasp_submitjob.submit_mode1(jobname)
-        print("NOTES: ------------------------------ \n")
-        print("if you meet the erros just like: \n")
-        print("    ERROR: charge density could not be read from file CHGCAR for ICHARG>10\n")
-        print("    Possible reason is that NGX, NGY, NGZ in scf/OUTCAR are different from those in eledos/OUTCAR \n")
+        print("NOTES: ------------------------------ ")
+        print("if you meet the erros just like: ")
+        print("    ERROR: charge density could not be read from file CHGCAR for ICHARG>10")
+        print("    Possible reason is that NGX, NGY, NGZ in scf/OUTCAR are different from those in eledos/OUTCAR ")
         print("    If you wanna to solve it, you need let NGX,NGY,NGZ in eledos/INCAR be the same as scf/OUTCAR")
-        print("If you meet the erros just like: \n")
-        print("    WARING: Your FFT grids (NGX,NGY,NGZ) are not sufficient for an accuratecalculation. Thus, the results might be wrong. \n")
-        print("    ANALYSIS: Possible reason is that NGX, NGY, NGZ you'v customized aren't matched with the PREC=Accurate \n")
-        print("    SOLUTION: You can let PREC=Normal in eledos/INCAR \n")
+        print("If you meet the erros just like: ")
+        print("    WARING: Your FFT grids (NGX,NGY,NGZ) are not sufficient for an accuratecalculation. Thus, the results might be wrong. ")
+        print("    ANALYSIS: Possible reason is that NGX, NGY, NGZ you'v customized aren't matched with the PREC=Accurate ")
+        print("    SOLUTION: You can let PREC=Normal in eledos/INCAR ")
     else:
         print(vasp_writeincar.mode)
 

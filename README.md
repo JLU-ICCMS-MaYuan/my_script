@@ -195,41 +195,154 @@ vasp_main.py -i 输入文件路径 -w 工作目录 -p 压强 -j 运行方式
 
 ## 具体其它详细的任务模式说明：
 
-### 结构弛豫
+### 写在最前面，如果你只是希望准备输入文件，即你只是希望准备INCAR,POSCAR,POTCAR,KPOINTS，那么你只需要指定mode与core即可。
+
+### 我会在下面的每一个计算模式下都写好需要该计算模式的最少参数
+
+
+
+###  <span style="color:yellow"> 多次结构弛豫到一个离子步收敛 </span>
+#### 最简参数
+```shell
+relax -m mode=rvf core=核数 
+```
+#### 最繁参数
 ```shell
 relax -m mode=rvf core=28 ediff=1e-8 ediffg=-0.001 ismear=1 kspacing=0.18 encut=800
 ```
 
-### 清理数据, 保留:'POSCAR', 'PPOSCAR', 'POTCAR', 'OUTCAR', 'INCAR*', '*.sh', '*.vasp', '*.slurm'
+###  <span style="color:yellow"> 三次结构弛豫  </span>
+#### 最简参数
+```shell
+relax -m mode=rv3 core=核数
+```
+#### 最繁参数
+```shell
+relax -m mode=rv3 core=28 ediff=1e-8 ediffg=-0.001 ismear=1 kspacing=0.18 encut=800
+```
+
+###  <span style="color:yellow"> 单次结构弛豫 </span>
+#### 最简参数
+```shell
+relax -m mode=rv1 core=核数
+```
+#### 最繁参数
+symprec=1e-2 用来解决倒格子对称性和晶格对称性不匹配的问题
+```shell
+relax -m mode=rv1 core=28 ediff=1e-8 ediffg=-0.001 ismear=1 encut=800 symprec=1e-2
+```
+
+###  <span style="color:yellow"> 清理数据, 保留:'POSCAR', 'PPOSCAR', 'POTCAR', 'OUTCAR', 'INCAR*', '*.sh', '*.vasp', '*.slurm'  </span>
 ```shell
 vasp_main.py -w ./ clear -m mode=all
 ```
 
-### 批量结构弛豫
+###  <span style="color:yellow"> 批量结构弛豫 同时 每个结构多次结构弛豫到一个离子步收敛  </span>
+#### 最简参数
+```shell
+batchrelax -m mode=rvf core=核数
+```
+#### 最繁参数
 ```shell
 batchrelax -m mode=rvf core=28 ediff=1e-8 ediffg=-0.001 ismear=1 kspacing=0.18 encut=800
 ```
 
-
-### 有限位移法计算声子谱
+###  <span style="color:yellow"> 批量结构弛豫 同时 每个结构做三次结构弛豫  </span>
+#### 最简参数
 ```shell
-phono -m supercell='2 2 2' kpoints='18 18 18' mode=disp core=48 ismear=1 encut=800 ediff=1E-08 ediffg=-0.001 queue=lhy
+batchrelax -m mode=rv3 core=核数
+```
+#### 最繁参数
+```shell
+batchrelax -m mode=rv3 core=28 ediff=1e-8 ediffg=-0.001 ismear=1 kspacing=0.18 encut=800
 ```
 
-### 密度泛函微扰DFPT法计算声子谱
+### <span style="color:yellow"> 批量结构弛豫 同时 每个结构做三次结构弛豫  </span>
+#### 最简参数
 ```shell
-phono -m supercell='2 2 2' kpoints='18 18 18' mode=dfpt core=48 ismear=1 encut=800 ediff=1e-08 ediffg=-0.001 queue=lhy
+batchrelax -m mode=rv1 core=核数
+```
+#### 最繁参数
+```shell
+batchrelax -m mode=rv1 core=28 ediff=1e-8 ediffg=-0.001 ismear=1 kspacing=0.18 encut=800
 ```
 
-### 有限位移法计算声子谱——数据处理band
+###  <span style="color:yellow"> 有限位移法计算声子谱  </span>
+#### 最简参数
+```shell
+phono -m mode=disp supercell='x x x' core=核数
+```
+#### 最繁参数
+```shell
+phono -m supercell='2 2 2' kdensity='36 36 36' mode=disp core=48 ismear=1 encut=800 ediff=1E-08 ediffg=-0.001 queue=lhy
+```
+
+###  <span style="color:yellow"> 密度泛函微扰DFPT法计算声子谱  </span>
+#### 最简参数
+```shell
+phono -m mode=dfpt supercell='x x x' core=核数
+```
+#### 最繁参数
+```shell
+phono -m supercell='2 2 2' kdensity='36 36 36' mode=dfpt core=48 ismear=1 encut=800 ediff=1e-08 ediffg=-0.001 queue=lhy
+```
+
+###  <span style="color:yellow"> 有限位移法计算声子谱——数据处理band  </span>
+#### 最简参数
+```shell
+data -m mode=dispprog supercell='2 2 2' spectrum=True 
+```
+#### 最繁参数
 ```shell
 data -m mode=dispprog supercell='2 2 2' spectrum=True 
 ```
 
-### 密度泛函微扰DFPT法计算声子谱——数据处理band
+###  <span style="color:yellow"> 密度泛函微扰DFPT法计算声子谱——数据处理band  </span>
+#### 最简参数
 ```shell
 data -m mode=dfptprog supercell='2 2 2' spectrum=True
 ```
+#### 最繁参数
+```shell
+data -m mode=dfptprog supercell='2 2 2' spectrum=True
+```
+
+###  <span style="color:yellow"> 自洽计算  </span>
+#### 最简参数
+```shell
+properties -m mode=scf core=核数
+```
+#### 最繁参数
+```shell
+properties -m mode=scf core=28 ediff=1e-8 ediffg=-0.001 ismear=1 kspacing=0.18 encut=800 queue=lhy
+```
+
+###  <span style="color:yellow"> 电子态密度计算  </span>
+如果指定 "-w 工作路径work_path"， 那么eledos计算时就会在工作路径work_path下寻找一个叫scf的子路径sub_workpath，并将其中的CHGCAR拷贝入eband的子路径sub_workpath
+如果没有指定 "-w 工作路径work_path"， 那么默认当前路径是子路径sub_workpath，其母路径就是work_path, 然后重复上述过程， 即：eledos计算时就会在工作路径work_path下寻找一个叫scf的子路径sub_workpath，并将其中的CHGCAR拷贝入eband的子路径sub_workpath
+
+电子态密度计算时，其kspacing需要是scf计算的2倍
+#### 最简参数
+```shell
+properties -m mode=eledos core=核数
+```
+#### 最繁参数
+```shell
+properties -m mode=eledos core=28 ediff=1e-8 ediffg=-0.001 ismear=1 kspacing=0.09 encut=800 queue=lhy
+```
+
+###  <span style="color:yellow"> 电子能带结构计算  </span>
+如果指定 "-w 工作路径work_path"， 那么能带计算时就会在工作路径work_path下寻找一个叫scf的子路径sub_workpath，并将其中的CHGCAR拷贝入eband的子路径sub_workpath
+如果没有指定 "-w 工作路径work_path"， 那么默认当前路径是子路径sub_workpath，其母路径就是work_path, 然后重复上述过程， 即：能带计算时就会在工作路径work_path下寻找一个叫scf的子路径sub_workpath，并将其中的CHGCAR拷贝入eband的子路径sub_workpath
+#### 最简参数
+```shell
+properties -m mode=eband core=核数
+```
+#### 最繁参数
+```shell
+properties -m mode=eband core=28 ediff=1e-8 ediffg=-0.001 ismear=1 encut=800 queue=lhy
+```
+
 
 # <div align="center"> <span style="color:red"> mytoolkit篇 </span> </div>
 
@@ -242,6 +355,7 @@ tool_main.py -i 输入文件名称 -w ./ convert -m dst_format=输出文件名�
 ```shell
 tool_main.py -i CaH6.vasp -w ./ convert -m dst_format=CaH6.cif
 ```
+
 
 
 # <div align="center"> <span style="color:red"> 绘制convex hull篇 </span> </div>

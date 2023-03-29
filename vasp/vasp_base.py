@@ -99,7 +99,8 @@ class vasp_base:
         Poscar(pstruct).write_file(output_poscar.joinpath("cell-primitive.vasp"))
         Poscar(bstruct).write_file(output_poscar.joinpath("cell-conventional.vasp"))
         Poscar(struct).write_file(output_poscar.joinpath("POSCAR"))
-
+        print("NOTES: ------------------------------ ")
+        print("You really confirm the inputfile is what you want !")
         # 处理PPOSCAR的pymatgen对象
         # 获得元素名称 和 每种元素的原子个数
         self.composition        = struct.composition.get_el_amt_dict()
@@ -237,7 +238,7 @@ class vasp_base:
             kp.write("{:<5} {:<5} {:<5}\n".format(str(N1), str(N2), str(N3)))
             kp.write("{:<5} {:<5} {:<5}\n".format("0", "0", "0"))
 
-    def create_kpoints_by_pymatgen(self, output_kpoints):
+    def create_kpoints_by_pymatgen(self, pmg_struct, output_kpoints, kdensity):
         """
         automatic_density_by_length方法 根据输入的结构(第一个参数), 各个维度k点的密度(第二个参数), 是否强制使用Gamma方法产生k点(第三个参数)
         重点说说如何设置各个方向的密度。该方法依据的公式是: 
@@ -247,8 +248,8 @@ class vasp_base:
         from pymatgen.io.vasp import Kpoints
         print("creat KPOINTS by `automatic_density_by_length`")
         kpoints = Kpoints.automatic_density_by_lengths(
-            self.sposcar_struct_type, 
-            length_densities=self.kpoints,
+            structure=pmg_struct, 
+            length_densities=kdensity,
             force_gamma=True)
         kpoints.write_file(output_kpoints)
         print(kpoints)
