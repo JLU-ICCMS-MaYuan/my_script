@@ -60,7 +60,7 @@ class vasp_inputpara(vasp_base):
             self.sigma = 0.01
 
         if not hasattr(self, "ediff"):
-            self.ediff = 1e-8
+            self.ediff = 1e-07
 
         if not hasattr(self, "ediffg"):
             self.ediffg = -0.01
@@ -83,6 +83,9 @@ class vasp_inputpara(vasp_base):
         if not hasattr(self, "lreal"):
             self.lreal = "Auto"
         
+        if not hasattr(self, "symprec"):
+            self.symprec = 1e-5
+
         if not hasattr(self, "mode"):
             self.mode = None 
         

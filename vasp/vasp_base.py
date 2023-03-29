@@ -60,12 +60,13 @@ class vasp_base:
                 self.sub_workpath = Path.cwd()
                 self.work_path = self.sub_workpath.parent   
         else:
+            self.work_path = Path(self.work_path)
             if self.mode in ['scf', 'eband', 'eledos']:
-                self.sub_workpath= Path(self.work_path).joinpath(self.mode)
+                self.sub_workpath= self.work_path.joinpath(self.mode)
                 if not self.sub_workpath.exists():
                     self.sub_workpath.mkdir(parents=True)
             else:
-                self.sub_workpath= Path(self.work_path).joinpath(str(int(self.press)))
+                self.sub_workpath= self.work_path.joinpath(str(int(self.press)))
                 if not self.sub_workpath.exists():
                     self.sub_workpath.mkdir(parents=True)
         print("sub_workpath is \n {}".format(self.sub_workpath))
@@ -244,7 +245,7 @@ class vasp_base:
         所以用户需要根据超胞的大小, 合理估计一个k点密度, 然后得到该方向的k点数
         """
         from pymatgen.io.vasp import Kpoints
-        print("")
+        print("creat KPOINTS by `automatic_density_by_length`")
         kpoints = Kpoints.automatic_density_by_lengths(
             self.sposcar_struct_type, 
             length_densities=self.kpoints,
@@ -258,7 +259,7 @@ class vasp_base:
 
         ltype   = ase_type.cell.get_bravais_lattice()
         pstring = ltype.special_path
-        _plist  = [[ p for p in pp] for pp in pstring.split(",")]
+        _plist  = [[ p for p in pp if not p.isdigit()] for pp in pstring.split(",")]
 
         print(f"the high symmetry points path is {_plist}")
 
@@ -272,6 +273,7 @@ class vasp_base:
 
         if not high_symmetry_type:
             high_symmetry_type = "all_points" # default
+
         if "," in pstring:
             if high_symmetry_type == "all_points":
                 path_name_list = list(chain.from_iterable(_plist))
@@ -287,8 +289,8 @@ class vasp_base:
         
         print(f"the choosed high symmetry path is\n")
         for name, coord in zip(path_name_list, path_coords):
-            print("{}      {:<5} {:<5} {:<5}".format(name, coord[0], coord[1], coord[2]))
-
+            print("{}      {:<8.6f} {:<8.6f} {:<8.6f}".format(name, coord[0], coord[1], coord[2]))
+            # < 表示左对齐，8.6f 表示留出8个位置并保留小数点后6位。
         return path_name_list, path_coords
 
     def write_highsymmetry_kpoints(self, ase_type, kpoints_path):
@@ -301,8 +303,8 @@ class vasp_base:
             kp.write("Line-Mode\n")
             kp.write("Reciprocal\n")
             for two_names, two_coords in zip(pair_two_names, pair_two_coords):
-                kp.write("{:<10} {:<10} {:<10} ! ${:<10}$\n".format(two_coords[0][0],two_coords[0][1],two_coords[0][2], two_names[0]))
-                kp.write("{:<10} {:<10} {:<10} ! ${:<10}$\n".format(two_coords[1][0],two_coords[1][1],two_coords[1][2], two_names[0]))
+                kp.write("{:<10.8f} {:<10.8f} {:<10.8f} ! ${}$\n".format(two_coords[0][0],two_coords[0][1],two_coords[0][2], two_names[0]))
+                kp.write("{:<10.8f} {:<10.8f} {:<10.8f} ! ${}$\n".format(two_coords[1][0],two_coords[1][1],two_coords[1][2], two_names[0]))
                 kp.write("\n")
 
 class vaspbatch_base(vasp_base):

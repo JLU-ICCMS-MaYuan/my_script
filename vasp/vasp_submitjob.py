@@ -76,15 +76,15 @@ class vasp_submitjob:
         dst_dir = input_file.parent.absolute()
         os.chdir(dst_dir)
         if self.submit_job_system == "bash":
-            logger.info(f"nohup {self.submit_order} {jobname} > bash.log 2>&1 &")
+            print(f"nohup {self.submit_order} {jobname} > bash.log 2>&1 &")
             res = os.popen(f"nohup {self.submit_order} {jobname} > bash.log 2>&1 &").read()
             jobids = self.getpid()
         else:
-            logger.info(f"{self.submit_order} {jobname}")
+            print(f"{self.submit_order} {jobname}")
             res = os.popen(f"{self.submit_order} {jobname}").read()
             jobids = re.findall(r"\d+", res)
 
-        logger.info(f"{jobname} is running. pid or jobids = {jobids}")
+        print(f"{jobname} is running. pid or jobids = {jobids}")
         os.chdir(cwd)
         # 检查任务是否成功提交，成功提交的话，应该会有进程号或者任务号返回。
         # 如果没有成功提交任务就跳出程序
@@ -110,15 +110,15 @@ class vasp_submitjob:
             dst_dir = dst_number_dir.absolute()
             os.chdir(dst_dir)
             if self.submit_job_system == "bash":
-                logger.info(f"nohup {self.submit_order} {jobname} > bash.log 2>&1 &")
+                print(f"nohup {self.submit_order} {jobname} > bash.log 2>&1 &")
                 res = os.popen(f"nohup {self.submit_order} {jobname} > bash.log 2>&1 &").read()
                 jobids = self.getpid()
             else:
-                logger.info(f"{self.submit_order} {jobname}")
+                print(f"{self.submit_order} {jobname}")
                 res = os.popen(f"{self.submit_order} {jobname}").read()
                 jobids = re.findall(r"\d+", res)
 
-            logger.info(f"{jobname} is running. pid or jobids = {jobids}")
+            print(f"{jobname} is running. pid or jobids = {jobids}")
             os.chdir(cwd)
 
 
@@ -126,7 +126,7 @@ class vasp_submitjob:
     def getpid():
         """get pid number"""
         jobids = []
-        logger.info("wait 3s, The program will tell you PID"); time.sleep(3); 
+        print("wait 3s, The program will tell you PID"); time.sleep(3); 
         osawk = """ps -ef | grep -E "vasp_std" |  grep -v grep | awk '{print $2}'""" # return a series of number, such as: 423423 324233 423424
         # ps -ef ps -ef用于查看全格式的全部进程，其中“ps”是在Linux中是查看进程的命令，“-e ”参数代表显示所有进程，“-f”参数代表全格式。
         # grep -E  ‘grep’ ‘-E’ 选项表示使用扩展的正则表达式。如果你使用 ‘grep’ 命令时带 ‘-E’，你只需要用途 ‘|’ 来分隔OR条件。 grep -E 'pattern1|pattern2' filename

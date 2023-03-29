@@ -1,20 +1,20 @@
 import os
 import re
 import logging
+import shutil
 from argparse import ArgumentParser
 from pathlib import Path
 from itertools import chain
 
+
 from ase.io import read
 from pymatgen.io.ase import AseAtomsAdaptor
-from pymatgen.core.structure import Structure
-from pymatgen.symmetry.kpath import KPathLatimerMunro, KPathSeek
+
 
 from vasp.config import config
 from vasp.vasp_base import vasp_base
 from vasp.vasp_inputpara import vasp_inputpara, vasp_phonopara, vaspbatch_inputpara, vaspbatch_phonopara
 from vasp.vasp_writeincar import vasp_writeincar
-from vasp.vasp_writekpoints import vasp_writekpoints
 from vasp.vasp_writesubmit import vasp_writesubmit
 from vasp.vasp_submitjob import vasp_submitjob
 
@@ -100,15 +100,15 @@ def vasp_phono(args: ArgumentParser) -> None:
         _vasp_writeincar.dfpt_incar(phono_inputpara.sub_workpath)
 
     # init the KPOINTS
-    vasp_kpoints   = vasp_writekpoints.init_from_inputpara(phono_inputpara)
+    vasp_kpoints   = phono_inputpara.create_kpoints_by_pymatgen(phono_inputpara.sub_workpath.joinpath("KPOINTS"))
 
     # init the submit job script
-    vasp_writesubmit = vasp_writesubmit.init_from_phonoinput(phono_inputpara)
-    jobname = vasp_writesubmit.write_submit_scripts()
+    _vasp_writesubmit = vasp_writesubmit.init_from_phonoinput(phono_inputpara)
+    jobname = _vasp_writesubmit.write_submit_scripts()
     # submit the job
-    vasp_submitjob   = vasp_submitjob.init_from_phonoinput(phono_inputpara)
+    _vasp_submitjob   = vasp_submitjob.init_from_phonoinput(phono_inputpara)
     if phono_inputpara.queue is not None:
-        vasp_submitjob.submit_mode2(jobname)
+        _vasp_submitjob.submit_mode2(jobname)
 
 
 def vaspbatch_phono(args: ArgumentParser) -> None:
@@ -174,6 +174,9 @@ def vasp_properties(args):
         if properties_inputpara.queue is not None:
             _vasp_submitjob.submit_mode1(jobname)
     elif properties_inputpara.mode == 'eband':
+        chgcar_src = properties_inputpara.work_path.joinpath("scf", "CHGCAR")
+        chgcar_dst = properties_inputpara.work_path.joinpath("eband", "CHGCAR")
+        shutil.copy(chgcar_src, chgcar_dst)
         properties_inputpara.write_highsymmetry_kpoints(
             properties_inputpara.ase_type, 
             properties_inputpara.sub_workpath.joinpath("KPOINTS"),
@@ -184,7 +187,19 @@ def vasp_properties(args):
         _vasp_submitjob = vasp_submitjob.init_from_relaxinput(properties_inputpara)
         if properties_inputpara.queue is not None:
             _vasp_submitjob.submit_mode1(jobname)
+        print("NOTES: ------------------------------ \n")
+        print("If you meet the erros in eband just like: \n")
+        print("    ERROR: charge density could not be read from file CHGCAR for ICHARG>10\n")
+        print("    ANALYSIS: Possible reason is that NGX, NGY, NGZ in scf/OUTCAR are different from those in eband/OUTCAR \n")
+        print("    SOLUTION: You can let NGX,NGY,NGZ in eledos/INCAR be the same as scf/OUTCAR\n")
+        print("If you meet the erros in eledos just like: \n")
+        print("    WARING: Your FFT grids (NGX,NGY,NGZ) are not sufficient for an accuratecalculation. Thus, the results might be wrong. \n")
+        print("    ANALYSIS: Possible reason is that NGX, NGY, NGZ you'v customized aren't matched with the PREC=Accurate \n")
+        print("    SOLUTION: You can let PREC=Normal eband/INCAR\n")
     elif properties_inputpara.mode == 'eledos':
+        chgcar_src = properties_inputpara.work_path.joinpath("scf", "CHGCAR")
+        chgcar_dst = properties_inputpara.work_path.joinpath("eledos", "CHGCAR")
+        shutil.copy(chgcar_src, chgcar_dst)
         properties_inputpara.write_evenly_kpoints(
             properties_inputpara.kspacing, 
             properties_inputpara.sub_workpath
@@ -195,8 +210,18 @@ def vasp_properties(args):
         _vasp_submitjob = vasp_submitjob.init_from_relaxinput(properties_inputpara)
         if properties_inputpara.queue is not None:
             _vasp_submitjob.submit_mode1(jobname)
+        print("NOTES: ------------------------------ \n")
+        print("if you meet the erros just like: \n")
+        print("    ERROR: charge density could not be read from file CHGCAR for ICHARG>10\n")
+        print("    Possible reason is that NGX, NGY, NGZ in scf/OUTCAR are different from those in eledos/OUTCAR \n")
+        print("    If you wanna to solve it, you need let NGX,NGY,NGZ in eledos/INCAR be the same as scf/OUTCAR")
+        print("If you meet the erros just like: \n")
+        print("    WARING: Your FFT grids (NGX,NGY,NGZ) are not sufficient for an accuratecalculation. Thus, the results might be wrong. \n")
+        print("    ANALYSIS: Possible reason is that NGX, NGY, NGZ you'v customized aren't matched with the PREC=Accurate \n")
+        print("    SOLUTION: You can let PREC=Normal in eledos/INCAR \n")
     else:
         print(vasp_writeincar.mode)
+
 
 class vasp_processdata(vasp_base):
 
@@ -466,6 +491,45 @@ class vasp_processdata(vasp_base):
             f.write("FORCE_CONSTANTS = READ  \n")
             f.write("PDOS = {}               \n".format(pdos))
 
+    def post_progress_eband(self):
+
+        import matplotlib.pyplot as plt
+        from pymatgen.io.vasp.outputs import Vasprun
+        from pymatgen.electronic_structure.plotter import BSDOSPlotter
+
+        vasprunxml_path = self.sub_workpath.joinpath("vasprun.xml")
+        vasprun = Vasprun(vasprunxml_path, parse_projected_eigen=True)
+
+        eband = vasprun.get_band_structure(line_mode=True)
+
+        e_fermi_fromvasp = vasprun.efermi
+        e_fermi_frompmg  = vasprun.calculate_efermi(float=0.0001)
+
+        # set figure parameters, draw figure
+        eband_fig = BSDOSPlotter(bs_projection=None, dos_projection=None, vb_energy_range=5, fixed_cb_energy=5)
+        eband_fig.get_plot(bs=eband)
+        ebandpng_path = self.sub_workpath.joinpath('eband.png')
+        plt.savefig(ebandpng_path, img_format='png')
+
+    def post_progress_edos(self):
+
+        import matplotlib.pyplot as plt
+        from pymatgen.io.vasp.outputs import Vasprun
+        from pymatgen.electronic_structure.plotter import BSDOSPlotter
+
+        vasprunxml_path = self.sub_workpath.joinpath("vasprun.xml")
+        vasprun = Vasprun(vasprunxml_path, parse_projected_eigen=True)
+
+        eledos = vasprun.complete_dos_normalized
+
+        e_fermi_fromvasp = vasprun.efermi
+        e_fermi_frompmg  = vasprun.calculate_efermi(float=0.0001)
+
+        # set figure parameters, draw figure
+        eledos_fig = BSDOSPlotter(bs_projection=None, dos_projection=None, vb_energy_range=5, fixed_cb_energy=5)
+        eledos_fig.get_plot(bs=eledos)
+        eledospng_path = self.sub_workpath.joinpath('eband.png')
+        plt.savefig(eledospng_path, img_format='png')
 
 class vasp_clear:
 
