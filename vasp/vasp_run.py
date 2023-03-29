@@ -101,7 +101,7 @@ def vasp_phono(args: ArgumentParser) -> None:
 
     # init the KPOINTS
     phono_inputpara.create_kpoints_by_pymatgen(
-        phono_inputpara.sposcar_ase_type,
+        phono_inputpara.sposcar_struct_type,
         phono_inputpara.sub_workpath.joinpath("KPOINTS"),
         phono_inputpara.kdensity,
         )
@@ -145,7 +145,7 @@ def vaspbatch_phono(args: ArgumentParser) -> None:
                 _vasp_writeincar.dfpt_incar(phono_inputpara.sub_workpath)
             # init the KPOINTS
             phono_inputpara.create_kpoints_by_pymatgen(
-                phono_inputpara.sposcar_ase_type,
+                phono_inputpara.sposcar_struct_type,
                 phono_inputpara.sub_workpath.joinpath("KPOINTS"),
                 phono_inputpara.kdensity,
                 )
