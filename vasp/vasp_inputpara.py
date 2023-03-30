@@ -60,7 +60,7 @@ class vasp_inputpara(vasp_base):
             self.sigma = 0.01
 
         if not hasattr(self, "ediff"):
-            self.ediff = 1e-07
+            self.ediff = 1E-07
 
         if not hasattr(self, "ediffg"):
             self.ediffg = -0.01

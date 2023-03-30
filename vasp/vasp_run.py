@@ -288,7 +288,7 @@ class vasp_processdata(vasp_base):
             os.chdir(self.work_path)
             os.system("phonopy -f disp-{001..%s}/vasprun.xml" %(disp_num))
             os.chdir(cwd) 
-            path_name_list, path_coords = self.self.get_hspp(self.ase_type)
+            path_name_list, path_coords = self.get_hspp(self.ase_type)
 
             self.write_disp_band_conf(
                 self.work_path, 
