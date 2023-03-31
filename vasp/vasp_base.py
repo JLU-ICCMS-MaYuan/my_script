@@ -100,7 +100,7 @@ class vasp_base:
         Poscar(bstruct).write_file(output_poscar.joinpath("cell-conventional.vasp"))
         Poscar(struct).write_file(output_poscar.joinpath("POSCAR"))
         print("NOTES: ------------------------------ ")
-        print("You really confirm the inputfile is what you want !")
+        print("You really confirm the inputfile, such as POSCAR, ***.vasp,  is what you want !")
         # 处理PPOSCAR的pymatgen对象
         # 获得元素名称 和 每种元素的原子个数
         self.composition        = struct.composition.get_el_amt_dict()

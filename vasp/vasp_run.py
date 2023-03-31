@@ -392,7 +392,7 @@ class vasp_processdata(vasp_base):
         from pymatgen.io.vasp.outputs import Vasprun
         from pymatgen.electronic_structure.plotter import BSDOSPlotter
 
-        vasprunxml_path = self.sub_workpath.joinpath("vasprun.xml")
+        vasprunxml_path = self.work_path.joinpath("vasprun.xml")
         vasprun = Vasprun(vasprunxml_path, parse_projected_eigen=True)
 
         eband = vasprun.get_band_structure(line_mode=True)
@@ -403,7 +403,7 @@ class vasp_processdata(vasp_base):
         # set figure parameters, draw figure
         eband_fig = BSDOSPlotter(bs_projection=None, dos_projection=None, vb_energy_range=5, fixed_cb_energy=5)
         eband_fig.get_plot(bs=eband)
-        ebandpng_path = self.sub_workpath.joinpath('eband.png')
+        ebandpng_path = self.work_path.joinpath('eband.png')
         plt.savefig(ebandpng_path, img_format='png')
     
     # 绘制 eledos
@@ -413,20 +413,20 @@ class vasp_processdata(vasp_base):
         from pymatgen.io.vasp.outputs import Vasprun
         from pymatgen.electronic_structure.plotter import BSDOSPlotter
 
-        vasprunxml_path = self.sub_workpath.joinpath("vasprun.xml")
-        vasprun = Vasprun(vasprunxml_path, parse_projected_eigen=True)
+        vasprunxml_path = self.work_path.joinpath("vasprun.xml")
+        vasprun = Vasprun(vasprunxml_path)
 
-        eledos = vasprun.complete_dos_normalized
+        eledos = vasprun.complete_dos
 
         e_fermi_fromvasp = vasprun.efermi
-        e_fermi_frompmg  = vasprun.calculate_efermi(float=0.0001)
+        e_fermi_frompmg  = vasprun.calculate_efermi(tol=0.0001)
         print("NOTES: ------------------------------ ")
         print("    You have to confirm that the Fermi energy is from scf/OUTCAR. Because the Fermi energy in dos/DOSCAR is not accurate")
         print("    You cat use 'grep E-fermi scf/OUTCAR' to check the Fermi energy! ")
         # set figure parameters, draw figure
         eledos_fig = BSDOSPlotter(bs_projection=None, dos_projection=None, vb_energy_range=5, fixed_cb_energy=5)
         eledos_fig.get_plot(bs=eledos)
-        eledospng_path = self.sub_workpath.joinpath('eband.png')
+        eledospng_path = self.work_path.joinpath('eband.png')
         plt.savefig(eledospng_path, img_format='png')
     
     # 创建band.conf  目的为了获得 band of phonon
