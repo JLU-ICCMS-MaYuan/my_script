@@ -297,6 +297,7 @@ class vasp_processdata(vasp_base):
             
             cwd = os.getcwd()
             os.chdir(self.work_path)
+            # traditional method
             os.system("phonopy -p -s band.conf -c POSCAR-init")
             os.system("phonopy-bandplot  --gnuplot> band.dat")
             os.chdir(cwd)
@@ -319,6 +320,7 @@ class vasp_processdata(vasp_base):
 
             cwd = os.getcwd()
             os.chdir(self.work_path)
+            # traditional method
             os.system("phonopy --dim='{}' -p -s band.conf -c POSCAR-init".format(' '.join(list(map(str, self.supercell)))))
             os.system("phonopy-bandplot  --gnuplot> band.dat")
             os.chdir(cwd)
@@ -390,24 +392,30 @@ class vasp_processdata(vasp_base):
 
         import matplotlib.pyplot as plt
         from pymatgen.io.vasp.outputs import Vasprun
-        from pymatgen.electronic_structure.plotter import DosPlotter
+        from pymatgen.electronic_structure.plotter import BSPlotter
 
-        scfoutcar_path   = Path(self.work_path).parent.joinpath("scf", "OUTCAR")
-        bandoutcar_path  = Path(self.work_path).joinpath("OUTCAR")
+        # 检查费米能级
         vasprunxml_path  = self.work_path.joinpath("vasprun.xml")
-
-        vasprun = Vasprun(vasprunxml_path, parse_projected_eigen=True)
+        self.check_efermi_energy(vasprunxml_path)
+        vasprun = Vasprun(vasprunxml_path)
+        e_fermi_fromband  = vasprun.efermi
+        print("NOTES: ------------------------------ ")
+        print("    Check the E-fermi( {} ) is equal to e_fermi_fromscf whether or not at last time !".format(e_fermi_fromband))
 
         eband = vasprun.get_band_structure(line_mode=True)
 
         e_fermi_fromvasp = vasprun.efermi
-        e_fermi_frompmg  = vasprun.calculate_efermi(float=0.0001)
 
         # set figure parameters, draw figure
-        eband_fig = BSDOSPlotter(bs_projection=None, dos_projection=None, vb_energy_range=5, fixed_cb_energy=5)
-        eband_fig.get_plot(bs=eband)
+        bsplotter = BSPlotter(bs=eband)
+        bsplotter.bs_plot_data()
+        bsplotter.get_plot()
         ebandpng_path = self.work_path.joinpath('eband.png')
-        plt.savefig(ebandpng_path, img_format='png')
+        bsplotter.save_plot(
+            ebandpng_path, 
+            img_format='png',
+            ylim=[-5,  5],
+            )
     
     # 绘制 eledos
     def post_progress_eletron_dos(self):
@@ -416,33 +424,14 @@ class vasp_processdata(vasp_base):
         from pymatgen.io.vasp.outputs import Vasprun
         from pymatgen.electronic_structure.plotter import DosPlotter
 
-        scfoutcar_path   = Path(self.work_path).parent.joinpath("scf", "OUTCAR")
-        vasprunxml_path  = self.work_path.joinpath("vasprun.xml")
-        
         # 检查费米能级
-        e_fermi_fromscf  = os.popen(f"grep E-fermi {scfoutcar_path} | tail -n 1 " + "| awk '{print $3}' ").read().strip("\n")
-        e_fermi_fromdos  = os.popen(f"grep efermi  {vasprunxml_path}" + "| awk '{print $3}' ").read().strip("\n")
-        print("NOTES: ------------------------------ ")
-        print("    You have to confirm that the Fermi energy is from scf/OUTCAR. Because the Fermi energy in dos/DOSCAR is not accurate")
-        print("    You can use 'grep E-fermi scf/OUTCAR' to check the Fermi energy by yourself !")
-        print("    E-fermi in scf is {}".format(e_fermi_fromscf))
-        print("    E-fermi in dos is {}".format(e_fermi_fromdos))
-        print("    The program will use `e_fermi_fromscf` to cover the `e_fermi_fromdos`")
-        if abs(float(e_fermi_fromscf) - float(e_fermi_fromdos)) > 0.0001:
-            replace_efermi = """ sed -E -i.bak """ + \
-                             """ 's/<i name="efermi">\s*[0-9]+\.[0-9]+\s*<\/i>/<i name="efermi">    {} <\/i>/' """.format(e_fermi_fromscf) + \
-                             """ {} """.format(vasprunxml_path)
-            cwd = os.getcwd()
-            os.chdir(self.work_path)
-            os.system(replace_efermi)
-            os.chdir(cwd)
-
+        vasprunxml_path  = self.work_path.joinpath("vasprun.xml")
+        self.check_efermi_energy(vasprunxml_path)
         vasprun = Vasprun(vasprunxml_path)
         e_fermi_fromdos  = vasprun.efermi
         print("NOTES: ------------------------------ ")
         print("    Check the E-fermi( {} ) is equal to e_fermi_fromscf whether or not at last time !".format(e_fermi_fromdos))
         
-
         # 获得dos的数据
         try:
             eledos = vasprun.complete_dos_normalized
@@ -605,6 +594,30 @@ class vasp_processdata(vasp_base):
             f.write("MP ={}                  \n".format(' '.join(__mp)))
             f.write("FORCE_CONSTANTS = READ  \n")
             f.write("PDOS = {}               \n".format(pdos))
+
+    # 检查费米能级
+    def check_efermi_energy(self, vasprunxml_path):
+
+        scfoutcar_path   = self.work_path.absolute().parent.joinpath("scf", "OUTCAR")
+        # 检查费米能级
+        e_fermi_fromscf  = os.popen(f"grep E-fermi {scfoutcar_path} | tail -n 1 " + "| awk '{print $3}' ").read().strip("\n")
+        e_fermi_dos_band = os.popen(f"grep efermi  {vasprunxml_path}" + "| awk '{print $3}' ").read().strip("\n")
+        print("NOTES: ------------------------------ ")
+        print("    You have to confirm that the Fermi energy is from scf/OUTCAR. Because the Fermi energy in dos/DOSCAR is not accurate")
+        print("    You can use 'grep E-fermi scf/OUTCAR' to check the Fermi energy by yourself !")
+        print("    E-fermi in scf is {}".format(e_fermi_fromscf))
+        print("    E-fermi in dos is {}".format(e_fermi_dos_band))
+        print("    The program will use `e_fermi_fromscf` to cover the `e_fermi_dos_band`")
+        if abs(float(e_fermi_fromscf) - float(e_fermi_dos_band)) > 0.0001:
+            replace_efermi_in_vasprunxml = """ sed -E -i.bak """ + \
+                                           """ 's/<i name="efermi">\s*[0-9]+\.[0-9]+\s*<\/i>/<i name="efermi">    {} <\/i>/' """.format(e_fermi_fromscf) + \
+                                           """ {} """.format(vasprunxml_path)
+            cwd = os.getcwd()
+            os.chdir(self.work_path)
+            os.system(replace_efermi_in_vasprunxml)
+            os.chdir(cwd)
+        print("NOTES: ------------------------------ ")
+        print("    If you wanna plot band or dos by yourself, you'd better replace efermi in DOSCAR with that in scf/OUTCAR")
 
 
 class vasp_clear:
