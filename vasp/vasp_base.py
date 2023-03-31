@@ -47,9 +47,9 @@ class vasp_base:
         self.struct_type       = AseAtomsAdaptor.get_structure(self.ase_type)
         
         print("Step 1 ------------------------------")
-        print("Create sub_workpath under the work_path.")
-        print("If you didn't specify the work_path, the default sub_workpath is the current path and the work_path is its parent path !")
-        print("If you specify the work_path, the sub_workpath will be 'work_path+(press/scf/eband/eledos)' !")
+        print("    Create sub_workpath under the work_path.")
+        print("    If you didn't specify the work_path, the default sub_workpath is the current path and the work_path is its parent path !")
+        print("    If you specify the work_path, the sub_workpath will be 'work_path+(press/scf/eband/eledos)' !")
         if self.work_path is None:
             if self.mode in ['scf', 'eband', 'eledos']:
                 self.sub_workpath = Path.cwd()
@@ -73,11 +73,11 @@ class vasp_base:
 
 
         print("Step 2 ------------------------------")
-        print("Prepare the POSCAR and its coresponding primitive and conventional cell.")
+        print("    Prepare the POSCAR and its coresponding primitive and conventional cell.")
         self.get_struct_info(self.struct_type, self.sub_workpath)
 
         print("Step 3 ------------------------------")
-        print("Prepare the directory of `potcar_lib` and merge POTCARs ")
+        print("    Prepare the directory of `potcar_lib` and merge POTCARs ")
         self.workpath_pppath = Path(self.sub_workpath).joinpath("potcar_lib")
         if not self.workpath_pppath.exists():
             self.workpath_pppath.mkdir() 
@@ -100,7 +100,7 @@ class vasp_base:
         Poscar(bstruct).write_file(output_poscar.joinpath("cell-conventional.vasp"))
         Poscar(struct).write_file(output_poscar.joinpath("POSCAR"))
         print("NOTES: ------------------------------ ")
-        print("You really confirm the inputfile, such as POSCAR, ***.vasp,  is what you want !")
+        print("    You really confirm the inputfile, such as POSCAR, ***.vasp,  is what you want !")
         # 处理PPOSCAR的pymatgen对象
         # 获得元素名称 和 每种元素的原子个数
         self.composition        = struct.composition.get_el_amt_dict()

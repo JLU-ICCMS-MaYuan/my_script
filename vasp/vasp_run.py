@@ -257,7 +257,7 @@ class vasp_processdata(vasp_base):
             self.post_progress_eletron_band()
         if self.mode == "eledos":
             self.post_progress_eletron_dos()
-    
+
     # 绘制 phonoband 
     def post_progress_phono_band(self):
 
@@ -331,7 +331,7 @@ class vasp_processdata(vasp_base):
         else:
             self.pdos = "AUTO"
 
-        if self.mode == "dispprog": 
+        if self.mode == "dispphdos": 
             # 获得total_dos.dat
             self.write_disp_mesh_conf(
                 self.work_path, 
@@ -358,7 +358,7 @@ class vasp_processdata(vasp_base):
             os.system("phonopy -p pdos.conf -c {}".format(self.input_file_path.name)) # 获得 total_dos.dat
             os.chdir(cwd)
 
-        elif self.mode == "dfptprog":
+        elif self.mode == "dispphdos":
             # 获得total_dos.dat
             self.write_dfpt_mesh_conf(
                 self.work_path, 
@@ -390,9 +390,12 @@ class vasp_processdata(vasp_base):
 
         import matplotlib.pyplot as plt
         from pymatgen.io.vasp.outputs import Vasprun
-        from pymatgen.electronic_structure.plotter import BSDOSPlotter
+        from pymatgen.electronic_structure.plotter import DosPlotter
 
-        vasprunxml_path = self.work_path.joinpath("vasprun.xml")
+        scfoutcar_path   = Path(self.work_path).parent.joinpath("scf", "OUTCAR")
+        bandoutcar_path  = Path(self.work_path).joinpath("OUTCAR")
+        vasprunxml_path  = self.work_path.joinpath("vasprun.xml")
+
         vasprun = Vasprun(vasprunxml_path, parse_projected_eigen=True)
 
         eband = vasprun.get_band_structure(line_mode=True)
@@ -411,23 +414,73 @@ class vasp_processdata(vasp_base):
 
         import matplotlib.pyplot as plt
         from pymatgen.io.vasp.outputs import Vasprun
-        from pymatgen.electronic_structure.plotter import BSDOSPlotter
+        from pymatgen.electronic_structure.plotter import DosPlotter
 
-        vasprunxml_path = self.work_path.joinpath("vasprun.xml")
-        vasprun = Vasprun(vasprunxml_path)
-
-        eledos = vasprun.complete_dos
-
-        e_fermi_fromvasp = vasprun.efermi
-        e_fermi_frompmg  = vasprun.calculate_efermi(tol=0.0001)
+        scfoutcar_path   = Path(self.work_path).parent.joinpath("scf", "OUTCAR")
+        vasprunxml_path  = self.work_path.joinpath("vasprun.xml")
+        
+        # 检查费米能级
+        e_fermi_fromscf  = os.popen(f"grep E-fermi {scfoutcar_path} | tail -n 1 " + "| awk '{print $3}' ").read().strip("\n")
+        e_fermi_fromdos  = os.popen(f"grep efermi  {vasprunxml_path}" + "| awk '{print $3}' ").read().strip("\n")
         print("NOTES: ------------------------------ ")
         print("    You have to confirm that the Fermi energy is from scf/OUTCAR. Because the Fermi energy in dos/DOSCAR is not accurate")
-        print("    You cat use 'grep E-fermi scf/OUTCAR' to check the Fermi energy! ")
-        # set figure parameters, draw figure
-        eledos_fig = BSDOSPlotter(bs_projection=None, dos_projection=None, vb_energy_range=5, fixed_cb_energy=5)
-        eledos_fig.get_plot(bs=eledos)
-        eledospng_path = self.work_path.joinpath('eband.png')
-        plt.savefig(eledospng_path, img_format='png')
+        print("    You can use 'grep E-fermi scf/OUTCAR' to check the Fermi energy by yourself !")
+        print("    E-fermi in scf is {}".format(e_fermi_fromscf))
+        print("    E-fermi in dos is {}".format(e_fermi_fromdos))
+        print("    The program will use `e_fermi_fromscf` to cover the `e_fermi_fromdos`")
+        if abs(float(e_fermi_fromscf) - float(e_fermi_fromdos)) > 0.0001:
+            replace_efermi = """ sed -E -i.bak """ + \
+                             """ 's/<i name="efermi">\s*[0-9]+\.[0-9]+\s*<\/i>/<i name="efermi">    {} <\/i>/' """.format(e_fermi_fromscf) + \
+                             """ {} """.format(vasprunxml_path)
+            cwd = os.getcwd()
+            os.chdir(self.work_path)
+            os.system(replace_efermi)
+            os.chdir(cwd)
+
+        vasprun = Vasprun(vasprunxml_path)
+        e_fermi_fromdos  = vasprun.efermi
+        print("NOTES: ------------------------------ ")
+        print("    Check the E-fermi( {} ) is equal to e_fermi_fromscf whether or not at last time !".format(e_fermi_fromdos))
+        
+
+        # 获得dos的数据
+        try:
+            eledos = vasprun.complete_dos_normalized
+            print("NOTES: ------------------------------ ")
+            print("    Success getting the complete_dos_normalized")        
+        except:
+            eledos = vasprun.complete_dos
+            print("NOTES: ------------------------------ ")
+            print("    Success getting the complete_dos")        
+
+
+        # 处理dos的数据，并决定
+        dosplotter = DosPlotter()
+        self.pdostype   = self._config.get('pdostype', None)
+        if self.pdostype == "ele":
+            print("NOTES: ------------------------------ ")
+            dosplotter.add_dos_dict(eledos.get_element_dos())
+            print("    Success getting the dos projected to elements")        
+        elif self.pdostype == "spd":
+            print("NOTES: ------------------------------ ")
+            dosplotter.add_dos_dict(eledos.get_spd_dos())
+            print("    Success getting the dos projected to spd-orbits")        
+        elif self.pdostype == "elespd":
+            print("NOTES: ------------------------------ ")
+            dosplotter.add_dos_dict(eledos.get_element_spd_dos())
+            print("    Success getting the dos projected to elements and spd-orbits")        
+        else:
+            print("NOTES: You set nothing for pdostype --")
+            dosplotter.add_dos_dict(eledos.get_element_dos())
+            print("    Default value is projected to element. Success getting the dos projected to elements")        
+        dosplotter.get_plot()
+        eledospng_path = self.work_path.joinpath('eledos.png')
+        dosplotter.save_plot(
+            filename=eledospng_path, 
+            img_format='png', 
+            xlim=[-5,  5], 
+            ylim=[0,  20],
+            )
     
     # 创建band.conf  目的为了获得 band of phonon
     def write_disp_band_conf(
