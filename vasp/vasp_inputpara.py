@@ -91,10 +91,10 @@ class vasp_inputpara(vasp_base):
         
         if not hasattr(self, "queue"):
             self.queue = None
-            print("You didn't specify queue, so the program will not submit the job in any way")
+            print("    You didn't specify queue, so the program will not submit the job in any way")
 
         if not hasattr(self, "core"):
-            raise ValueError("You must specify the number of core, such as 'core=48'")
+            raise ValueError("    You must specify the number of core, such as 'core=48'")
 
     @classmethod
     def init_from_config1(cls, config: dict):

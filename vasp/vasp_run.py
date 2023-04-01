@@ -266,7 +266,7 @@ class vasp_processdata(vasp_base):
             self.supercell = list(map(int, _supercell))
         else:
             print("WARNING: ----------------------------- ")
-            raise ValueError("you have to specify the supercell=[?,?,?]. If you didn't specify it, maybe somthing wrong will occur !")
+            raise ValueError("    you have to specify the supercell=[?,?,?]. If you didn't specify it, maybe somthing wrong will occur !")
 
         if "mp" in self._config:
             _mp = self._config['mp'].split()
@@ -274,15 +274,19 @@ class vasp_processdata(vasp_base):
         else:
             self.mp = [8,8,8]
             print("NOTES: ------------------------------ ")
-            print("you didn't specify the mp='? ? ?', the program will set default mp=[8,8,8]")
+            print("    you didn't specify the mp='? ? ?', the program will set default mp=[8,8,8]")
 
         if self.mode == "dispband":
-
+            print("NOTES: ------------------------------ ")
+            print("    Run disp-band-post-progress-module")
             _disp_num = len(list(Path(self.work_path).glob("disp-*")))
-            disp_num = str(_disp_num).rjust(3, '0')
+            disp_num  = str(_disp_num).rjust(3, '0')
 
             cwd = os.getcwd()
             os.chdir(self.work_path)
+            print("NOTES: ------------------------------ ")
+            print("    Run the order `phonopy -f disp-{001..%s}/vasprun.xml`" %(disp_num))
+            print("    Please confirm  disp-{001..%s} are all correctively computed !!!" %(disp_num))
             os.system("phonopy -f disp-{001..%s}/vasprun.xml" %(disp_num))
             os.chdir(cwd) 
             path_name_list, path_coords = self.get_hspp(self.ase_type)
@@ -298,12 +302,19 @@ class vasp_processdata(vasp_base):
             cwd = os.getcwd()
             os.chdir(self.work_path)
             # traditional method
+            print("NOTES: ------------------------------ ")
+            print("    Run the order `phonopy -p -s band.conf -c POSCAR-init`")
+            print("    Please confirm the POSCAR-init exist !!!")
             os.system("phonopy -p -s band.conf -c POSCAR-init")
+            print("NOTES: ------------------------------ ")
+            print("    Run the order `phonopy-bandplot  --gnuplot> band.dat`")
+            print("    band.dat is the data for plot phononband in Origin")
             os.system("phonopy-bandplot  --gnuplot> band.dat")
             os.chdir(cwd)
 
         elif self.mode == "dfptband":
-
+            print("NOTES: ------------------------------ ")
+            print("    Run dfpt-band-post-progress-module")
             cwd = os.getcwd()
             os.chdir(self.work_path)
             os.system("phonopy --fc vasprun.xml")
