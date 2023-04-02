@@ -45,11 +45,11 @@ qe_main.py -i 输入文件路径 -w 工作目录 -p 压强 -j 运行方式
 **WARNING1 queue存在则会运行，queue不存在则只会产生输入文件和提交任务的脚本文件。**
 **WARNING2 如果你使用-j bash, 那么一定注意core设置的不要太大，小心把主节点搞崩溃了。**
 
-### 结构弛豫：
+###  <span style="color:yellow"> 结构弛豫：
 ```shell
 relax -m mode=relax-vc kpoints_dense="20 20 20" core=48 npool=4  queue=lhy
 ```
-### 自洽
+###  <span style="color:yellow"> 自洽
 ```shell
 scf -m mode=scffit kpoints_dense='24 24 24' core=48 npool=4  queue=lhy
 ```
@@ -58,17 +58,17 @@ scf -m mode=scffit kpoints_dense='24 24 24' core=48 npool=4  queue=lhy
 scf -m mode=scf kpoints_sparse='12 12 12' core=48 npool=4  queue=lhy
 ```
 
-### 非自洽计算
+###  <span style="color:yellow"> 非自洽计算
 ```shell
 qe_main.py -i relax.out -j bash scf -m mode=nscf kpoints_dense='32 32 32' core=2 queue=local
 ```
 
-### 不分q点计算声子
+###  <span style="color:yellow"> 不分q点计算声子
 ```shell
 phono -m mode=nosplit qpoints='6 6 6' dyn0_flag=False queue=lhy core=48 npool=4  queue=lhy el_ph_nsigma=
 ```
 
-### 分q点计算声子 : split_dyn0模式
+###  <span style="color:yellow"> 分q点计算声子 : split_dyn0模式
 ```shell
 phono -m mode=nosplit qpoints='6 6 6' dyn0_flag=True core=1 npool=1 queue=local
 ```
@@ -76,65 +76,65 @@ phono -m mode=nosplit qpoints='6 6 6' dyn0_flag=True core=1 npool=1 queue=local
 phono -m mode=split_dyn0 qpoints='6 6 6' core=48 npool=4 queue=local
 ```
 
-### 分q点计算声子 : split_assignQ模式
+###  <span style="color:yellow"> 分q点计算声子 : split_assignQ模式
 ```shell
 phono -m mode=split_assignQ qpoints='6 6 6' core=1 npool=1 queue=local
 ```
 
-### 合并声子文件
+###  <span style="color:yellow"> 合并声子文件
 ```shell
 phono -m mode=merge core=1 queue=local
 ```
 
-### 计算力常数
+###  <span style="color:yellow"> 计算力常数
 ```shell
 phono -m mode=q2r qpoints='6 6 6' core=1 npool=1 queue=local
 ```
 
-### 计算动力学矩阵元
+###  <span style="color:yellow"> 计算动力学矩阵元
 ```shell
 phono -m mode=matdyn qpoints='6 6 6' core=1 npool=1 queue=local qinserted=50
 ```
 
-### 计算phonodos, 计算态密度时要用更密的q点网格，这需设置nk1, nk2, nk3   
+###  <span style="color:yellow"> 计算phonodos, 计算态密度时要用更密的q点网格，这需设置nk1, nk2, nk3   
 ```shell
 dos -m mode=phonodos core=1 npool=1 queue=local qpoints='8 8 8' ndos=500 
 ```
 
-### 计算eletdos(这里计算电子的dos也用qpoints其实非常不合理)
+###  <span style="color:yellow"> 计算eletdos(这里计算电子的dos也用qpoints其实非常不合理)
 ```shell
 dos -m mode=eletdos core=1 npool=1 queue=local qpoints='8 8 8' ndos=500 
 ```
 
-### 计算elepdos(这里计算电子的dos也用qpoints其实非常不合理)
+###  <span style="color:yellow"> 计算elepdos(这里计算电子的dos也用qpoints其实非常不合理)
 ```shell
 dos -m mode=elepdos core=1 npool=1 queue=local qpoints='8 8 8' ndos=500 
 ```
 
-### 使用McAD方法计算超导
-#### 不指定最高频率, 将会自动读取最高频率文件
+###  <span style="color:green">使用McAD方法计算超导
+####   <span style="color:yellow">不指定最高频率, 将会自动读取最高频率文件
 ```shell
 sc -m mode=McAD core=1 npool=1 queue=local             deguass=0.5 screen_constant=0.1 smearing_method=1 qpoints='6 6 6'
 ```
-#### 使用McAD方法超导转变温度指定最高频率
+####  <span style="color:yellow"> 使用McAD方法超导转变温度指定最高频率
 ```shell
 sc -m mode=McAD core=1 npool=1 queue=local top_freq=80 deguass=0.5 screen_constant=0.1 smearing_method=1 qpoints='6 6 6'
 ```
-#### 使用eliashberg方法超导转变温度, 指定a2F.dos*文件
+### <span style="color:green"> 使用eliashberg方法超导转变温度, 指定a2F.dos*文件
 ```shell
 sc -m mode=eliashberg core=1 npool=1 queue=local temperature_steps=100 a2F_dos=a2F.dos3 qpoints='6 6 6'
 ```
-#### 使用eliashberg方法超导转变温度, 指定使用alpha2F.dat文件中使用哪一列的degauss对应的alpha2F数值。使用degauss_column来指定
+####  <span style="color:yellow"> 使用eliashberg方法超导转变温度, 指定使用alpha2F.dat文件中使用哪一列的degauss对应的alpha2F数值。使用degauss_column来指定
 (这个方法生成ALPHA2F.OUT可能有问题导致 ELIASHBERG_GAP_T.OUT 中出现NAN。所以更推荐上面那种处理方法。)
 ```shell
 sc -m mode=eliashberg core=1 npool=1 queue=local temperature_steps=100 degauss_column=7 qpoints='6 6 6'
 ```
-#### 获得eliashberg计算得到的超导转变温度
+####  <span style="color:yellow"> 获得eliashberg计算得到的超导转变温度
 ```shell
 sc -m mode=eliashberg Tc=output core=1
 ```
 
-### 批量计算
+###  <span style="color:yellow">  批量计算
 ```shell
 prepare -m mode=prepare electron_maxstep=1000 core=4 npool=1 queue=local
 ```
@@ -143,7 +143,7 @@ prepare -m mode=prepare electron_maxstep=1000 core=4 npool=1 queue=local
 ```
 
 
-### 如何增加新的功能模块(以增加ele-dos计算的功能模块为例子说明，修改这需要添加哪些内容)
+###  <span style="color:yellow"> 如何增加新的功能模块(以增加ele-dos计算的功能模块为例子说明，修改这需要添加哪些内容)
 
 #### 第1步：在qe_writeinput.py中, class qe_writeinput中增加写电子态密度计算.in文件的实例方法
 #### 第2步：在qe_writeinput.py中, class qe_writeinput的dos的init_from_dosinput的类方法中，新增需要用到的新的输入参数
