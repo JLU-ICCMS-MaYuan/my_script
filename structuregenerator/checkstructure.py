@@ -10,10 +10,10 @@ def checkclathrate(pmg_struct: Structure):
     #     return False
     # if clathrate.shr_num_avg < 1.6:
     #     return False
-    # if clathrate.cage_regularity_avg > 0.05:
-    #     return False
-    # if clathrate.h2h_network_regularity_avg > 0.12:
-    #     return False
+    if clathrate.cage_regularity_avg > 0.05:
+        return False
+    if clathrate.h2h_network_regularity_avg > 0.15:
+        return False
     if clathrate.h2h_1nearest[0][0] < 0.9:
         return False
     if clathrate.nonh2nonh_1nearest[0][0] < 2.2:

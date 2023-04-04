@@ -149,37 +149,6 @@ def append_composition(group, nameofatoms, wyckoffpositons, spacegroup_number, n
 
 class split_wyckoffs:
     '''
-    generator_main.py -w ./Ar-Ne-H-num229-500/ -i ./229.ini method -m mode=specifywps
-
-    input.ini的内容: 
-    [splitwps]
-    spacegroup_number = 229 
-    nameofatoms = ["Ar", "Ne", "H"] 
-    wyckoffpositions = {
-        '2a': False,
-        '6b': False,
-        '8c': False,
-        '12d': False,
-        '12e': True,
-        '16f': True,
-        '24g': True,
-        '24h': True,
-        '48i': True,
-        '48j': True,
-        '48k': True,
-        '96l': True,
-        }
-#    nonH_upper_limit = '12e'
-    H_lower_limit    = '12d'
-    sitesoccupiedrange=[[1,2], 
-                        [1,2], 
-                        [1,3],] 
-    popsize=300 
-    maxlimit=150
-    distancematrix=[[2.014, 1.908, 1.590],
-                    [1.908, 1.802, 1.483],
-                    [1.590, 1.483, 1.116],]
-    clathrate_ratio=0.75
     '''
     def __init__(
         self              ,
