@@ -157,7 +157,7 @@ class split_wyckoffs:
         nameofatoms: List[str], 
         numberofatoms: List,
         mults_ranges: List[List[int]],
-        occupied_number_range: List[List[int]],
+        occupied_number_ranges: List[List[int]],
         popsize: int,
         maxlimit: int,
         distancematrix: List[List[float]],
@@ -170,7 +170,7 @@ class split_wyckoffs:
         self.nameofatoms       = nameofatoms
         self.numberofatoms     = numberofatoms
         self.mults_ranges = mults_ranges
-        self.occupied_number_range = occupied_number_range
+        self.occupied_number_ranges = occupied_number_ranges
 
         self.work_path          = Path(work_path)
         if not self.work_path.exists():
@@ -188,7 +188,7 @@ class split_wyckoffs:
             self.wyckoffpositions,
             self.nameofatoms,
             self.mults_ranges,  
-            self.occupied_number_range,
+            self.occupied_number_ranges,
             )
 
     def get_spgs(self, spacegroup_number, mults_ranges):
@@ -232,7 +232,7 @@ class split_wyckoffs:
         wyckoffpositions,
         nameofatoms,
         mults_ranges,
-        occupied_number_range,
+        occupied_number_ranges,
         ):
             # check whether the file 'composition.json' exist or not
             import json
@@ -247,7 +247,7 @@ class split_wyckoffs:
                 if len(nameofatoms) == 2:
                     _group = self.binary_hydrides(
                         nameofatoms,
-                        occupied_number_range,
+                        occupied_number_ranges,
                         satisfied_spgs,
                         wyckoffpositions,
                         mults_ranges,
@@ -258,7 +258,7 @@ class split_wyckoffs:
                 if len(nameofatoms) == 3:
                     _group = self.ternary_hydrides(
                         nameofatoms,
-                        occupied_number_range,
+                        occupied_number_ranges,
                         satisfied_spgs,
                         wyckoffpositions,
                         mults_ranges,
@@ -269,7 +269,7 @@ class split_wyckoffs:
                 if len(nameofatoms) == 4:
                     _group = self.quaternary_hydrides(
                         nameofatoms,
-                        occupied_number_range,
+                        occupied_number_ranges,
                         satisfied_spgs,
                         wyckoffpositions,
                         mults_ranges,
@@ -281,7 +281,7 @@ class split_wyckoffs:
     def binary_hydrides(
         self,
         nameofatoms,
-        occupied_number_range,
+        occupied_number_ranges,
         satisfied_spgs,
         wyckoffpositions,
         mults_ranges,
@@ -292,8 +292,8 @@ class split_wyckoffs:
             raise ValueError("you have to set nameofatoms in order as `H element is the last one` !!! Just like nameofatoms=['Ar', 'Ne', 'H']")
         
 
-        nonH1_occupied_number = occupied_number_range[ 0]  # 这里是一个小技巧，等于号前面加逗号相当于一种解包的操作, 它等价于: nonH1_occupied_number = occupied_number_range[:-1][0]
-        H1_occupied_number    = occupied_number_range[-1]
+        nonH1_occupied_number = occupied_number_ranges[ 0]  # 这里是一个小技巧，等于号前面加逗号相当于一种解包的操作, 它等价于: nonH1_occupied_number = occupied_number_ranges[:-1][0]
+        H1_occupied_number    = occupied_number_ranges[-1]
         nonH_mults            = mults_ranges[ 0]
         H_mults               = mults_ranges[-1]
         # 考虑该非氢元素可能占据的wps的个数的范围从 `nonH1_occupied_number[0]~nonH1_occupied_number[-1]+1`
@@ -341,7 +341,7 @@ class split_wyckoffs:
     def ternary_hydrides(
         self,
         nameofatoms,
-        occupied_number_range,
+        occupied_number_ranges,
         satisfied_spgs,
         wyckoffpositions,
         mults_ranges,
@@ -357,8 +357,8 @@ class split_wyckoffs:
         if not nameofatoms[-1] == 'H':
             raise ValueError("you have to set nameofatoms in order as `H element is the last one` !!! Just like nameofatoms=['Ar', 'Ne', 'H']")
         
-        nonH1_occupied_number, nonH2_occupied_number = occupied_number_range[:-1]
-        H_range                  = occupied_number_range[-1]
+        nonH1_occupied_number, nonH2_occupied_number = occupied_number_ranges[:-1]
+        H_range                  = occupied_number_ranges[-1]
         nonH1_mults, nonH2_mults = mults_ranges[:-1]
         H_mults                  = mults_ranges[-1]
  
@@ -408,7 +408,7 @@ class split_wyckoffs:
     def quaternary_hydrides(
         self,
         nameofatoms,
-        occupied_number_range,
+        occupied_number_ranges,
         satisfied_spgs,
         wyckoffpositions,
         mults_ranges,
@@ -424,8 +424,8 @@ class split_wyckoffs:
         if not nameofatoms[-1] == 'H':
             raise ValueError("you have to set nameofatoms in order as `H element is the last one` !!! Just like nameofatoms=['Ar', 'Ne', 'H']")
         
-        nonH1_occupied_number, nonH2_occupied_number, nonH3_occupied_number = occupied_number_range[:-1]
-        H_range = occupied_number_range[-1]
+        nonH1_occupied_number, nonH2_occupied_number, nonH3_occupied_number = occupied_number_ranges[:-1]
+        H_range = occupied_number_ranges[-1]
         nonH1_mults, nonH2_mults, nonH3_mults = mults_ranges[:-1]
         H_mults = mults_ranges[-1]
  
@@ -673,7 +673,7 @@ class split_wyckoffs:
             nonH_floor_mult=config_d["nonh_floor_mult"],
             H_upper_mult=config_d["h_upper_mult"],
             H_floor_mult=config_d["h_floor_mult"],
-            occupied_number_range=config_d["occupied_number_range"],
+            occupied_number_ranges=config_d["occupied_number_ranges"],
             popsize=config_d["popsize"],
             maxlimit=config_d["maxlimit"],
             distancematrix=config_d["distancematrix"],
@@ -686,44 +686,44 @@ class split_wyckoffs:
 if __name__ == "__main__":
 
     # binary
-    # spl_wps = split_wyckoffs(
-    #     work_path='.',
-    #     spacegroup_number = [[2, 230]],
-    #     nameofatoms = ["Ca", "H"],
-    #     numberofatoms = [1, 6],
-    #     mults_ranges=[[1,2],
-    #                   [1,12]],
-    #     occupied_number_range=[[1,2],
-    #                            [1,2]],
-    #     popsize=30,
-    #     maxlimit=150,
-    #     distancematrix=[[2.014, 1.908, 1.590],
-    #                     [1.908, 1.802, 1.483],
-    #                     [1.590, 1.483, 1.116],],
-    #     clathrate_ratio=0.0,
-    #     hydrogen_content=0.75
-    # )
-    # ternary
     spl_wps = split_wyckoffs(
         work_path='.',
-        spacegroup_number = [[9,9]],
-        nameofatoms = ["Ca", "Y", "La", "H"],
-        numberofatoms = [1, 1, 1, 6],
-        mults_ranges=[[4,4],
-                      [4,4],
-                      [4,4],
-                      [4,4]],
-        occupied_number_range=[[1,1],
-                               [1,1],
-                               [1,1],
-                               [6,6]],
+        spacegroup_number = [[229, 229]],
+        nameofatoms = ["Ca", "H"],
+        numberofatoms = [1, 6],
+        mults_ranges=[[1,2],
+                      [1,12]],
+        occupied_number_ranges=[[1,2],
+                               [1,2]],
         popsize=30,
         maxlimit=150,
         distancematrix=[[2.014, 1.908, 1.590],
                         [1.908, 1.802, 1.483],
                         [1.590, 1.483, 1.116],],
         clathrate_ratio=0.0,
-        hydrogen_content=0.0,
+        hydrogen_content=0.75
     )
-    struct, struct_type = spl_wps._gen_randomly()
-    print(struct, "\n", struct_type)
+    # ternary
+    # spl_wps = split_wyckoffs(
+    #     work_path='.',
+    #     spacegroup_number = [[195,195]],
+    #     nameofatoms = ["Ca", "H"],
+    #     numberofatoms = [1, 1, 1, 6],
+    #     mults_ranges=[[1,4],
+    #                   [1,4],
+    #                   [1,4],
+    #                   [4,6]],
+    #     occupied_number_ranges=[[1,2],
+    #                            [1,2],
+    #                            [1,2],
+    #                            [1,3]],
+    #     popsize=30,
+    #     maxlimit=150,
+    #     distancematrix=[[2.014, 1.908, 1.590],
+    #                     [1.908, 1.802, 1.483],
+    #                     [1.590, 1.483, 1.116],],
+    #     clathrate_ratio=0.0,
+    #     hydrogen_content=0.0,
+    # )
+    # struct, struct_type = spl_wps._gen_randomly()
+    # print(struct, "\n", struct_type)
