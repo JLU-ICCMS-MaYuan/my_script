@@ -103,8 +103,11 @@ class qe_submitjob:
             raise FileExistsError(f" {inputfilename} doesn't exist")
         outputfilename = inputfilename.split(".")[0] + ".out"
         logger.warning("!!!!!!!! Please Attention, You have been source your Intel Compiler !!!!!!!!")
+        cwd_path = os.getcwd()
+        os.chdir(self.work_underpressure)
         jobids = os.popen(f"nohup {qebin_path}/ph.x <{inputfilename}> {outputfilename} 2>&1 & echo $!").read()
         print(f"ph.x is running. pid or jobids = {jobids}")
+        os.chdir(cwd_path)
         return jobids, outputfilename
 
     def submit_mode1(self, inputfilename, jobname):

@@ -318,7 +318,7 @@ class qephono_inputpara(qe_inputpara):
                 return item
 
         qirreduced = int(content[1])
-        _q_coordinate_list     = list(filter(find_q, content))
+        _q_coordinate_list = list(filter(find_q, content))
         qirreduced_coords = [q_string.strip("\n").split() for q_string in _q_coordinate_list]
         
         return qtot, qirreduced, qirreduced_coords

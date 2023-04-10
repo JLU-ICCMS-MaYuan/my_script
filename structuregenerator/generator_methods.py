@@ -5,8 +5,9 @@ from argparse import ArgumentParser
 from pymatgen.io.ase import AseAtomsAdaptor
 
 from structuregenerator.config import config
-from structuregenerator.specify_wyckoffs import specify_wyckoffs
+from structuregenerator.specify_wyckoffs import specify_wyckoffs 
 from structuregenerator.split_wyckoffs import split_wyckoffs
+from structuregenerator.split_wyckoffs_multprocessing import split_wyckoffs_multprocessing
 from structuregenerator.substitution import substitution
 from structuregenerator.pso import pso
 from structuregenerator.psolib.utils.sort_atoms import sort_atoms
@@ -44,7 +45,10 @@ class generator_methods:
 
         if self.config_d["mode"] == "splitwps":
             # init the parameter for generating the structure
-            spl_wps = split_wyckoffs.init_from_config(self.config_d)
+            if self.config_d.get("max_workers", None):
+                spl_wps = split_wyckoffs_multprocessing.init_from_config(self.config_d)
+            else:
+                spl_wps = split_wyckoffs.init_from_config(self.config_d)
             # create structures and store them in the List `spe_wps.structs`
             ################################# CASE 2 ##################################
             # CASE 2: create a structure, then write it !!!
@@ -59,7 +63,8 @@ class generator_methods:
                         ramdom_structure += 1
                     _struct_ase = AseAtomsAdaptor.get_atoms(stru)
                     _struct_ase = sort_atoms(_struct_ase, spl_wps.nameofatoms)
-                    filepath = os.path.join(spl_wps.work_path, "POSCAR_" + str(_struct_amounts)); _struct_ase.write(filepath, format='vasp')
+                    _filepath = os.path.join(spl_wps.work_path, "POSCAR_" + str(_struct_amounts))
+                    _struct_ase.write(_filepath, format='vasp')
                     logger.info(f"new you have successfully created No.{_struct_amounts}-{str(_struct_ase.symbols)}, and its type is {stru_type}!")
             ###########################################################################
 

@@ -373,3 +373,78 @@ VaspProcess.py -d ./ -opt
 ```shell
 plot_ternary_convexhull.py -i enthalpy_sorted.csv -hand Lu N H -ebh 10  -save 
 ```
+
+# <div align="center"> <span style="color:red"> structuregenerator篇 </span> </div>
+
+## 使用splitwps方法产生结构
+
+### 输入文件, 输入文件的名称为splitwps.ini
+```python
+[splitwps]
+spacegroup_number = [[2, 230]]
+nameofatoms = ["La", "H"]
+numberofatoms = [1, 10]
+occupied_number_ranges=[[1,4],[1,10]]
+mults_ranges=[[1,2],
+              [1,6],]
+popsize=100
+maxlimit=100
+distancematrix=[[2.074, 1.444],
+                [1.444, 0.815]]
+clathrate_ratio=1.0
+hydrogen_content=0.6
+max_workers=8
+[pso]
+numberOflbest = 4
+simthreshold = 0.06
+fingerprint = "bcm"
+lbest = 4
+critic = "enthalpy"
+maxstep= 50
+pso_ltype=["cubic"]
+pso_ratio=0.5
+```
+
+### 说明：
+```shell
+max_workers=8 如果指定了，那么就是相当于用8个核进行进程并发
+```
+
+### 运行命令:
+
+```shell
+generator_main.py -i split.ini -w . method -m mode=splitwps
+-i split.ini   输入文件路径
+-w .           输出的POSCAR_*的存储路径
+mode=splitwps  采用的产生结构的方法
+```
+
+
+## 使用specifywps方法产生结构
+
+### 输入文件, 输入文件的名称一般为specifywps.ini
+```python
+[splitwps]
+spacegroup_number = [[2, 230]]
+nameofatoms = ["La", "H"]
+numberofatoms = [1, 10]
+occupied_number_ranges=[[1,4],[1,10]]
+mults_ranges=[[1,2],
+              [1,6],]
+popsize=100
+maxlimit=100
+distancematrix=[[2.074, 1.444],
+                [1.444, 0.815]]
+clathrate_ratio=1.0
+hydrogen_content=0.6
+max_workers=8
+[pso]
+numberOflbest = 4
+simthreshold = 0.06
+fingerprint = "bcm"
+lbest = 4
+critic = "enthalpy"
+maxstep= 50
+pso_ltype=["cubic"]
+pso_ratio=0.5
+```
