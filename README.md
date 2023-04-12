@@ -114,21 +114,55 @@ dos -m mode=elepdos core=1 npool=1 queue=local qpoints='8 8 8' ndos=500
 ###  <span style="color:green">使用McAD方法计算超导
 ####   <span style="color:yellow">不指定最高频率, 将会自动读取最高频率文件
 ```shell
-sc -m mode=McAD core=1 npool=1 queue=local             deguass=0.5 screen_constant=0.1 smearing_method=1 qpoints='6 6 6'
+sc -m mode=McAD core=1 npool=1 queue=local  deguass=0.5 screen_constant=0.1 smearing_method=1 qpoints='6 6 6'
 ```
 ####  <span style="color:yellow"> 使用McAD方法超导转变温度指定最高频率
 ```shell
 sc -m mode=McAD core=1 npool=1 queue=local top_freq=80 deguass=0.5 screen_constant=0.1 smearing_method=1 qpoints='6 6 6'
 ```
-### <span style="color:green"> 使用eliashberg方法超导转变温度, 指定a2F.dos*文件
+这里的参数对应于lamda.in文件中的参数分别是：
 ```shell
-sc -m mode=eliashberg core=1 npool=1 queue=local temperature_steps=100 a2F_dos=a2F.dos3 qpoints='6 6 6'
+top_freq(最高声子频率)  deguass(展宽宽度取0.12)  smearing_method(展宽方法一般等于1）    
+10                               
+ 0.000000000000000E+00 0.000000000000000E+00 0.000000000000000E+00  1    
+ 0.000000000000000E+00 0.000000000000000E+00 0.249999999999993E+00  6    
+ 0.000000000000000E+00 0.000000000000000E+00 -0.499999999999986E+00  3    
+ 0.000000000000000E+00 0.249999999999993E+00 0.249999999999993E+00  12    
+ 0.000000000000000E+00 0.249999999999993E+00 -0.499999999999986E+00  12    
+ 0.000000000000000E+00 -0.499999999999986E+00 -0.499999999999986E+00  3    
+ 0.249999999999993E+00 0.249999999999993E+00 0.249999999999993E+00  8    
+ 0.249999999999993E+00 0.249999999999993E+00 -0.499999999999986E+00  12    
+ 0.249999999999993E+00 -0.499999999999986E+00 -0.499999999999986E+00  6    
+ -0.499999999999986E+00 -0.499999999999986E+00 -0.499999999999986E+00  1    
+ elph_dir/elph.inp_lambda.1    
+ elph_dir/elph.inp_lambda.10    
+ elph_dir/elph.inp_lambda.2    
+ elph_dir/elph.inp_lambda.3    
+ elph_dir/elph.inp_lambda.4    
+ elph_dir/elph.inp_lambda.5    
+ elph_dir/elph.inp_lambda.6    
+ elph_dir/elph.inp_lambda.7    
+ elph_dir/elph.inp_lambda.8    
+ elph_dir/elph.inp_lambda.9    
+screen_constant(库伦屏蔽常数0.1~0.13)
+```
+
+
+### <span style="color:green"> 使用eliashberg方法超导转变温度
+### <span style="color:yellow">  使用eliashberg方法超导转变温度, 指定a2F.dos*文件
+```shell
+sc -m mode=eliashberg core=1 npool=1 queue=local temperature_steps=100 a2F_dos=a2F.dos3 qpoints='6 6 6' screen_constant=0.1
 ```
 ####  <span style="color:yellow"> 使用eliashberg方法超导转变温度, 指定使用alpha2F.dat文件中使用哪一列的degauss对应的alpha2F数值。使用degauss_column来指定
 (这个方法生成ALPHA2F.OUT可能有问题导致 ELIASHBERG_GAP_T.OUT 中出现NAN。所以更推荐上面那种处理方法。)
 ```shell
-sc -m mode=eliashberg core=1 npool=1 queue=local temperature_steps=100 degauss_column=7 qpoints='6 6 6'
+sc -m mode=eliashberg core=1 npool=1 queue=local temperature_steps=100 degauss_column=7 qpoints='6 6 6' screen_constant=0.1
 ```
+NOTE: INPUT文件中只需设置两个参数，
+1. 前者是screen_constant，一般取0.10~0.13；
+2. 后者是temperature_steps，表示对ntemp个温度点自洽求解Eliashberg方程，得到带隙Δ关于温度T的曲线(该程序首先处理McMillan方程，得到超导临界温度tc作为参考值，然后在温度区间[tc/6, tc*3]中线性插入ntemp个温度点。ntemp一般取40~100即可，也可以更大，建议根据体系差异灵活调控)。
+
+
 ####  <span style="color:yellow"> 获得eliashberg计算得到的超导转变温度
 ```shell
 sc -m mode=eliashberg Tc=output core=1
