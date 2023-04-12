@@ -20,4 +20,22 @@ def checkclathrate(pmg_struct: Structure):
         return False
     
     return True
+
+
+if __name__ == "__main__":
+    import sys
+    from pathlib import Path
+
+    print("如果你想使用这个脚本, 你需要指定一个路径, 这个路径下存放着所有待判断的结构")
+    clathrates = []
+    for file in Path("/work/home/may/workplace/6.new_hydride/1.test-my-method/2.lah10-my-method/1.calypso-structure/100").glob("CONTCAR_*"):
+        filename = file.name
+        print(filename)
+        struct = Structure.from_file(file)
+        if checkclathrate(struct):
+            clathrates.append(filename)
     
+    print("最终结果是：")
+    for name in clathrates:
+        print(name)
+    print("总共数量是：", len(clathrates))
