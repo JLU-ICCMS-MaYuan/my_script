@@ -162,7 +162,15 @@ class split_wyckoffs:
         distancematrix: List[List[float]],
         clathrate_ratio : float,
 
-        hydrogen_content : float
+        hydrogen_content : float,
+
+        remain_H_ratio_upperstd,
+        fraction_of_hydrogen_volume_lowerstd,
+        shr_num_avg_lowerstd,
+        cage_regularity_avg_upperstd,
+        h2h_network_regularity_avg_upperstd,
+        h2h_1nearest_lowerstd,
+        nonh2nonh_1nearest_lowerstd,
         ):
         
         self.spacegroup_number = spacegroup_number
@@ -179,6 +187,14 @@ class split_wyckoffs:
         self.distancematrix     = np.array(distancematrix)
         self.clathrate_ratio    = clathrate_ratio
         self.hydrogen_content   = hydrogen_content
+
+        self.remain_H_ratio_upperstd = 0.44
+        self.fraction_of_hydrogen_volume_lowerstd = 0.3
+        self.shr_num_avg_lowerstd = 1.6
+        self.cage_regularity_avg_upperstd = 0.05
+        self.h2h_network_regularity_avg_upperstd = 0.15
+        self.h2h_1nearest_lowerstd = 0.9
+        self.nonh2nonh_1nearest_lowerstd = 2.2
 
         self.structs = []
         self.satisfied_spgs, self.wyckoffpositions = self.get_spgs(self.spacegroup_number, self.mults_ranges)
@@ -377,7 +393,16 @@ class split_wyckoffs:
             struct_pmg = struc.to_pymatgen()
 
             if self.clathrate_ratio > np.random.uniform():
-                if checkclathrate(struct_pmg):
+                if checkclathrate(
+                    struct_pmg,
+                    remain_H_ratio_UPPERSTD=self.remain_H_ratio_upperstd,
+                    fraction_of_hydrogen_volume_LOWERSTD=self.fraction_of_hydrogen_volume_lowerstd,
+                    shr_num_avg_LOWERSTD=self.shr_num_avg_lowerstd,
+                    cage_regularity_avg_UPPERSTD=self.cage_regularity_avg_upperstd,
+                    h2h_network_regularity_avg_UPPERSTD=self.h2h_network_regularity_avg_upperstd,
+                    h2h_1nearest_LOWERSTD=self.h2h_1nearest_lowerstd,
+                    nonh2nonh_1nearest_LOWERSTD=self.nonh2nonh_1nearest_lowerstd,
+                    ):
                     return (struct_pmg, "clathrate")
                 else:
                     print(f"Generating clathrate failed !!!")
@@ -450,6 +475,14 @@ class split_wyckoffs:
             distancematrix=config_d["distancematrix"],
             clathrate_ratio=config_d["clathrate_ratio"],
             hydrogen_content=config_d['hydrogen_content'],
+
+            remain_H_ratio_upperstd=config_d['remain_H_ratio_upperstd'],
+            fraction_of_hydrogen_volume_lowerstd=config_d['fraction_of_hydrogen_volume_lowerstd'],
+            shr_num_avg_lowerstd=config_d['shr_num_avg_lowerstd'],
+            cage_regularity_avg_upperstd=config_d['cage_regularity_avg_upperstd'],
+            h2h_network_regularity_avg_upperstd=config_d['h2h_network_regularity_avg_upperstd'],
+            h2h_1nearest_lowerstd=config_d['h2h_1nearest_lowerstd'],
+            nonh2nonh_1nearest_lowerstd=config_d['nonh2nonh_1nearest_lowerstd'],
         )
         return self
 

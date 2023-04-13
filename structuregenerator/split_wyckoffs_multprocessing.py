@@ -307,11 +307,8 @@ class split_wyckoffs_multprocessing:
         print(f"when considering the spg-{satisfied_spg}, {special_spg_posibility} scenarios just are given!")
 
         _group = dict(_group)
-        if _group:
-            return _group
-        else:  # 有可能指定的配比在当前空间群和wyckoff组合下并不存在，所以需要提示错误
-            msg = f"The specified chemical formula {self.nameofatoms} doesn't exist"
-            Formula_Specified_Error(msg)
+        # 不管_group有没有值，都返回一个字典，只不过没有满足情况的排列组合时，返回值是一个空字典
+        return _group
 
     def check_duplicate(self, wps:List[List[str]], wps_bool:dict):
         flag_wps = list(chain(*wps))

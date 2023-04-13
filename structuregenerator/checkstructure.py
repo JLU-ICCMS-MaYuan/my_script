@@ -2,21 +2,39 @@ from pymatgen.core.structure import Structure
 
 from structuregenerator.clathrate import HydrideClathrate
 
-def checkclathrate(pmg_struct: Structure):
+def checkclathrate(
+        pmg_struct: Structure,
+        remain_H_ratio_UPPERSTD: float,
+        fraction_of_hydrogen_volume_LOWERSTD: float,
+        shr_num_avg_LOWERSTD: float,
+        cage_regularity_avg_UPPERSTD: float,
+        h2h_network_regularity_avg_UPPERSTD: float,
+        h2h_1nearest_LOWERSTD: float,
+        nonh2nonh_1nearest_LOWERSTD: float,
+        ):
     clathrate = HydrideClathrate(pmg_struct)
-    # if clathrate.remain_H_ratio > 0.44:
-    #     return False
-    # if clathrate.fraction_of_hydrogen_volume < 0.3:
-    #     return False
-    # if clathrate.shr_num_avg < 1.6:
-    #     return False
-    if clathrate.cage_regularity_avg > 0.05:
+
+    # 推荐设置
+    # remain_H_ratio_UPPERSTD = 0.44
+    # fraction_of_hydrogen_volume_LOWERSTD = 0.3
+    # shr_num_avg_LOWERSTD = 1.6
+    # cage_regularity_avg_UPPERSTD = 0.05
+    # h2h_network_regularity_avg_UPPERSTD = 0.15
+    # h2h_1nearest_LOWERSTD = 0.9
+    # nonh2nonh_1nearest_LOWERSTD = 2.2
+    if clathrate.remain_H_ratio > remain_H_ratio_UPPERSTD:
         return False
-    if clathrate.h2h_network_regularity_avg > 0.15:
+    if clathrate.fraction_of_hydrogen_volume < fraction_of_hydrogen_volume_LOWERSTD:
         return False
-    if clathrate.h2h_1nearest[0][0] < 0.9:
+    if clathrate.shr_num_avg < shr_num_avg_LOWERSTD:
         return False
-    if clathrate.nonh2nonh_1nearest[0][0] < 2.2:
+    if clathrate.cage_regularity_avg > cage_regularity_avg_UPPERSTD:
+        return False
+    if clathrate.h2h_network_regularity_avg > h2h_network_regularity_avg_UPPERSTD:
+        return False
+    if clathrate.h2h_1nearest[0][0] < h2h_1nearest_LOWERSTD:
+        return False
+    if clathrate.nonh2nonh_1nearest[0][0] < nonh2nonh_1nearest_LOWERSTD:
         return False
     
     return True

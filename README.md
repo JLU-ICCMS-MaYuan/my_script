@@ -428,6 +428,13 @@ distancematrix=[[2.074, 1.444],
 clathrate_ratio=1.0
 hydrogen_content=0.6
 max_workers=8
+remain_H_ratio_UPPERSTD = 0.44
+fraction_of_hydrogen_volume_LOWERSTD = 0.3
+shr_num_avg_LOWERSTD = 1.6
+cage_regularity_avg_UPPERSTD = 0.05
+h2h_network_regularity_avg_UPPERSTD = 0.15
+h2h_1nearest_LOWERSTD = 0.9
+nonh2nonh_1nearest_LOWERSTD = 2.2
 [pso]
 numberOflbest = 4
 simthreshold = 0.06
