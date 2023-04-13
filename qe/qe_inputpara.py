@@ -75,8 +75,8 @@ class qe_inputpara(qe_base):
 
         # self.smearing = methfessel-paxton 做scffit 和 scf 时候用这个参数
         if not hasattr(self, "degauss"):
-            self.degauss = "0.005"
-            print("You didn't set the `degauss` !       The program will use default value: degauss=0.005")
+            self.degauss = "0.05"
+            print("You didn't set the `degauss` !       The program will use default value: degauss=0.05")
 
         if not hasattr(self, "ecutwfc"):
             self.ecutwfc = "60"
@@ -119,8 +119,8 @@ class qe_inputpara(qe_base):
             #  做结构弛豫 1.0-d8
             #  做scffit 和 scf 时候用1.0d-9
         if not hasattr(self, "mixing_beta"):
-            self.mixing_beta = "0.7"
-            print("You didn't set the `mixing_beta` !   The program will use default value: mixing_beta=0.7")
+            self.mixing_beta = "0.3"
+            print("You didn't set the `mixing_beta` !   The program will use default value: mixing_beta=0.3")
             #  做scffit 和 scf 时候用0.8
         if not hasattr(self, "electron_maxstep"):
             self.electron_maxstep = "200"
@@ -214,8 +214,8 @@ class qephono_inputpara(qe_inputpara):
             print(f"You didn't set the `el_ph_sigma` !     The program will use default value: el_ph_sigma=0.005")
         
         if not hasattr(self, "alpha_mix"):
-            self.alpha_mix = "0.5"
-            print(f"You didn't set the `alpha_mix` !       The program will use default value: alpha_mix=0.5")
+            self.alpha_mix = "0.3"
+            print(f"You didn't set the `alpha_mix` !       The program will use default value: alpha_mix=0.3")
         
         if not hasattr(self, "dyn0_flag"):
             self.dyn0_flag = False

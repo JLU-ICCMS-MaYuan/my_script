@@ -50,6 +50,11 @@ qe_main.py -i 输入文件路径 -w 工作目录 -p 压强 -j 运行方式
 relax -m mode=relax-vc kpoints_dense="20 20 20" core=48 npool=4  queue=lhy
 ```
 ###  <span style="color:yellow"> 自洽
+#### 重要参数的说明
+1. mixing_beta = 0.3 一般用0.3，算的比较快
+2. degauss = 0.05, 一般用0.02~0.05，值越大，算出来的声子谱越容易稳定。特别是当计算出来的声子谱有一个非GAMMA点虚频一点点时，可以通过调整degauss来消除虚频
+
+**所以我采用的默认参数mixing_beta=0.3, degauss=0.05, 如果你自己需要高精度，自己调整**
 ```shell
 scf -m mode=scffit kpoints_dense='24 24 24' core=48 npool=4  queue=lhy
 ```
@@ -62,13 +67,18 @@ scf -m mode=scf kpoints_sparse='12 12 12' core=48 npool=4  queue=lhy
 ```shell
 qe_main.py -i relax.out -j bash scf -m mode=nscf kpoints_dense='32 32 32' core=2 queue=local
 ```
+### <span style="color:yellow"> 声子计算
+#### 重要参数的说明
+1. alpha_mix(1)=0.3 一般用0.3， 算的比较快，值越大算的越慢。
 
-###  <span style="color:yellow"> 不分q点计算声子
+**所以我采用的默认参数alpha_mix(1)=0.3, 如果你自己需要高精度，自己调整**
+
+####  不分q点计算声子
 ```shell
 phono -m mode=nosplit qpoints='6 6 6' dyn0_flag=False queue=lhy core=48 npool=4  queue=lhy el_ph_nsigma=
 ```
 
-###  <span style="color:yellow"> 分q点计算声子 : split_dyn0模式
+####  <span style="color:green"> 分q点计算声子 : split_dyn0模式
 ```shell
 phono -m mode=nosplit qpoints='6 6 6' dyn0_flag=True core=1 npool=1 queue=local
 ```
@@ -76,47 +86,48 @@ phono -m mode=nosplit qpoints='6 6 6' dyn0_flag=True core=1 npool=1 queue=local
 phono -m mode=split_dyn0 qpoints='6 6 6' core=48 npool=4 queue=local
 ```
 
-###  <span style="color:yellow"> 分q点计算声子 : split_assignQ模式
+####  <span style="color:green"> 分q点计算声子 : split_assignQ模式
 ```shell
 phono -m mode=split_assignQ qpoints='6 6 6' core=1 npool=1 queue=local
 ```
 
-###  <span style="color:yellow"> 合并声子文件
+####  <span style="color:green"> 合并声子文件
 ```shell
 phono -m mode=merge core=1 queue=local
 ```
 
-###  <span style="color:yellow"> 计算力常数
+####  <span style="color:green"> 计算力常数
 ```shell
 phono -m mode=q2r qpoints='6 6 6' core=1 npool=1 queue=local
 ```
 
-###  <span style="color:yellow"> 计算动力学矩阵元
+####  <span style="color:green"> 计算动力学矩阵元
 ```shell
 phono -m mode=matdyn qpoints='6 6 6' core=1 npool=1 queue=local qinserted=50
 ```
-
-###  <span style="color:yellow"> 计算phonodos, 计算态密度时要用更密的q点网格，这需设置nk1, nk2, nk3   
+### 声子态密度计算
+####  <span style="color:green"> 计算phonodos, 计算态密度时要用更密的q点网格，这需设置nk1, nk2, nk3   
 ```shell
 dos -m mode=phonodos core=1 npool=1 queue=local qpoints='8 8 8' ndos=500 
 ```
 
-###  <span style="color:yellow"> 计算eletdos(这里计算电子的dos也用qpoints其实非常不合理)
+### 电子态密度计算
+####  <span style="color:yellow"> 计算eletdos(这里计算电子的dos也用qpoints其实非常不合理)
 ```shell
 dos -m mode=eletdos core=1 npool=1 queue=local qpoints='8 8 8' ndos=500 
 ```
 
-###  <span style="color:yellow"> 计算elepdos(这里计算电子的dos也用qpoints其实非常不合理)
+####  <span style="color:yellow"> 计算elepdos(这里计算电子的dos也用qpoints其实非常不合理)
 ```shell
 dos -m mode=elepdos core=1 npool=1 queue=local qpoints='8 8 8' ndos=500 
 ```
 
-###  <span style="color:green">使用McAD方法计算超导
-####   <span style="color:yellow">不指定最高频率, 将会自动读取最高频率文件
+###  <span style="color:yellow"> 使用McAD方法计算超导
+####   <span style="color:green">不指定最高频率, 将会自动读取最高频率文件
 ```shell
 sc -m mode=McAD core=1 npool=1 queue=local  deguass=0.5 screen_constant=0.1 smearing_method=1 qpoints='6 6 6'
 ```
-####  <span style="color:yellow"> 使用McAD方法超导转变温度指定最高频率
+####  <span style="color:green"> 使用McAD方法超导转变温度指定最高频率
 ```shell
 sc -m mode=McAD core=1 npool=1 queue=local top_freq=80 deguass=0.5 screen_constant=0.1 smearing_method=1 qpoints='6 6 6'
 ```
@@ -148,12 +159,12 @@ screen_constant(库伦屏蔽常数0.1~0.13)
 ```
 
 
-### <span style="color:green"> 使用eliashberg方法超导转变温度
-### <span style="color:yellow">  使用eliashberg方法超导转变温度, 指定a2F.dos*文件
+### <span style="color:yellow"> 使用eliashberg方法超导转变温度
+### <span style="color:green">  使用eliashberg方法超导转变温度, 指定a2F.dos*文件
 ```shell
 sc -m mode=eliashberg core=1 npool=1 queue=local temperature_steps=100 a2F_dos=a2F.dos3 qpoints='6 6 6' screen_constant=0.1
 ```
-####  <span style="color:yellow"> 使用eliashberg方法超导转变温度, 指定使用alpha2F.dat文件中使用哪一列的degauss对应的alpha2F数值。使用degauss_column来指定
+####  <span style="color:green"> 使用eliashberg方法超导转变温度, 指定使用alpha2F.dat文件中使用哪一列的degauss对应的alpha2F数值。使用degauss_column来指定
 (这个方法生成ALPHA2F.OUT可能有问题导致 ELIASHBERG_GAP_T.OUT 中出现NAN。所以更推荐上面那种处理方法。)
 ```shell
 sc -m mode=eliashberg core=1 npool=1 queue=local temperature_steps=100 degauss_column=7 qpoints='6 6 6' screen_constant=0.1
@@ -163,7 +174,7 @@ NOTE: INPUT文件中只需设置两个参数，
 2. 后者是temperature_steps，表示对ntemp个温度点自洽求解Eliashberg方程，得到带隙Δ关于温度T的曲线(该程序首先处理McMillan方程，得到超导临界温度tc作为参考值，然后在温度区间[tc/6, tc*3]中线性插入ntemp个温度点。ntemp一般取40~100即可，也可以更大，建议根据体系差异灵活调控)。
 
 
-####  <span style="color:yellow"> 获得eliashberg计算得到的超导转变温度
+####  <span style="color:green"> 获得eliashberg计算得到的超导转变温度
 ```shell
 sc -m mode=eliashberg Tc=output core=1
 ```
@@ -409,6 +420,31 @@ plot_ternary_convexhull.py -i enthalpy_sorted.csv -hand Lu N H -ebh 10  -save
 ```
 
 # <div align="center"> <span style="color:red"> structuregenerator篇 </span> </div>
+##安装注意事项：
+由于用到了CALYPSO内的部分Fortran代码，所以在忻宇师弟的帮助下，将Fortran代码进行打包，编译为Python可以调用的动态链接库（几个`.so文件`）。然后将这些动态链接库文件复制到指定的目录中。
+### 第一步编译
+
+```shell
+cd structuregenerator/psolib/fortran_src/LegacyFingerPrint/
+make
+# 编译好的文件存储在 structuregenerator/psolib/fortran_src/sym3dgenerator/LIB
+ls LIB
+_f90sym3dgenerator.cpython-39-x86_64-linux-gnu.so f90sym3dgenerator.cpython-39-x86_64-linux-gnu.so
+cd structuregenerator/psolib/fortran_src/sym3dgenerator
+make
+ls LIB
+_f90LegacyFingerPrint.cpython-39-x86_64-linux-gnu.so f90LegacyFingerPrint.cpython-39-x86_64-linux-gnu.so
+```
+### 第二步复制LIB目录中`.so文件`到指定目录
+```shell
+cd structuregenerator
+# 这里可能需要你自己在psolib目录中创建一个新子目录：lib_so
+mkdir -p psolib/lib_so
+cd psolib/lib_so
+cp ../fortran_src/LegacyFingerPrint/LIB/*.so  .
+cp ../fortran_src/sym3dgenerator/LIB/*.so  .
+```
+
 
 ## 使用splitwps方法产生结构
 
