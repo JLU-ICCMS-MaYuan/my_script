@@ -57,8 +57,8 @@ class qe_inputpara(qe_base):
         print('\n'); print("if you want to run `relax` `scffit` `fit`, you had better set these values!")
         # &CONTROL
         if not hasattr(self, "forc_conv_thr"):
-            self.forc_conv_thr = "1.0d-5"
-            print("You didn't set the `forc_conv_thr` ! The program will use default value: forc_conv_thr=1.0d-5")
+            self.forc_conv_thr = "1.0d-6"
+            print("You didn't set the `forc_conv_thr` ! The program will use default value: forc_conv_thr=1.0d-6")
 
         if not hasattr(self, "etot_conv_thr"):
             self.etot_conv_thr = "1.0d-7"
@@ -75,8 +75,8 @@ class qe_inputpara(qe_base):
 
         # self.smearing = methfessel-paxton 做scffit 和 scf 时候用这个参数
         if not hasattr(self, "degauss"):
-            self.degauss = "0.05"
-            print("You didn't set the `degauss` !       The program will use default value: degauss=0.05")
+            self.degauss = "0.02"
+            print("You didn't set the `degauss` !       The program will use default value: degauss=0.02")
 
         if not hasattr(self, "ecutwfc"):
             self.ecutwfc = "60"
@@ -114,13 +114,14 @@ class qe_inputpara(qe_base):
             print("You didn't set the `diagonalization`! The program will use default value: diagonalization=david")
         
         if not hasattr(self, "conv_thr"):
-            self.conv_thr = "1.0d-8"
-            print("You didn't set the `conv_thr` !      The program will use default value: conv_thr=1.0d-8")
+            self.conv_thr = "1.0d-9"
+            print("You didn't set the `conv_thr` !      The program will use default value: conv_thr=1.0d-9")
             #  做结构弛豫 1.0-d8
             #  做scffit 和 scf 时候用1.0d-9
+
         if not hasattr(self, "mixing_beta"):
-            self.mixing_beta = "0.3"
-            print("You didn't set the `mixing_beta` !   The program will use default value: mixing_beta=0.3")
+            self.mixing_beta = "0.7"
+            print("You didn't set the `mixing_beta` !   The program will use default value: mixing_beta=0.7")
             #  做scffit 和 scf 时候用0.8
         if not hasattr(self, "electron_maxstep"):
             self.electron_maxstep = "200"

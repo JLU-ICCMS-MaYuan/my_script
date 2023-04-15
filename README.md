@@ -47,7 +47,7 @@ qe_main.py -i 输入文件路径 -w 工作目录 -p 压强 -j 运行方式
 
 ###  <span style="color:yellow"> 结构弛豫：
 ```shell
-relax -m mode=relax-vc kpoints_dense="20 20 20" core=48 npool=4  queue=lhy
+relax -m mode=relax-vc kpoints_dense="20 20 20" conv_thr=1.0d-8 core=48 npool=4  queue=lhy
 ```
 ###  <span style="color:yellow"> 自洽
 #### 重要参数的说明
@@ -125,11 +125,11 @@ dos -m mode=elepdos core=1 npool=1 queue=local qpoints='8 8 8' ndos=500
 ###  <span style="color:yellow"> 使用McAD方法计算超导
 ####   <span style="color:green">不指定最高频率, 将会自动读取最高频率文件
 ```shell
-sc -m mode=McAD core=1 npool=1 queue=local  deguass=0.5 screen_constant=0.1 smearing_method=1 qpoints='6 6 6'
+sc -m mode=McAD core=1 npool=1 queue=local  deguass=0.02 screen_constant=0.1 smearing_method=1 qpoints='6 6 6'
 ```
 ####  <span style="color:green"> 使用McAD方法超导转变温度指定最高频率
 ```shell
-sc -m mode=McAD core=1 npool=1 queue=local top_freq=80 deguass=0.5 screen_constant=0.1 smearing_method=1 qpoints='6 6 6'
+sc -m mode=McAD core=1 npool=1 queue=local top_freq=80 deguass=0.02 screen_constant=0.1 smearing_method=1 qpoints='6 6 6'
 ```
 这里的参数对应于lamda.in文件中的参数分别是：
 ```shell
