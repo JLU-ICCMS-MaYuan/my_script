@@ -33,8 +33,8 @@ def set_more_args(parser: ArgumentParser):
         default=None,
         dest='work_path',
         help="please tell me your calculated directory, it will determine two things\n"
-            "   1. the directory of `work_underpressure` \n"
-            "       when you tell me your work_path, the program will create the directory of `work_underpressure` named:\n"
+            "   1. the directory of `work_path` \n"
+            "       when you tell me your work_path, the program will create the directory of `work_path` named:\n"
             "       input_file_name + mode + press\n"
             "           such as: POSCAR-disp-200\n"
             "                    CaH6-dfpt-100\n"

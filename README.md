@@ -26,9 +26,9 @@ qe, vasp, structuregenerator是三个独立的项目，互相不耦合。可以�
 qe_main.py -i 输入文件路径 -w 工作目录 -p 压强 -j 运行方式
 ```
 说明：输入文件路径 和工作路径说明 ：
-1. 如果输入文件是relax.out, 那么工作目录会被强行限制为输入文件是relax.out的上一级路径。
-2. 如果输入文件是其它路径:
-    1. 如果指定了-w ，那么就是在-w指定的路径下创建一个压强值命名的目录，在该压强值命名的目录下开展计算
+1. 如果输入文件是relax.out或者scffit.out或者scf.out, 那么工作目录会被强行限制为输入文件所在目录
+2. 如果输入文件是类型例如，POSCAR或者其它scf.in或者cif文件:
+    1. 如果指定了-w ，那么就是在-w指定的路径下开展计算
     2. 如果没有指定-w, 那么就默认所有的计算都在当前指定qe_main.py命令的目录下运行. 并不会额外创建一个压强值命名的目录作为最终工作目录
 
 说明：压强
@@ -101,14 +101,107 @@ phono -m mode=merge core=1 queue=local
 phono -m mode=q2r qpoints='6 6 6' core=1 npool=1 queue=local
 ```
 
-####  <span style="color:green"> 计算动力学矩阵元
+####  <span style="color:green"> 计算动力学矩阵元，获得高对称路径下的声子振动频率
 ```shell
 phono -m mode=matdyn qpoints='6 6 6' core=1 npool=1 queue=local qinserted=50
 ```
+
+####  <span style="color:green"> 处理数据获得声子谱
+**注意！！！ 计算完高对称路径下的声子振动频率后，一定要记得处理数据获得声子谱。**
+这里是处理声子谱的命令
+```shell
+phono -m mode=phonobanddata core=1
+```
+**这里是获得高对称点投影路径的命令**
+```shell
+phono -m mode=hspp core=1
+```
+
+**不然如果后续直接计算声子态密度phonodos的话，`体系名称`.freq文件, `体系名称`.freq.gq文件中声子的q点数目就和gam.lines文件中q点数目对不上了。**
+这里展示计算完`动力学矩阵元，获得高对称路径下的声子振动频率`后的 `体系名称`.freq文件(因为`体系名称`.freq文件和`体系名称`.freq.gq文件类似，这里就不再展示）, gam.lines文件
+
+我先给出我的matdyn.in文件: 其中有6个高对称的q点，每2个q点之间插入20个q点，所以总的q点个数是：20*5+1=101， 101个q点。
+```shell
+&input    
+ asr = 'simple',    
+ amass(1)=138.90547 ,    
+ amass(2)=88.90585 ,    
+ amass(3)=1.00794 ,    
+  flfrc = 'La1Y3H40.fc',    
+  flfrq='La1Y3H40.freq',    
+  la2F=.true.,    
+  dos=.false.,    
+  q_in_band_form=.true.,    
+  q_in_cryst_coord=.true.,    
+/    
+6    
+ 0               0               0               20    
+ 0.0             0.5             0.0             20    
+ 0.5             0.5             0.0             20    
+ 0               0               0               20    
+ 0.5             0.5             0.5             20    
+ 0.0             0.5             0.0             20  
+```
+`体系名称`.freq文件
+```shell
+&plot nbnd= 132, nks= 101 / # nbnd代表有132个声子振动模式(反应在声子谱上有132条带)，nks代表计算了101个q点
+           0.000000  0.000000  0.000000 # 第1个q点的坐标， 下面的这些数字正好是132个，表示在这个q点下计算了132个振动模式的振动频率分别是多少。
+-0.0663   -0.0663   -0.0663  188.7484  188.7484  188.7484
+...       ...       ...      ...       ...       ...
+...       ...       ...      ...       ...       ...
+2044.5579 2044.5579 2226.2463 2226.2463 2253.1870 2327.3298
+           0.000000  0.025000  0.000000 # 第2个q点的坐标
+6.9385    6.9385   25.9481  188.0445  188.0445  189.0030
+...       ...       ...      ...       ...       ...
+...       ...       ...      ...       ...       ...
+2044.9873 2045.0136 2225.8874 2226.5873 2253.9177 2328.7849
+...
+...
+            0.000000  0.500000  0.000000 # 第101个q点的坐标
+48.9448   48.9448  140.2440  140.2440  227.4149  227.4149
+...       ...       ...      ...       ...       ...
+...       ...       ...      ...       ...       ...
+1996.1023 2015.9340 2157.0716 2191.5706 2244.4918 2301.3597 
+```
+gam.lines文件
+```shell
+   
+  Gamma lines for all modes [THz] 
+   
+ Broadening   0.0050 # degauss展宽，第1个值是起始展宽值，
+                     # 取决于你的ph.in中el_ph_sigma=0.005和el_ph_nsigma=10的设置
+       1  # 代表第1个q点, 
+  # 下面的数字表示在该q点下，每个振动频率的展宽值，因为每个q点有132个振动模式，每个振动模式有一个展宽，所有总共有132个值
+  0.0000  0.0000  0.0000  0.0075  0.0075  0.0075  0.0152  0.0152  0.0152 
+  ...     ...     ...     ...     ...     ...     ...     ...     ...     
+  ...     ...     ...     ...     ...     ...     ...     ...     ... 
+  0.9044  0.9044  1.7802  1.7802  6.8412 11.6098
+       101
+  0.0479  0.0479  0.0049  0.0049  0.0027  0.0027  0.0259  0.0046  0.0046
+  ...     ...     ...     ...     ...     ...     ...     ...     ...     
+  ...     ...     ...     ...     ...     ...     ...     ...     ... 
+  0.2878  1.5340  0.7457  2.5516  3.0478  2.3681
+ Broadening   0.0100 # degauss展宽，第2个展宽
+       1
+       ...
+       101
+       ...
+ Broadening   0.0500
+       1
+       ...
+       101
+       ...
+```
+
 ### 声子态密度计算
 ####  <span style="color:green"> 计算phonodos, 计算态密度时要用更密的q点网格，这需设置nk1, nk2, nk3   
 ```shell
 dos -m mode=phonodos core=1 npool=1 queue=local qpoints='8 8 8' ndos=500 
+```
+
+####  <span style="color:green"> 处理出投影到每种元素的phonodos
+```shell
+dos -m mode=phonodosdata core=1 queue=local
 ```
 
 ### 电子态密度计算
@@ -179,6 +272,18 @@ NOTE: INPUT文件中只需设置两个参数，
 sc -m mode=eliashberg Tc=output core=1
 ```
 
+####  <span style="color:green"> **处理数据得到 $\lambda$ 和 $\omega_{log}$**
+用到的公式：
+
+$$\lambda = 2 \int_0^{\infty} \frac{\alpha^2F(\omega)}{\omega} d\omega$$
+
+$$\omega_{log} = exp[\frac{2}{\lambda}\int_{0}^{\infty} \frac{d\omega}{\omega} \alpha^2 F(\omega) ln(\omega)]$$
+
+用到的命令：
+```shell
+sc -m mode=lambda core=1
+```
+
 ###  <span style="color:yellow">  批量计算
 ```shell
 prepare -m mode=prepare electron_maxstep=1000 core=4 npool=1 queue=local
@@ -227,8 +332,8 @@ vasp_main.py -i 输入文件路径 -w 工作目录 -p 压强 -j 运行方式
 1. 指定输入的POSCAR
 
 说明：工作目录
-1. 如果指定工作目录，那么工作目录是-w指定的目录+-p指定的压强组成的路径。比如: -w test -p 200。那么最终路径就是/test/200.0。所有的文件都会在这个路径下运行。
-2. 如果没有指定工作路径，那么工作路径就是当前路径，不会产生压强目录。
+1. 如果指定工作目录，那么工作目录是-w指定的目录
+2. 如果没有指定-w, 那么就默认所有的计算都在当前指定vasp_main.py命令的目录下运行. 并不会额外创建一个压强值命名的目录作为最终工作目录
 
 说明：压强
 1. 指定结构优化的压强，单位是GPa.
@@ -363,8 +468,8 @@ properties -m mode=scf core=28 ediff=1e-8 ediffg=-0.001 ismear=1 kspacing=0.18 e
 ```
 
 ###  <span style="color:yellow"> 电子态密度计算  </span>
-如果指定 "-w 工作路径work_path"， 那么eledos计算时就会在工作路径work_path下寻找一个叫scf的子路径sub_workpath，并将其中的CHGCAR拷贝入eband的子路径sub_workpath
-如果没有指定 "-w 工作路径work_path"， 那么默认当前路径是子路径sub_workpath，其母路径就是work_path, 然后重复上述过程， 即：eledos计算时就会在工作路径work_path下寻找一个叫scf的子路径sub_workpath，并将其中的CHGCAR拷贝入eband的子路径sub_workpath
+如果指定 "-w 工作路径work_path"， 那么eledos计算时就会在工作路径work_path下寻找一个叫scf的子路径work_path，并将其中的CHGCAR拷贝入eband的子路径work_path
+如果没有指定 "-w 工作路径work_path"， 那么默认当前路径是子路径work_path，其母路径就是work_path, 然后重复上述过程， 即：eledos计算时就会在工作路径work_path下寻找一个叫scf的子路径work_path，并将其中的CHGCAR拷贝入eband的子路径work_path
 
 电子态密度计算时，其kspacing需要是scf计算的2倍
 #### 最简参数
@@ -377,8 +482,8 @@ properties -m mode=eledos core=28 ediff=1e-8 ediffg=-0.001 ismear=1 kspacing=0.0
 ```
 
 ###  <span style="color:yellow"> 电子能带结构计算  </span>
-如果指定 "-w 工作路径work_path"， 那么能带计算时就会在工作路径work_path下寻找一个叫scf的子路径sub_workpath，并将其中的CHGCAR拷贝入eband的子路径sub_workpath
-如果没有指定 "-w 工作路径work_path"， 那么默认当前路径是子路径sub_workpath，其母路径就是work_path, 然后重复上述过程， 即：能带计算时就会在工作路径work_path下寻找一个叫scf的子路径sub_workpath，并将其中的CHGCAR拷贝入eband的子路径sub_workpath
+如果指定 "-w 工作路径work_path"， 那么能带计算时就会在工作路径work_path下寻找一个叫scf的子路径work_path，并将其中的CHGCAR拷贝入eband的子路径work_path
+如果没有指定 "-w 工作路径work_path"， 那么默认当前路径是子路径work_path，其母路径就是work_path, 然后重复上述过程， 即：能带计算时就会在工作路径work_path下寻找一个叫scf的子路径work_path，并将其中的CHGCAR拷贝入eband的子路径work_path
 #### 最简参数
 ```shell
 properties -m mode=eband core=核数

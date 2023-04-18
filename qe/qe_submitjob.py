@@ -16,13 +16,13 @@ class qe_submitjob:
     
     def __init__(
         self,
-        work_underpressure: Path,
+        work_path: Path,
         submit_job_system: str,
         mode: str, 
         **kwargs
         ):
 
-        self.work_underpressure = work_underpressure
+        self.work_path = work_path
         self.submit_job_system  = submit_job_system
         self.mode = mode
 
@@ -43,7 +43,7 @@ class qe_submitjob:
     def init_from_relaxinput(cls, other_class: qe_inputpara):
         
         self = cls(
-            work_underpressure=other_class.work_underpressure,
+            work_path=other_class.work_path,
             submit_job_system=other_class.submit_job_system,
             mode=other_class.mode,
         )
@@ -54,7 +54,7 @@ class qe_submitjob:
     def init_from_scfinput(cls, other_class: qe_inputpara):
         
         self = cls(
-            work_underpressure=other_class.work_underpressure,
+            work_path=other_class.work_path,
             submit_job_system=other_class.submit_job_system,
             mode=other_class.mode,
         )
@@ -65,7 +65,7 @@ class qe_submitjob:
     def init_from_phonoinput(cls, other_class: qe_inputpara):
         
         self = cls(
-            work_underpressure=other_class.work_underpressure,
+            work_path=other_class.work_path,
             submit_job_system=other_class.submit_job_system,
             mode=other_class.mode,
             dyn0_flag=other_class.dyn0_flag,
@@ -79,7 +79,7 @@ class qe_submitjob:
     def init_from_dosinput(cls, other_class: qe_inputpara):
         
         self = cls(
-            work_underpressure=other_class.work_underpressure,
+            work_path=other_class.work_path,
             submit_job_system=other_class.submit_job_system,
             mode=other_class.mode,
         )
@@ -90,7 +90,7 @@ class qe_submitjob:
     def init_from_scinput(cls, other_class: qe_inputpara):
         
         self = cls(
-            work_underpressure=other_class.work_underpressure,
+            work_path=other_class.work_path,
             submit_job_system=other_class.submit_job_system,
             mode=other_class.mode,
         )
@@ -98,13 +98,13 @@ class qe_submitjob:
         return self 
 
     def submit_mode0(self, inputfilename):
-        input_file = Path(self.work_underpressure).joinpath(inputfilename)
+        input_file = Path(self.work_path).joinpath(inputfilename)
         if not input_file.exists():
             raise FileExistsError(f" {inputfilename} doesn't exist")
         outputfilename = inputfilename.split(".")[0] + ".out"
         logger.warning("!!!!!!!! Please Attention, You have been source your Intel Compiler !!!!!!!!")
         cwd_path = os.getcwd()
-        os.chdir(self.work_underpressure)
+        os.chdir(self.work_path)
         jobids = os.popen(f"nohup {qebin_path}/ph.x <{inputfilename}> {outputfilename} 2>&1 & echo $!").read()
         print(f"ph.x is running. pid or jobids = {jobids}")
         os.chdir(cwd_path)
@@ -120,10 +120,10 @@ class qe_submitjob:
             q2r,
             matdyn
         """
-        input_file = Path(self.work_underpressure).joinpath(inputfilename)
+        input_file = Path(self.work_path).joinpath(inputfilename)
         if not input_file.exists():
             raise FileExistsError(f" {inputfilename} doesn't exist")
-        job_file = Path(self.work_underpressure).joinpath(jobname)
+        job_file = Path(self.work_path).joinpath(jobname)
         if not job_file.exists():
             raise FileExistsError(f" {jobname} doesn't exist")
         cwd = input_file.cwd()
@@ -157,7 +157,7 @@ class qe_submitjob:
             # 检查是否只是为了获得dyn0文件，如果是：
             print(f"You set dyn0_flag = {self.dyn0_flag}. So When the dyn0 appears, the program will kill ph.x")
             # 在运行ph.x之前，检查dyn0文件是否已经存在
-            if self.checksuffix(self.work_underpressure, ".dyn0"):
+            if self.checksuffix(self.work_path, ".dyn0"):
                 # 在运行ph.x之前，如果dyn0文件已经存在， 那么就直接退出程序
                 logger.warning("Before running the ph.x, the program will check the *.dyn0 exists whether or not !")
                 logger.warning("It seems that dyn0 is not create by you!! Please check it carefully!!! The program will exit!!!")
@@ -169,11 +169,11 @@ class qe_submitjob:
                 while True:
                     # 然后检查dyn0文件是否存在，一旦产生就退出ph.x的运行。
                     time.sleep(3)
-                    if self.checksuffix(self.work_underpressure, ".dyn0"):
+                    if self.checksuffix(self.work_path, ".dyn0"):
                         print("The *.dyn0 has been created just now !!! The program will run `killall -9 ph.x`")
                         os.system("killall -9 ph.x")
                         break
-                    if self.checkerror(self.work_underpressure, outputfilename):
+                    if self.checkerror(self.work_path, outputfilename):
                         print("The {outputfilename} has ERROR !!! The program will exit")
                         sys.exit(1)
         else:
@@ -188,7 +188,7 @@ class qe_submitjob:
         jobids = []
         for i, jobname in enumerate(jobnames):
             cwd = os.getcwd()
-            os.chdir(self.work_underpressure.joinpath(str(i+1)))
+            os.chdir(self.work_path.joinpath(str(i+1)))
             if self.submit_job_system == "bash":
                 print(f"nohup {self.submit_order} {jobname} > phbash{i+1}.log 2>&1 &")
                 res = os.popen(f"nohup {self.submit_order} {jobname} > bash.log 2>&1 &").read()
@@ -206,7 +206,7 @@ class qe_submitjob:
         """split_assignQ"""
         jobids = []
         cwd = os.getcwd()
-        os.chdir(self.work_underpressure)
+        os.chdir(self.work_path)
         for i, jobname in enumerate(jobnames):
             if self.submit_job_system == "bash":
                 print(f"nohup {self.submit_order} {jobname} > phbash{i+1}.log 2>&1 &")

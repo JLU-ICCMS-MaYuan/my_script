@@ -1,11 +1,11 @@
 import os
 import re
+import sys
 import shutil
 import logging
 import numpy as np
 from pathlib import Path
 
-from argparse import ArgumentParser
 
 from ase.io import read
 from pymatgen.io.ase import AseAtomsAdaptor
@@ -30,7 +30,7 @@ class qe_base:
         说明: 输入文件路径 和工作路径说明 : 
         1. 如果输入文件是relax.out, 那么工作目录会被强行限制为输入文件是relax.out的上一级路径。
         2. 如果输入文件是其它路径:
-            1. 如果指定了-w,   那么就是在-w指定的路径下创建一个压强值命名的目录, 在该压强值命名的目录下开展计算
+            1. 如果指定了-w,   那么就是在-w指定的路径下开展计算
             2. 如果没有指定-w, 那么就默认所有的计算都在当前指定qe_main.py命令的目录下运行. 并不会额外创建一个压强值命名的目录作为最终工作目录
 
         说明: 压强
@@ -50,21 +50,28 @@ class qe_base:
 
         # 设置underpressure
         if ("relax.out" in self.input_file_path.name) or ("scf.out" in self.input_file_path.name) or ("scffit.out" in self.input_file_path.name):
-            self.work_underpressure= Path(self.input_file_path).parent
+            self.work_path = Path(self.input_file_path).parent
         elif self.work_path is None:
-            self.work_underpressure= Path.cwd()
+            self.work_path = Path.cwd()
         else:
-            self.work_underpressure= Path(self.work_path).joinpath(str(int(self.press)))
-            if not self.work_underpressure.exists():
-                self.work_underpressure.mkdir(parents=True, exist_ok=True)
+            self.work_path = Path(self.work_path)
+            if not self.work_path.exists():
+                self.work_path.mkdir(parents=True, exist_ok=True)
+                
+        try:
+            self.ase_type          = read(self.input_file_path)
+        except:
+            print("Note: --------------------")
+            print("    When reading `{}` file, the program get something wrong, you need to check it !!!".format(self.input_file_path))
+            sys.exit(1)
 
-        self.ase_type          = read(self.input_file_path)
         self.struct_type       = AseAtomsAdaptor.get_structure(self.ase_type)
-        self.get_struct_info(self.struct_type, self.work_underpressure)
+        self.get_struct_info(self.struct_type, self.work_path)
         
         ############################ prepare pp directory #########################
-        print(f"create potcar dir in {self.work_path}")
-        self.workpath_pppath = Path(self.work_underpressure).joinpath("pp")
+        print("Note: ----------")
+        print(f"    create potcar dir in {self.work_path}")
+        self.workpath_pppath = Path(self.work_path).joinpath("pp")
         if not self.workpath_pppath.exists():
             self.workpath_pppath.mkdir(parents=True)
         # 准备赝势 
@@ -100,7 +107,7 @@ class qe_base:
         self.fractional_sites   = pstruct.sites
         # 获得倒格矢
         # 注意，这是用于固体物理的标准倒数晶格，因数为2π
-        self.reciprocal_plattice = self.get_reciprocal_lattice(self.work_underpressure.joinpath("scffit.out"))
+        self.reciprocal_plattice = self.get_reciprocal_lattice(self.work_path.joinpath("scffit.out"))
         # self.reciprocal_plattice = pstruct.lattice.reciprocal_lattice
         # self.reciprocal_blattice = bstruct.lattice.reciprocal_lattice
         # 返回晶体倒数晶格，即没有2π的因子。
@@ -146,7 +153,7 @@ class qe_base:
                 self.final_choosed_pp.append(dst_pp)
             else:
                 logger.error(f"find many POTCARs {dst_pps}")
-            print(f"species_name {species_name}")
+            print(f"    species_name {species_name}")
 
     def get_single_uspp(self, species_name, workpath_pppath):
         '''
@@ -189,12 +196,19 @@ class qe_base:
         if not scffit_out.exists():
             print("Warning ! You have run scffit for getting `scffit.out`")
             return None
-            
+        
+        # 从scffit.out中获得alat
+        alat = float(os.popen(f"sed -n '/lattice parameter (alat)/p' {scffit_out}").read().split()[4])
+
+        unit_reciprocal_axis = 2*np.pi/alat
+        print("Note: --------------------")
+        print(f"    unit_reciprocal_axis = 2pi/alat=2pi/{alat}={unit_reciprocal_axis}, the unit of alat is `1 a.u.`=0.529117 A")
+        print(f"    However !!!!! When you get cartesian coordinates of high symmetry points, unit_reciprocal_axis={1}. Only in this way can we guarantee the consistency of the coordinates of the q points !!!!")
         reciprocal_lattice = []
         for i in range(1,4):
             b = os.popen(f"sed -n '/b({i})/p' {scffit_out}").read()
             b = re.findall(r"-?\d+\.\d+", b)
-            b  = list(map(float, b))
+            b = [float(bi) for bi in b]  # 这里不需要乘以 unit_reciprocal_axis
             reciprocal_lattice.append(b)
         return np.array(reciprocal_lattice)
 

@@ -35,7 +35,7 @@ class qe_writeinput:
     
     def __init__(
         self, 
-        work_underpressure: Path,
+        work_path: Path,
         workpath_pppath: Path,
         press: int,
         qe_workflow,
@@ -43,7 +43,7 @@ class qe_writeinput:
         **kwargs
         ):
 
-        self.work_underpressure = work_underpressure
+        self.work_path = work_path
         self.workpath_pppath = Path(workpath_pppath)
         self.press = press
         self.qe_workflow = qe_workflow
@@ -56,7 +56,7 @@ class qe_writeinput:
     def init_from_relaxinput(cls, other_class: qe_inputpara):
         
         self = cls(
-            work_underpressure=other_class.work_underpressure,
+            work_path=other_class.work_path,
             workpath_pppath=other_class.workpath_pppath,
             press=other_class.press,
             qe_workflow=other_class.qe_workflow,
@@ -93,7 +93,7 @@ class qe_writeinput:
     def init_from_scfinput(cls, other_class: qe_inputpara):
         
         self = cls(
-            work_underpressure=other_class.work_underpressure,
+            work_path=other_class.work_path,
             workpath_pppath=other_class.workpath_pppath,
             press=other_class.press,
             qe_workflow=other_class.qe_workflow,
@@ -131,7 +131,7 @@ class qe_writeinput:
     def init_from_phonoinput(cls, other_class: qe_inputpara):
         
         self = cls(
-            work_underpressure=other_class.work_underpressure,
+            work_path=other_class.work_path,
             workpath_pppath=other_class.workpath_pppath,
             press=other_class.press,
             qe_workflow=other_class.qe_workflow,
@@ -183,7 +183,7 @@ class qe_writeinput:
     def init_from_dosinput(cls, other_class: qe_inputpara):
 
         self = cls(
-            work_underpressure=other_class.work_underpressure,
+            work_path=other_class.work_path,
             workpath_pppath=other_class.workpath_pppath,
             press=other_class.press,
             qe_workflow=other_class.qe_workflow,
@@ -210,7 +210,7 @@ class qe_writeinput:
     def init_from_scinput(cls, other_class: qe_inputpara):
 
         self = cls(
-            work_underpressure=other_class.work_underpressure,
+            work_path=other_class.work_path,
             workpath_pppath=other_class.workpath_pppath,
             press=other_class.press,
             qe_workflow=other_class.qe_workflow,
@@ -253,13 +253,13 @@ class qe_writeinput:
             inputfilename = self.write_relax_in()
             return inputfilename
         if mode == "scffit":
-            inputfilename = self.write_scf_fit_in(self.work_underpressure)
+            inputfilename = self.write_scf_fit_in(self.work_path)
             return inputfilename
         if mode == "scf":
-            inputfilename = self.write_scf_in(self.work_underpressure)
+            inputfilename = self.write_scf_in(self.work_path)
             return inputfilename
         if mode == "nscf":
-            inputfilename = self.write_nscf_in(self.work_underpressure)
+            inputfilename = self.write_nscf_in(self.work_path)
             return inputfilename
         if mode =="nosplit":
             inputfilename = self.write_ph_no_split_in()
@@ -267,7 +267,7 @@ class qe_writeinput:
         if mode =="split_dyn0":
             inputfilename = []
             for i, q3 in enumerate(self.qirreduced_coords):
-                split_ph_dir = os.path.join(self.work_underpressure, str(i+1))
+                split_ph_dir = os.path.join(self.work_path, str(i+1))
                 if not os.path.exists(split_ph_dir):
                     os.makedirs(split_ph_dir)
                 scffit_name = self.write_scf_fit_in(split_ph_dir)
@@ -280,7 +280,7 @@ class qe_writeinput:
             inputfilename = []
             if self.qirreduced is not None:
                 for i in range(int(self.qirreduced)):
-                    ph_name     = self.write_split_phassignQ(self.work_underpressure, i+1, i+1)
+                    ph_name     = self.write_split_phassignQ(self.work_path, i+1, i+1)
                     inputfilename.append(ph_name)
                 print(f"finish input files {i+1}")            
             return inputfilename
@@ -309,7 +309,7 @@ class qe_writeinput:
 
     def write_relax_in(self):
         inputfilename =  "relax.in"
-        relax_in = os.path.join(self.work_underpressure, inputfilename)
+        relax_in = os.path.join(self.work_path, inputfilename)
         with open(relax_in, "w") as qe:
             qe.write("&CONTROL\n")
             qe.write(" calculation='vc-relax',         \n")
@@ -367,7 +367,7 @@ class qe_writeinput:
                     qe.write(" {:<5}  {:<10}  {:<50} \n".format(species_name, species_mass, species_pseudo[0]))
             qe.write("CELL_PARAMETERS {angstrom}        \n")  # 如果选择angstrom单未，原子坐标选择分数坐标，即，ATOMIC_POSITIONS (crystal), 且不设置celldm(1). 这时alat和celldm(1)设置成v1的长度
             # 判断输入文件relax.out是否存在, 如果relax.out存在, 那么之直接使用relax.out里面的结构信息
-            cell_parameters, fractional_sites = get_cell_and_coords(self.work_underpressure.joinpath("relax.out"))
+            cell_parameters, fractional_sites = get_cell_and_coords(self.work_path.joinpath("relax.out"))
             if cell_parameters is None and fractional_sites is None:
                 print("Note: --------------------")
                 print("    The program will use cell_parameters and coords in inputfile specified by you !!!")
@@ -436,7 +436,7 @@ class qe_writeinput:
                     qe.write(" {:<5}  {:<10}  {:<50} \n".format(species_name, species_mass, species_pseudo[0]))
             qe.write("CELL_PARAMETERS {angstrom}        \n")  # 如果选择angstrom单未，原子坐标选择分数坐标，即，ATOMIC_POSITIONS (crystal), 且不设置celldm(1). 这时alat和celldm(1)设置成v1的长度
             # 判断输入文件relax.out是否存在, 如果relax.out存在, 那么之直接使用relax.out里面的结构信息
-            cell_parameters, fractional_sites = get_cell_and_coords(self.work_underpressure.joinpath("relax.out"))
+            cell_parameters, fractional_sites = get_cell_and_coords(self.work_path.joinpath("relax.out"))
             if cell_parameters is None and fractional_sites is None:
                 print("Note: --------------------")
                 print("    The program will use cell_parameters and coords in inputfile specified by you !!!")
@@ -504,7 +504,7 @@ class qe_writeinput:
                     qe.write(" {:<5}  {:<10}  {:<50} \n".format(species_name, species_mass, species_pseudo[0]))
             qe.write("CELL_PARAMETERS {angstrom}        \n")  # 如果选择angstrom单未，原子坐标选择分数坐标，即，ATOMIC_POSITIONS (crystal), 且不设置celldm(1). 这时alat和celldm(1)设置成v1的长度
             # 判断输入文件relax.out是否存在, 如果relax.out存在, 那么之直接使用relax.out里面的结构信息
-            cell_parameters, fractional_sites = get_cell_and_coords(self.work_underpressure.joinpath("relax.out"))
+            cell_parameters, fractional_sites = get_cell_and_coords(self.work_path.joinpath("relax.out"))
             if cell_parameters is None and fractional_sites is None:
                 print("Note: --------------------")
                 print("    The program will use cell_parameters and coords in inputfile specified by you !!!")
@@ -574,7 +574,7 @@ class qe_writeinput:
             qe.write("CELL_PARAMETERS {angstrom}        \n")  # 如果选择angstrom单未，原子坐标选择分数坐标，即，ATOMIC_POSITIONS (crystal), 且不设置celldm(1). 这时alat和celldm(1)设置成v1的长度
             qe.write("CELL_PARAMETERS {angstrom}        \n")  # 如果选择angstrom单未，原子坐标选择分数坐标，即，ATOMIC_POSITIONS (crystal), 且不设置celldm(1). 这时alat和celldm(1)设置成v1的长度
             # 判断输入文件relax.out是否存在, 如果relax.out存在, 那么之直接使用relax.out里面的结构信息
-            cell_parameters, fractional_sites = get_cell_and_coords(self.work_underpressure.joinpath("relax.out"))
+            cell_parameters, fractional_sites = get_cell_and_coords(self.work_path.joinpath("relax.out"))
             if cell_parameters is None and fractional_sites is None:
                 print("Note: --------------------")
                 print("    The program will use cell_parameters and coords in inputfile specified by you !!!")
@@ -602,7 +602,7 @@ class qe_writeinput:
     # not split mode
     def write_ph_no_split_in(self):
         inputfilename = "ph_no_split.in"
-        ph_in = os.path.join(self.work_underpressure, inputfilename)
+        ph_in = os.path.join(self.work_path, inputfilename)
         with open(ph_in, "w") as qe:
             qe.write("Electron-phonon coefficients for {}                \n".format(self.system_name))                                    
             qe.write(" &inputph                                          \n")      
@@ -692,7 +692,7 @@ class qe_writeinput:
 
     def write_q2r_in(self):
         inputfilename = "q2r.in"
-        q2r_in = os.path.join(self.work_underpressure, inputfilename)
+        q2r_in = os.path.join(self.work_path, inputfilename)
         with open(q2r_in, "w") as qe:
             qe.write("&input                      \n")             
             qe.write("  la2F = .true.,            \n")                       
@@ -704,7 +704,7 @@ class qe_writeinput:
 
     def write_matdyn_in(self):
         inputfilename = "matdyn.in"
-        matdyn_in = os.path.join(self.work_underpressure, inputfilename)
+        matdyn_in = os.path.join(self.work_path, inputfilename)
         special_qpoints_number  = len(self.path_name_coords)
         inserted_qpoints_number = self.qinserted
         with open(matdyn_in, "w") as qe:
@@ -728,7 +728,7 @@ class qe_writeinput:
 
     def write_eletdos_in(self):
         inputfilename = "eletdos.in"
-        eledos_in = os.path.join(self.work_underpressure, inputfilename) 
+        eledos_in = os.path.join(self.work_path, inputfilename) 
         with open(eledos_in, "w") as qe:
             qe.write("&dos                                               \n")
             qe.write("   prefix = '{}',                                  \n".format(self.system_name))                                                          
@@ -742,7 +742,7 @@ class qe_writeinput:
 
     def write_elepdos_in(self):
         inputfilename = "elepdos.in"
-        eledos_in = os.path.join(self.work_underpressure, inputfilename) 
+        eledos_in = os.path.join(self.work_path, inputfilename) 
         with open(eledos_in, "w") as qe:
             qe.write("&projwfc                                           \n")
             qe.write("   prefix = '{}',                                  \n".format(self.system_name))                                                          
@@ -757,7 +757,7 @@ class qe_writeinput:
 
     def write_phonodos_in(self):
         inputfilename = "phonodos.in"
-        phonodos_in = os.path.join(self.work_underpressure, inputfilename) 
+        phonodos_in = os.path.join(self.work_path, inputfilename) 
         with open(phonodos_in, "w") as qe:
             qe.write("&input                                             \n")
             qe.write("   asr = 'simple',                                 \n")                                 
@@ -777,8 +777,8 @@ class qe_writeinput:
 
     def write_lambda_in(self):
         inputfilename = "lambda.in"
-        lambda_in      = os.path.join(self.work_underpressure, inputfilename)
-        elph_dir_path  = os.path.join(self.work_underpressure, "elph_dir")
+        lambda_in      = os.path.join(self.work_path, inputfilename)
+        elph_dir_path  = os.path.join(self.work_path, "elph_dir")
         if not os.path.exists(elph_dir_path):
             raise FileExistsError("There is no directory elph_dir! So the lambda.in will not be created!!!")
         else:
@@ -811,14 +811,14 @@ class qe_writeinput:
         screen_constant = self.screen_constant
         temperature_steps = self.temperature_steps
         inputfilename = "INPUT"
-        eliashberg_in = os.path.join(self.work_underpressure, inputfilename)
+        eliashberg_in = os.path.join(self.work_path, inputfilename)
         with open(eliashberg_in, "w") as qe:
             qe.write("{:<10} {:<10}".format(screen_constant, temperature_steps))
         return inputfilename
 
     def write_alpha2f_out(self):
-        alpha2f_out = Path(self.work_underpressure).joinpath("ALPHA2F.OUT").absolute()
-        alpha2F_dat = Path(self.work_underpressure).joinpath("alpha2F.dat").absolute()
+        alpha2f_out = Path(self.work_path).joinpath("ALPHA2F.OUT").absolute()
+        alpha2F_dat = Path(self.work_path).joinpath("alpha2F.dat").absolute()
         # 方法1 不计算声子的态密度, 直接处理 alpha2F.dat 来计算超导
         if self.degauss_column is not None:
             if not alpha2F_dat.exists():
@@ -829,7 +829,7 @@ class qe_writeinput:
             os.system(awk_order)
         # 方法2 通过计算声子态密度, 获得a2F.dos*文件, 然后选择一个合适的文件用来计算超导
         elif self.a2F_dos is not None:
-            a2F_dos_path = Path(self.work_underpressure).joinpath(self.a2F_dos)
+            a2F_dos_path = Path(self.work_path).joinpath(self.a2F_dos)
             if not a2F_dos_path.exists():
                 raise FileExistsError(f"{self.a2f_dos} doesn't exist !")
             a2F_dos_path = str(a2F_dos_path)

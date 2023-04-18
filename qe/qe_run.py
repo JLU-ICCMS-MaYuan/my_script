@@ -1,9 +1,7 @@
-import time
 import os
-import logging
 from argparse import ArgumentParser
-from pathlib import Path
-from itertools import chain
+
+import pandas as pd
 
 from qe.config import config
 from qe.qe_inputpara import * 
@@ -107,7 +105,16 @@ class qe_phono:
         self.phono_inputpara = qephono_inputpara.init_from_config(self._config)
 
         if self.phono_inputpara.mode == "merge":
-            self.phono_inputpara.merge(self.phono_inputpara.work_underpressure)
+            self.phono_inputpara.merge(self.phono_inputpara.work_path)
+        elif self.phono_inputpara.mode == "phonobanddata":
+            idx, gaussian = self.phono_inputpara.check_convergence()
+            qpoints_freqs, q_number, freq_number = self.phono_inputpara.get_phono_freq()
+            phononwidth = self.phono_inputpara.get_gam_lines(gaussian, q_number, freq_number)
+            self.phono_inputpara.merge_qp_freq_width(qpoints_freqs, phononwidth)
+            print("Note: --------------------")
+            print("    You can use `qp_freq_width.csv` to plot phonon-band")
+        elif self.phono_inputpara.mode == "hspp":
+            self.phono_inputpara.get_hspp()
         else:
             # init the input
             self.qe_writeinput  = qe_writeinput.init_from_phonoinput(self.phono_inputpara)
@@ -127,6 +134,10 @@ class qe_phono:
                 elif self.phono_inputpara.mode == "split_assignQ":
                     self.qe_submitjob.submit_mode4(inputfilename, jobnames)
                 else:
+                    print("Note: --------------------")
+                    print("    If mode=matdyn, please remerber process phono spectrum after finish matdyn.x computation")
+                    print("        The reason is `systemname`.freq, `systemname`.freq.gq and gam.lines will be rewrited when you calcuate phonodos")
+                    print("        In most cases, the number of q-points is different between matdyn.in and phonondos.in")
                     self.qe_submitjob.submit_mode1(inputfilename, jobnames)
         
 
@@ -140,16 +151,21 @@ class qe_dos:
         # prepare input parameter
         self.dos_inputpara = qedos_inputpara.init_from_config(self._config)
 
-        # write input parameter
-        self.qe_writeinput  = qe_writeinput.init_from_dosinput(self.dos_inputpara)
-        inputfilename = self.qe_writeinput.writeinput()
-        # init the submit job script
-        self.qe_writesubmit = qe_writesubmit.init_from_dosinput(self.dos_inputpara)
-        jobname = self.qe_writesubmit.write_submit_scripts(inputfilename)
-        # submit the job
-        self.qe_submitjob = qe_submitjob.init_from_dosinput(self.dos_inputpara)
-        if self.dos_inputpara.queue is not None:
-            self.qe_submitjob.submit_mode1(inputfilename, jobname)
+        if self.dos_inputpara.mode == "phonodosdata":
+            self.dos_inputpara.get_phonodos()
+            print("Note: --------------------")
+            print("    You can use `phonodos_proj2eles.csv` to plot phonon-DOS")
+        else:
+            # write input parameter
+            self.qe_writeinput  = qe_writeinput.init_from_dosinput(self.dos_inputpara)
+            inputfilename = self.qe_writeinput.writeinput()
+            # init the submit job script
+            self.qe_writesubmit = qe_writesubmit.init_from_dosinput(self.dos_inputpara)
+            jobname = self.qe_writesubmit.write_submit_scripts(inputfilename)
+            # submit the job
+            self.qe_submitjob = qe_submitjob.init_from_dosinput(self.dos_inputpara)
+            if self.dos_inputpara.queue is not None:
+                self.qe_submitjob.submit_mode1(inputfilename, jobname)
 
 
 class qe_superconduct:
@@ -162,19 +178,25 @@ class qe_superconduct:
         # prepare input parameter
         self.sc_inputpara  = qesc_inputpara.init_from_config(self._config)
 
-        # init the input
-        self.qe_writeinput  = qe_writeinput.init_from_scinput(self.sc_inputpara)
-        inputfilename = self.qe_writeinput.writeinput()
+        if self.sc_inputpara.mode == "lambda":
+            idx, gauss = self.sc_inputpara.check_convergence()
+            self.sc_inputpara.obtain_lambda_omegalog_Tc_fromQE(idx, gauss)
+            self.sc_inputpara.calculate_lambda_personly(idx, gauss)
+        else:
+            # init the input
+            self.qe_writeinput  = qe_writeinput.init_from_scinput(self.sc_inputpara)
+            inputfilename = self.qe_writeinput.writeinput()
 
-        # init the submit job script
-        self.qe_writesubmit = qe_writesubmit.init_from_scinput(self.sc_inputpara)
-        jobname = self.qe_writesubmit.write_submit_scripts(inputfilename)
+            # init the submit job script
+            self.qe_writesubmit = qe_writesubmit.init_from_scinput(self.sc_inputpara)
+            jobname = self.qe_writesubmit.write_submit_scripts(inputfilename)
 
-        # submit the job
-        self.qe_submitjob   = qe_submitjob.init_from_scinput(self.sc_inputpara)
-        if self.sc_inputpara.queue is not None:
-            self.qe_submitjob.submit_mode1(inputfilename, jobname)
+            # submit the job
+            self.qe_submitjob   = qe_submitjob.init_from_scinput(self.sc_inputpara)
+            if self.sc_inputpara.queue is not None:
+                self.qe_submitjob.submit_mode1(inputfilename, jobname)
 
+    
 
 class qe_prepare:
 
@@ -202,3 +224,4 @@ class qe_prepare:
         self.qe_submitjob   = qe_submitjob.init_from_scinput(self.prepare_inputpara)
         if self.prepare_inputpara.queue is not None:
             self.qe_submitjob.submit_mode1(inputfilename1, jobname)
+

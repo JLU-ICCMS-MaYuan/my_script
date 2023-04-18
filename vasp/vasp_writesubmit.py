@@ -8,14 +8,14 @@ class vasp_writesubmit:
     
     def __init__(
         self, 
-        sub_workpath: str, 
+        work_path: str, 
         submit_job_system: str, 
         mode: str,
         queue: str,
         core: int,
         **kwargs,
         ):
-        self.sub_workpath = sub_workpath
+        self.work_path = work_path
         self.submit_job_system = submit_job_system
         self.mode = mode
         self.queue = queue
@@ -36,7 +36,7 @@ class vasp_writesubmit:
     def init_from_relaxinput(cls, other_class: vasp_inputpara):
         
         self = cls(
-            sub_workpath=other_class.sub_workpath,
+            work_path=other_class.work_path,
             submit_job_system=other_class.submit_job_system,
             mode=other_class.mode,
             queue=other_class.queue,
@@ -49,7 +49,7 @@ class vasp_writesubmit:
     def init_from_properties(cls, other_class: vasp_inputpara):
         
         self = cls(
-            sub_workpath=other_class.sub_workpath,
+            work_path=other_class.work_path,
             submit_job_system=other_class.submit_job_system,
             mode=other_class.mode,
             queue=other_class.queue,
@@ -62,7 +62,7 @@ class vasp_writesubmit:
     def init_from_phonoinput(cls, other_class: vasp_inputpara):
 
         self = cls(
-            sub_workpath=other_class.sub_workpath,
+            work_path=other_class.work_path,
             submit_job_system=other_class.submit_job_system,
             mode=other_class.mode,
             queue=other_class.queue,
@@ -77,22 +77,22 @@ class vasp_writesubmit:
             mode=self.mode
 
         if mode == 'rvf':
-            jobname = self.fopt(self.sub_workpath)
+            jobname = self.fopt(self.work_path)
             return jobname
         elif mode == "rv1":
-            jobname = self.oneopt(self.sub_workpath)
+            jobname = self.oneopt(self.work_path)
             return jobname
         elif mode == 'rv3':
-            jobname = self.threeopt(self.sub_workpath)
+            jobname = self.threeopt(self.work_path)
             return jobname
         elif mode == 'disp':
-            jobname = self.disp(self.sub_workpath)
+            jobname = self.disp(self.work_path)
             return jobname
         elif mode == 'dfpt':
-            jobname = self.dfpt(self.sub_workpath)
+            jobname = self.dfpt(self.work_path)
             return jobname
         elif mode in ['scf', 'eband', 'eledos']:
-            jobname = self.scf_eband_eledos(self.sub_workpath)
+            jobname = self.scf_eband_eledos(self.work_path)
             return jobname
 
     # submit job scripts

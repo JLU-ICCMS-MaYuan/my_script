@@ -113,14 +113,14 @@ if __name__ == "__main__":
     previous_content  = ""
     while True:
         if submit_system == "slurm":
-            send_flag, content = check_slurm(5)
+            send_flag, content = check_slurm(6)
             if send_flag: # 发送邮件，就把content， previous_content 一起发送
                 sendQQemail(previous_content, content)
                 sys.exit(0)
             else: #  不发送邮件，就把content保存下来
                 previous_content = content
         elif submit_system == "pbs":
-            send_flag, content = check_pbs()
+            send_flag, content = check_pbs(10)
             if send_flag: # 发送邮件，就把content， previous_content 一起发送
                 sendQQemail(previous_content, content)
                 sys.exit(0)

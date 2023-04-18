@@ -24,8 +24,8 @@ class vasp_base:
         press
         input_file_path
         submit_job_system
-    create pressure directory (named sub_workpath) on the basis of work_path and press
-    Create pseudopotential directory (named workpath_pppath) in the sub_workpath
+    create pressure directory (named work_path) on the basis of work_path and press
+    Create pseudopotential directory (named workpath_pppath) in the work_path
     """
     def __init__(
         self,
@@ -47,41 +47,26 @@ class vasp_base:
         self.struct_type       = AseAtomsAdaptor.get_structure(self.ase_type)
         
         print("Step 1 ------------------------------")
-        print("    Create sub_workpath under the work_path.")
-        print("    If you didn't specify the work_path, the default sub_workpath is the current path and the work_path is its parent path !")
-        print("    If you specify the work_path, the sub_workpath will be 'work_path+(press/scf/eband/eledos)' !")
+        print("    Create work_path under the work_path.")
+        print("    If you didn't specify the work_path, the default work_path is the current path and the work_path is its parent path !")
+        print("    If you specify the work_path, the work_path will be 'work_path+(press/scf/eband/eledos)' !")
         if self.work_path is None:
-            if self.mode in ['scf', 'eband', 'eledos']:
-                self.sub_workpath = Path.cwd()
-                self.work_path = self.sub_workpath.parent
-                if not self.sub_workpath.exists():
-                    self.sub_workpath.mkdir(parents=True)
-            else:
-                self.sub_workpath = Path.cwd()
-                self.work_path = self.sub_workpath.parent   
+            self.work_path = Path.cwd()
         else:
             self.work_path = Path(self.work_path)
-            if self.mode in ['scf', 'eband', 'eledos']:
-                self.sub_workpath= self.work_path.joinpath(self.mode)
-                if not self.sub_workpath.exists():
-                    self.sub_workpath.mkdir(parents=True)
-            else:
-                self.sub_workpath= self.work_path.joinpath(str(int(self.press)))
-                if not self.sub_workpath.exists():
-                    self.sub_workpath.mkdir(parents=True)
-        print("sub_workpath is \n {}".format(self.sub_workpath))
-
+            if not self.work_path.exists():
+                self.work_path.mkdir(parents=True)
 
         print("Step 2 ------------------------------")
         print("    Prepare the POSCAR and its coresponding primitive and conventional cell.")
-        self.get_struct_info(self.struct_type, self.sub_workpath)
+        self.get_struct_info(self.struct_type, self.work_path)
 
         print("Step 3 ------------------------------")
         print("    Prepare the directory of `potcar_lib` and merge POTCARs ")
-        self.workpath_pppath = Path(self.sub_workpath).joinpath("potcar_lib")
+        self.workpath_pppath = Path(self.work_path).joinpath("potcar_lib")
         if not self.workpath_pppath.exists():
             self.workpath_pppath.mkdir() 
-        self.get_potcar(self.sub_workpath)
+        self.get_potcar(self.work_path)
         print(f"potcar_lib is in \n {self.workpath_pppath}")
 
 
@@ -159,7 +144,10 @@ class vasp_base:
         targetpotcarnames = [pp for pp in targetpotcarfiles]
         choosed_flag  = False
         while not choosed_flag:
-            choosed_pot = input(f"{targetpotcarnames}, \nplease input you want one\n")
+            for i, p in enumerate(targetpotcarnames):
+                print(f"{i+1}.  ", p)
+            choosed_pot_number = input("please input you want one(Enter the previous number, such as 1,2,3...)\n")
+            choosed_pot = targetpotcarnames[choosed_pot_number-1]
             if choosed_pot in targetpotcarnames:
                 src_pp = Path(potcar_dir).joinpath(choosed_pot , "POTCAR")
                 dst_pp = Path(self.workpath_pppath).joinpath(species_name)
@@ -186,8 +174,8 @@ class vasp_base:
         # 第三步：将完成的POTCAR合并出来，并且合并到目标POSCAR所在的目录
         if not os.path.exists(self.workpath_pppath):
             raise FileExistsError("potcar_lib doesn't exist!")
-        if self.sub_workpath.joinpath("POSCAR").exists():
-            src_poscar = self.sub_workpath.joinpath("POSCAR") 
+        if self.work_path.joinpath("POSCAR").exists():
+            src_poscar = self.work_path.joinpath("POSCAR") 
             elements = open(src_poscar, "r").readlines()[5].split()
             print("The program will merge the POTCAR of element {}".format(elements))
             src_potcar_path_list = []
@@ -265,21 +253,22 @@ class vasp_base:
         print(f"the high symmetry points path is {_plist}")
 
         print(
-            "please input the mode you want\n",
-            "'all_points'\n",
-            "'main_points'\n",
-            "Nothing to input\n"
+            "please input the mode you want, just even input Number like 1 or 2\n",
+            "'1  all_points'\n",
+            "'2  main_points'\n",
+            "Nothing to input, directly press ENTER, the default is main_points\n"
             )
         high_symmetry_type = input()
 
         if not high_symmetry_type:
-            high_symmetry_type = "all_points" # default
-
+            high_symmetry_type = "2" # default
         if "," in pstring:
-            if high_symmetry_type == "all_points":
+            if high_symmetry_type == "1":
                 path_name_list = list(chain.from_iterable(_plist))
-            elif high_symmetry_type == "main_points":
+                print(f"the choosed high symmetry points path is \n {path_name_list}")
+            elif high_symmetry_type == "2":
                 path_name_list = max(_plist, key=len)
+                print(f"the choosed high symmetry points path is \n {path_name_list}")
         else:
             path_name_list = [ pp for pp in pstring]
         
@@ -327,16 +316,16 @@ class vaspbatch_base(vasp_base):
         
         self.input_file_name   = self.input_file_path.name.split(".")[0]
         if self.work_path is None:
-            self.sub_workpath = Path.cwd().joinpath(str(self.press), self.input_file_name)
-            self.work_path = self.sub_workpath.parent
+            self.work_path = Path.cwd().joinpath(str(self.press), self.input_file_name)
+            self.work_path = self.work_path.parent
         else:
-            self.sub_workpath= Path(self.work_path).joinpath(str(self.press), self.input_file_name)
-            if not self.sub_workpath.exists():
-                self.sub_workpath.mkdir(parents=True)
+            self.work_path= Path(self.work_path).joinpath(str(self.press), self.input_file_name)
+            if not self.work_path.exists():
+                self.work_path.mkdir(parents=True)
 
         self.ase_type          = read(self.input_file_path)
         self.struct_type       = AseAtomsAdaptor.get_structure(self.ase_type)
-        self.get_struct_info(self.struct_type, self.sub_workpath)
+        self.get_struct_info(self.struct_type, self.work_path)
         
         ############################ prepare pp directory #########################
         print(f"create potcar dir in \n {self.work_path}")
@@ -344,4 +333,4 @@ class vaspbatch_base(vasp_base):
         if not self.workpath_pppath.exists():
             self.workpath_pppath.mkdir()
         # 准备赝势 
-        self.get_potcar(self.sub_workpath)   
+        self.get_potcar(self.work_path)   

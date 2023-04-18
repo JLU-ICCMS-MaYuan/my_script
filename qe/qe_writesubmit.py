@@ -11,13 +11,13 @@ class qe_writesubmit:
 
     def __init__(
         self,
-        work_underpressure: Path,
+        work_path: Path,
         submit_job_system: str,
         mode: str,
         **kwargs,
         ):
-
-        self.work_underpressure = work_underpressure
+ 
+        self.work_path          = work_path
         self.submit_job_system  = submit_job_system 
         self.mode               = mode
 
@@ -37,7 +37,7 @@ class qe_writesubmit:
     def init_from_relaxinput(cls, other_class: qe_inputpara):
         
         self = cls(
-            work_underpressure=other_class.work_underpressure,
+            work_path=other_class.work_path,
             submit_job_system=other_class.submit_job_system,
             mode=other_class.mode,
             queue=other_class.queue,
@@ -50,7 +50,7 @@ class qe_writesubmit:
     def init_from_scfinput(cls, other_class: qe_inputpara):
         
         self = cls(
-            work_underpressure=other_class.work_underpressure,
+            work_path=other_class.work_path,
             submit_job_system=other_class.submit_job_system,
             mode=other_class.mode,
             queue=other_class.queue,
@@ -63,7 +63,7 @@ class qe_writesubmit:
     def init_from_phonoinput(cls, other_class: qe_inputpara):
         
         self = cls(
-            work_underpressure=other_class.work_underpressure,
+            work_path=other_class.work_path,
             submit_job_system=other_class.submit_job_system,
             mode=other_class.mode,
             queue=other_class.queue,
@@ -79,7 +79,7 @@ class qe_writesubmit:
     def init_from_dosinput(cls, other_class: qe_inputpara):
         
         self = cls(
-            work_underpressure=other_class.work_underpressure,
+            work_path=other_class.work_path,
             submit_job_system=other_class.submit_job_system,
             mode=other_class.mode,
             queue=other_class.queue,
@@ -92,7 +92,7 @@ class qe_writesubmit:
     def init_from_scinput(cls, other_class: qe_inputpara):
 
         self = cls(
-            work_underpressure=other_class.work_underpressure,
+            work_path=other_class.work_path,
             submit_job_system=other_class.submit_job_system,
             mode=other_class.mode,
             queue=other_class.queue,
@@ -105,7 +105,7 @@ class qe_writesubmit:
     def init_from_prepareinput(cls, other_class: qe_inputpara):
         
         self = cls(
-            work_underpressure=other_class.work_underpressure,
+            work_path=other_class.work_path,
             submit_job_system=other_class.submit_job_system,
             mode=other_class.mode,
             queue=other_class.queue,
@@ -126,24 +126,24 @@ class qe_writesubmit:
             mode=self.mode
 
         if mode == "relax-vc":
-            jobname = self.s1_relax(self.work_underpressure, inpufilename)
+            jobname = self.s1_relax(self.work_path, inpufilename)
             return jobname
         if mode == "scffit":
-            jobname = self.s2_scffit(self.work_underpressure, inpufilename)
+            jobname = self.s2_scffit(self.work_path, inpufilename)
             return jobname
         if mode == "scf":
-            jobname = self.s3_scf(self.work_underpressure, inpufilename)
+            jobname = self.s3_scf(self.work_path, inpufilename)
             return jobname
         if mode =="prepare":
-            jobname = self.s123_prepare(self.work_underpressure, inpufilename)
+            jobname = self.s123_prepare(self.work_path, inpufilename)
             return jobname
         if mode =="nosplit":
-            jobname = self.s4_PhNoSplit(self.work_underpressure, inpufilename)
+            jobname = self.s4_PhNoSplit(self.work_path, inpufilename)
             return jobname
         if mode =="split_dyn0":
             jobnames = []
             for i, inname in enumerate(inpufilename):
-                split_ph_dir = os.path.join(self.work_underpressure, str(i+1))
+                split_ph_dir = os.path.join(self.work_path, str(i+1))
                 if not os.path.exists(split_ph_dir):
                     raise FileExistsError (f"There is no {split_ph_dir}")
                 jobname = self.s5_PhSplitDyn0(split_ph_dir, inname)
@@ -153,32 +153,32 @@ class qe_writesubmit:
         if mode =="split_assignQ":
             jobnames = []
             for i, inname in enumerate(inpufilename):
-                jobname = self.s5_PhSplitAssignQ(self.work_underpressure, inname)
+                jobname = self.s5_PhSplitAssignQ(self.work_path, inname)
                 jobnames.append(jobname)
             return jobnames
         if mode =="q2r":
-            jobname = self.s6_q2r(self.work_underpressure, inpufilename)
+            jobname = self.s6_q2r(self.work_path, inpufilename)
             return jobname
         if mode =="matdyn":
-            jobname = self.s7_matdyn(self.work_underpressure, inpufilename)
+            jobname = self.s7_matdyn(self.work_path, inpufilename)
             return jobname
         if mode =="eletdos":
-            jobname = self.s8_eletdos(self.work_underpressure, inpufilename)
+            jobname = self.s8_eletdos(self.work_path, inpufilename)
             return jobname
         if mode =="elepdos":
-            jobname = self.s8_elepdos(self.work_underpressure, inpufilename)
+            jobname = self.s8_elepdos(self.work_path, inpufilename)
             return jobname
         if mode == "phonodos":
-            jobname = self.s8_phonodos(self.work_underpressure, inpufilename)
+            jobname = self.s8_phonodos(self.work_path, inpufilename)
             return jobname
         if mode =="McAD":
-            jobname = self.s9_lambda(self.work_underpressure, inpufilename)
+            jobname = self.s9_lambda(self.work_path, inpufilename)
             return jobname
         if mode =="eliashberg":
-            jobname = self.s9_eliashberg(self.work_underpressure, inpufilename)
+            jobname = self.s9_eliashberg(self.work_path, inpufilename)
             return jobname
         if mode =="nscf":
-            jobname = self.s10_nscf(self.work_underpressure, inpufilename)
+            jobname = self.s10_nscf(self.work_path, inpufilename)
             return jobname
 
     #  job scripts

@@ -30,14 +30,14 @@ def set_more_args(parser: ArgumentParser):
         help="please tell me your calculated directory\n"
             "   1. if input-file-path is ended with `xxx.vasp`,\n" 
             "       the program will create the directory `xxx/press/`, \n"
-            "       the work_underpressure will be work_path/xxx/press/\n"
+            "       the work_path will be work_path/xxx/press/\n"
             "   2. if input-file-path is ended with `relax.out`,\n"
             "       the program will not create any the directory,\n"
-            "       the parent path of input_file_path will be the work_underpressure.\n"
+            "       the parent path of input_file_path will be the work_path.\n"
             "       such as input-file-path is `home/mayuan/substitute/relax.out`, so the parent path is `home/mayuan/substitute/`\n"
             "       At the moment the work_path still isn't invalid !!! It will determine the position of pp(pseudopotential path) !!!\n"
             "   3. if input-file-path is ended with other formats(such as POSCAR CONTCAR xxx.cif),\n"
-            "       the program will only create the directory `/press`, the work_underpressure will be `work_path/press/`\n"
+            "       the program will only create the directory `/press`, the work_path will be `work_path/press/`\n"
     )
     parser.add_argument(
         '-j',

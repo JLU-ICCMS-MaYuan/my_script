@@ -4,16 +4,16 @@ from vasp.vasp_inputpara import vasp_inputpara
 
 class vasp_writeincar:
     
-    def __init__(self, sub_workpath, **kwargs) -> None:
+    def __init__(self, work_path, **kwargs) -> None:
 
-        self.sub_workpath = sub_workpath
+        self.work_path = work_path
         for key, value in kwargs.items():
             setattr(self, key, value)
 
     @classmethod
     def init_from_relaxinput(cls, other_class: vasp_inputpara):
         self = cls(
-            sub_workpath=other_class.sub_workpath,
+            work_path=other_class.work_path,
             encut=other_class.encut,
             kspacing=other_class.kspacing,
             ismear=other_class.ismear,
@@ -36,7 +36,7 @@ class vasp_writeincar:
     @classmethod
     def init_from_phonoinput(cls, other_class: vasp_inputpara):
         self = cls(
-            sub_workpath=other_class.sub_workpath,
+            work_path=other_class.work_path,
             encut=other_class.encut,
             ismear=other_class.ismear,
             sigma=other_class.sigma,
@@ -53,7 +53,7 @@ class vasp_writeincar:
     @classmethod
     def init_from_properties(cls, other_class: vasp_inputpara):
         self = cls(
-            sub_workpath=other_class.sub_workpath,
+            work_path=other_class.work_path,
             encut=other_class.encut,
             ismear=other_class.ismear,
             sigma=other_class.sigma,

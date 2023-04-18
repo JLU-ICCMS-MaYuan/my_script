@@ -170,7 +170,7 @@ class vasp_phonopara(vasp_inputpara):
             self.kdensity = [40, 40, 40]
         if self.mode == "disp" or self.mode == "dfpt":
             cwd = os.getcwd()
-            os.chdir(self.sub_workpath)
+            os.chdir(self.work_path)
             os.system('phonopy -d --dim="{} {} {}"'.format(
                         self.supercell[0],
                         self.supercell[1],
@@ -178,9 +178,9 @@ class vasp_phonopara(vasp_inputpara):
                     ))
             os.chdir(cwd)
 
-            poscar_file = Path(self.sub_workpath).joinpath("POSCAR")
-            poscar_init = Path(self.sub_workpath).joinpath("POSCAR-init")
-            sposcar_file= Path(self.sub_workpath).joinpath("SPOSCAR")
+            poscar_file = Path(self.work_path).joinpath("POSCAR")
+            poscar_init = Path(self.work_path).joinpath("POSCAR-init")
+            sposcar_file= Path(self.work_path).joinpath("SPOSCAR")
             self.sposcar_ase_type    = read(sposcar_file)
             self.sposcar_struct_type = AseAtomsAdaptor.get_structure(self.sposcar_ase_type) 
             if self.mode == 'dfpt':
