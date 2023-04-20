@@ -1,5 +1,7 @@
 import os
 import re
+import sys
+import time
 import logging
 from pathlib import Path
 
@@ -222,17 +224,18 @@ class qe_writeinput:
 
             screen_constant=other_class.screen_constant,
             top_freq=other_class.top_freq,
-            deguass=other_class.deguass,
+            degauss=other_class.degauss,
             smearing_method=other_class.smearing_method,
             temperature_steps=other_class.temperature_steps,
-            a2F_dos=other_class.a2F_dos,
-            degauss_column=other_class.degauss_column,
+            gaussid=other_class.gaussid,
+            a2fdos=other_class.a2fdos,
+            alpha2fdat=other_class.alpha2fdat,
 
             # basic parameter of control precision
             forc_conv_thr=other_class.forc_conv_thr,
             etot_conv_thr=other_class.etot_conv_thr,
             smearing=other_class.smearing,
-            degauss=other_class.degauss,
+            broaden=other_class.broaden,
             ecutwfc=other_class.ecutwfc,
             ecutrho=other_class.ecutrho,
             lspinorb=other_class.lspinorb,
@@ -365,6 +368,10 @@ class qe_writeinput:
                     element      = Element(species_name)
                     species_mass = str(element.atomic_mass).strip("amu")
                     qe.write(" {:<5}  {:<10}  {:<50} \n".format(species_name, species_mass, species_pseudo[0]))
+                else:
+                    print("Note: --------------------")
+                    print("    When write pseudo-potentional information, something wrong. Maybe methdo `get_pps_for_a_element` is problematic !")
+                    sys.exit(1)
             qe.write("CELL_PARAMETERS {angstrom}        \n")  # 如果选择angstrom单未，原子坐标选择分数坐标，即，ATOMIC_POSITIONS (crystal), 且不设置celldm(1). 这时alat和celldm(1)设置成v1的长度
             # 判断输入文件relax.out是否存在, 如果relax.out存在, 那么之直接使用relax.out里面的结构信息
             cell_parameters, fractional_sites = get_cell_and_coords(self.work_path.joinpath("relax.out"))
@@ -434,6 +441,10 @@ class qe_writeinput:
                     element      = Element(species_name)
                     species_mass = str(element.atomic_mass).strip("amu")
                     qe.write(" {:<5}  {:<10}  {:<50} \n".format(species_name, species_mass, species_pseudo[0]))
+                else:
+                    print("Note: --------------------")
+                    print("    When write pseudo-potentional information, something wrong. Maybe methdo `get_pps_for_a_element` is problematic !")
+                    sys.exit(1)
             qe.write("CELL_PARAMETERS {angstrom}        \n")  # 如果选择angstrom单未，原子坐标选择分数坐标，即，ATOMIC_POSITIONS (crystal), 且不设置celldm(1). 这时alat和celldm(1)设置成v1的长度
             # 判断输入文件relax.out是否存在, 如果relax.out存在, 那么之直接使用relax.out里面的结构信息
             cell_parameters, fractional_sites = get_cell_and_coords(self.work_path.joinpath("relax.out"))
@@ -502,6 +513,10 @@ class qe_writeinput:
                     element      = Element(species_name)
                     species_mass = str(element.atomic_mass).strip("amu")
                     qe.write(" {:<5}  {:<10}  {:<50} \n".format(species_name, species_mass, species_pseudo[0]))
+                else:
+                    print("Note: --------------------")
+                    print("    When write pseudo-potentional information, something wrong. Maybe methdo `get_pps_for_a_element` is problematic !")
+                    sys.exit(1)
             qe.write("CELL_PARAMETERS {angstrom}        \n")  # 如果选择angstrom单未，原子坐标选择分数坐标，即，ATOMIC_POSITIONS (crystal), 且不设置celldm(1). 这时alat和celldm(1)设置成v1的长度
             # 判断输入文件relax.out是否存在, 如果relax.out存在, 那么之直接使用relax.out里面的结构信息
             cell_parameters, fractional_sites = get_cell_and_coords(self.work_path.joinpath("relax.out"))
@@ -571,7 +586,10 @@ class qe_writeinput:
                     element      = Element(species_name)
                     species_mass = str(element.atomic_mass).strip("amu")
                     qe.write(" {:<5}  {:<10}  {:<50} \n".format(species_name, species_mass, species_pseudo[0]))
-            qe.write("CELL_PARAMETERS {angstrom}        \n")  # 如果选择angstrom单未，原子坐标选择分数坐标，即，ATOMIC_POSITIONS (crystal), 且不设置celldm(1). 这时alat和celldm(1)设置成v1的长度
+                else:
+                    print("Note: --------------------")
+                    print("    When write pseudo-potentional information, something wrong. Maybe methdo `get_pps_for_a_element` is problematic !")
+                    sys.exit(1)
             qe.write("CELL_PARAMETERS {angstrom}        \n")  # 如果选择angstrom单未，原子坐标选择分数坐标，即，ATOMIC_POSITIONS (crystal), 且不设置celldm(1). 这时alat和celldm(1)设置成v1的长度
             # 判断输入文件relax.out是否存在, 如果relax.out存在, 那么之直接使用relax.out里面的结构信息
             cell_parameters, fractional_sites = get_cell_and_coords(self.work_path.joinpath("relax.out"))
@@ -780,24 +798,29 @@ class qe_writeinput:
         lambda_in      = os.path.join(self.work_path, inputfilename)
         elph_dir_path  = os.path.join(self.work_path, "elph_dir")
         if not os.path.exists(elph_dir_path):
-            raise FileExistsError("There is no directory elph_dir! So the lambda.in will not be created!!!")
+            print("There is no directory elph_dir! So the lambda.in will not be created!!!")
+            sys.exit(1)
         else:
             a2Fq2r_elphInpLambda = os.listdir(elph_dir_path)
             elphInpLambda = sorted(list(filter(lambda x: "elph.inp_lambda" in x, a2Fq2r_elphInpLambda)))
             # prepare input data
             top_freq        = self.top_freq
-            deguass         = self.deguass
+            broaden         = self.broaden
             smearing_method = self.smearing_method
             screen_constant = self.screen_constant
+            print("Note: --------------------")
+            print("    Again, check to see if the four values are the same")
+            print("    qirreduced_coords:{}   qweights:{}   qirreduced number:{}   elphInpLambda number:{}".format(len(self.qirreduced_coords),  len(self.qweights), int(self.qirreduced), len(elphInpLambda)))
+            time.sleep(3)
             if len(self.qirreduced_coords) == len(self.qweights) == int(self.qirreduced) == len(elphInpLambda):
                 q_number = self.qirreduced
                 q_coords = self.qirreduced_coords
                 q_weight = self.qweights
             else:
-                logger.error("q number is wrong. The q number in qlist.dat is not matched with nqs.dat")
-
+                print("q_number is wrong. The q_number in qlist.dat is not matched with nqs.dat")
+                sys.exit(1)
             with open(lambda_in, "w") as qe:
-                qe.write("{:<10} {:<10} {:<10}                 \n".format(str(top_freq), str(deguass), str(smearing_method)))
+                qe.write("{:<10} {:<10} {:<10}                 \n".format(str(top_freq), str(broaden), str(smearing_method)))
                 qe.write("{:<10}                               \n".format(str(q_number)))
                 for qcoord, nq in zip(q_coords, q_weight):
                     qe.write(" {} {} {}  {}                    \n".format(str(qcoord[0]), str(qcoord[1]), str(qcoord[2]), str(nq)))
@@ -819,22 +842,24 @@ class qe_writeinput:
     def write_alpha2f_out(self):
         alpha2f_out = Path(self.work_path).joinpath("ALPHA2F.OUT").absolute()
         alpha2F_dat = Path(self.work_path).joinpath("alpha2F.dat").absolute()
-        # 方法1 不计算声子的态密度, 直接处理 alpha2F.dat 来计算超导
-        if self.degauss_column is not None:
-            if not alpha2F_dat.exists():
-                raise FileExistsError(f"{alpha2F_dat.name} doesn't exist !")
-            alpha2F_dat = str(alpha2F_dat)
-            alpha2f_out = str(alpha2f_out)
-            awk_order   = '''sed '1,1d' %s | awk '{print $1/6579.684, $%s}' > %s''' %(alpha2F_dat, str(self.degauss_column), alpha2f_out)
-            os.system(awk_order)
-        # 方法2 通过计算声子态密度, 获得a2F.dos*文件, 然后选择一个合适的文件用来计算超导
-        elif self.a2F_dos is not None:
-            a2F_dos_path = Path(self.work_path).joinpath(self.a2F_dos)
-            if not a2F_dos_path.exists():
-                raise FileExistsError(f"{self.a2f_dos} doesn't exist !")
-            a2F_dos_path = str(a2F_dos_path)
-            alpha2f_out = str(alpha2f_out)
-            os.system(f"sed '1,5d' {a2F_dos_path} | sed '/lambda/d' | awk '{'{print $1/2, $2}'}' > {alpha2f_out}")
+        
+        # 方法1 通过计算声子态密度, 获得a2F.dos*文件, 然后选择一个合适的文件用来计算超导
+        if self.a2fdos:
+            a2fdos_path = Path(self.work_path).joinpath("a2F.dos"+self.gaussid)
+            if not a2fdos_path.exists():
+                print(f"a2F.dos{self.gaussid} doesn't exist !")
+                sys.exit(1)
+            # a2fdos_path = str(a2fdos_path)
+            # alpha2f_out = str(alpha2f_out)
+            os.system(f"sed '1,5d' {a2fdos_path} | sed '/lambda/d' | awk '{'{print $1/2, $2}'}' > {alpha2f_out}")
+        # 方法2 不计算声子的态密度, 直接处理 alpha2F.dat 来计算超导
         else:
-            raise("You haven't set either degauss_column or a2F_dos* !!!")
+            if not alpha2F_dat.exists():
+                print(f"{alpha2F_dat.name} doesn't exist !")
+                sys.exit(1)
+            # alpha2F_dat = str(alpha2F_dat)
+            # alpha2f_out = str(alpha2f_out)
+            awk_order   = '''sed '1,1d' %s | awk '{print $1/6579.684, $%s}' > %s''' %(alpha2F_dat, str(self.gaussid), alpha2f_out)
+            os.system(awk_order)
+
 

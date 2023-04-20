@@ -1,7 +1,6 @@
-from argparse import ArgumentParser
 import os
 import re
-import logging
+import sys
 import shutil
 from pathlib import Path
 from typing import List
@@ -13,9 +12,7 @@ from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from pymatgen.io.vasp import Poscar
 
 from vasp.vaspbin import potcar_source_libs
-from vasp.config import config
 
-logger = logging.getLogger("vaspbase")
 
 class vasp_base:
     """
@@ -123,7 +120,8 @@ class vasp_base:
                 dst_pp = self.get_single_potcar(species_name)
                 self.final_choosed_potcar.append(dst_pp)
             else:
-                logger.error(f"find many POTCARs {dst_pps}")
+                print(f"find many POTCARs {dst_pps}")
+                sys.exit(1)
         if len(self.final_choosed_potcar) == len(self.species):
             self.merge_potcar(dst_potcar_path, self.final_choosed_potcar)
 
@@ -316,20 +314,24 @@ class vaspbatch_base(vasp_base):
         
         self.input_file_name   = self.input_file_path.name.split(".")[0]
         if self.work_path is None:
-            self.work_path = Path.cwd().joinpath(str(self.press), self.input_file_name)
-            self.work_path = self.work_path.parent
+            print("Note: -------------------")
+            print("    You didn't specify the work_path, and this is parameters that must be set!!! the program will exit")
+            sys.exit(1)
         else:
             self.work_path= Path(self.work_path).joinpath(str(self.press), self.input_file_name)
             if not self.work_path.exists():
                 self.work_path.mkdir(parents=True)
+            print("Note: --------------------")
+            print("    Now {} will be created".format(self.work_path))
 
         self.ase_type          = read(self.input_file_path)
         self.struct_type       = AseAtomsAdaptor.get_structure(self.ase_type)
         self.get_struct_info(self.struct_type, self.work_path)
         
         ############################ prepare pp directory #########################
-        print(f"create potcar dir in \n {self.work_path}")
-        self.workpath_pppath = Path(self.work_path).joinpath("potcar_lib")
+        self.workpath_pppath = Path(self.work_path).parent.parent.joinpath("potcar_lib")
+        print(f"Note: --------------------")
+        print(f"   To create potcar dir in \n {self.workpath_pppath}, it's convenient for you to choose POTCARs once.")
         if not self.workpath_pppath.exists():
             self.workpath_pppath.mkdir()
         # 准备赝势 

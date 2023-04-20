@@ -1,10 +1,8 @@
-import logging
+import sys
 from pathlib import Path
 from configparser import ConfigParser
 from argparse import ArgumentParser
 
-
-logger = logging.getLogger(__name__)
 
 class config:
     def __init__(self, args: ArgumentParser) -> None:
@@ -53,7 +51,8 @@ class config:
                 try:
                     self.config_d[key] = eval(value)
                 except (NameError, SyntaxError):
-                    logger.error("there is no {}".format(key))
+                    print("there is no {}".format(key))
+                    sys.exit(1)
         
         if "pso" in config_inputini.sections():
             self.sections.append("pso")
@@ -61,5 +60,6 @@ class config:
                 try:
                     self.config_d[key] = eval(value)
                 except (NameError, SyntaxError):
-                    logger.error("there is no {}".format(key))
+                    print("there is no {}".format(key))
+                    sys.exit(1)
         

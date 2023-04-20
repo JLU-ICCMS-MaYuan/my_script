@@ -257,10 +257,10 @@ class qe_submitjob:
         if outputfile_path.exists():
             content = open(outputfile_path, "r").read()
             if ("Error" in content) or ("error" in content) or ("stopping" in content):
-                logger.error(f"{outputfilename} output some wrong results. The program will exit!!!") 
+                print(f"{outputfilename} output some wrong results. The program will exit!!!") 
                 sys.exit(1)
             elif crash_file.exists():
-                logger.error(f"{outputfilename} output some wrong results. The program will exit!!!") 
+                print(f"{outputfilename} output some wrong results. The program will exit!!!") 
                 sys.exit(1)
         else:
             print(f"{outputfilename} doesn't exist temporarily!")

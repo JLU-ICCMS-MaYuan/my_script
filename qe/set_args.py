@@ -172,7 +172,8 @@ def set_more_args(parser: ArgumentParser):
             "mode=eliashberg"
             "   if we choose the Eliashberg method to calculate superconducting transition temperature, you need to set: \n"
             "   temperature_steps=10000\n"
-            "   a2F_dos=a2F_dos3\n"
+            "   a2fdos=True\n"
+            "   alpha2fdat=False\n"
     )
     parser_phono.set_defaults(qe_workflow=qe_superconduct)
 

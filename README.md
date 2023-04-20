@@ -107,12 +107,12 @@ phono -m mode=matdyn qpoints='6 6 6' core=1 npool=1 queue=local qinserted=50
 ```
 
 ####  <span style="color:green"> 处理数据获得声子谱
-**注意！！！ 计算完高对称路径下的声子振动频率后，一定要记得处理数据获得声子谱。**
+**注意！！！ 计算完高对称路径下的声子振动频率后，一定要记得处理数据获得声子谱。输出一个文件 qp_freq_width.csv 可以用来绘制声子谱以及每个振动频率对应的线宽**
 这里是处理声子谱的命令
 ```shell
 phono -m mode=phonobanddata core=1
 ```
-**这里是获得高对称点投影路径的命令**
+**这里是获得高对称点投影路径的命令， 可以用来在origin中绘制高对称点的垂直参考线**
 ```shell
 phono -m mode=hspp core=1
 ```
@@ -199,7 +199,7 @@ gam.lines文件
 dos -m mode=phonodos core=1 npool=1 queue=local qpoints='8 8 8' ndos=500 
 ```
 
-####  <span style="color:green"> 处理出投影到每种元素的phonodos
+####  <span style="color:green"> 处理出投影到每种元素的phonodos，并且会输出一个文件phdos_proj2eles.csv用来绘制投影态密度
 ```shell
 dos -m mode=phonodosdata core=1 queue=local
 ```
@@ -218,11 +218,11 @@ dos -m mode=elepdos core=1 npool=1 queue=local qpoints='8 8 8' ndos=500
 ###  <span style="color:yellow"> 使用McAD方法计算超导
 ####   <span style="color:green">不指定最高频率, 将会自动读取最高频率文件
 ```shell
-sc -m mode=McAD core=1 npool=1 queue=local  deguass=0.02 screen_constant=0.1 smearing_method=1 qpoints='6 6 6'
+sc -m mode=McAD core=1 npool=1 queue=local broaden=0.5 screen_constant=0.1 smearing_method=1 qpoints='6 6 6'
 ```
-####  <span style="color:green"> 使用McAD方法超导转变温度指定最高频率
+####  <span style="color:green"> 指定最高频率
 ```shell
-sc -m mode=McAD core=1 npool=1 queue=local top_freq=80 deguass=0.02 screen_constant=0.1 smearing_method=1 qpoints='6 6 6'
+sc -m mode=McAD core=1 npool=1 queue=local top_freq=80 broaden=0.5 screen_constant=0.1 smearing_method=1 qpoints='6 6 6'
 ```
 这里的参数对应于lamda.in文件中的参数分别是：
 ```shell
@@ -253,14 +253,17 @@ screen_constant(库伦屏蔽常数0.1~0.13)
 
 
 ### <span style="color:yellow"> 使用eliashberg方法超导转变温度
-### <span style="color:green">  使用eliashberg方法超导转变温度, 指定a2F.dos*文件
+### <span style="color:green">  使用eliashberg方法超导转变温度, 指定读取a2F.dos*文件
 ```shell
-sc -m mode=eliashberg core=1 npool=1 queue=local temperature_steps=100 a2F_dos=a2F.dos3 qpoints='6 6 6' screen_constant=0.1
+sc -m mode=eliashberg core=1 npool=1 queue=local temperature_steps=100 gaussid=3 qpoints='6 6 6' screen_constant=0.1 a2fdos=True alpha2fdat=False
 ```
-####  <span style="color:green"> 使用eliashberg方法超导转变温度, 指定使用alpha2F.dat文件中使用哪一列的degauss对应的alpha2F数值。使用degauss_column来指定
+
+**当然了，a2fdos， alpha2fdat 两个参数不设置也可以，默认使用的是从alpha2fdat中读取数据，因为很多时候，你不会计算phonodos，所以你也没有a2F.dos*这些文件。**
+
+####  <span style="color:green"> 使用eliashberg方法超导转变温度, 指定读取alpha2F.dat文件中使用哪一列的degauss对应的alpha2F数值。使用alpha2fdat来指定
 (这个方法生成ALPHA2F.OUT可能有问题导致 ELIASHBERG_GAP_T.OUT 中出现NAN。所以更推荐上面那种处理方法。)
 ```shell
-sc -m mode=eliashberg core=1 npool=1 queue=local temperature_steps=100 degauss_column=7 qpoints='6 6 6' screen_constant=0.1
+sc -m mode=eliashberg core=1 npool=1 queue=local temperature_steps=100 gaussid=7 qpoints='6 6 6' screen_constant=0.1 a2fdos=True alpha2fdat=False
 ```
 NOTE: INPUT文件中只需设置两个参数，
 1. 前者是screen_constant，一般取0.10~0.13；
@@ -272,7 +275,7 @@ NOTE: INPUT文件中只需设置两个参数，
 sc -m mode=eliashberg Tc=output core=1
 ```
 
-####  <span style="color:green"> **处理数据得到 $\lambda$ 和 $\omega_{log}$**
+####  <span style="color:green"> **处理数据得到 $\lambda$ 和 $\omega_{log}$ 并且输出一个文件：w_alpha2f_lambda.csv 可以用来绘制alpha-lambda的函数图像。** 
 用到的公式：
 
 $$\lambda = 2 \int_0^{\infty} \frac{\alpha^2F(\omega)}{\omega} d\omega$$

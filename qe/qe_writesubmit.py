@@ -116,6 +116,7 @@ class qe_writesubmit:
 
     def write_submit_scripts(self, inpufilename, mode=None):
 
+        print("Note: -------------------")
         print("You can use the modes, please carefully compare your input mode is one of the above modes")
         print("{:<20} {:<20} {:<20} {:<20}".format("relax-vc", "scffit", "scf", "prepare", "nscf"))
         print("{:<20} {:<20} {:<20} {:<20}".format("nosplit", "split_dyn0", "split_assignQ", "q2r"))

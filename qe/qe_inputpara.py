@@ -1,8 +1,8 @@
 import os
 import re
 import sys
+import time
 import shutil
-import logging
 from pathlib import Path
 from itertools import chain
 from math import ceil
@@ -12,11 +12,6 @@ import pandas as pd
 
 from qe.qe_base import qe_base
 
-logging.basicConfig(
-    level = logging.INFO, 
-    format='%(asctime)s | %(name)s | %(levelname)s ---- %(message)s'
-    )
-logger = logging.getLogger(__name__)
 
 class qe_inputpara(qe_base):
 
@@ -58,7 +53,7 @@ class qe_inputpara(qe_base):
             print("    You didn't specify queue, so the program will not submit the job in any way")
 
         print("Note: --------------------")
-        print("if you want to run `relax` `scffit` `fit`, you had better set these values!")
+        print("If you want to run `relax` `scffit` `fit`, you had better set these values!")
         # &CONTROL
         if not hasattr(self, "forc_conv_thr"):
             self.forc_conv_thr = "1.0d-6"
@@ -186,7 +181,7 @@ class qephono_inputpara(qe_inputpara):
             )
         
         print("Note: --------------------")
-        print("if you want to run `phono`, you had better set these values!")
+        print("If you want to run `phono`, you had better set these values!")
         dyn0_names = Path(self.work_path).joinpath(f"{self.system_name}.dyn0")
         if hasattr(self, "qpoints"):
             _qpoints = self.qpoints.split()
@@ -225,13 +220,17 @@ class qephono_inputpara(qe_inputpara):
         
         if not hasattr(self, "dyn0_flag"):
             self.dyn0_flag = False
-        
         else:
             self.dyn0_flag = eval(self.dyn0_flag)
-
+        
+        print("Note: --------------------")
         dyn0_names = Path(self.work_path).joinpath(f"{self.system_name}.dyn0")
         if dyn0_names.exists():
             self.qtot, self.qirreduced, self.qirreduced_coords= self.get_q_from_dyn0(dyn0_path=dyn0_names) 
+            print("    qtot from No.1 line in {}.dyn0 = {}".format(self.system_name, self.qtot))
+            print("    qirreduced from No.2 line in  {}.dyn0 = {}".format(self.system_name, self.qirreduced))
+            print("    qirreduced_coords from the rest lines in {}.dyn0, the number = {}".format(self.system_name, len(self.qirreduced_coords)))
+            time.sleep(3)
             # 获得 self.qtot, self.qirreduced, self.qirreduced_coords, self.qweights 
         else:
             print(f"{self.system_name}.dyn0 doesn't exist in {self.work_path}. The qtot, qirreduced, qirreduced_coords will not get values.")
@@ -264,7 +263,8 @@ class qephono_inputpara(qe_inputpara):
 
     def get_q_from_scfout(self, dir):
         if not os.path.exists(dir):
-            raise FileExistsError ("scf.out didn't exist!")
+            print("scf.out didn't exist!")
+            sys.exit(1)
         content = open(dir, "r").readlines()
         def find_k(item):
             if re.search(r"k\(\s*\d+\)\s*=\s*", item):
@@ -472,6 +472,7 @@ class qephono_inputpara(qe_inputpara):
             print("The Gaussion in ph_no_split.in file is different the Gaussion in `'elph_dir\elph.inp_lambda.1`")
             sys.exit(1)
         self.gaussian = gaussian1
+        
         # 判断哪一个gaussian是收敛的，给出的是gaussian列表的索引值。
         shlorder = f"grep DOS {self.work_path.joinpath('elph_dir', 'elph.inp_lambda.1')}" + "| awk '{print $3}'"
         dos = os.popen(shlorder).readlines()
@@ -481,8 +482,8 @@ class qephono_inputpara(qe_inputpara):
         # 收敛Gaussian的索引
         idx = np.argmin(delta_dos)
         gauss = gaussian0[idx]
-        print(f'Converged Index of gaussian={idx+1}, corresponding gaussian value={gaussian1[idx]}')
-
+        print("Note: --------------------")
+        print(f'    Converged gaussid = {idx+1}, corresponding gaussian value={gaussian1[idx]}')
         return idx, gauss
 
     def get_gam_lines(self, gauss:float, q_number:int, freq_number:int):
@@ -679,7 +680,7 @@ class qedos_inputpara(qe_inputpara):
         phonondos_sum.insert(1, 'tdos', tdos_col)
 
         phonondos_sum.to_csv(
-            self.work_path.joinpath("phonodos_proj2eles.csv"),
+            self.work_path.joinpath("phdos_proj2eles.csv"),
             header=True,   # 指定第一行为列名称
             index=False,   # 不输出列索引
             )
@@ -705,20 +706,24 @@ class qesc_inputpara(qephono_inputpara):
             **kwargs
             )
         print("Note: --------------------")
-        print("if you want to run `superconduct`, you had better set these values!")
+        print("If you want to run `superconduct`, you had better set these values!")
         # Mc-A-D and Eliashberg
         if not hasattr(self, "screen_constant"):
             print("    You didn't set the `screen_constant` ! The program will use default value: screen_constant=0.13")
             self.screen_constant = 0.13
 
         # Mc-A-D
+        print("Note: --------------------")
         q2r_names = list(Path(self.work_path).glob("q2r.out"))
         if len(q2r_names)==1:
             q2r_path = q2r_names[0]
             self.qweights = self.get_q_from_q2r(q2r_path=q2r_path)
+            print("    The number of qweights = {}".format(len(self.qweights)))
+            time.sleep(3)
             # 获得 self.qtot, self.qirreduced, self.qirreduced_coords, self.qweights 
         else:
-            raise FileExistsError("No exist *.dyn0! ") 
+            print("No exist *.dyn0! ")
+            sys.exit(1)
         
         # Mc-A-D
         if not hasattr(self, "top_freq"):
@@ -728,9 +733,10 @@ class qesc_inputpara(qephono_inputpara):
                 self.top_freq = self.get_top_freq(dosfile=phonodos_file)
         
         # Mc-A-D
-        if not hasattr(self, "deguass"):
-            self.deguass = 0.12
-            print("    You didn't set the `deguass` !         The program will use default value: deguass=0.12")
+        if not hasattr(self, "broaden"):
+            self.broaden = 0.5
+            print("    You didn't set the `broaden` !         The program will use default value: broaden=0.12")
+            print("    ***** Don't change easily the parameter of broaden, 0.5 is good enough !!!! ***** ")
 
         # Mc-A-D
         if not hasattr(self, "smearing_method"):
@@ -738,24 +744,42 @@ class qesc_inputpara(qephono_inputpara):
             print("    You didn't set the `smearing_method`!  The program will use default value: smearing_method=1")
 
         # Eliashberg
-        print("If you use Eliashberg method, you have to specify the temperature_steps !")
-        print("If you use Eliashberg method, you may not specify the a2f_dos* !")
-        print("If you use Eliashberg method, you may not specify the degauss_column* !")
-        print("\tIf you set a2f_dos*,then you don't need set degauss_column !\n\tIf you set both, the program will run in the way of `degauss_column*`")
+        print("    If you use Eliashberg method, you have to specify the temperature_steps, a2fdos*(alpha2fdat*)!")
+        print("    If you set both a2fdos* and alpha2fdat*, the program will run in the way of `a2fdos*`")
         if not hasattr(self, "temperature_steps"):
             self.temperature_steps = 5000
             print("    You didn't set the `temperature_steps`.The program will use default value: temperature_steps=5000")
 
         # Eliashberg
-        if not hasattr(self, "a2F_dos"):
-            self.a2F_dos = None
-            print("    You didn't set the `a2F_dos`.          The program will use default value: a2F_dos=None")
-
-        # Eliashberg
-        if not hasattr(self, "degauss_column"):
-            self.degauss_column = None
-            print("    You didn't set the `a2F_dos`.          The program will use default value: degauss_column=None")
+        print("Note: --------------------")
+        print("If you want to run `sc`, you can choose converged alpha by parameter of `gaussid` or by program(just not input gaussid)!")
+        if hasattr(self, "gaussid"):
+            self.gaussid = str(self.gaussid)
+            print("    You have specified `gaussid={}`. The program will choose byitself.".format(self.gaussid))
+        else:
+            gaussid, gaussvalue = self.check_convergence()
+            self.gaussid = str(gaussid)
+            print("    You didn't specify `gaussid`. The program will obtain  `gaussid={}` by itself.".format(gaussid+1))
         
+        print("Note: --------------------")
+        if hasattr(self, "a2fdos") and self.a2fdos == True:
+            self.alpha2fdat = False
+            print("    The omegas-alpha2F values will be getted from a2F.dos{}".format(self.gaussid))
+            print("    The shell order used is:")
+            print("    sed '1,5d' a2F.dos%s | sed '/lambda/d' | awk '{print $1/2, $2}' ALPHA2F.OUT"%(self.gaussid))
+        elif hasattr(self, "alpha2fdat") and self.alpha2fdat == True:
+            self.a2fdos = False
+            print("    The omegas-alpha2F values will be getted from alpha2F.dat{}".format(self.gaussid))
+            print("    The shell order used is:")
+            print("    sed '1,1d' alpha2F.dat | awk '{print $1/6579.684, $%s}' > ALPHA2F.OUT "%(self.gaussid))
+        else:
+            self.a2fdos = False
+            self.alpha2fdat = True
+            print("    You didn't specify the either `a2fdos` or `alpha2fdat`")
+            print("    The omegas-alpha2F values will be getted from alpha2F.dat. Because you may not calculate phonodos")
+            print("    The shell order used is:")
+            print("    sed '1,1d' alpha2F.dat | awk '{print $1/6579.684, $%s}' > ALPHA2F.OUT "%(self.gaussid))
+
         if hasattr(self, "Tc"):
             self.identify_converge_Tc()
 
@@ -813,7 +837,6 @@ class qesc_inputpara(qephono_inputpara):
             converged_degauss_index: 是一个收敛的degauss的索引, 因为python是从0开始的, 所以一定要小心
             gauss: 对应索引的Gaussian值
         """
-        from scipy.integrate import trapz
 
         alpha2F_dat_path = self.work_path.joinpath("alpha2F.dat")
         if not alpha2F_dat_path.exists():
@@ -830,20 +853,34 @@ class qesc_inputpara(qephono_inputpara):
         print(f"    Converged gauss index inputed = {converged_gauss_index+1}, its value = {gauss}")
         print(f"    So in alpha2F.dat, corresponding gauss value = {alpha2F_dat.columns[converged_gauss_index+1]} ")
         omegas  = np.array(alpha2F_dat.iloc[:, 0])
-        alpha2f = np.array(alpha2F_dat.iloc[:, converged_gauss_index+1])
+        alpha2fs = np.array(alpha2F_dat.iloc[:, converged_gauss_index+1])
 
         # 定义被积函数的插值函数
-        integrand_value = np.nan_to_num(alpha2f / omegas, nan=0) # # 计算 alpha2f / omegas，并将结果中的 NaN 替换为 0
+        integrand_func = 2*np.nan_to_num(alpha2fs / omegas, nan=0) # 计算 alpha2f / omegas，并将结果中的 NaN 替换为 0
 
-        # 初始化结果列表
-        integral_results = []
-        # 遍历 omegas 数组，对每个积分上限进行数值积分
-        for idx, omega in enumerate(omegas):
-            # 使用 trapz 函数进行数值积分
-            integral = trapz(y=integrand_value[:idx+1], x=omegas[:idx+1], dx=0.01)
-            # 将积分结果添加到结果列表中
-            integral_results.append(integral)
-        print(integral_results)
+        # 定义步长, 总共有len(omegas)个omega值，那么就有len(omegas)-1段
+        d_omega = (omegas[-1] - omegas[1]) / (len(omegas) -1)
+
+        # 许多小正方形的面积
+        squares_areas = [integrand_func[idx] * d_omega for idx, omega in enumerate(omegas)]
+
+        # 梯形累计求和。例如对[1,2,3,4,5]梯形累计求和就是[1,3,6,10,15]
+        lambdas = np.cumsum(squares_areas)
+        if len(omegas) == len(alpha2fs) == len(lambdas):
+            omegas_alpha2fs_lambdas = np.vstack((omegas, alpha2fs, lambdas)).T
+            # omegas_alpha2fs_lambdas 拼接出来的效果如下。所以必须要转置
+            # [[xxx, ..., ..., ..., ..., ..., ..., ..., ..., ..., xxx] ]
+            #  [xxx, ..., ..., ..., ..., ..., ..., ..., ..., ..., xxx] ]
+            #  [xxx, ..., ..., ..., ..., ..., ..., ..., ..., ..., xxx] ]
+            w_alpha2f_lamd = pd.DataFrame(omegas_alpha2fs_lambdas)
+            w_alpha2f_lamd.columns = ['omegas', 'alpha2f', 'lambdas']
+            w_alpha2f_lamd.to_csv(
+                self.work_path.joinpath("w_alpha2f_lambda.csv"),
+                header=True,
+                index=False,
+            )
+            print("Note: --------------------")
+            print("    lambda = {:<8.6f} calculated by yourself !".format(lambdas[-1]))
 
     def obtain_lambda_omegalog_Tc_fromQE(self, converged_gauss_index, gauss):
         """

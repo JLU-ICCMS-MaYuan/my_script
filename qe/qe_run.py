@@ -1,7 +1,6 @@
 import os
+import time
 from argparse import ArgumentParser
-
-import pandas as pd
 
 from qe.config import config
 from qe.qe_inputpara import * 
@@ -136,8 +135,8 @@ class qe_phono:
                 else:
                     print("Note: --------------------")
                     print("    If mode=matdyn, please remerber process phono spectrum after finish matdyn.x computation")
-                    print("        The reason is `systemname`.freq, `systemname`.freq.gq and gam.lines will be rewrited when you calcuate phonodos")
-                    print("        In most cases, the number of q-points is different between matdyn.in and phonondos.in")
+                    print("    The reason is `systemname`.freq, `systemname`.freq.gq and gam.lines will be rewrited when you calcuate phonodos")
+                    print("    In most cases, the number of q-points is different between matdyn.in(high symmetry path qpoints sample) and phonondos.in(even qpoints sample)")
                     self.qe_submitjob.submit_mode1(inputfilename, jobnames)
         
 
@@ -154,7 +153,7 @@ class qe_dos:
         if self.dos_inputpara.mode == "phonodosdata":
             self.dos_inputpara.get_phonodos()
             print("Note: --------------------")
-            print("    You can use `phonodos_proj2eles.csv` to plot phonon-DOS")
+            print("    You can use `phdos_proj2eles.csv` to plot phonon-DOS")
         else:
             # write input parameter
             self.qe_writeinput  = qe_writeinput.init_from_dosinput(self.dos_inputpara)
@@ -182,7 +181,14 @@ class qe_superconduct:
             idx, gauss = self.sc_inputpara.check_convergence()
             self.sc_inputpara.obtain_lambda_omegalog_Tc_fromQE(idx, gauss)
             self.sc_inputpara.calculate_lambda_personly(idx, gauss)
+            print("Note: --------------------")
+            print("    You can use `w_alpha2f_lambda.csv` to plot alpha2f-lambda")
         else:
+            print("Note: --------------------")
+            print("    Give you 5 seconds to think of whether you use `backup_lambda.py xxx(0.10 or 0.13)` to backup the lambda.in, lambda.out, alpha2F.dat, ")
+            print("    The reason is you need caluculate Tc twice, repectively, mu=0.10 and mu=0.13")
+            print("    My advice is after finishing both McAD method and Eliashberg method, then you can backup these files. Otherwise you will mix up mu=0.10 and mu=0.13 ")
+            time.sleep(5)
             # init the input
             self.qe_writeinput  = qe_writeinput.init_from_scinput(self.sc_inputpara)
             inputfilename = self.qe_writeinput.writeinput()

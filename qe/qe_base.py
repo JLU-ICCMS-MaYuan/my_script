@@ -48,7 +48,6 @@ class qe_base:
         self.submit_job_system = submit_job_system
         self.input_file_path   = Path(input_file_path)
 
-        # 设置underpressure
         if ("relax.out" in self.input_file_path.name) or ("scf.out" in self.input_file_path.name) or ("scffit.out" in self.input_file_path.name):
             self.work_path = Path(self.input_file_path).parent
         elif self.work_path is None:
@@ -126,17 +125,18 @@ class qe_base:
                 add the path of target uspp to the `self.final_choosed_pp`
         '''
         pp_files = os.listdir(workpath_pppath)
-        self.final_choosed_pp = []
+        self.final_choosed_pp = [] # 最终用来写输入文件用到的赝势都存在这里
         for species in self.species:
             species_name = species.name
-            dst_pps = get_pps_for_a_element(species_name, pp_files)
+            dst_pps = get_pps_for_a_element(species_name, pp_files) # 从已经准备好的pp目录里面拿出来目标赝势
             if len(dst_pps) > 1:
                 # 如果目标元素已经有多个赝势放在pp目录中. 例如S元素的三个赝势都放在了pp目录中，你需要手动选择哪个赝势用作计算
                 choosed_flag  = False
                 while not choosed_flag:
                     for i, p in enumerate(dst_pps):
                         print(f"{i+1}.  ", p)
-                    choosed_pp_number = int(input("please input you want one(Enter the previous number, such as 1,2,3...)\n"))
+                    print("Note: --------------------")
+                    choosed_pp_number = int(input("    please input you want one(Enter the previous number, such as 1,2,3...)\n"))
                     choosed_pp = dst_pps[choosed_pp_number-1]
                     if choosed_pp in dst_pps:
                         choosed_flag = True
@@ -148,12 +148,15 @@ class qe_base:
                 # 如果目标元素只有1个赝势放在pp目录中. 直接将其加入self.final_choosed_pp即可
                 self.final_choosed_pp.append(dst_pps[0])
             elif len(dst_pps) == 0:
-                print(f"to prepare {species_name} uspp! ")
+                # 如果目标元素在pp目录中一个都没有，就从之前设置的赝势库中选择一个
+                print("Note: --------------------")
+                print(f"    To prepare {species_name} uspp! ")
                 dst_pp = self.get_single_uspp(species_name, workpath_pppath)
                 self.final_choosed_pp.append(dst_pp)
             else:
-                logger.error(f"find many POTCARs {dst_pps}")
-            print(f"    species_name {species_name}")
+                print(f"find many POTCARs {dst_pps}")
+                sys.exit(1)
+
 
     def get_single_uspp(self, species_name, workpath_pppath):
         '''
@@ -167,7 +170,8 @@ class qe_base:
         if os.path.exists(qe_USPP):
             pp_files = os.listdir(qe_USPP)
         else:
-            raise FileExistsError("You may not set the potcar_source_libs, you can set it in `qebin.py` ")
+            print("    You may not set the potcar_source_libs, you can set it in `qebin.py` ")
+            sys.exit(1)
 
         targetppfiles    = get_pps_for_a_element(species_name, pp_files)
         targetppnames    = [pp for pp in targetppfiles]
@@ -175,7 +179,7 @@ class qe_base:
         while not choosed_flag:
             for i, p in enumerate(targetppnames):
                 print(f"{i+1}.  ", p)
-            choosed_pp_number = int(input("please input you want one(Enter the previous number, such as 1,2,3...)\n"))
+            choosed_pp_number = int(input("    please input you want one(Enter the previous number, such as 1,2,3...)\n"))
             choosed_pp = targetppnames[choosed_pp_number-1]
             if choosed_pp in targetppnames:
                 src_pp = Path(qe_USPP).joinpath(choosed_pp)
@@ -245,11 +249,12 @@ def get_pps_for_a_element(species_name:str, pp_files:list):
     # 这里写的实在是太精妙了。我用2个花括号套在一起解决了正则表达式传入花括号的问题
     namelenth = len(species_name)
     if namelenth == 1:
-        qepp_name_patter = re.compile(f'''^[{species_name.capitalize()}|{species_name.lower()}]{'{1,1}'}[\.|\_]''')
+        qepp_name_patter = re.compile(f'''^[{species_name.capitalize()}|{species_name.lower()}][\.|\_]''')
     elif namelenth == 2:
-        qepp_name_patter = re.compile(f'''^[{species_name.capitalize()}|{species_name.lower()}]{'{2,2}'}[\.|\_]''')
+
+        qepp_name_patter = re.compile(f'''^([{species_name[0].capitalize()}|{species_name[0].lower()}]{species_name[1]})[\.|\_]''')
     else:
-        logger.warning(f"Inconceivable that the length of the element name is not 1 or 2, it is {namelenth}, its name is {species_name}")
+        print(f"Inconceivable that the length of the element name is not 1 or 2, it is {namelenth}, its name is {species_name}")
     dst_pps          = list(filter(lambda file: qepp_name_patter.findall(file), pp_files))
 
     return dst_pps
