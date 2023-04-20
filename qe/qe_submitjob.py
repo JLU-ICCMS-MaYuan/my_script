@@ -8,7 +8,7 @@ import logging
 from pathlib import Path
 
 from qe.qe_inputpara import qe_inputpara
-from qe.qebin import qebin_path
+from qe.qebin import qebin_path, eliashberg_x_path
 
 logger = logging.getLogger("qe_submitjob")
 
@@ -97,18 +97,31 @@ class qe_submitjob:
 
         return self 
 
-    def submit_mode0(self, inputfilename):
+    def submit_mode0(self, inputfilename, dotx_file):
         input_file = Path(self.work_path).joinpath(inputfilename)
         if not input_file.exists():
             raise FileExistsError(f" {inputfilename} doesn't exist")
         outputfilename = inputfilename.split(".")[0] + ".out"
-        logger.warning("!!!!!!!! Please Attention, You have been source your Intel Compiler !!!!!!!!")
-        cwd_path = os.getcwd()
-        os.chdir(self.work_path)
-        jobids = os.popen(f"nohup {qebin_path}/ph.x <{inputfilename}> {outputfilename} 2>&1 & echo $!").read()
-        print(f"ph.x is running. pid or jobids = {jobids}")
-        os.chdir(cwd_path)
-        return jobids, outputfilename
+        print("Note: --------------------")
+        print("    !!!!!!!! Please Attention, You have been source your Intel Compiler !!!!!!!!")
+        if dotx_file == "ph.x":
+            cwd_path = os.getcwd()
+            os.chdir(self.work_path)
+            jobids = os.popen(f"nohup {qebin_path}/{dotx_file} <{inputfilename}> {outputfilename} 2>&1 & echo $!").read()
+            print(f"{dotx_file} is running. pid or jobids = {jobids}")
+            os.chdir(cwd_path)
+            return jobids, outputfilename
+        elif dotx_file == "lambda.x":
+            cwd_path = os.getcwd()
+            os.chdir(self.work_path)
+            os.system(f"{qebin_path}/{dotx_file} <{inputfilename}> {outputfilename}")
+            os.chdir(cwd_path)
+        elif dotx_file == "eliashberg.x":
+            cwd_path = os.getcwd()
+            os.chdir(self.work_path)
+            os.system(f"{eliashberg_x_path} > eliashberg.log")
+            os.chdir(cwd_path)
+        
 
     def submit_mode1(self, inputfilename, jobname):
         """
@@ -164,7 +177,7 @@ class qe_submitjob:
                 sys.exit(0)
             else:
                 # 在运行ph.x之前，如果dyn0文件不存在， 那么就执行ph.x的运行
-                jobids, outputfilename = self.submit_mode0(inputfilename)
+                jobids, outputfilename = self.submit_mode0(inputfilename, "ph.x")
                 # 如果执行完ph.x的运行后，检查返回的任务号不为空，说明ph.x的运行没有问题。
                 while True:
                     # 然后检查dyn0文件是否存在，一旦产生就退出ph.x的运行。
@@ -180,8 +193,6 @@ class qe_submitjob:
             # 检查是否只是为了获得dyn0文件，如果否：
             print(f"You set dyn0_flag = {self.dyn0_flag}. The program will just simply run ph.x ")
             jobids = self.submit_mode1(inputfilename, jobname)
-
-
 
     def submit_mode3(self, inputfilename, jobnames):
         """split_dyn0"""
@@ -199,8 +210,6 @@ class qe_submitjob:
                 jobids = re.findall(r"\d+", res)
             print(f"finish submit {jobname}, jobids = {''.join(jobids)}")
             os.chdir(cwd)
-
-
 
     def submit_mode4(self, inputfilename, jobnames):
         """split_assignQ"""

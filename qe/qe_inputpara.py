@@ -708,12 +708,9 @@ class qesc_inputpara(qephono_inputpara):
         print("Note: --------------------")
         print("If you want to run `superconduct`, you had better set these values!")
         # Mc-A-D and Eliashberg
-        if not hasattr(self, "screen_constant"):
-            print("    You didn't set the `screen_constant` ! The program will use default value: screen_constant=0.13")
-            self.screen_constant = 0.13
+        self.screen_constant = [0.10, 0.13]
 
         # Mc-A-D
-        print("Note: --------------------")
         q2r_names = list(Path(self.work_path).glob("q2r.out"))
         if len(q2r_names)==1:
             q2r_path = q2r_names[0]
@@ -726,11 +723,12 @@ class qesc_inputpara(qephono_inputpara):
             sys.exit(1)
         
         # Mc-A-D
-        if not hasattr(self, "top_freq"):
-            print(f"    You didn't set the `top_freq`!         The program will read {self.system_name}_phono.dos file")
-            phonodos_file = Path(self.work_path).joinpath(self.system_name+"_phono.dos")
-            if phonodos_file.exists():
-                self.top_freq = self.get_top_freq(dosfile=phonodos_file)
+        phonodos_file = Path(self.work_path).joinpath(self.system_name+"_phono.dos")
+        if phonodos_file.exists():
+            self.top_freq = self.get_top_freq(dosfile=phonodos_file)
+        else:
+            print(f"    There is no {self.system_name}+'_phono.dos'")
+            sys.exit(1)
         
         # Mc-A-D
         if not hasattr(self, "broaden"):
@@ -751,39 +749,39 @@ class qesc_inputpara(qephono_inputpara):
             print("    You didn't set the `temperature_steps`.The program will use default value: temperature_steps=5000")
 
         # Eliashberg
-        print("Note: --------------------")
-        print("If you want to run `sc`, you can choose converged alpha by parameter of `gaussid` or by program(just not input gaussid)!")
         if hasattr(self, "gaussid"):
             self.gaussid = str(self.gaussid)
-            print("    You have specified `gaussid={}`. The program will choose byitself.".format(self.gaussid))
         else:
-            gaussid, gaussvalue = self.check_convergence()
-            self.gaussid = str(gaussid)
-            print("    You didn't specify `gaussid`. The program will obtain  `gaussid={}` by itself.".format(gaussid+1))
+            print("    You didn't specify `gaussid`. The program will obtain  `gaussid` by itself.")
         
+        if hasattr(self, "gauss"):
+            self.gauss = str(self.gauss)
+        else:
+            print("    You didn't specify `gaussid`. The program will obtain  `gauss` by itself.")
+
         print("Note: --------------------")
-        if hasattr(self, "a2fdos") and self.a2fdos == True:
+        if hasattr(self, "a2fdos") and eval(self.a2fdos) == True:
+            self.a2fdos = True
             self.alpha2fdat = False
-            print("    The omegas-alpha2F values will be getted from a2F.dos{}".format(self.gaussid))
+            print("    The omegas-alpha2F values will be getted from a2F.dos{}".format("xxx"))
             print("    The shell order used is:")
-            print("    sed '1,5d' a2F.dos%s | sed '/lambda/d' | awk '{print $1/2, $2}' ALPHA2F.OUT"%(self.gaussid))
-        elif hasattr(self, "alpha2fdat") and self.alpha2fdat == True:
+            print("    sed '1,5d' a2F.dos%s | sed '/lambda/d' | awk '{print $1/2, $2}' ALPHA2F.OUT"%("xxx"))
+        elif hasattr(self, "alpha2fdat") and eval(self.alpha2fdat) == True:
             self.a2fdos = False
-            print("    The omegas-alpha2F values will be getted from alpha2F.dat{}".format(self.gaussid))
+            self.alpha2fdat = True
+            print("    The omegas-alpha2F values will be getted from alpha2F.dat{}".format("xxx"))
             print("    The shell order used is:")
-            print("    sed '1,1d' alpha2F.dat | awk '{print $1/6579.684, $%s}' > ALPHA2F.OUT "%(self.gaussid))
+            print("    sed '1,1d' alpha2F.dat | awk '{print $1/6579.684, $%s}' > ALPHA2F.OUT "%("xxx"))
         else:
             self.a2fdos = False
             self.alpha2fdat = True
             print("    You didn't specify the either `a2fdos` or `alpha2fdat`")
             print("    The omegas-alpha2F values will be getted from alpha2F.dat. Because you may not calculate phonodos")
             print("    The shell order used is:")
-            print("    sed '1,1d' alpha2F.dat | awk '{print $1/6579.684, $%s}' > ALPHA2F.OUT "%(self.gaussid))
+            print("    sed '1,1d' alpha2F.dat | awk '{print $1/6579.684, $%s}' > ALPHA2F.OUT "%("xxx"))
+        time.sleep(3)
 
-        if hasattr(self, "Tc"):
-            self.identify_converge_Tc()
-
-    def identify_converge_Tc(self):
+    def getTc_by_eliashberg(self):
         '''
         根据四面体的非自洽方法计算得到的TDOS。
         然后取scf.out里面的费米能级。
@@ -812,14 +810,14 @@ class qesc_inputpara(qephono_inputpara):
         
         # 获得eliashberg方法计算得到的Tc
         # 运行可能报错, 建议仔细检查ELIASHBERG_GAP_T.OUT文件的第二列, 有些数据本来应该是0.1666489645E-265, 但是实际可能为0.1666489645-265, 导致numpy无法将其转化为数字
-        print("-------------------------------------WARING--------------------------------------")
-        print("It is recommended to carefully check the second column of the ELIASHBERG_GAP_T.OUT file. ")
-        print("Some data should be 0.1666489645E-265, but it may actually be 0.1666489645-265, causing numpy to fail to turn it into a number.")
-        print("-------------------------------------WARING--------------------------------------")
+        print("Note: --------------------")
+        print("    It is recommended to carefully check the second column of the ELIASHBERG_GAP_T.OUT file. ")
+        print("    Some data should be 0.1666489645E-265, but it may actually be 0.1666489645-265, causing numpy to fail to turn it into a number.")
         eliashberg_gap_t_out = Path(self.work_path).joinpath("ELIASHBERG_GAP_T.OUT")
         process_eliashberg_gap_t_out = Path(self.work_path).joinpath("process_ELIASHBERG_GAP_T.OUT")
         if not eliashberg_gap_t_out.exists():
             print(f"ELIASHBERG_GAP_T.OUT doesn't exist !!! The program will exit")
+            sys.exit(1)
         os.system(f"sed '/E/!d' {eliashberg_gap_t_out} > {process_eliashberg_gap_t_out}") # 将不包含字符串E的行都删掉
         gap_t   = np.loadtxt(process_eliashberg_gap_t_out)
         Tc      = gap_t[:, 0]
@@ -828,10 +826,34 @@ class qesc_inputpara(qephono_inputpara):
         dgap_id = np.where(dgap < 1e-8)[0]
         gap_id  = np.where(gap  < 1e-8)[0]
         Tc_id   = [i for i in dgap_id if i in gap_id]
-        print(f'Tc = {Tc[Tc_id[0]]} K (The results are for reference only; please refer to the Tc-GAP image)')
-        sys.exit(1)
+        try:
+            Tc = Tc[Tc_id[0]]
+            return Tc
+        except:
+            print("    Maybe the imaginary frequency of phono leads to NAN in ELIASHBERG_GAP_T.OUT")
+            sys.exit(1)
 
-    def calculate_lambda_personly(self, converged_gauss_index, gauss):
+    def getTc_by_McAD(self, converged_gauss_index):
+        """
+        输入: 
+        converged_gauss_index: 是一个收敛的degauss的索引, 因为python是从0开始的, 所以一定要小心
+        gauss: 对应索引的Gaussian值
+        """
+        lambda_out_path = self.work_path.joinpath("lambda.out")
+        if not lambda_out_path.exists():
+            print("Note: --------------------")
+            print("    `lambda.out` file doesn't exist!!!")
+            sys.exit(1)
+        shlorder = "sed -n '/^lambda/,$ {/^lambda/!p}'" + f"  {lambda_out_path}" # -n 选项表示只打印匹配的行
+        content  = [line.strip('\n').split() for line in os.popen(shlorder).readlines()]
+        lambda_omegalog_Tc = [[float(line[0]), float(line[1]), float(line[2])] for idx, line in enumerate(content)]
+
+        Lambda = lambda_omegalog_Tc[converged_gauss_index][0]
+        omega_log = lambda_omegalog_Tc[converged_gauss_index][1]
+        tc = lambda_omegalog_Tc[converged_gauss_index][2]
+        return Lambda, omega_log, tc
+
+    def get_lambda_from_alpha2f(self, converged_gauss_index, gauss):
         """
         输入: 
             converged_degauss_index: 是一个收敛的degauss的索引, 因为python是从0开始的, 所以一定要小心
@@ -867,7 +889,7 @@ class qesc_inputpara(qephono_inputpara):
         # 梯形累计求和。例如对[1,2,3,4,5]梯形累计求和就是[1,3,6,10,15]
         lambdas = np.cumsum(squares_areas)
         if len(omegas) == len(alpha2fs) == len(lambdas):
-            omegas_alpha2fs_lambdas = np.vstack((omegas, alpha2fs, lambdas)).T
+            omegas_alpha2fs_lambdas = np.vstack((omegas*33.356409519815, alpha2fs, lambdas)).T
             # omegas_alpha2fs_lambdas 拼接出来的效果如下。所以必须要转置
             # [[xxx, ..., ..., ..., ..., ..., ..., ..., ..., ..., xxx] ]
             #  [xxx, ..., ..., ..., ..., ..., ..., ..., ..., ..., xxx] ]
@@ -879,28 +901,11 @@ class qesc_inputpara(qephono_inputpara):
                 header=True,
                 index=False,
             )
+            return lambdas[-1]
+        else:
             print("Note: --------------------")
-            print("    lambda = {:<8.6f} calculated by yourself !".format(lambdas[-1]))
-
-    def obtain_lambda_omegalog_Tc_fromQE(self, converged_gauss_index, gauss):
-        """
-        输入: 
-        converged_gauss_index: 是一个收敛的degauss的索引, 因为python是从0开始的, 所以一定要小心
-        gauss: 对应索引的Gaussian值
-        """
-        lambda_out_path = self.work_path.joinpath("lambda.out")
-        if not lambda_out_path.exists():
-            print("Note: --------------------")
-            print("    `lambda.out` file doesn't exist!!!")
+            print("    Number of omegas != Number of alpha2fs != Number of lambdas")
             sys.exit(1)
-        shlorder = "sed -n '/^lambda/,$ {/^lambda/!p}'" + f"  {lambda_out_path}" # -n 选项表示只打印匹配的行
-        content  = [line.strip('\n').split() for line in os.popen(shlorder).readlines()]
-        degauss_lambda_omegalog_Tc = [[self.gaussian[idx], float(line[0]), float(line[1]), float(line[2])] for idx, line in enumerate(content)]
-        print("Note: --------------------")
-        print(f"    Converged Gaussian = {degauss_lambda_omegalog_Tc[converged_gauss_index][0]}")
-        print(f"    Corresponding lambda = {degauss_lambda_omegalog_Tc[converged_gauss_index][1]}")
-        print(f"    Corresponding omega_log = {degauss_lambda_omegalog_Tc[converged_gauss_index][2]}")
-        print(f"    Corresponding Tc = {degauss_lambda_omegalog_Tc[converged_gauss_index][3]}") 
 
 
 class qeprepare_inputpara(qephono_inputpara):

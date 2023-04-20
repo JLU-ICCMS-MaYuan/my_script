@@ -227,7 +227,7 @@ class qe_writeinput:
             degauss=other_class.degauss,
             smearing_method=other_class.smearing_method,
             temperature_steps=other_class.temperature_steps,
-            gaussid=other_class.gaussid,
+
             a2fdos=other_class.a2fdos,
             alpha2fdat=other_class.alpha2fdat,
 
@@ -793,7 +793,7 @@ class qe_writeinput:
             qe.write("/                                                  \n")                                                                
         return inputfilename
 
-    def write_lambda_in(self):
+    def write_lambda_in(self, screen_constant):
         inputfilename = "lambda.in"
         lambda_in      = os.path.join(self.work_path, inputfilename)
         elph_dir_path  = os.path.join(self.work_path, "elph_dir")
@@ -807,7 +807,6 @@ class qe_writeinput:
             top_freq        = self.top_freq
             broaden         = self.broaden
             smearing_method = self.smearing_method
-            screen_constant = self.screen_constant
             print("Note: --------------------")
             print("    Again, check to see if the four values are the same")
             print("    qirreduced_coords:{}   qweights:{}   qirreduced number:{}   elphInpLambda number:{}".format(len(self.qirreduced_coords),  len(self.qweights), int(self.qirreduced), len(elphInpLambda)))
@@ -829,9 +828,8 @@ class qe_writeinput:
                 qe.write("{}                                   \n".format(str(screen_constant)))
         return inputfilename
 
-    def write_eliashberg_in(self):
+    def write_eliashberg_in(self, screen_constant):
 
-        screen_constant = self.screen_constant
         temperature_steps = self.temperature_steps
         inputfilename = "INPUT"
         eliashberg_in = os.path.join(self.work_path, inputfilename)
@@ -839,15 +837,15 @@ class qe_writeinput:
             qe.write("{:<10} {:<10}".format(screen_constant, temperature_steps))
         return inputfilename
 
-    def write_alpha2f_out(self):
+    def write_alpha2f_out(self, gaussid):
         alpha2f_out = Path(self.work_path).joinpath("ALPHA2F.OUT").absolute()
         alpha2F_dat = Path(self.work_path).joinpath("alpha2F.dat").absolute()
         
         # 方法1 通过计算声子态密度, 获得a2F.dos*文件, 然后选择一个合适的文件用来计算超导
         if self.a2fdos:
-            a2fdos_path = Path(self.work_path).joinpath("a2F.dos"+self.gaussid)
+            a2fdos_path = Path(self.work_path).joinpath("a2F.dos"+str(gaussid))
             if not a2fdos_path.exists():
-                print(f"a2F.dos{self.gaussid} doesn't exist !")
+                print(f"a2F.dos{str(gaussid)} doesn't exist !")
                 sys.exit(1)
             # a2fdos_path = str(a2fdos_path)
             # alpha2f_out = str(alpha2f_out)
@@ -859,7 +857,7 @@ class qe_writeinput:
                 sys.exit(1)
             # alpha2F_dat = str(alpha2F_dat)
             # alpha2f_out = str(alpha2f_out)
-            awk_order   = '''sed '1,1d' %s | awk '{print $1/6579.684, $%s}' > %s''' %(alpha2F_dat, str(self.gaussid), alpha2f_out)
+            awk_order   = '''sed '1,1d' %s | awk '{print $1/6579.684, $%s}' > %s''' %(alpha2F_dat, str(gaussid), alpha2f_out)
             os.system(awk_order)
 
 

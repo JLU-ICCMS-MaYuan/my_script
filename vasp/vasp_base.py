@@ -41,8 +41,13 @@ class vasp_base:
 
         self.input_file_name   = self.input_file_path.name.split(".")[0]
         self.ase_type          = read(self.input_file_path)
-        self.struct_type       = AseAtomsAdaptor.get_structure(self.ase_type)
-        
+        try:
+            self.struct_type       = AseAtomsAdaptor.get_structure(self.ase_type)
+        except:
+            print("Note: ------------------------------")
+            print("    Read inputfile {} occurs something wrong!".format(self.input_file_name))
+            sys.exit(1)
+            
         print("Step 1 ------------------------------")
         print("    Create work_path under the work_path.")
         print("    If you didn't specify the work_path, the default work_path is the current path and the work_path is its parent path !")

@@ -177,32 +177,70 @@ class qe_superconduct:
         # prepare input parameter
         self.sc_inputpara  = qesc_inputpara.init_from_config(self._config)
 
-        if self.sc_inputpara.mode == "lambda":
-            idx, gauss = self.sc_inputpara.check_convergence()
-            self.sc_inputpara.obtain_lambda_omegalog_Tc_fromQE(idx, gauss)
-            self.sc_inputpara.calculate_lambda_personly(idx, gauss)
-            print("Note: --------------------")
-            print("    You can use `w_alpha2f_lambda.csv` to plot alpha2f-lambda")
-        else:
-            print("Note: --------------------")
-            print("    Give you 5 seconds to think of whether you use `backup_lambda.py xxx(0.10 or 0.13)` to backup the lambda.in, lambda.out, alpha2F.dat, ")
-            print("    The reason is you need caluculate Tc twice, repectively, mu=0.10 and mu=0.13")
-            print("    My advice is after finishing both McAD method and Eliashberg method, then you can backup these files. Otherwise you will mix up mu=0.10 and mu=0.13 ")
-            time.sleep(5)
-            # init the input
+        # 当电荷屏蔽常数为0.10
+        results = []
+        for screen_constant in self.sc_inputpara.screen_constant:
+            # McAD
             self.qe_writeinput  = qe_writeinput.init_from_scinput(self.sc_inputpara)
-            inputfilename = self.qe_writeinput.writeinput()
+            self.qe_submitjob = qe_submitjob.init_from_dosinput(self.sc_inputpara)
 
-            # init the submit job script
-            self.qe_writesubmit = qe_writesubmit.init_from_scinput(self.sc_inputpara)
-            jobname = self.qe_writesubmit.write_submit_scripts(inputfilename)
-
-            # submit the job
-            self.qe_submitjob   = qe_submitjob.init_from_scinput(self.sc_inputpara)
+            inputfilename = self.qe_writeinput.write_lambda_in(screen_constant)
             if self.sc_inputpara.queue is not None:
-                self.qe_submitjob.submit_mode1(inputfilename, jobname)
+                self.qe_submitjob.submit_mode0(inputfilename, dotx_file="lambda.x")
+            try:
+                idx = int(self.sc_inputpara.gaussid)-1 # 因为输入的是要求获得第3列的gauss，但是实际上索引的是第2列
+                gauss = float(self.sc_inputpara.gauss)
+            except:
+                idx, gauss = self.sc_inputpara.check_convergence()
+            Lambda_byqe, omega_log, Tc_McAD = self.sc_inputpara.getTc_by_McAD(idx)
 
-    
+            # eliashberg
+            inputfilename = self.qe_writeinput.write_eliashberg_in(screen_constant)
+            self.qe_writeinput.write_alpha2f_out(idx)
+            if self.sc_inputpara.queue is not None:
+                self.qe_submitjob.submit_mode0(inputfilename, dotx_file="eliashberg.x")
+            Tc_eliashberg = self.sc_inputpara.getTc_by_eliashberg()
+
+            Lambda_byalpha2f = self.sc_inputpara.get_lambda_from_alpha2f(idx, gauss)
+            
+            results.append({
+                "screen_constant": screen_constant,
+                "gaussid":idx, 
+                "gauss":gauss, 
+                "Lambda_byqe":Lambda_byqe, 
+                "Lambda_byalpha2f":Lambda_byalpha2f, 
+                "omega_log":omega_log, 
+                "Tc_McAD":Tc_McAD, 
+                "Tc_eliashberg":Tc_eliashberg,
+                })
+            self.backupfile(screen_constant)
+
+        self.printinfo(results)
+
+    def printinfo(self, results):
+        print("Note: --------------------")
+        for res in results:
+            print(f'    screen_constant = {res["screen_constant"]}')
+            print(f'    Converged gaussid = {res["gaussid"]+1}')
+            print(f'    Corresponding gauss = {res["gauss"]}')
+            print(f'    Corresponding Lambda_byqe = {res["Lambda_byqe"]}')
+            print(f'    Corresponding Lambda_byalpha2f = {res["Lambda_byalpha2f"]}')
+            print(f'    Corresponding omega_log = {res["omega_log"]}')
+            print(f'    Corresponding Tc_McAD = {res["Tc_McAD"]}')
+            print(f'    Corresponding Tc_eliashberg = {res["Tc_eliashberg"]}')
+            print("\n")
+
+    def backupfile(self, mu):
+        files = ['lambda.in', 'lambda.out', 'alpha2F.dat', 'INPUT', 'ALPHA2F.OUT', 'ELIASHBERG.OUT', 'ELIASHBERG_IA.OUT', 'ELIASHBERG_GAP_T.OUT']
+        for file in files:
+            if self.sc_inputpara.work_path.joinpath(file):
+                shutil.copy(
+                    self.sc_inputpara.work_path.joinpath(file), 
+                    self.sc_inputpara.work_path.joinpath(str(mu)+'-'+file)
+                    )
+                print(f"    {file} backuping finish")
+            else:
+                print(f"    {file} doesn't exist!")
 
 class qe_prepare:
 

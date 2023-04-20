@@ -215,16 +215,47 @@ dos -m mode=eletdos core=1 npool=1 queue=local qpoints='8 8 8' ndos=500
 dos -m mode=elepdos core=1 npool=1 queue=local qpoints='8 8 8' ndos=500 
 ```
 
-###  <span style="color:yellow"> 使用McAD方法计算超导
-####   <span style="color:green">不指定最高频率, 将会自动读取最高频率文件
+###  <span style="color:yellow"> 计算超导
+处理电荷屏蔽常数为0.1和0.13,得到 $\lambda$ 和 $\omega_{log}$ 并且输出一个文件：w_alpha2f_lambda.csv 可以用来绘制alpha-lambda的函数图像
+
 ```shell
-sc -m mode=McAD core=1 npool=1 queue=local broaden=0.5 screen_constant=0.1 smearing_method=1 qpoints='6 6 6'
+sc -m mode=Tc core=1 npool=1 queue=local temperature_steps=100 qpoints='4 4 4' a2fdos=True alpha2fdat=False broaden=0.5 smearing_method=1 gaussid=3 gauss=0.015  top_freq=80
 ```
-####  <span style="color:green"> 指定最高频率
+
 ```shell
-sc -m mode=McAD core=1 npool=1 queue=local top_freq=80 broaden=0.5 screen_constant=0.1 smearing_method=1 qpoints='6 6 6'
+sc -m mode=Tc core=1 npool=1 queue=local temperature_steps=100 qpoints='4 4 4' a2fdos=True alpha2fdat=False broaden=0.5 smearing_method=1
 ```
-这里的参数对应于lamda.in文件中的参数分别是：
+指定最高频率
+```shell
+top_freq=80
+```
+**当然了，a2fdos， alpha2fdat 两个参数不设置也可以，默认使用的是从alpha2fdat中读取数据，因为很多时候，你不会计算phonodos，所以你也没有a2F.dos*这些文件。**
+使用eliashberg方法超导转变温度, 指定读取a2F.dos*文件
+```shell
+a2fdos=True alpha2fdat=False
+```
+使用eliashberg方法超导转变温度, 指定读取alpha2F.dat文件中使用哪一列的degauss对应的alpha2F数值。使用alpha2fdat来指定
+**(这个方法生成ALPHA2F.OUT可能有问题导致 ELIASHBERG_GAP_T.OUT 中出现NAN。所以更推荐a2fdos=True那种处理方法。)**
+```shell
+a2fdos=False alpha2fdat=True
+```
+
+用到的公式：
+
+$$\lambda = 2 \int_0^{\infty} \frac{\alpha^2F(\omega)}{\omega} d\omega$$
+
+$$\omega_{log} = exp[\frac{2}{\lambda}\int_{0}^{\infty} \frac{d\omega}{\omega} \alpha^2 F(\omega) ln(\omega)]$$
+
+####  <span style="color:green"> **千万注意：alpha2F.dat中频率的单位是THz, 但是freq.gp文件中的频率的单位是cm-1，如果想在一张图中把两个数据放在一起对比需要一个单位转化**
+$$c=299792458  m/s$$
+$$\lambda^{-1} = \frac{\nu}{c} = \frac{1Thz}{299792458  m/s} =  \frac{10^{12}Hz}{299792458\times 10^{2} cm \cdot Hz} = 33.3564095198152 cm^{-1} $$
+即：
+$$1Thz \Leftrightarrow 33.3564 cm^{-1}$$
+
+w_alpha2f_lambda.csv 中的第一列是频率，其单位是经过转化的$cm^{-1}$
+
+
+####  <span style="color:green"> McAD方法计算Tc需要lamda.in文件中的参数分别是：
 ```shell
 top_freq(最高声子频率)  deguass(展宽宽度取0.12)  smearing_method(展宽方法一般等于1）    
 10                               
@@ -251,41 +282,11 @@ top_freq(最高声子频率)  deguass(展宽宽度取0.12)  smearing_method(展�
 screen_constant(库伦屏蔽常数0.1~0.13)
 ```
 
-
-### <span style="color:yellow"> 使用eliashberg方法超导转变温度
-### <span style="color:green">  使用eliashberg方法超导转变温度, 指定读取a2F.dos*文件
-```shell
-sc -m mode=eliashberg core=1 npool=1 queue=local temperature_steps=100 gaussid=3 qpoints='6 6 6' screen_constant=0.1 a2fdos=True alpha2fdat=False
-```
-
-**当然了，a2fdos， alpha2fdat 两个参数不设置也可以，默认使用的是从alpha2fdat中读取数据，因为很多时候，你不会计算phonodos，所以你也没有a2F.dos*这些文件。**
-
-####  <span style="color:green"> 使用eliashberg方法超导转变温度, 指定读取alpha2F.dat文件中使用哪一列的degauss对应的alpha2F数值。使用alpha2fdat来指定
-(这个方法生成ALPHA2F.OUT可能有问题导致 ELIASHBERG_GAP_T.OUT 中出现NAN。所以更推荐上面那种处理方法。)
-```shell
-sc -m mode=eliashberg core=1 npool=1 queue=local temperature_steps=100 gaussid=7 qpoints='6 6 6' screen_constant=0.1 a2fdos=True alpha2fdat=False
-```
-NOTE: INPUT文件中只需设置两个参数，
+####  <span style="color:green"> Eliashberg方法计算Tc需要INPUT文件中只需设置两个参数，
 1. 前者是screen_constant，一般取0.10~0.13；
 2. 后者是temperature_steps，表示对ntemp个温度点自洽求解Eliashberg方程，得到带隙Δ关于温度T的曲线(该程序首先处理McMillan方程，得到超导临界温度tc作为参考值，然后在温度区间[tc/6, tc*3]中线性插入ntemp个温度点。ntemp一般取40~100即可，也可以更大，建议根据体系差异灵活调控)。
 
 
-####  <span style="color:green"> 获得eliashberg计算得到的超导转变温度
-```shell
-sc -m mode=eliashberg Tc=output core=1
-```
-
-####  <span style="color:green"> **处理数据得到 $\lambda$ 和 $\omega_{log}$ 并且输出一个文件：w_alpha2f_lambda.csv 可以用来绘制alpha-lambda的函数图像。** 
-用到的公式：
-
-$$\lambda = 2 \int_0^{\infty} \frac{\alpha^2F(\omega)}{\omega} d\omega$$
-
-$$\omega_{log} = exp[\frac{2}{\lambda}\int_{0}^{\infty} \frac{d\omega}{\omega} \alpha^2 F(\omega) ln(\omega)]$$
-
-用到的命令：
-```shell
-sc -m mode=lambda core=1
-```
 
 ###  <span style="color:yellow">  批量计算
 ```shell
