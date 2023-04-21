@@ -1,5 +1,6 @@
 import os
 import re
+import sys
 import logging
 import shutil
 from argparse import ArgumentParser
@@ -184,9 +185,14 @@ def vasp_properties(args):
         if properties_inputpara.queue is not None:
             _vasp_submitjob.submit_mode1(jobname)
     elif properties_inputpara.mode == 'eband':
-        chgcar_src = properties_inputpara.work_path.joinpath("scf", "CHGCAR")
-        chgcar_dst = properties_inputpara.work_path.joinpath("eband", "CHGCAR")
-        shutil.copy(chgcar_src, chgcar_dst)
+        chgcar_src = properties_inputpara.work_path.parent.joinpath("scf", "CHGCAR")
+        chgcar_dst = properties_inputpara.work_path.joinpath("CHGCAR")
+        if chgcar_src.exists():
+            shutil.copy(chgcar_src, chgcar_dst)
+        else:
+            print("NOTES: ------------------------------ ")
+            print(f"    The CHGCAR doesn't exist in {chgcar_src}")
+            sys.exit(1)
         properties_inputpara.write_highsymmetry_kpoints(
             properties_inputpara.ase_type, 
             properties_inputpara.work_path.joinpath("KPOINTS"),
@@ -203,13 +209,18 @@ def vasp_properties(args):
         print("    ANALYSIS: Possible reason is that NGX, NGY, NGZ in scf/OUTCAR are different from those in eband/OUTCAR ")
         print("    SOLUTION: You can let NGX,NGY,NGZ in eledos/INCAR be the same as scf/OUTCAR")
         print("If you meet the erros in eledos just like: ")
-        print("    WARING: Your FFT grids (NGX,NGY,NGZ) are not sufficient for an accuratecalculation. Thus, the results might be wrong. ")
+        print("    WARING: Your FFT grids (NGX,NGY,NGZ) are not sufficient for an accurate calculation. Thus, the results might be wrong. ")
         print("    ANALYSIS: Possible reason is that NGX, NGY, NGZ you'v customized aren't matched with the PREC=Accurate ")
         print("    SOLUTION: You can let PREC=Normal eband/INCAR")
     elif properties_inputpara.mode == 'eledos':
-        chgcar_src = properties_inputpara.work_path.joinpath("scf", "CHGCAR")
-        chgcar_dst = properties_inputpara.work_path.joinpath("eledos", "CHGCAR")
-        shutil.copy(chgcar_src, chgcar_dst)
+        chgcar_src = properties_inputpara.work_path.parent.joinpath("CHGCAR")
+        chgcar_dst = properties_inputpara.work_path.joinpath("CHGCAR")
+        if chgcar_src.exists():
+            shutil.copy(chgcar_src, chgcar_dst)
+        else:
+            print("NOTES: ------------------------------ ")
+            print(f"    The CHGCAR doesn't exist in {chgcar_src}")
+            sys.exit(1)
         print("NOTES:  ------------------------------ ")
         print("    KSPACING in `eledos` have to be twice than that in `scf` ")
         properties_inputpara.write_evenly_kpoints(
@@ -228,11 +239,12 @@ def vasp_properties(args):
         print("    Possible reason is that NGX, NGY, NGZ in scf/OUTCAR are different from those in eledos/OUTCAR ")
         print("    If you wanna to solve it, you need let NGX,NGY,NGZ in eledos/INCAR be the same as scf/OUTCAR")
         print("If you meet the erros just like: ")
-        print("    WARING: Your FFT grids (NGX,NGY,NGZ) are not sufficient for an accuratecalculation. Thus, the results might be wrong. ")
+        print("    WARING: Your FFT grids (NGX,NGY,NGZ) are not sufficient for an accurate calculation. Thus, the results might be wrong. ")
         print("    ANALYSIS: Possible reason is that NGX, NGY, NGZ you'v customized aren't matched with the PREC=Accurate ")
         print("    SOLUTION: You can let PREC=Normal in eledos/INCAR ")
     else:
-        print(vasp_writeincar.mode)
+        print("NOTES: ------------------------------ ")
+        print(f"    The mode {vasp_writeincar.mode} you specified isn't supported. ")
 
 
 class vasp_processdata(vasp_base):
@@ -259,7 +271,8 @@ class vasp_processdata(vasp_base):
             self.post_progress_eletron_band()
         if self.mode == "eledos":
             self.post_progress_eletron_dos()
-
+        if self.mode == "hspp":
+            self.get_hspp(self.ase_type)
     # 绘制 phonoband 
     def post_progress_phono_band(self):
 

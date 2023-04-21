@@ -50,11 +50,11 @@ class vasp_base:
             
         print("Step 1 ------------------------------")
         print("    Create work_path under the work_path.")
-        print("    If you didn't specify the work_path, the default work_path is the current path and the work_path is its parent path !")
-        print("    If you specify the work_path, the work_path will be 'work_path+(press/scf/eband/eledos)' !")
         if self.work_path is None:
             self.work_path = Path.cwd()
+            print(f"    You didn't specify the work_path, the default work_path is the current path {self.work_path}!")
         else:
+            print(f"    You specify the work_path, the work_path will be '{self.work_path}' !")
             self.work_path = Path(self.work_path)
             if not self.work_path.exists():
                 self.work_path.mkdir(parents=True)
@@ -102,6 +102,23 @@ class vasp_base:
         self.cell_parameters    = struct.lattice.matrix
         # 获得原子分数坐标
         self.fractional_sites   = struct.sites
+        # 获得倒格子
+        self.reciprocal_plattice = self.get_reciprocal_lattice()
+
+    def get_reciprocal_lattice(self):
+        """
+        获得一个胞的倒格子
+        """
+        a1 = self.cell_parameters[0]
+        a2 = self.cell_parameters[1]
+        a3 = self.cell_parameters[2]
+
+        b1 = 2*np.pi*np.cross(a2, a3) / np.dot(a1, np.cross(a2, a3))
+        b2 = 2*np.pi*np.cross(a3, a1) / np.dot(a2, np.cross(a3, a1))
+        b3 = 2*np.pi*np.cross(a1, a2) / np.dot(a3, np.cross(a1, a2))
+ 
+        self.reciprocal_plattice = np.array([b1, b2, b3])
+        return self.reciprocal_plattice
 
     def get_potcar(self, dst_potcar_path: Path):
         """
@@ -280,25 +297,64 @@ class vasp_base:
         special_points   = ltype.get_special_points()
         path_coords      = [list(special_points[pname]) for pname in path_name_list]
         
-        print(f"the choosed high symmetry path is\n")
+
+
+        # 处理高对称点路径
+        print("Print Fractional Coordinates of Reciprocal Lattice ! ")
         for name, coord in zip(path_name_list, path_coords):
             print("{}      {:<8.6f} {:<8.6f} {:<8.6f}".format(name, coord[0], coord[1], coord[2]))
             # < 表示左对齐，8.6f 表示留出8个位置并保留小数点后6位。
+
+
+
+        print("The reciprocal lattice (without multiplating `unit_reciprocal_axis`)")
+        for vector in self.reciprocal_plattice:
+            print("{:<6.3f} {:<6.3f} {:<6.3f} ".format(vector[0], vector[1], vector[2]))
+
+
+
+        print("Print projected high symmetry path")
+        path_name_coords = list(zip(path_name_list, path_coords))
+        projected_path_name_coords = [[path_name_coords[0][0], path_name_coords[0][1][0]]]
+        total_dist = 0
+        for idx in range(1, len(path_name_coords)):
+            current_name   = path_name_coords[idx][0]
+            current_coords = np.dot(self.reciprocal_plattice, path_name_coords[idx][1])
+            last_coords    = np.dot(self.reciprocal_plattice, path_name_coords[idx-1][1])
+            dist = np.linalg.norm(current_coords-last_coords, 2)
+            total_dist += dist
+            projected_path_name_coords.append([current_name, total_dist])
+        string_names = '  '.join(coord[0] for coord in projected_path_name_coords)
+        string_coord = '  '.join(str(np.round(coord[1], 6)) for coord in projected_path_name_coords)
+        print(string_names)
+        print(string_coord)
+
+        
         return path_name_list, path_coords
 
     def write_highsymmetry_kpoints(self, ase_type, kpoints_path):
-        path_name_list, path_coords = self.get_hspp(ase_type)
-        pair_two_names  = [[path_name_list[i], path_name_list[i+1]] for i in range(len(path_name_list)-1)]
-        pair_two_coords = [[path_coords[i], path_coords[i+1]] for i in range(len(path_coords)-1)]
-        with open(kpoints_path, "w") as kp:
-            kp.write("KPATH\n")
-            kp.write("50\n")
-            kp.write("Line-Mode\n")
-            kp.write("Reciprocal\n")
-            for two_names, two_coords in zip(pair_two_names, pair_two_coords):
-                kp.write("{:<10.8f} {:<10.8f} {:<10.8f} ! ${}$\n".format(two_coords[0][0],two_coords[0][1],two_coords[0][2], two_names[0]))
-                kp.write("{:<10.8f} {:<10.8f} {:<10.8f} ! ${}$\n".format(two_coords[1][0],two_coords[1][1],two_coords[1][2], two_names[0]))
-                kp.write("\n")
+        
+        print("Note: --------------------------------")
+        vaspkitflag = input("If you have installed vaspkit and you want to use it, input: Yes\n")
+        if vaspkitflag:
+            cwd = os.getcwd()
+            os.chdir(self.work_path)
+            os.system('echo -e "3\n303" | vaspkit')
+            shutil.copy("KPATH.in", "KPOINTS")
+            os.chdir(cwd)
+        else: 
+            path_name_list, path_coords = self.get_hspp(ase_type)
+            pair_two_names  = [[path_name_list[i], path_name_list[i+1]] for i in range(len(path_name_list)-1)]
+            pair_two_coords = [[path_coords[i], path_coords[i+1]] for i in range(len(path_coords)-1)]
+            with open(kpoints_path, "w") as kp:
+                kp.write("KPATH\n")
+                kp.write("50\n")
+                kp.write("Line-Mode\n")
+                kp.write("Reciprocal\n")
+                for two_names, two_coords in zip(pair_two_names, pair_two_coords):
+                    kp.write("{:<10.8f} {:<10.8f} {:<10.8f} ! ${}$\n".format(two_coords[0][0],two_coords[0][1],two_coords[0][2], two_names[0]))
+                    kp.write("{:<10.8f} {:<10.8f} {:<10.8f} ! ${}$\n".format(two_coords[1][0],two_coords[1][1],two_coords[1][2], two_names[1]))
+                    kp.write("\n")
 
 class vaspbatch_base(vasp_base):
 

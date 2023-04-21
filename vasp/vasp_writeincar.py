@@ -287,5 +287,5 @@ class vasp_writeincar:
             incar.write("NPAR = 4             \n") #这个应该是DOS的采点个数，弄高一点无所谓。
             incar.write("NEDOS = 1201         \n") # NEDOS指定DOS被评估的网格点的数量
             incar.write("LORBIT = 11          \n") # 输出分波态密度信息
-            incar.write("EMIN = -10           \n") # 此为DOS图的能量范围，根据能带的能量范围来决定min和max是多少。
-            incar.write("EMAX =  10           \n") 
+            incar.write("#EMIN = -10           \n") # 此为DOS图的能量范围，根据能带的能量范围来决定min和max是多少。
+            incar.write("#EMAX =  10           \n") 

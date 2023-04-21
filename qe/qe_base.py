@@ -112,7 +112,6 @@ class qe_base:
         # 返回晶体倒数晶格，即没有2π的因子。
         # self.reciprocal_lattice_crystallographic = pstruct.lattice.reciprocal_lattice_crystallographic
 
-
     def get_USPP(self, workpath_pppath):
         '''
         input parameter:
@@ -156,7 +155,6 @@ class qe_base:
             else:
                 print(f"find many POTCARs {dst_pps}")
                 sys.exit(1)
-
 
     def get_single_uspp(self, species_name, workpath_pppath):
         '''
