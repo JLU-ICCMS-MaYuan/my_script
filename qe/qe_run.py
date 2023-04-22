@@ -112,6 +112,10 @@ class qe_phono:
             self.phono_inputpara.merge_qp_freq_width(qpoints_freqs, phononwidth)
             print("Note: --------------------")
             print("    You can use `qp_freq_width.csv` to plot phonon-band")
+        elif self.phono_inputpara.mode == "phonodosdata":
+            self.phono_inputpara.get_phonodos()
+            print("Note: --------------------")
+            print("    You can use `phdos_proj2eles.csv` to plot phonon-DOS")
         elif self.phono_inputpara.mode == "hspp":
             self.phono_inputpara.get_hspp()
         else:
@@ -128,10 +132,8 @@ class qe_phono:
             if self.phono_inputpara.queue is not None :
                 if self.phono_inputpara.mode == "nosplit":
                     self.qe_submitjob.submit_mode2(inputfilename, jobnames)
-                elif self.phono_inputpara.mode == "split_dyn0":
+                elif self.phono_inputpara.mode == "split_dyn0" or self.phono_inputpara.mode == "split_assignQ":
                     self.qe_submitjob.submit_mode3(inputfilename, jobnames)
-                elif self.phono_inputpara.mode == "split_assignQ":
-                    self.qe_submitjob.submit_mode4(inputfilename, jobnames)
                 else:
                     print("Note: --------------------")
                     print("    If mode=matdyn, please remerber process phono spectrum after finish matdyn.x computation")
@@ -140,7 +142,7 @@ class qe_phono:
                     self.qe_submitjob.submit_mode1(inputfilename, jobnames)
         
 
-class qe_dos:
+class qe_eletron:
 
     def __init__(self, args: ArgumentParser) -> None:
 
@@ -148,22 +150,43 @@ class qe_dos:
         self._config = config(args).read_config()
 
         # prepare input parameter
-        self.dos_inputpara = qedos_inputpara.init_from_config(self._config)
+        self.eletron_inputpara = qeeletron_inputpara.init_from_config(self._config)
 
-        if self.dos_inputpara.mode == "phonodosdata":
-            self.dos_inputpara.get_phonodos()
+        if self.eletron_inputpara.mode == "hspp":
+            self.eletron_inputpara.get_hspp()
+        elif self.eletron_inputpara.mode == "elebanddata": 
+            self.qe_writeinput = qe_writeinput.init_from_eletroninput(self.eletron_inputpara)
+            self.qe_submitjob  = qe_submitjob.init_from_eletroninput(self.eletron_inputpara)
+            self.qe_writesubmit = qe_writesubmit.init_from_eletroninput(self.eletron_inputpara)
             print("Note: --------------------")
-            print("    You can use `phdos_proj2eles.csv` to plot phonon-DOS")
+            print("    !!!!!!!!!! Remember to run pw.x to get eleband.out before you run bands.x") 
+            print("    Run bands.x to get eleband.dat and  eleband.dat.gnu")
+            print("    eleband.dat.gnu can be used in origin to plot-eletronband")
+            inputfilename = self.qe_writeinput.write_elebanddata_in(self.eletron_inputpara.work_path)
+            if self.prepare_inputpara.queue is not None:
+                self.qe_submitjob.submit_mode0(inputfilename, dotx_file="bands.x")
+        elif self.eletron_inputpara.mode == "eleproperties":
+            self.qe_writeinput = qe_writeinput.init_from_eletroninput(self.eletron_inputpara)
+            self.qe_writesubmit = qe_writesubmit.init_from_eletroninput(self.eletron_inputpara)
+            inputfilename1 = self.qe_writeinput.writeinput(mode="eleband")
+            inputfilename2 = self.qe_writeinput.writeinput(mode="elebanddata")
+            inputfilename3 = self.qe_writeinput.writeinput(mode="nscf")
+            inputfilename4 = self.qe_writeinput.writeinput(mode="eletdos")
+            inputfilename5 = self.qe_writeinput.writeinput(mode="elepdos")
+            self.qe_submitjob  = qe_submitjob.init_from_eletroninput(self.eletron_inputpara)
+            jobname = self.qe_writesubmit.write_submit_scripts([inputfilename1, inputfilename2, inputfilename3, inputfilename4, inputfilename5])
+            if self.eletron_inputpara.queue is not None:
+                self.qe_submitjob.submit_mode1(inputfilename1, jobname)
         else:
+            self.qe_writeinput  = qe_writeinput.init_from_eletroninput(self.eletron_inputpara)
+            self.qe_writesubmit = qe_writesubmit.init_from_eletroninput(self.eletron_inputpara)
             # write input parameter
-            self.qe_writeinput  = qe_writeinput.init_from_dosinput(self.dos_inputpara)
             inputfilename = self.qe_writeinput.writeinput()
             # init the submit job script
-            self.qe_writesubmit = qe_writesubmit.init_from_dosinput(self.dos_inputpara)
             jobname = self.qe_writesubmit.write_submit_scripts(inputfilename)
             # submit the job
-            self.qe_submitjob = qe_submitjob.init_from_dosinput(self.dos_inputpara)
-            if self.dos_inputpara.queue is not None:
+            self.qe_submitjob = qe_submitjob.init_from_eletroninput(self.eletron_inputpara)
+            if self.eletron_inputpara.queue is not None:
                 self.qe_submitjob.submit_mode1(inputfilename, jobname)
 
 
@@ -184,6 +207,7 @@ class qe_superconduct:
             self.qe_writeinput  = qe_writeinput.init_from_scinput(self.sc_inputpara)
             self.qe_submitjob = qe_submitjob.init_from_dosinput(self.sc_inputpara)
 
+            # 尝试获得收敛的degauss
             inputfilename = self.qe_writeinput.write_lambda_in(screen_constant)
             if self.sc_inputpara.queue is not None:
                 self.qe_submitjob.submit_mode0(inputfilename, dotx_file="lambda.x")
@@ -192,11 +216,13 @@ class qe_superconduct:
                 gauss = float(self.sc_inputpara.gauss)
             except:
                 idx, gauss = self.sc_inputpara.check_convergence()
+
+            # McAD-Tc
             Lambda_byqe, omega_log, Tc_McAD = self.sc_inputpara.getTc_by_McAD(idx)
 
-            # eliashberg
-            inputfilename = self.qe_writeinput.write_eliashberg_in(screen_constant)
-            self.qe_writeinput.write_alpha2f_out(idx)
+            # eliashberg-Tc
+            inputfilename = self.qe_writeinput.write_eliashberg_in(self.sc_inputpara.work_path, screen_constant)
+            self.qe_writeinput.write_alpha2f_out(self.sc_inputpara.work_path, idx)
             if self.sc_inputpara.queue is not None:
                 self.qe_submitjob.submit_mode0(inputfilename, dotx_file="eliashberg.x")
             Tc_eliashberg = self.sc_inputpara.getTc_by_eliashberg()
@@ -269,4 +295,5 @@ class qe_prepare:
         self.qe_submitjob   = qe_submitjob.init_from_scinput(self.prepare_inputpara)
         if self.prepare_inputpara.queue is not None:
             self.qe_submitjob.submit_mode1(inputfilename1, jobname)
+
 

@@ -76,7 +76,7 @@ class qe_writesubmit:
         return self
 
     @classmethod
-    def init_from_dosinput(cls, other_class: qe_inputpara):
+    def init_from_eletroninput(cls, other_class: qe_inputpara):
         
         self = cls(
             work_path=other_class.work_path,
@@ -154,8 +154,12 @@ class qe_writesubmit:
         if mode =="split_assignQ":
             jobnames = []
             for i, inname in enumerate(inpufilename):
-                jobname = self.s5_PhSplitAssignQ(self.work_path, inname)
+                split_ph_dir = os.path.join(self.work_path, str(i+1))
+                if not os.path.exists(split_ph_dir):
+                    raise FileExistsError (f"There is no {split_ph_dir}")
+                jobname = self.s5_PhSplitAssignQ(split_ph_dir, inname)
                 jobnames.append(jobname)
+                print(f"finish submit job script in {i+1}")
             return jobnames
         if mode =="q2r":
             jobname = self.s6_q2r(self.work_path, inpufilename)
@@ -169,6 +173,12 @@ class qe_writesubmit:
         if mode =="elepdos":
             jobname = self.s8_elepdos(self.work_path, inpufilename)
             return jobname
+        if mode =="eleband":
+            jobname = self.s8_eleband(self.work_path, inpufilename)
+            return jobname
+        if mode =="elebanddata":
+            jobname = self.s8_elebanddata(self.work_path, inpufilename)
+            return jobname
         if mode == "phonodos":
             jobname = self.s8_phonodos(self.work_path, inpufilename)
             return jobname
@@ -180,6 +190,9 @@ class qe_writesubmit:
             return jobname
         if mode =="nscf":
             jobname = self.s10_nscf(self.work_path, inpufilename)
+            return jobname
+        if mode =="eleproperties":
+            jobname = self.s11_eleproperties(self.work_path, inpufilename)
             return jobname
 
     #  job scripts
@@ -335,6 +348,26 @@ class qe_writesubmit:
             j.write('mpirun -np {} {}/projwfc.x <{}> {}  \n'.format(self.core, qebin_path,  _inpufilename, _outputfilename))
         return jobname
 
+    def s8_eleband(self, _dirpath, inputfilename):
+        _inpufilename = inputfilename
+        _outputfilename = _inpufilename.split(".")[0] + ".out"
+        jobname = "s8_eband.sh"
+        _script_filepath = os.path.join(_dirpath, jobname)
+        with open(_script_filepath, "w") as j:
+            j.writelines(self.jobtitle)
+            j.write('mpirun -np {} {}/pw.x <{}> {}  \n'.format(self.core, qebin_path,  _inpufilename, _outputfilename))
+        return jobname
+
+    def s8_elebanddata(self, _dirpath, inputfilename):
+        _inpufilename = inputfilename
+        _outputfilename = _inpufilename.split(".")[0] + ".out"
+        jobname = "s8_elebanddata.sh"
+        _script_filepath = os.path.join(_dirpath, jobname)
+        with open(_script_filepath, "w") as j:
+            j.writelines(self.jobtitle)
+            j.write('mpirun -np {} {}/bands.x <{}> {}  \n'.format(self.core, qebin_path,  _inpufilename, _outputfilename))
+        return jobname
+
     def s8_phonodos(self, _dirpath, inputfilename):
         _inpufilename = inputfilename
         _outputfilename = _inpufilename.split(".")[0] + ".out"
@@ -377,3 +410,32 @@ class qe_writesubmit:
             j.write('mpirun -np {} {}/pw.x {} <{}> {}  \n'.format(self.core, qebin_path, self.npool, _inpufilename, _outputfilename))
         return jobname
 
+    def s11_eleproperties(self, _dirpath, inputfilenames):
+        _inpufilename = inputfilenames
+        _outputfilename = [ipname.split(".")[0] + ".out" for ipname in _inpufilename]
+        input_output    = zip(_inpufilename, _outputfilename)
+        jobname = "s11_eleproperties.sh"
+        _script_filepath = os.path.join(_dirpath, jobname)
+        with open(_script_filepath, "w") as j:
+            j.writelines(self.jobtitle)
+            # 先做能带计算
+            eleband_in, eleband_out = input_output.__next__()
+            j.write('mpirun -np {} {}/pw.x {} <{}> {}  \n\n'.format(self.core, qebin_path, self.npool, eleband_in, eleband_out))
+            
+            # 先做处理能带数据
+            elebanddata_in, elebanddata_out = input_output.__next__()
+            j.write('{}/bands.x <{}> {}  \n\n'.format(qebin_path, elebanddata_in, elebanddata_out))
+
+            # 再做非自洽计算
+            nscf_in, nscf_out = input_output.__next__()
+            j.write('mpirun -np {} {}/pw.x {} <{}> {} \n\n'.format(self.core, qebin_path, self.npool, nscf_in, nscf_out))
+        
+            # 再做总dos计算TDOS
+            nscf_in, nscf_out = input_output.__next__()
+            j.write('mpirun -np {} {}/dos.x {} <{}> {} \n\n'.format(self.core, qebin_path, self.npool, nscf_in, nscf_out))
+
+            # 再做投影dos计算PDOS
+            nscf_in, nscf_out = input_output.__next__()
+            j.write('mpirun -np {} {}/projwfc.x {} <{}> {}  \n\n'.format(self.core, qebin_path, self.npool, nscf_in, nscf_out))
+
+        return jobname

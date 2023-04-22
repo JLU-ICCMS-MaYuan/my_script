@@ -66,28 +66,28 @@ class qe_inputpara(qe_base):
         # &SYSTEM
         if not hasattr(self, "occupations"):
             self.occupations = "smearing"
-            print("    You didn't set the `occupations` !   The program will use default value: occupations=smearing")
+            print("    You didn't set the `occupations` ! The program will use default value: occupations=smearing")
 
         if not hasattr(self, "smearing"):
             self.smearing = "gauss"
-            print("    You didn't set the `smearing` !      The program will use default value: smearing=gauss")
+            print("    You didn't set the `smearing` ! The program will use default value: smearing=gauss")
 
         # self.smearing = methfessel-paxton 做scffit 和 scf 时候用这个参数
         if not hasattr(self, "degauss"):
             self.degauss = "0.02"
-            print("    You didn't set the `degauss` !       The program will use default value: degauss=0.02")
+            print("    You didn't set the `degauss` ! The program will use default value: degauss=0.02")
 
         if not hasattr(self, "ecutwfc"):
             self.ecutwfc = "60"
-            print("    You didn't set the `ecutwfc` !       The program will use default value: ecutwfc=60")
+            print("    You didn't set the `ecutwfc` ! The program will use default value: ecutwfc=60")
 
         if not hasattr(self, "ecutrho"):
             self.ecutrho = "720"
-            print("    You didn't set the `ecutrho` !       The program will use default value: ecutrho=720")
+            print("    You didn't set the `ecutrho` ! The program will use default value: ecutrho=720")
 
         if not hasattr(self, "lspinorb"):
             self.lspinorb = "false"
-            print("    You didn't set the `lspinorb` !      The program will use default value: lspinorb=false")
+            print("    You didn't set the `lspinorb` ! The program will use default value: lspinorb=false")
         else:
             print("Please carefully check the bool value of `lspinorb` you just set. Its format must be `false` or `true` without capital")
 
@@ -96,14 +96,14 @@ class qe_inputpara(qe_base):
             print("Because lspinorb = true, so the noncolin=true")
         elif not hasattr(self, "noncolin"):
             self.noncolin = "false"
-            print("    You didn't set the `noncolin` !      The program will use default value: noncolin=false")
+            print("    You didn't set the `noncolin` ! The program will use default value: noncolin=false")
         else:
             print("Please carefully check the bool value of `noncolin` you just set. Its format must be `false` or `true` without capital")
 
         if not hasattr(self, "la2F"):
             self.la2F = "true"
-            print("    You didn't set the `la2F` !          The program will use default value: la2F=true. ")
-            print("                                         But in relax mode and scf mode, it doesn't exist ! It only exist in scffit mode")
+            print("    You didn't set the `la2F` ! The program will use default value: la2F=true. ")
+            print("    But in relax mode and scf mode, it doesn't exist ! It only exist in scffit mode")
         else:
             print("Please carefully check the bool value of `la2F` you just set. Its format must be `false` or `true` without capital")
 
@@ -114,13 +114,13 @@ class qe_inputpara(qe_base):
         
         if not hasattr(self, "conv_thr"):
             self.conv_thr = "1.0d-9"
-            print("    You didn't set the `conv_thr` !      The program will use default value: conv_thr=1.0d-9")
+            print("    You didn't set the `conv_thr` ! The program will use default value: conv_thr=1.0d-9")
             #  做结构弛豫 1.0-d8
             #  做scffit 和 scf 时候用1.0d-9
 
         if not hasattr(self, "mixing_beta"):
             self.mixing_beta = "0.7"
-            print("    You didn't set the `mixing_beta` !   The program will use default value: mixing_beta=0.7")
+            print("    You didn't set the `mixing_beta` ! The program will use default value: mixing_beta=0.7")
             #  做scffit 和 scf 时候用0.8
         if not hasattr(self, "electron_maxstep"):
             self.electron_maxstep = "200"
@@ -160,212 +160,6 @@ class qe_inputpara(qe_base):
             **config,
         )
         return self
-
-
-class qephono_inputpara(qe_inputpara):
-
-    def __init__(
-        self, 
-        work_path: str, 
-        press: int, 
-        submit_job_system: str, 
-        input_file_path: str, 
-        **kwargs: dict
-        ):
-        super(qephono_inputpara, self).__init__(
-            work_path, 
-            press, 
-            submit_job_system, 
-            input_file_path, 
-            **kwargs
-            )
-        
-        print("Note: --------------------")
-        print("If you want to run `phono`, you had better set these values!")
-        dyn0_names = Path(self.work_path).joinpath(f"{self.system_name}.dyn0")
-        if hasattr(self, "qpoints"):
-            _qpoints = self.qpoints.split()
-            self.qpoints = list(map(int, _qpoints))
-            self.kpoints_sparse= [kp*2 for kp in self.qpoints]
-            self.kpoints_dense = [kp*4 for kp in self.qpoints]
-        elif dyn0_names.exists():
-            print(f"    You didn't set the `qpoints` !        The program will qpoints in read {self.system_name}.dyn0 file")
-            self.qpoints = self.get_qpoints(dyn0_path=dyn0_names)
-            self.kpoints_sparse= [kp*2 for kp in self.qpoints]
-            self.kpoints_dense = [kp*4 for kp in self.qpoints] 
-        else:
-            self.qpoints = [4,4,4]
-            self.kpoints_sparse= [kp*2 for kp in self.qpoints]
-            self.kpoints_dense = [kp*4 for kp in self.qpoints]
-
-        if not hasattr(self, "tr2_ph"):
-            self.tr2_ph = "1.0d-16"
-            print(f"    You didn't set the `tr2_ph` !          The program will use default value: tr2_ph=1.0d-16")
-
-        if not hasattr(self, "electron_phonon"):
-            self.electron_phonon="interpolated"
-            print(f"    You didn't set the `electron_phonon` ! The program will use default value: electron_phonon=interpolated")
-
-        if not hasattr(self, "el_ph_nsigma"):
-            self.el_ph_nsigma = "10"
-            print(f"You didn't set the `el_ph_nsigma` !    The program will use default value: el_ph_nsigma=10")
-            
-        if not hasattr(self, "el_ph_sigma"):
-            self.el_ph_sigma = "0.005"
-            print(f"    You didn't set the `el_ph_sigma` !     The program will use default value: el_ph_sigma=0.005")
-        
-        if not hasattr(self, "alpha_mix"):
-            self.alpha_mix = "0.3"
-            print(f"    You didn't set the `alpha_mix` !       The program will use default value: alpha_mix=0.3")
-        
-        if not hasattr(self, "dyn0_flag"):
-            self.dyn0_flag = False
-        else:
-            self.dyn0_flag = eval(self.dyn0_flag)
-        
-        print("Note: --------------------")
-        dyn0_names = Path(self.work_path).joinpath(f"{self.system_name}.dyn0")
-        if dyn0_names.exists():
-            self.qtot, self.qirreduced, self.qirreduced_coords= self.get_q_from_dyn0(dyn0_path=dyn0_names) 
-            print("    qtot from No.1 line in {}.dyn0 = {}".format(self.system_name, self.qtot))
-            print("    qirreduced from No.2 line in  {}.dyn0 = {}".format(self.system_name, self.qirreduced))
-            print("    qirreduced_coords from the rest lines in {}.dyn0, the number = {}".format(self.system_name, len(self.qirreduced_coords)))
-            time.sleep(3)
-            # 获得 self.qtot, self.qirreduced, self.qirreduced_coords, self.qweights 
-        else:
-            print(f"{self.system_name}.dyn0 doesn't exist in {self.work_path}. The qtot, qirreduced, qirreduced_coords will not get values.")
-
-        if not hasattr(self, "qtot"):
-            self.qtot = None
-        else:
-            print(f"    You didn't set the `qtot` ! Of course you don't need to set it! The program will get from {self.system_name}.dyn0. qtot={self.qtot}")
-        
-        if not hasattr(self, "qirreduced"):
-            self.qirreduced = None
-        else:
-            print(f"    You didn't set the `qirreduced` ! Of course you don't need to set it! The program will get from {self.system_name}.dyn0. qirreduced={self.qirreduced}")
-
-        if not hasattr(self, "qinserted"):
-            self.qinserted = None
-        else:
-            self.qinserted = int(self.qinserted)
-
-        if not hasattr(self, "qirreduced_coords"):
-            self.qirreduced_coords = None
-        else:
-            print(f"    You didn't set the `qirreduced_coords` ! Of course you don't need to set it! The program will get from {self.system_name}.dyn0.")
-
-        if not hasattr(self, "path_name_coords"):
-            self.path_name_coords = None
-        
-        if self.mode == "matdyn":
-            self.path_name_coords = self.get_hspp()
-
-    def get_q_from_scfout(self, dir):
-        if not os.path.exists(dir):
-            print("scf.out didn't exist!")
-            sys.exit(1)
-        content = open(dir, "r").readlines()
-        def find_k(item):
-            if re.search(r"k\(\s*\d+\)\s*=\s*", item):
-                return item
-
-        result = filter(find_k, content)
-        for res in result:
-            ks  = re.findall(r"\-?\d+\.\d+", res.split(",")[0])
-            self.q_coordinate_list.append(ks)
-            wp = re.findall(r"\-?\d+\.\d+", res.split(",")[1])
-            nqs = float(wp[0]) * self.qtot / 2
-            self.q_weight_list.append(nqs)
-
-        self.qtot           = self.qpoints[0] * self.qpoints[1] * self.qpoints[2] 
-        self.q_non_irreducible_amount = len(self.q_coordinate_list)
-
-        return self.qtot,    self.q_non_irreducible_amount, \
-               self.q_coordinate_list, self.q_weight_list
-
-    def get_qpoints(self, dyn0_path):
-        '''
-        input  : dir        dyn0文件的路径
-                 
-        return : self.qtot 总q点数
-                 self.qirreduced 不可约q点数
-                 self.qirreduced_coords 不可约q点坐标
-        '''
-        if not os.path.exists(dyn0_path):
-            raise FileExistsError ("dyn0 file doesn't exist!")
-        content = open(dyn0_path, "r").readlines()
-        # check qtot is right or not! 
-        qpoints = list(map(int, content[0].strip("\n").split()))
-
-        return qpoints
-
-    def get_q_from_dyn0(self, dyn0_path):
-        '''
-        input  : dir        dyn0文件的路径
-                 
-        return : self.qtot 总q点数
-                 self.qirreduced 不可约q点数
-                 self.qirreduced_coords 不可约q点坐标
-        '''
-        if not os.path.exists(dyn0_path):
-            raise FileExistsError ("dyn0 file doesn't exist!")
-        content = open(dyn0_path, "r").readlines()
-        # check qtot is right or not! 
-        qpoints = list(map(int, content[0].strip("\n").split()))
-        qtot  = list(map(int, qpoints))
-        if qtot != self.qpoints:
-            print(f"qtot = {qtot}")
-            print(f"self.qpoints = {self.qpoints}")
-            raise ValueError ("q points set wrong")
-
-        def find_q(item):
-            if re.search(r"E[\+|\-]", item):
-                return item
-
-        qirreduced = int(content[1])
-        _q_coordinate_list = list(filter(find_q, content))
-        qirreduced_coords = [q_string.strip("\n").split() for q_string in _q_coordinate_list]
-        
-        return qtot, qirreduced, qirreduced_coords
-
-    def get_q_from_q2r(self, q2r_path):
-        """
-        input:  q2r_path   q2r.out文件的路径
-        
-        return:  self.qweights 不可约q点权重
-        """
-        def find_q_weight(item):
-            if re.search(r"nqs\=", item):
-                return item
-            
-        q2r_out        = open(q2r_path, "r").readlines()
-        _q_weight_list = list(filter(find_q_weight, q2r_out))
-        qweights  = [re.search(r"\d+", qwt).group() for qwt in _q_weight_list]
-        
-        return qweights
-
-    def merge(self, dir):
-        elph_dir_path = os.path.join(dir, "elph_dir")
-        if not os.path.exists(elph_dir_path):
-            os.makedirs(elph_dir_path)
-        
-        for i in range(self.qirreduced):
-            src_elph   = os.path.join(dir, str(i+1), "elph_dir", "elph.inp_lambda.1")
-            dst_elph   = os.path.join(elph_dir_path, "elph.inp_lambda."+str(i+1))
-            shutil.copy(src_elph, dst_elph)
-            print(f"elph.inp_.1 copy finished \n {dst_elph}")
-
-            src_dyn    = os.path.join(dir, str(i+1), self.system_name+".dyn")
-            dst_dyn    = os.path.join(dir,           self.system_name+".dyn"+str(i+1))
-            shutil.copy(src_dyn, dst_dyn)
-            print(f"{self.system_name}.dyn copy finished {dst_dyn}")
-
-            for j in range(51, 61):
-                src_a2Fq2r = os.path.join(dir, str(i+1), "elph_dir", "a2Fq2r."+str(j)+".1")
-                dst_a2Fq2r = os.path.join(elph_dir_path,             "a2Fq2r."+str(j)+"."+str(i+1))
-                shutil.copy(src_a2Fq2r, dst_a2Fq2r)
-                print(f"a2Fq2r.{str(j)}.1 copy finished  {dst_dyn}")
 
     def get_hspp(self):
         """
@@ -430,6 +224,228 @@ class qephono_inputpara(qe_inputpara):
         print(string_names)
         print(string_coord)
         return path_name_coords 
+
+
+class qephono_inputpara(qe_inputpara):
+
+    def __init__(
+        self, 
+        work_path: str, 
+        press: int, 
+        submit_job_system: str, 
+        input_file_path: str, 
+        **kwargs: dict
+        ):
+        super(qephono_inputpara, self).__init__(
+            work_path, 
+            press, 
+            submit_job_system, 
+            input_file_path, 
+            **kwargs
+            )
+        
+        print("Note: --------------------")
+        print("If you want to run `phono`, you had better set these values!")
+        dyn0_names = Path(self.work_path).joinpath(f"{self.system_name}.dyn0")
+        if hasattr(self, "qpoints"):
+            _qpoints = self.qpoints.split()
+            self.qpoints = list(map(int, _qpoints))
+            self.kpoints_sparse= [kp*2 for kp in self.qpoints]
+            self.kpoints_dense = [kp*4 for kp in self.qpoints]
+        elif dyn0_names.exists():
+            print("Note: --------------------")
+            print(f"   !!!!!  You didn't set the `qpoints` ! The program will qpoints in read {self.system_name}.dyn0 file")
+            print(f"   !!!!!  You didn't set the `qpoints` ! The program will qpoints in read {self.system_name}.dyn0 file")
+            print(f"   !!!!!  You didn't set the `qpoints` ! The program will qpoints in read {self.system_name}.dyn0 file")
+            print("    If you want to calculate phonodos, you had better set `qpoints`! ")
+            print("    Its `qpoints` had better be set more densely than `qpoints` in `ph.in`")
+            print("    For example, In ph.in, qpoints='8 8 8', then in phono_dos.in, qpoints='16 16 16' ")
+            print(f"   You didn't set `qpoints`, the program will use `qpoints` in {self.system_name}.dyn0, and then multiply 2 for qpoints")
+            self.qpoints = self.get_qpoints(dyn0_path=dyn0_names)
+            self.kpoints_sparse= [kp*2 for kp in self.qpoints]
+            self.kpoints_dense = [kp*4 for kp in self.qpoints] 
+        else:
+            print("Note: --------------------")
+            print(f"   !!!!!  You didn't set the `qpoints` ! And The program can't get qpoints in {self.system_name}.dyn0 file")
+            print(f"   !!!!!  You didn't set the `qpoints` ! And The program can't get qpoints in {self.system_name}.dyn0 file")
+            print(f"   !!!!!  You didn't set the `qpoints` ! And The program can't get qpoints in {self.system_name}.dyn0 file")
+            print("    If you want to calculate phonodos, you had better set `qpoints`! ")
+            print("    Its `qpoints` had better be set more densely than `qpoints` in `ph.in`")
+            print("    For example, In ph.in, qpoints='8 8 8', then in phono_dos.in, qpoints='16 16 16' ")
+            print(f"   You didn't set `qpoints`, the program will use `qpoints` in {self.system_name}.dyn0, and then multiply 2 for qpoints")
+            self.qpoints = [4,4,4]
+            self.kpoints_sparse= [kp*2 for kp in self.qpoints]
+            self.kpoints_dense = [kp*4 for kp in self.qpoints]
+
+        if not hasattr(self, "tr2_ph"):
+            self.tr2_ph = "1.0d-16"
+            print(f"    You didn't set the `tr2_ph` !  The program will use default value: tr2_ph=1.0d-16")
+
+        if not hasattr(self, "electron_phonon"):
+            self.electron_phonon="interpolated"
+            print(f"    You didn't set the `electron_phonon` ! The program will use default value: electron_phonon=interpolated")
+
+        if not hasattr(self, "el_ph_nsigma"):
+            self.el_ph_nsigma = "10"
+            print(f"You didn't set the `el_ph_nsigma` ! The program will use default value: el_ph_nsigma=10")
+            
+        if not hasattr(self, "el_ph_sigma"):
+            self.el_ph_sigma = "0.005"
+            print(f"    You didn't set the `el_ph_sigma` ! The program will use default value: el_ph_sigma=0.005")
+        
+        if not hasattr(self, "alpha_mix"):
+            self.alpha_mix = "0.3"
+            print(f"    You didn't set the `alpha_mix` ! The program will use default value: alpha_mix=0.3")
+        
+        if not hasattr(self, "dyn0_flag"):
+            self.dyn0_flag = False
+        else:
+            self.dyn0_flag = eval(self.dyn0_flag)
+        
+        print("Note: --------------------")
+        dyn0_names = Path(self.work_path).joinpath(f"{self.system_name}.dyn0")
+        if dyn0_names.exists():
+            self.qtot, self.qirreduced, self.qirreduced_coords= self.get_q_from_dyn0(dyn0_path=dyn0_names) 
+            print("    qtot from No.1 line in {}.dyn0 = {}".format(self.system_name, self.qtot))
+            print("    qirreduced from No.2 line in  {}.dyn0 = {}".format(self.system_name, self.qirreduced))
+            print("    qirreduced_coords from the rest lines in {}.dyn0, the number = {}".format(self.system_name, len(self.qirreduced_coords)))
+            time.sleep(3)
+            # 获得 self.qtot, self.qirreduced, self.qirreduced_coords, self.qweights 
+        else:
+            print(f"{self.system_name}.dyn0 doesn't exist in {self.work_path}. The qtot, qirreduced, qirreduced_coords will not get values.")
+
+        if not hasattr(self, "qtot"):
+            self.qtot = None
+        else:
+            print(f"    You didn't set the `qtot` ! Of course you don't need to set it! The program will get from {self.system_name}.dyn0. qtot={self.qtot}")
+        
+        if not hasattr(self, "qirreduced"):
+            self.qirreduced = None
+        else:
+            print(f"    You didn't set the `qirreduced` ! Of course you don't need to set it! The program will get from {self.system_name}.dyn0. qirreduced={self.qirreduced}")
+
+        if not hasattr(self, "qinserted"):
+            self.qinserted = 50
+        else:
+            self.qinserted = int(self.qinserted)
+
+        if not hasattr(self, "qirreduced_coords"):
+            self.qirreduced_coords = None
+        else:
+            print(f"    You didn't set the `qirreduced_coords` ! Of course you don't need to set it! The program will get from {self.system_name}.dyn0.")
+        
+        # phonodos计算
+        if not hasattr(self, "ndos"):
+            self.ndos = 500
+            print("    You didn't set `ndos`, the program will use default value: ndos=500")
+
+        # phonoband计算
+        if self.mode == "matdyn":
+            self.path_name_coords = self.get_hspp()
+        else:
+            self.path_name_coords = None
+
+    def get_q_from_scfout(self, dir):
+        if not os.path.exists(dir):
+            print("scf.out didn't exist!")
+            sys.exit(1)
+        content = open(dir, "r").readlines()
+        def find_k(item):
+            if re.search(r"k\(\s*\d+\)\s*=\s*", item):
+                return item
+
+        result = filter(find_k, content)
+        for res in result:
+            ks  = re.findall(r"\-?\d+\.\d+", res.split(",")[0])
+            self.q_coordinate_list.append(ks)
+            wp = re.findall(r"\-?\d+\.\d+", res.split(",")[1])
+            nqs = float(wp[0]) * self.qtot / 2
+            self.q_weight_list.append(nqs)
+
+        self.qtot           = self.qpoints[0] * self.qpoints[1] * self.qpoints[2] 
+        self.q_non_irreducible_amount = len(self.q_coordinate_list)
+
+        return self.qtot,    self.q_non_irreducible_amount, \
+               self.q_coordinate_list, self.q_weight_list
+
+    def get_qpoints(self, dyn0_path):
+        '''
+        input  : dir        dyn0文件的路径
+                 
+        return : self.qtot 总q点数
+                 self.qirreduced 不可约q点数
+                 self.qirreduced_coords 不可约q点坐标
+        '''
+        if not os.path.exists(dyn0_path):
+            raise FileExistsError ("dyn0 file doesn't exist!")
+        content = open(dyn0_path, "r").readlines()
+        # check qtot is right or not! 
+        qpoints = list(map(int, content[0].strip("\n").split()))
+
+        return qpoints
+
+    def get_q_from_dyn0(self, dyn0_path):
+        '''
+        input  : dir        dyn0文件的路径
+                 
+        return : self.qtot 总q点数
+                 self.qirreduced 不可约q点数
+                 self.qirreduced_coords 不可约q点坐标
+        '''
+        if not os.path.exists(dyn0_path):
+            raise FileExistsError ("dyn0 file doesn't exist!")
+        content = open(dyn0_path, "r").readlines()
+        # check qtot is right or not! 
+        qpoints = list(map(int, content[0].strip("\n").split()))
+        qtot  = list(map(int, qpoints))
+
+        def find_q(item):
+            if re.search(r"E[\+|\-]", item):
+                return item
+
+        qirreduced = int(content[1])
+        _q_coordinate_list = list(filter(find_q, content))
+        qirreduced_coords = [q_string.strip("\n").split() for q_string in _q_coordinate_list]
+        
+        return qtot, qirreduced, qirreduced_coords
+
+    def get_q_from_q2r(self, q2r_path):
+        """
+        input:  q2r_path   q2r.out文件的路径
+        
+        return:  self.qweights 不可约q点权重
+        """
+        def find_q_weight(item):
+            if re.search(r"nqs\=", item):
+                return item
+            
+        q2r_out        = open(q2r_path, "r").readlines()
+        _q_weight_list = list(filter(find_q_weight, q2r_out))
+        qweights  = [re.search(r"\d+", qwt).group() for qwt in _q_weight_list]
+        
+        return qweights
+
+    def merge(self, dir):
+        elph_dir_path = os.path.join(dir, "elph_dir")
+        if not os.path.exists(elph_dir_path):
+            os.makedirs(elph_dir_path)
+        
+        for i in range(self.qirreduced):
+            src_elph   = os.path.join(dir, str(i+1), "elph_dir", "elph.inp_lambda.1")
+            dst_elph   = os.path.join(elph_dir_path, "elph.inp_lambda."+str(i+1))
+            shutil.copy(src_elph, dst_elph)
+            print(f"elph.inp_.1 copy finished \n {dst_elph}")
+
+            src_dyn    = os.path.join(dir, str(i+1), self.system_name+".dyn")
+            dst_dyn    = os.path.join(dir,           self.system_name+".dyn"+str(i+1))
+            shutil.copy(src_dyn, dst_dyn)
+            print(f"{self.system_name}.dyn copy finished {dst_dyn}")
+
+            for j in range(51, 61):
+                src_a2Fq2r = os.path.join(dir, str(i+1), "elph_dir", "a2Fq2r."+str(j)+".1")
+                dst_a2Fq2r = os.path.join(elph_dir_path,             "a2Fq2r."+str(j)+"."+str(i+1))
+                shutil.copy(src_a2Fq2r, dst_a2Fq2r)
+                print(f"a2Fq2r.{str(j)}.1 copy finished  {dst_dyn}")
 
     def get_top_freq(self, dosfile):
         phonon_dos = open(dosfile, "r").readlines()
@@ -574,73 +590,6 @@ class qephono_inputpara(qe_inputpara):
             index=False,
             )
         
-
-class qedos_inputpara(qe_inputpara):
-
-    def __init__(
-        self, 
-        work_path: str, 
-        press: int, 
-        submit_job_system: str, 
-        input_file_path: str, 
-        **kwargs: dict,
-        ):
-    
-        super(qedos_inputpara, self).__init__(
-            work_path, 
-            press, 
-            submit_job_system, 
-            input_file_path, 
-            **kwargs
-            )
-        
-        print("Note: --------------------")
-        print("if you want to run `dos`, you had better set these values!")
-        # 电子态密度设置
-        if not hasattr(self, "DeltaE"):
-            self.DeltaE = 0.01
-            print("    You didn't set `DeltaE` for eledos.in, the program will use default value: DeltaE=0.01")
-        if not hasattr(self, "emin"):
-            self.emin = -10
-            print("    You didn't set `emin`   for eledos.in, the program will use default value: emin=-10")
-        if not hasattr(self, "emax"):
-            self.emax = 30
-            print("    You didn't set `emax`   for eledos.in, the program will use default value: emax=30 ")
-
-        # 声子态密度设置
-        if hasattr(self, "qpoints"):
-            _qpoints = self.qpoints.split()
-            self.qpoints = list(map(int, _qpoints))
-        else:
-            dyn0_names = Path(self.work_path).joinpath(f"{self.system_name}.dyn0")
-            qpoints = self.get_qpoints(dyn0_path=dyn0_names)
-            self.qpoints = [q*2 for q in qpoints]
-            print("Note: --------------------")
-            print("if you want to calculate phonodos, you had better set `qpoints`! ")
-            print("    Its `qpoints` had better be set more densely than `qpoints` in `ph.in`")
-            print("    For example, In ph.in, qpoints='8 8 8', then in phono_dos.in, qpoints='16 16 16' ")
-            print(f"    You didn't set `qpoints`, the program will use `qpoints` in {self.system_name}.dyn0, and then multiply 2 for qpoints")
-
-        if not hasattr(self, "ndos"):
-            self.ndos = 500
-            print("    You didn't set `ndos`, the program will use default value: ndos=500")
-
-    def get_qpoints(self, dyn0_path):
-        '''
-        input  : dir        dyn0文件的路径
-                 
-        return : self.qtot 总q点数
-                 self.qirreduced 不可约q点数
-                 self.qirreduced_coords 不可约q点坐标
-        '''
-        if not os.path.exists(dyn0_path):
-            raise FileExistsError ("dyn0 file doesn't exist!")
-        content = open(dyn0_path, "r").readlines()
-        # check qtot is right or not! 
-        qpoints = list(map(int, content[0].strip("\n").split()))
-
-        return qpoints
-    
     def get_phonodos(self):
         """
         返回值是一个dataframe类型，是一个二维列表，第一行是freq+元素名称, 第二行
@@ -686,6 +635,54 @@ class qedos_inputpara(qe_inputpara):
             )
 
         return phonondos_sum
+
+
+class qeeletron_inputpara(qe_inputpara):
+
+    def __init__(
+        self, 
+        work_path: str, 
+        press: int, 
+        submit_job_system: str, 
+        input_file_path: str, 
+        **kwargs: dict
+        ):
+        super(qeeletron_inputpara, self).__init__(
+            work_path, 
+            press, 
+            submit_job_system, 
+            input_file_path, 
+            **kwargs
+            )
+
+        print("Note: --------------------")
+        print("if you want to run `electron-dos`, you had better set these values!")
+        # 电子态密度设置
+        if not hasattr(self, "DeltaE"):
+            self.DeltaE = 0.01
+            print("    You didn't set `DeltaE` for eledos.in, the program will use default value: DeltaE=0.01")
+        if not hasattr(self, "emin"):
+            self.emin = -10
+            print("    You didn't set `emin`   for eledos.in, the program will use default value: emin=-10")
+        if not hasattr(self, "emax"):
+            self.emax = 30
+            print("    You didn't set `emax`   for eledos.in, the program will use default value: emax=30 ")
+
+        # 电子能带计算
+        if self.mode == "eleband" or self.mode == "eleproperties":
+            self.path_name_coords = self.get_hspp()
+        else:
+            self.path_name_coords = None
+
+        if not hasattr(self, "kinserted"):
+            self.kinserted = 100
+        else:
+            self.kinserted = int(self.kinserted)
+            
+        if not hasattr(self, "nbnd"):
+            print("Note: --------------------")
+            print("    You didn't set nbnd, the default value nbnd=100")
+            self.nbnd = 100
 
 
 class qesc_inputpara(qephono_inputpara):

@@ -138,21 +138,21 @@ def set_more_args(parser: ArgumentParser):
     )
     parser_phono.set_defaults(qe_workflow=qe_phono)
 
-   # dos计算
-    parser_dos = subparsers.add_parser("dos", formatter_class=RawTextHelpFormatter)
+   # eletron计算
+    parser_dos = subparsers.add_parser("eletron", formatter_class=RawTextHelpFormatter)
     parser_dos.add_argument(
         '-m',
-        '--more-argments-about-relax',
+        '--more-argments-about-eletron',
         type=str,
         dest='more_args',
         nargs='+',
-        help="输入dos计算的参数\n"
-            "qpoints='x x x' (尽量密一点, 比如是声子计算的2倍) \n"
+        help="输入电子性质计算的参数\n"
+            "kpoints_dense='x x x' (尽量密一点） \n"
             "   `x`=`path\POSCAR`\n"
             "   `y`=`the position of directory where KPOINTS will be put`\n"
-            "   mode=dos\n"
+            "   mode=eband, eletdos, elepdos\n"
     )
-    parser_dos.set_defaults(qe_workflow=qe_dos)
+    parser_dos.set_defaults(qe_workflow=qe_eletron)
 
    # 超导
     parser_phono = subparsers.add_parser("sc",  formatter_class=RawTextHelpFormatter)

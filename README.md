@@ -46,6 +46,8 @@ qe_main.py -i 输入文件路径 -w 工作目录 -p 压强 -j 运行方式
 **WARNING2 如果你使用-j bash, 那么一定注意core设置的不要太大，小心把主节点搞崩溃了。**
 
 ###  <span style="color:yellow"> 结构弛豫：
+
+结构优化时，对于体系的对称性非常敏感，也就是QE自身不会寻找体系的对称性，只能依靠手动输入体系的对称性，这点与VASP相比是非常欠缺的，因为VASP是可以自己寻找对称性的
 ```shell
 relax -m mode=relax-vc kpoints_dense="20 20 20" conv_thr=1.0d-8 core=48 npool=4  queue=lhy
 ```
@@ -196,24 +198,45 @@ gam.lines文件
 ### 声子态密度计算
 ####  <span style="color:green"> 计算phonodos, 计算态密度时要用更密的q点网格，这需设置nk1, nk2, nk3   
 ```shell
-dos -m mode=phonodos core=1 npool=1 queue=local qpoints='8 8 8' ndos=500 
+phono -m mode=phonodos core=1 npool=1 queue=local qpoints='8 8 8' ndos=500 
 ```
 
 ####  <span style="color:green"> 处理出投影到每种元素的phonodos，并且会输出一个文件phdos_proj2eles.csv用来绘制投影态密度
 ```shell
-dos -m mode=phonodosdata core=1 queue=local
+phono -m mode=phonodosdata core=1 queue=local
 ```
 
-### 电子态密度计算
-####  <span style="color:yellow"> 计算eletdos(这里计算电子的dos也用qpoints其实非常不合理)
+###  <span style="color:yellow"> 电子态密度计算
+####  <span style="color:green">**总DOS: eletdos**</span>
 ```shell
-dos -m mode=eletdos core=1 npool=1 queue=local qpoints='8 8 8' ndos=500 
+eletron -m mode=eletdos core=1 npool=1 queue=local kpoints_dense='8 8 8' 
 ```
 
-####  <span style="color:yellow"> 计算elepdos(这里计算电子的dos也用qpoints其实非常不合理)
+####  <span style="color:green">**投影DOS: elepdos**</span>
 ```shell
-dos -m mode=elepdos core=1 npool=1 queue=local qpoints='8 8 8' ndos=500 
+eletron -m mode=elepdos core=1 npool=1 queue=local kpoints_dense='8 8 8' 
 ```
+
+###  <span style="color:yellow"> 电子能带结构计算
+####  <span style="color:green">**获得eleband数据**</span>
+```shell
+eletron -m mode=eleband core=1 npool=1 queue=local kinserted=200 nbnd=500
+```
+
+####  <span style="color:green">**处理eleband数据获得可以origin绘图的数据**</span>(这里计算电子的dos也用qpoints其实非常不合理)
+```shell
+eletron -m mode=elebanddata core=1 queue=local
+```
+
+###  <span style="color:yellow"> 同时 电子能带结构计算 电子态密度计算
+```shell
+eletron -m mode=eleproperties core=48 npool=4 queue=local kinserted=200 nbnd=500  kpoints_dense='8 8 8' 
+```
+####  <span style="color:green">**处理eleband数据获得可以origin绘图的数据**</span>(这里计算电子的dos也用qpoints其实非常不合理)
+```shell
+eletron -m mode=elebanddata core=1 queue=local
+```
+
 
 ###  <span style="color:yellow"> 计算超导
 处理电荷屏蔽常数为0.1和0.13,得到 $\lambda$ 和 $\omega_{log}$ 并且输出一个文件：w_alpha2f_lambda.csv 可以用来绘制alpha-lambda的函数图像
@@ -464,39 +487,61 @@ data -m mode=dfptprog supercell='2 2 2' spectrum=True
 ###  <span style="color:yellow"> 自洽计算  </span>
 #### 最简参数
 ```shell
-properties -m mode=scf core=核数
+-w 你的路径/scf properties -m mode=scf core=核数
 ```
 #### 最繁参数
 ```shell
-properties -m mode=scf core=28 ediff=1e-8 ediffg=-0.001 ismear=1 kspacing=0.18 encut=800 queue=lhy
+-w 你的路径/scf properties -m mode=scf core=28 ediff=1e-8 ediffg=-0.001 ismear=1 kspacing=0.18 encut=800 queue=lhy
 ```
 
 ###  <span style="color:yellow"> 电子态密度计算  </span>
-如果指定 "-w 工作路径work_path"， 那么eledos计算时就会在工作路径work_path下寻找一个叫scf的子路径work_path，并将其中的CHGCAR拷贝入eband的子路径work_path
-如果没有指定 "-w 工作路径work_path"， 那么默认当前路径是子路径work_path，其母路径就是work_path, 然后重复上述过程， 即：eledos计算时就会在工作路径work_path下寻找一个叫scf的子路径work_path，并将其中的CHGCAR拷贝入eband的子路径work_path
+
+如果指定 "-w 工作路径work_path"， 那么eledos计算时就会在工作路径work_path的母路径下寻找一个叫scf的目录，并将scf其中的CHGCAR拷贝入指定的路径work_path下; 所以在指定work_path时，尽量写出来目录eledos
+
+如果没有指定 "-w 工作路径work_path"， 那么eledos计算时就会在当前路径的母路径下寻找一个叫scf的目录，并将scf其中的CHGCAR拷贝入当前路径work_path下。
+
+**电子态密度计算时，INCAR中有几个参数需要格外注意，这里我将这些参数给出，请你使用该脚本产生eledos计算的INCAR后稍作检查**
+```shell
+ISTART = 1    # 读取WAVECAR，如果WAVECAR不存在，就自己构造
+ICHARG = 11   # 读取CHGCAR， 进行非自洽计算
+#EMIN = -10   # 该脚本中默认将其注释了，EMIN指定了DOS评估的能量范围的下限。
+#EMAX =  10   # 该脚本中默认将其注释了，EMAX指定了DOS评估的能量范围的上限。
+```
 
 电子态密度计算时，其kspacing需要是scf计算的2倍
 #### 最简参数
 ```shell
-properties -m mode=eledos core=核数
+-w 你的路径/eledos properties -m mode=eledos core=核数
 ```
 #### 最繁参数
 ```shell
-properties -m mode=eledos core=28 ediff=1e-8 ediffg=-0.001 ismear=1 kspacing=0.09 encut=800 queue=lhy
+-w 你的路径/eledos properties -m mode=eledos core=28 ediff=1e-8 ediffg=-0.001 ismear=1 kspacing=0.09 encut=800 queue=lhy
 ```
 
 ###  <span style="color:yellow"> 电子能带结构计算  </span>
-如果指定 "-w 工作路径work_path"， 那么能带计算时就会在工作路径work_path下寻找一个叫scf的子路径work_path，并将其中的CHGCAR拷贝入eband的子路径work_path
-如果没有指定 "-w 工作路径work_path"， 那么默认当前路径是子路径work_path，其母路径就是work_path, 然后重复上述过程， 即：能带计算时就会在工作路径work_path下寻找一个叫scf的子路径work_path，并将其中的CHGCAR拷贝入eband的子路径work_path
+
+如果指定 "-w 工作路径work_path"， 那么eband计算时就会在工作路径work_path的母路径下寻找一个叫scf的目录，并将scf其中的CHGCAR拷贝入指定的路径work_path下; 所以在指定work_path时，尽量写出来目录eband。
+
+如果没有指定 "-w 工作路径work_path"， 那么eband计算时就会在当前路径的母路径下寻找一个叫scf的目录，并将scf其中的CHGCAR拷贝入当前路径work_path下。
+
+**电子态密度计算时，INCAR中有几个参数需要格外注意，这里我将这些参数给出，请你使用该脚本产生eledos计算的INCAR后稍作检查**
+```shell
+ISTART = 0    # 读取WAVECAR，如果WAVECAR不存在，就自己构造
+ICHARG = 11   # 读取CHGCAR， 进行非自洽计算
+```
+
 #### 最简参数
 ```shell
-properties -m mode=eband core=核数
+-w 你的路径/eband properties -m mode=eband core=核数
 ```
 #### 最繁参数
 ```shell
-properties -m mode=eband core=28 ediff=1e-8 ediffg=-0.001 ismear=1 encut=800 queue=lhy
+-w 你的路径/eband properties -m mode=eband core=28 ediff=1e-8 ediffg=-0.001 ismear=1 encut=800 queue=lhy
 ```
-
+#### 获得投影到一维路径的高对称路径点
+```shell
+vasp_main.py -i CONTCAR -j bash data -m mode=hspp core=1
+```
 
 # <div align="center"> <span style="color:red"> mytoolkit篇 </span> </div>
 

@@ -215,11 +215,13 @@ class qe_base:
         return np.array(reciprocal_lattice)
 
 def get_cell_and_coords(relax_out_path:Path):
-    """从relax.out文件中获得晶格参数和坐标"""
+
+    cell_parameters = None
+    fractional_sites = None
     if not relax_out_path.exists():
         print("Note: --------------------")
         print("    relax.out doesn't exist !!!")
-        return None, None
+        return cell_parameters, fractional_sites
     awk_order = "awk '/Begin final coordinates/,/End final coordinates/{print $0}'" + f" {os.path.abspath(relax_out_path)} " 
     content = os.popen(awk_order).readlines()
     for idx, line in enumerate(content):
@@ -227,6 +229,7 @@ def get_cell_and_coords(relax_out_path:Path):
             cell_parameters = content[idx+1:idx+4]
             # 将里面的\n剔除
             cell_parameters = [cell.strip("\n") for cell in cell_parameters]
+
     for idx, line in enumerate(content):
         if "ATOMIC_POSITIONS (crystal)" in line:
             fractional_sites = content[idx+1:-1]

@@ -19,12 +19,14 @@ class qe_submitjob:
         work_path: Path,
         submit_job_system: str,
         mode: str, 
+        core: int,
         **kwargs
         ):
 
         self.work_path = work_path
         self.submit_job_system  = submit_job_system
         self.mode = mode
+        self.core = core
 
         for key, value in kwargs.items():
             setattr(self, key, value)
@@ -46,6 +48,7 @@ class qe_submitjob:
             work_path=other_class.work_path,
             submit_job_system=other_class.submit_job_system,
             mode=other_class.mode,
+            core=other_class.core,
         )
 
         return self
@@ -57,7 +60,8 @@ class qe_submitjob:
             work_path=other_class.work_path,
             submit_job_system=other_class.submit_job_system,
             mode=other_class.mode,
-        )
+            core=other_class.core,
+            )
 
         return self
 
@@ -71,17 +75,19 @@ class qe_submitjob:
             dyn0_flag=other_class.dyn0_flag,
             system_name=other_class.system_name,
             qirreduced=other_class.qirreduced,
+            core=other_class.core,
         )
 
         return self 
 
     @classmethod
-    def init_from_dosinput(cls, other_class: qe_inputpara):
+    def init_from_eletroninput(cls, other_class: qe_inputpara):
         
         self = cls(
             work_path=other_class.work_path,
             submit_job_system=other_class.submit_job_system,
             mode=other_class.mode,
+            core=other_class.core,
         )
 
         return self 
@@ -93,6 +99,7 @@ class qe_submitjob:
             work_path=other_class.work_path,
             submit_job_system=other_class.submit_job_system,
             mode=other_class.mode,
+            core=other_class.core,
         )
 
         return self 
@@ -104,6 +111,9 @@ class qe_submitjob:
         outputfilename = inputfilename.split(".")[0] + ".out"
         print("Note: --------------------")
         print("    !!!!!!!! Please Attention, You have been source your Intel Compiler !!!!!!!!")
+        # 这种模式是专门为qe的其它模块设计，非阻塞式单核运行，
+        # 只有一个目的，将ph.x任务提交到后台后，进行不可约q点产生计算。
+        # 一旦检测到dyn0文件出现，就杀掉这个ph.x任务，
         if dotx_file == "ph.x":
             cwd_path = os.getcwd()
             os.chdir(self.work_path)
@@ -111,16 +121,25 @@ class qe_submitjob:
             print(f"{dotx_file} is running. pid or jobids = {jobids}")
             os.chdir(cwd_path)
             return jobids, outputfilename
-        elif dotx_file == "lambda.x":
-            cwd_path = os.getcwd()
-            os.chdir(self.work_path)
-            os.system(f"{qebin_path}/{dotx_file} <{inputfilename}> {outputfilename}")
-            os.chdir(cwd_path)
+        # 这个是专门为eliashberg方程求解提供的提交任务模式
         elif dotx_file == "eliashberg.x":
             cwd_path = os.getcwd()
             os.chdir(self.work_path)
+            print(f"    {eliashberg_x_path} > eliashberg.log")
             os.system(f"{eliashberg_x_path} > eliashberg.log")
             os.chdir(cwd_path)
+        # 这种模式是专门为qe设计，阻塞式单核运行, 可以用于所有的任务计算，这里提供了核数设置。
+        # 也就是说如果命令行设置用多少核，这里就会用多少核进行计算
+        else: 
+            cwd_path = os.getcwd()
+            os.chdir(self.work_path)
+            print("Note: --------------------")
+            print(f"    killall -9 {dotx_file} > /dev/null")
+            print(f"    {qebin_path}/{dotx_file} <{inputfilename} > {outputfilename}")
+            os.system(f"killall -9 {dotx_file} > /dev/null")
+            os.system(f"{qebin_path}/{dotx_file} <{inputfilename} > {outputfilename}")
+            os.chdir(cwd_path)
+
         
 
     def submit_mode1(self, inputfilename, jobname):
@@ -172,8 +191,9 @@ class qe_submitjob:
             # 在运行ph.x之前，检查dyn0文件是否已经存在
             if self.checksuffix(self.work_path, ".dyn0"):
                 # 在运行ph.x之前，如果dyn0文件已经存在， 那么就直接退出程序
-                logger.warning("Before running the ph.x, the program will check the *.dyn0 exists whether or not !")
-                logger.warning("It seems that dyn0 is not create by you!! Please check it carefully!!! The program will exit!!!")
+                print("Note: ------------------------")
+                print("    Before running the ph.x, the program will check the *.dyn0 exists whether or not !")
+                print("    It seems that dyn0 is not create by you!! Please check it carefully!!! The program will exit!!!")
                 sys.exit(0)
             else:
                 # 在运行ph.x之前，如果dyn0文件不存在， 那么就执行ph.x的运行
@@ -185,7 +205,7 @@ class qe_submitjob:
                     if self.checksuffix(self.work_path, ".dyn0"):
                         print("The *.dyn0 has been created just now !!! The program will run `killall -9 ph.x`")
                         os.system("killall -9 ph.x")
-                        break
+                        sys.exit(0)
                     if self.checkerror(self.work_path, outputfilename):
                         print("The {outputfilename} has ERROR !!! The program will exit")
                         sys.exit(1)
@@ -195,7 +215,7 @@ class qe_submitjob:
             jobids = self.submit_mode1(inputfilename, jobname)
 
     def submit_mode3(self, inputfilename, jobnames):
-        """split_dyn0"""
+        """split_dyn0和split_assignQ两个模式提交作业的方式"""
         jobids = []
         for i, jobname in enumerate(jobnames):
             cwd = os.getcwd()
@@ -210,24 +230,6 @@ class qe_submitjob:
                 jobids = re.findall(r"\d+", res)
             print(f"finish submit {jobname}, jobids = {''.join(jobids)}")
             os.chdir(cwd)
-
-    def submit_mode4(self, inputfilename, jobnames):
-        """split_assignQ"""
-        jobids = []
-        cwd = os.getcwd()
-        os.chdir(self.work_path)
-        for i, jobname in enumerate(jobnames):
-            if self.submit_job_system == "bash":
-                print(f"nohup {self.submit_order} {jobname} > phbash{i+1}.log 2>&1 &")
-                res = os.popen(f"nohup {self.submit_order} {jobname} > bash.log 2>&1 &").read()
-                jobids = self.getpid()
-            else:
-                print(f"{self.submit_order} {jobname}")
-                res = os.popen(f"{self.submit_order} {jobname}").read()
-                jobids = re.findall(r"\d+", res)
-                print(f"finish submit {jobname}, jobids = {''.join(jobids)}")
-        os.chdir(cwd)
-
 
 
     @staticmethod
