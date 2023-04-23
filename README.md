@@ -195,7 +195,7 @@ gam.lines文件
        ...
 ```
 
-### 声子态密度计算
+###  <span style="color:yellow"> 声子态密度计算
 ####  <span style="color:green"> 计算phonodos, 计算态密度时要用更密的q点网格，这需设置nk1, nk2, nk3   
 ```shell
 phono -m mode=phonodos core=1 npool=1 queue=local qpoints='8 8 8' ndos=500 
@@ -207,6 +207,18 @@ phono -m mode=phonodosdata core=1 queue=local
 ```
 
 ###  <span style="color:yellow"> 电子态密度计算
+
+####  <span style="color:green">**先进行非自洽计算, k点要比自洽密一些**</span>
+```shell
+scf -m mode=nscf core=48 npool=4 queue=local kpoints_dense='16 16 16' 
+```
+
+####  <span style="color:green">**同时获得eletdos 和 elepdos**</span>
+```shell
+eletron -m mode=elepdosdata core=1 npool=1 queue=local kpoints_dense='8 8 8' 
+```
+
+
 ####  <span style="color:green">**总DOS: eletdos**</span>
 ```shell
 eletron -m mode=eletdos core=1 npool=1 queue=local kpoints_dense='8 8 8' 
@@ -500,7 +512,7 @@ data -m mode=dfptprog supercell='2 2 2' spectrum=True
 
 如果没有指定 "-w 工作路径work_path"， 那么eledos计算时就会在当前路径的母路径下寻找一个叫scf的目录，并将scf其中的CHGCAR拷贝入当前路径work_path下。
 
-**电子态密度计算时，INCAR中有几个参数需要格外注意，这里我将这些参数给出，请你使用该脚本产生eledos计算的INCAR后稍作检查**
+**电子态密度计算时，INCAR中有几个参数需要格外注意，这里我将这些参数给出，请你使用该脚本产生eledos计算的INCAR后稍作检查(原因是我在设置了EMIN和EMAX后算出来的dos的能量范围没有正值。)**
 ```shell
 ISTART = 1    # 读取WAVECAR，如果WAVECAR不存在，就自己构造
 ICHARG = 11   # 读取CHGCAR， 进行非自洽计算

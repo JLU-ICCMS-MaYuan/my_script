@@ -154,6 +154,7 @@ class qe_eletron:
 
         if self.eletron_inputpara.mode == "hspp":
             self.eletron_inputpara.get_hspp()
+            self.get_fermi_energy()
         elif self.eletron_inputpara.mode == "elebanddata": 
             self.qe_writeinput = qe_writeinput.init_from_eletroninput(self.eletron_inputpara)
             self.qe_submitjob  = qe_submitjob.init_from_eletroninput(self.eletron_inputpara)
@@ -165,6 +166,7 @@ class qe_eletron:
             inputfilename = self.qe_writeinput.write_elebanddata_in(self.eletron_inputpara.work_path)
             if self.eletron_inputpara.queue is not None:
                 self.qe_submitjob.submit_mode0(inputfilename, dotx_file="bands.x")
+            self.get_fermi_energy()
         elif self.eletron_inputpara.mode == "eledosdata": 
             self.qe_writeinput = qe_writeinput.init_from_eletroninput(self.eletron_inputpara)
             self.qe_submitjob  = qe_submitjob.init_from_eletroninput(self.eletron_inputpara)
@@ -178,6 +180,7 @@ class qe_eletron:
             inputfilename = self.qe_writeinput.write_elepdos_in(self.eletron_inputpara.work_path)
             if self.eletron_inputpara.queue is not None:
                 self.qe_submitjob.submit_mode0(inputfilename, dotx_file="projwfc.x")
+            self.get_fermi_energy()
         elif self.eletron_inputpara.mode == "eleproperties":
             self.qe_writeinput = qe_writeinput.init_from_eletroninput(self.eletron_inputpara)
             self.qe_writesubmit = qe_writesubmit.init_from_eletroninput(self.eletron_inputpara)
@@ -190,6 +193,7 @@ class qe_eletron:
             jobname = self.qe_writesubmit.write_submit_scripts([inputfilename1, inputfilename2, inputfilename3, inputfilename4, inputfilename5])
             if self.eletron_inputpara.queue is not None:
                 self.qe_submitjob.submit_mode1(inputfilename1, jobname)
+            self.get_fermi_energy()
         else:
             self.qe_writeinput  = qe_writeinput.init_from_eletroninput(self.eletron_inputpara)
             self.qe_writesubmit = qe_writesubmit.init_from_eletroninput(self.eletron_inputpara)
@@ -201,7 +205,18 @@ class qe_eletron:
             self.qe_submitjob = qe_submitjob.init_from_eletroninput(self.eletron_inputpara)
             if self.eletron_inputpara.queue is not None:
                 self.qe_submitjob.submit_mode1(inputfilename, jobname)
+            self.get_fermi_energy()
 
+    def get_fermi_energy(self):
+        print("Note: --------------------")
+        scffit_out_path = self.eletron_inputpara.work_path.joinpath("scffit.out")
+        if scffit_out_path.exists():
+            fermi_energy = os.popen(f'grep "Fermi energy" {scffit_out_path}').read().split()[4]
+            print("    fermi_energy={} in scffit.out".format(fermi_energy))
+        scf_out_path = self.eletron_inputpara.work_path.joinpath("scf.out")
+        if scf_out_path.exists():
+            fermi_energy = os.popen(f'grep "Fermi energy" {scf_out_path}').read().split()[4]
+            print("    fermi_energy={} in scf.out".format(fermi_energy))
 
 class qe_superconduct:
 
