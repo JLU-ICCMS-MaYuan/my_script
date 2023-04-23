@@ -314,6 +314,7 @@ class vasp_base:
 
 
         print("Print projected high symmetry path")
+        print("倒格子的单位是: 2pi/埃")
         path_name_coords = list(zip(path_name_list, path_coords))
         projected_path_name_coords = [[path_name_coords[0][0], path_name_coords[0][1][0]]]
         total_dist = 0

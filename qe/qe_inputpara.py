@@ -210,6 +210,7 @@ class qe_inputpara(qe_base):
         
 
         print("Print projected high symmetry path")
+        print("倒格子的单位是 2pi/alat")
         projected_path_name_coords = [[path_name_coords[0][0], path_name_coords[0][1][0]]]
         total_dist = 0
         for idx in range(1, len(path_name_coords)):
@@ -657,6 +658,7 @@ class qeeletron_inputpara(qe_inputpara):
 
         print("Note: --------------------")
         print("if you want to run `electron-dos`, you had better set these values!")
+        
         # 电子态密度设置
         if not hasattr(self, "DeltaE"):
             self.DeltaE = 0.01
@@ -665,9 +667,14 @@ class qeeletron_inputpara(qe_inputpara):
             self.emin = -10
             print("    You didn't set `emin`   for eledos.in, the program will use default value: emin=-10")
         if not hasattr(self, "emax"):
-            self.emax = 30
-            print("    You didn't set `emax`   for eledos.in, the program will use default value: emax=30 ")
-
+            self.emax = 10
+            print("    You didn't set `emax`   for eledos.in, the program will use default value: emax=10 ")
+        if not hasattr(self, "ngauss"):
+            self.ngauss = 0
+            print("    You didn't set `emax`   for eledos.in, the program will use default value: ngauss=0 ")
+        if not hasattr(self, "pdosdegauss"):
+            self.pdosdegauss = 0
+            print("    You didn't set `emax`   for eledos.in, the program will use default value: pdosdegauss=0 ")
         # 电子能带计算
         if self.mode == "eleband" or self.mode == "eleproperties":
             self.path_name_coords = self.get_hspp()

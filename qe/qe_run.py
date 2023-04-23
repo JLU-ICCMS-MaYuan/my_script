@@ -163,8 +163,21 @@ class qe_eletron:
             print("    Run bands.x to get eleband.dat and  eleband.dat.gnu")
             print("    eleband.dat.gnu can be used in origin to plot-eletronband")
             inputfilename = self.qe_writeinput.write_elebanddata_in(self.eletron_inputpara.work_path)
-            if self.prepare_inputpara.queue is not None:
+            if self.eletron_inputpara.queue is not None:
                 self.qe_submitjob.submit_mode0(inputfilename, dotx_file="bands.x")
+        elif self.eletron_inputpara.mode == "eledosdata": 
+            self.qe_writeinput = qe_writeinput.init_from_eletroninput(self.eletron_inputpara)
+            self.qe_submitjob  = qe_submitjob.init_from_eletroninput(self.eletron_inputpara)
+            self.qe_writesubmit = qe_writesubmit.init_from_eletroninput(self.eletron_inputpara)
+            print("Note: --------------------")
+            print("    !!!!!!!!!! Remember to run pw.x to get nscf.out before you run dos.x and projwfc.x") 
+            print("    Run dos.x to get tdos and and run projwfc.x to get pdos")
+            inputfilename = self.qe_writeinput.write_eletdos_in(self.eletron_inputpara.work_path)
+            if self.eletron_inputpara.queue is not None:
+                self.qe_submitjob.submit_mode0(inputfilename, dotx_file="dos.x")
+            inputfilename = self.qe_writeinput.write_elepdos_in(self.eletron_inputpara.work_path)
+            if self.eletron_inputpara.queue is not None:
+                self.qe_submitjob.submit_mode0(inputfilename, dotx_file="projwfc.x")
         elif self.eletron_inputpara.mode == "eleproperties":
             self.qe_writeinput = qe_writeinput.init_from_eletroninput(self.eletron_inputpara)
             self.qe_writesubmit = qe_writesubmit.init_from_eletroninput(self.eletron_inputpara)

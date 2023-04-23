@@ -230,6 +230,8 @@ class qe_writeinput:
             kinserted=other_class.kinserted,
             path_name_coords=other_class.path_name_coords,
             nbnd=other_class.nbnd,
+            ngauss=other_class.ngauss,
+            pdosdegauss=other_class.pdosdegauss,
         )
         return self
 
@@ -775,29 +777,31 @@ class qe_writeinput:
         inputfilename = "eletdos.in"
         eledos_in = work_directory.joinpath(inputfilename) 
         with open(eledos_in, "w") as qe:
-            qe.write("&dos                                               \n")
-            qe.write("   prefix = '{}',                                  \n".format(self.system_name))                                                          
-            qe.write("   outdir = './tmp',                               \n")                                                                                    
-            qe.write("   fildos = '{}.tdos',                              \n".format(self.system_name))
-            qe.write("   DeltaE = 0.01,                                  \n".format(self.DeltaE))                                    
-            qe.write("   emin = {},                                      \n".format(self.emin))
-            qe.write("   emax = {},                                      \n".format(self.emax))
-            qe.write("/                                                  \n")                                                                
+            qe.write("&dos                       \n")
+            qe.write("   prefix = '{}',          \n".format(self.system_name))                                                          
+            qe.write("   outdir = './tmp',       \n")                                                                                    
+            qe.write("   fildos = '{}.tdos',     \n".format(self.system_name))
+            qe.write("   DeltaE = {},            \n".format(self.DeltaE))                                    
+            qe.write("   emin = {},              \n".format(self.emin))
+            qe.write("   emax = {},              \n".format(self.emax))
+            qe.write("/                          \n")                                                                
         return inputfilename
 
     def write_elepdos_in(self, work_directory:Path):
         inputfilename = "elepdos.in"
         eledos_in = work_directory.joinpath(inputfilename) 
         with open(eledos_in, "w") as qe:
-            qe.write("&projwfc                                           \n")
-            qe.write("   prefix = '{}',                                  \n".format(self.system_name))                                                          
-            qe.write("   outdir = './tmp',                               \n")                                                                                    
-            qe.write("   filpdos= '{}',                                  \n".format(self.system_name))
-            qe.write("   filproj= '{}',                                  \n".format(self.system_name))
-            qe.write("   DeltaE = 0.01,                                  \n".format(self.DeltaE))                                    
-            qe.write("   emin = {},                                      \n".format(self.emin))
-            qe.write("   emax = {},                                      \n".format(self.emax))
-            qe.write("/                                                  \n")                                                                
+            qe.write("&projwfc                   \n")
+            qe.write("   prefix = '{}',          \n".format(self.system_name))                                                          
+            qe.write("   outdir = './tmp',       \n")                                                                                    
+            qe.write("   filpdos= '{}.pdos',     \n".format(self.system_name))
+            qe.write("   ngauss = {}             \n".format(self.ngauss))
+            qe.write("   filproj= '{}.proj',     \n".format(self.system_name))
+            qe.write("   DeltaE = {},            \n".format(self.DeltaE))   
+            qe.write("   degauss = {},           \n".format(self.pdosdegauss))                                 
+            qe.write("   emin = {},              \n".format(self.emin))
+            qe.write("   emax = {},              \n".format(self.emax))
+            qe.write("/                          \n")                                                                
         return inputfilename
 
     def write_eleband_in(self, work_directory:Path):

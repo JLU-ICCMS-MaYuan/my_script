@@ -385,7 +385,7 @@ class qe_writesubmit:
         _script_filepath = os.path.join(_dirpath, jobname)
         with open(_script_filepath, "w") as j:
             j.writelines(self.jobtitle)
-            j.write('mpirun -np {} {}/lambda.x <{}> {}  \n'.format(self.core, qebin_path, _inpufilename, _outputfilename))
+            j.write('mpirun -np {} {}/lambda.x  <{}> {}  \n'.format(self.core, qebin_path, _inpufilename, _outputfilename))
         return jobname
 
     def s9_eliashberg(self, _dirpath, inputfilename):
@@ -407,7 +407,7 @@ class qe_writesubmit:
         _script_filepath = os.path.join(_dirpath, jobname)
         with open(_script_filepath, "w") as j:
             j.writelines(self.jobtitle)
-            j.write('mpirun -np {} {}/pw.x {} <{}> {}  \n'.format(self.core, qebin_path, self.npool, _inpufilename, _outputfilename))
+            j.write('mpirun -np {} {}/pw.x  -npool {} <{}> {}  \n'.format(self.core, qebin_path, self.npool, _inpufilename, _outputfilename))
         return jobname
 
     def s11_eleproperties(self, _dirpath, inputfilenames):
@@ -420,22 +420,27 @@ class qe_writesubmit:
             j.writelines(self.jobtitle)
             # 先做能带计算
             eleband_in, eleband_out = input_output.__next__()
-            j.write('mpirun -np {} {}/pw.x {} <{}> {}  \n\n'.format(self.core, qebin_path, self.npool, eleband_in, eleband_out))
+            j.write('echo "eleband"\n')
+            j.write('mpirun -np {} {}/pw.x <{}> {}  \n\n'.format(self.core, qebin_path, eleband_in, eleband_out))
             
             # 先做处理能带数据
             elebanddata_in, elebanddata_out = input_output.__next__()
+            j.write('echo "elebanddata"\n')
             j.write('{}/bands.x <{}> {}  \n\n'.format(qebin_path, elebanddata_in, elebanddata_out))
 
             # 再做非自洽计算
             nscf_in, nscf_out = input_output.__next__()
-            j.write('mpirun -np {} {}/pw.x {} <{}> {} \n\n'.format(self.core, qebin_path, self.npool, nscf_in, nscf_out))
+            j.write('echo "nscf"\n')
+            j.write('mpirun -np {} {}/pw.x <{}> {} \n\n'.format(self.core, qebin_path, nscf_in, nscf_out))
         
             # 再做总dos计算TDOS
-            nscf_in, nscf_out = input_output.__next__()
-            j.write('mpirun -np {} {}/dos.x {} <{}> {} \n\n'.format(self.core, qebin_path, self.npool, nscf_in, nscf_out))
+            eletdos_in, eletdos_out = input_output.__next__()
+            j.write('echo "eletdos"\n')
+            j.write('mpirun -np {} {}/dos.x -pd .true. <{}> {} \n\n'.format(self.core, qebin_path, eletdos_in, eletdos_out))
 
             # 再做投影dos计算PDOS
-            nscf_in, nscf_out = input_output.__next__()
-            j.write('mpirun -np {} {}/projwfc.x {} <{}> {}  \n\n'.format(self.core, qebin_path, self.npool, nscf_in, nscf_out))
+            elepdos_in, elepdos_out = input_output.__next__()
+            j.write('echo "elepdos"\n')
+            j.write('mpirun -np {} {}/projwfc.x -pd .true. <{}> {}  \n\n'.format(self.core, qebin_path, elepdos_in, elepdos_out))
 
         return jobname
