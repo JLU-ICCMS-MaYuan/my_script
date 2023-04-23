@@ -166,7 +166,7 @@ class vasp_base:
         while not choosed_flag:
             for i, p in enumerate(targetpotcarnames):
                 print(f"{i+1}.  ", p)
-            choosed_pot_number = input("please input you want one(Enter the previous number, such as 1,2,3...)\n")
+            choosed_pot_number = int(input("please input you want one(Enter the previous number, such as 1,2,3...)\n"))
             choosed_pot = targetpotcarnames[choosed_pot_number-1]
             if choosed_pot in targetpotcarnames:
                 src_pp = Path(potcar_dir).joinpath(choosed_pot , "POTCAR")
