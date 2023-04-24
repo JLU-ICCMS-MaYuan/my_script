@@ -242,7 +242,7 @@ eletron -m mode=elebanddata core=1 queue=local
 
 ###  <span style="color:yellow"> 同时 电子能带结构计算 电子态密度计算
 ```shell
-eletron -m mode=eleproperties core=48 npool=4 queue=local kinserted=200 nbnd=500  kpoints_dense='8 8 8' 
+eletron -m mode=eleeletron core=48 npool=4 queue=local kinserted=200 nbnd=500  kpoints_dense='8 8 8' 
 ```
 ####  <span style="color:green">**处理eleband数据获得可以origin绘图的数据**</span>(这里计算电子的dos也用qpoints其实非常不合理)
 ```shell
@@ -499,11 +499,11 @@ data -m mode=dfptprog supercell='2 2 2' spectrum=True
 ###  <span style="color:yellow"> 自洽计算  </span>
 #### 最简参数
 ```shell
--w 你的路径/scf properties -m mode=scf core=核数
+-w 你的路径/scf eletron -m mode=scf core=核数
 ```
 #### 最繁参数
 ```shell
--w 你的路径/scf properties -m mode=scf core=28 ediff=1e-8 ediffg=-0.001 ismear=1 kspacing=0.18 encut=800 queue=lhy
+-w 你的路径/scf eletron -m mode=scf core=28 ediff=1e-8 ediffg=-0.001 ismear=1 kspacing=0.18 encut=800 queue=lhy
 ```
 
 ###  <span style="color:yellow"> 电子态密度计算  </span>
@@ -523,11 +523,11 @@ ICHARG = 11   # 读取CHGCAR， 进行非自洽计算
 电子态密度计算时，其kspacing需要是scf计算的2倍
 #### 最简参数
 ```shell
--w 你的路径/eledos properties -m mode=eledos core=核数
+-w 你的路径/eledos eletron -m mode=eledos core=核数
 ```
 #### 最繁参数
 ```shell
--w 你的路径/eledos properties -m mode=eledos core=28 ediff=1e-8 ediffg=-0.001 ismear=1 kspacing=0.09 encut=800 queue=lhy
+-w 你的路径/eledos eletron -m mode=eledos core=28 ediff=1e-8 ediffg=-0.001 ismear=1 kspacing=0.09 encut=800 queue=lhy
 ```
 
 ###  <span style="color:yellow"> 电子能带结构计算  </span>
@@ -544,11 +544,11 @@ ICHARG = 11   # 读取CHGCAR， 进行非自洽计算
 
 #### 最简参数
 ```shell
--w 你的路径/eband properties -m mode=eband core=核数
+-w 你的路径/eband eletron -m mode=eband core=核数
 ```
 #### 最繁参数
 ```shell
--w 你的路径/eband properties -m mode=eband core=28 ediff=1e-8 ediffg=-0.001 ismear=1 encut=800 queue=lhy
+-w 你的路径/eband eletron -m mode=eband core=28 ediff=1e-8 ediffg=-0.001 ismear=1 encut=800 queue=lhy
 ```
 #### 获得投影到一维路径的高对称路径点
 ```shell

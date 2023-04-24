@@ -1,6 +1,6 @@
 from argparse import ArgumentParser, RawTextHelpFormatter
 
-from vasp.vasp_run import vasp_relax, vasp_phono, vaspbatch_relax, vaspbatch_phono, vasp_processdata, vasp_clear, vasp_properties
+from vasp.vasp_run import *
 
 def set_more_args(parser: ArgumentParser):
 
@@ -84,7 +84,7 @@ def set_more_args(parser: ArgumentParser):
     parser_relax.set_defaults(vasp_workflow=vasp_relax)
     
     # 性质计算：自洽，能带，电子态密度
-    parser_relax = subparsers.add_parser("properties", formatter_class=RawTextHelpFormatter)
+    parser_relax = subparsers.add_parser("eletron", formatter_class=RawTextHelpFormatter)
     parser_relax.add_argument(
         '-m',
         '--more-argments-about-properties',
@@ -107,7 +107,7 @@ def set_more_args(parser: ArgumentParser):
             "mode = None, you can set it to be: rvf rv3 \n"
             "queue = xieyu\n"
     )
-    parser_relax.set_defaults(vasp_workflow=vasp_properties)
+    parser_relax.set_defaults(vasp_workflow=vasp_eletron)
 
     # 计算声子谱
     parser_phono = subparsers.add_parser("phono", formatter_class=RawTextHelpFormatter)

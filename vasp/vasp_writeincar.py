@@ -51,7 +51,7 @@ class vasp_writeincar:
         return self
 
     @classmethod
-    def init_from_properties(cls, other_class: vasp_inputpara):
+    def init_from_eletron(cls, other_class: vasp_inputpara):
         self = cls(
             work_path=other_class.work_path,
             encut=other_class.encut,

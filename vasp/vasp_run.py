@@ -14,7 +14,7 @@ from pymatgen.io.ase import AseAtomsAdaptor
 
 from vasp.config import config
 from vasp.vasp_base import vasp_base
-from vasp.vasp_inputpara import vasp_inputpara, vasp_phonopara, vaspbatch_inputpara, vaspbatch_phonopara
+from vasp.vasp_inputpara import *
 from vasp.vasp_writeincar import vasp_writeincar
 from vasp.vasp_writesubmit import vasp_writesubmit
 from vasp.vasp_submitjob import vasp_submitjob
@@ -161,47 +161,47 @@ def vaspbatch_phono(args: ArgumentParser) -> None:
                 _vasp_submitjob.submit_mode2(jobname)
 
 
-def vasp_properties(args):
+def vasp_eletron(args):
         
     # read input para
     _config = config(args).read_config()
 
     # prepare the POSCAR POTCAR  
-    properties_inputpara = vasp_inputpara.init_from_config1(_config)
+    eletron_inputpara = vasp_inputpara.init_from_config1(_config)
 
     # init the INCAR
-    _vasp_writeincar  = vasp_writeincar.init_from_properties(properties_inputpara)
-    if properties_inputpara.mode == 'scf':
+    _vasp_writeincar  = vasp_writeincar.init_from_eletron(eletron_inputpara)
+    if eletron_inputpara.mode == 'scf':
         _vasp_writeincar.scf_incar(
-            properties_inputpara.work_path
+            eletron_inputpara.work_path
             )
-        properties_inputpara.write_evenly_kpoints(
-            properties_inputpara.kspacing, 
-            properties_inputpara.work_path
+        eletron_inputpara.write_evenly_kpoints(
+            eletron_inputpara.kspacing, 
+            eletron_inputpara.work_path
             )
-        _vasp_writesubmit = vasp_writesubmit.init_from_properties(properties_inputpara)
+        _vasp_writesubmit = vasp_writesubmit.init_from_eletron(eletron_inputpara)
         jobname = _vasp_writesubmit.write_submit_scripts()
-        _vasp_submitjob = vasp_submitjob.init_from_relaxinput(properties_inputpara)
-        if properties_inputpara.queue is not None:
+        _vasp_submitjob = vasp_submitjob.init_from_relaxinput(eletron_inputpara)
+        if eletron_inputpara.queue is not None:
             _vasp_submitjob.submit_mode1(jobname)
-    elif properties_inputpara.mode == 'eband':
-        chgcar_src = properties_inputpara.work_path.parent.joinpath("scf", "CHGCAR")
-        chgcar_dst = properties_inputpara.work_path.joinpath("CHGCAR")
+    elif eletron_inputpara.mode == 'eband':
+        chgcar_src = eletron_inputpara.work_path.parent.joinpath("scf", "CHGCAR")
+        chgcar_dst = eletron_inputpara.work_path.joinpath("CHGCAR")
         if chgcar_src.exists():
             shutil.copy(chgcar_src, chgcar_dst)
         else:
             print("NOTES: ------------------------------ ")
             print(f"    The CHGCAR doesn't exist in {chgcar_src}")
             sys.exit(1)
-        properties_inputpara.write_highsymmetry_kpoints(
-            properties_inputpara.ase_type, 
-            properties_inputpara.work_path.joinpath("KPOINTS"),
+        eletron_inputpara.write_highsymmetry_kpoints(
+            eletron_inputpara.ase_type, 
+            eletron_inputpara.work_path.joinpath("KPOINTS"),
             )
-        _vasp_writeincar.band_incar(properties_inputpara.work_path)
-        _vasp_writesubmit = vasp_writesubmit.init_from_properties(properties_inputpara)
+        _vasp_writeincar.band_incar(eletron_inputpara.work_path)
+        _vasp_writesubmit = vasp_writesubmit.init_from_eletron(eletron_inputpara)
         jobname = _vasp_writesubmit.write_submit_scripts()
-        _vasp_submitjob = vasp_submitjob.init_from_relaxinput(properties_inputpara)
-        if properties_inputpara.queue is not None:
+        _vasp_submitjob = vasp_submitjob.init_from_relaxinput(eletron_inputpara)
+        if eletron_inputpara.queue is not None:
             _vasp_submitjob.submit_mode1(jobname)
         print("NOTES: ------------------------------ ")
         print("If you meet the erros in eband just like: ")
@@ -212,9 +212,9 @@ def vasp_properties(args):
         print("    WARING: Your FFT grids (NGX,NGY,NGZ) are not sufficient for an accurate calculation. Thus, the results might be wrong. ")
         print("    ANALYSIS: Possible reason is that NGX, NGY, NGZ you'v customized aren't matched with the PREC=Accurate ")
         print("    SOLUTION: You can let PREC=Normal eband/INCAR")
-    elif properties_inputpara.mode == 'eledos':
-        chgcar_src = properties_inputpara.work_path.parent.joinpath("CHGCAR")
-        chgcar_dst = properties_inputpara.work_path.joinpath("CHGCAR")
+    elif eletron_inputpara.mode == 'eledos':
+        chgcar_src = eletron_inputpara.work_path.parent.joinpath("scf", "CHGCAR")
+        chgcar_dst = eletron_inputpara.work_path.joinpath("CHGCAR")
         if chgcar_src.exists():
             shutil.copy(chgcar_src, chgcar_dst)
         else:
@@ -223,15 +223,15 @@ def vasp_properties(args):
             sys.exit(1)
         print("NOTES:  ------------------------------ ")
         print("    KSPACING in `eledos` have to be twice than that in `scf` ")
-        properties_inputpara.write_evenly_kpoints(
-            properties_inputpara.kspacing, 
-            properties_inputpara.work_path
+        eletron_inputpara.write_evenly_kpoints(
+            eletron_inputpara.kspacing, 
+            eletron_inputpara.work_path
             )
-        _vasp_writeincar.eledos_incar(properties_inputpara.work_path)
-        _vasp_writesubmit = vasp_writesubmit.init_from_properties(properties_inputpara)
+        _vasp_writeincar.eledos_incar(eletron_inputpara.work_path)
+        _vasp_writesubmit = vasp_writesubmit.init_from_eletron(eletron_inputpara)
         jobname = _vasp_writesubmit.write_submit_scripts()
-        _vasp_submitjob = vasp_submitjob.init_from_relaxinput(properties_inputpara)
-        if properties_inputpara.queue is not None:
+        _vasp_submitjob = vasp_submitjob.init_from_relaxinput(eletron_inputpara)
+        if eletron_inputpara.queue is not None:
             _vasp_submitjob.submit_mode1(jobname)
         print("NOTES: ------------------------------ ")
         print("if you meet the erros just like: ")
@@ -369,7 +369,7 @@ class vasp_processdata(vasp_base):
             )
             cwd = os.getcwd()
             os.chdir(self.work_path)
-            os.system("phonopy -p -t mesh.conf") # -p: dos plot   -t: thermal properties print
+            os.system("phonopy -p -t mesh.conf") # -p: dos plot   -t: thermal eletron print
             os.system("phonopy -p mesh.conf -c {}".format(self.input_file_path.name)) # 获得 total_dos.dat
             os.chdir(cwd)
 
@@ -396,7 +396,7 @@ class vasp_processdata(vasp_base):
             )
             cwd = os.getcwd()
             os.chdir(self.work_path)
-            os.system("phonopy -p -t mesh.conf") # -p: dos plot   -t: thermal properties print
+            os.system("phonopy -p -t mesh.conf") # -p: dos plot   -t: thermal eletron print
             os.system("phonopy -p mesh.conf -c {}".format(self.input_file_path.name)) # 获得 total_dos.dat
             os.chdir(cwd)
 
