@@ -26,5 +26,5 @@ echo "$new_doscar_data" | head -n 6 | tail -n 1
 
 echo "NOTE --------------------"
 echo "    Use vaspkit get the Band-Structure"
-echo -e "21\n211" | vaspkit
+echo -e "21\n211" | vaspkit > \dev\null
 

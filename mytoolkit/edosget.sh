@@ -26,5 +26,13 @@ echo "$new_doscar_data" | head -n 6 | tail -n 1
 
 echo "NOTE --------------------"
 echo "    Use vaspkit get the PDOS for every element and TDOS"
-echo -e "11\n113" | vaspkit
-echo -e "11\n111" | vaspkit
+echo -e "11\n113" | vaspkit > \dev\null
+echo -e "11\n111" | vaspkit > \dev\null
+
+echo "NOTE --------------------"
+echo "    Get TDOS(Ef). The unit is states/eV/f.u. in VASP "
+echo "                  (The unit is states/spin/Ry/f.u. in Quantum Espresso)"
+echo "                  1 Ry = 13.605693122994 eV"
+echo "                  1 eV = 0.0734986443513 Ry"
+echo "                  DOS_vasp_qe = 0.0734986443513 * DOS_vasp_value"
+echo "                  
