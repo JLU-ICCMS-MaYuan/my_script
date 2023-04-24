@@ -106,7 +106,7 @@ class qe_base:
         self.fractional_sites   = pstruct.sites
         # 获得倒格矢
         # 注意，这是用于固体物理的标准倒数晶格，因数为2π
-        self.reciprocal_plattice = self.get_reciprocal_lattice(self.work_path.joinpath("scffit.out"))
+        self.reciprocal_plattice = self.get_reciprocal_lattice()
         # self.reciprocal_plattice = pstruct.lattice.reciprocal_lattice
         # self.reciprocal_blattice = bstruct.lattice.reciprocal_lattice
         # 返回晶体倒数晶格，即没有2π的因子。
@@ -189,18 +189,28 @@ class qe_base:
             
         return choosed_pp
 
-    def get_reciprocal_lattice(self, scffit_out: Path):
+    def get_reciprocal_lattice(self):
         """
         读取scffit.out文件获得其中的reciprocal lattice
         Read the scffit.out file to get the reciprocal lattice
         """
 
-        if not scffit_out.exists():
-            print("Warning ! You have run scffit for getting `scffit.out`")
-            return None
-        
+        scffit_out_path = self.work_path.joinpath("scffit.out")
+        scf_out_path = self.work_path.joinpath("scf.out")
+        relax_out_path = self.work_path.joinpath("relax.out")
+
+        if scffit_out_path.exists():
+            res_path = scffit_out_path
+        elif scf_out_path.exists():
+            res_path = scf_out_path
+        elif relax_out_path.exists():
+            res_path = relax_out_path
+        else:
+            print("scffit.out, scf.out and relax.out all don't exist")
+            sys.exit(1)
+
         # 从scffit.out中获得alat
-        alat = float(os.popen(f"sed -n '/lattice parameter (alat)/p' {scffit_out}").read().split()[4])
+        alat = float(os.popen(f"sed -n '/lattice parameter (alat)/p' {res_path}").read().split()[4])
 
         unit_reciprocal_axis = 2*np.pi/alat
         print("Note: --------------------")
@@ -208,7 +218,7 @@ class qe_base:
         print(f"    However !!!!! When you get cartesian coordinates of high symmetry points, unit_reciprocal_axis={1}. Only in this way can we guarantee the consistency of the coordinates of the q points !!!!")
         reciprocal_lattice = []
         for i in range(1,4):
-            b = os.popen(f"sed -n '/b({i})/p' {scffit_out}").read()
+            b = os.popen(f"sed -n '/b({i})/p' {res_path}").read()
             b = re.findall(r"-?\d+\.\d+", b)
             b = [float(bi) for bi in b]  # 这里不需要乘以 unit_reciprocal_axis
             reciprocal_lattice.append(b)

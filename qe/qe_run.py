@@ -233,10 +233,10 @@ class qe_superconduct:
         for screen_constant in self.sc_inputpara.screen_constant:
             # McAD
             self.qe_writeinput  = qe_writeinput.init_from_scinput(self.sc_inputpara)
-            self.qe_submitjob = qe_submitjob.init_from_dosinput(self.sc_inputpara)
+            self.qe_submitjob = qe_submitjob.init_from_scinput(self.sc_inputpara)
 
             # 尝试获得收敛的degauss
-            inputfilename = self.qe_writeinput.write_lambda_in(screen_constant)
+            inputfilename = self.qe_writeinput.write_lambda_in(self.sc_inputpara.work_path, screen_constant)
             if self.sc_inputpara.queue is not None:
                 self.qe_submitjob.submit_mode0(inputfilename, dotx_file="lambda.x")
             try:

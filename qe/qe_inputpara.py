@@ -220,8 +220,8 @@ class qe_inputpara(qe_base):
             dist = np.linalg.norm(current_coords-last_coords, 2)
             total_dist += dist
             projected_path_name_coords.append([current_name, total_dist])
-        string_names = '  '.join(coord[0] for coord in projected_path_name_coords)
-        string_coord = '  '.join(str(np.round(coord[1], 6)) for coord in projected_path_name_coords)
+        string_names = ' '.join(coord[0] for coord in projected_path_name_coords)
+        string_coord = ' '.join(str(np.round(coord[1], 6)) for coord in projected_path_name_coords)
         print(string_names)
         print(string_coord)
         return path_name_coords 

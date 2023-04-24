@@ -240,7 +240,7 @@ eletron -m mode=eleband core=1 npool=1 queue=local kinserted=200 nbnd=500
 eletron -m mode=elebanddata core=1 queue=local
 ```
 
-###  <span style="color:yellow"> 同时 电子能带结构计算 电子态密度计算
+###  <span style="color:yellow"> 同时 电子能带结构计算 电子态密度计算 **(qe计算出来的电子态密度的横坐标能量的单位是Ry, 而vasp计算出来的电子态密度的横坐标的单位是eV, 1 Ry = 13.605693122994, 1eV = 0.0734986443513 Ry)**
 ```shell
 eletron -m mode=eleeletron core=48 npool=4 queue=local kinserted=200 nbnd=500  kpoints_dense='8 8 8' 
 ```
@@ -317,10 +317,13 @@ top_freq(最高声子频率)  deguass(展宽宽度取0.12)  smearing_method(展�
 screen_constant(库伦屏蔽常数0.1~0.13)
 ```
 
-####  <span style="color:green"> Eliashberg方法计算Tc需要INPUT文件中只需设置两个参数，
+####  <span style="color:green"> **Eliashberg方法计算Tc需要INPUT文件中只需设置两个参数**
 1. 前者是screen_constant，一般取0.10~0.13；
 2. 后者是temperature_steps，表示对ntemp个温度点自洽求解Eliashberg方程，得到带隙Δ关于温度T的曲线(该程序首先处理McMillan方程，得到超导临界温度tc作为参考值，然后在温度区间[tc/6, tc*3]中线性插入ntemp个温度点。ntemp一般取40~100即可，也可以更大，建议根据体系差异灵活调控)。
+####  <span style="color:green"> **Eliashberg方法计算得到的ELIASHBERG_GAP_T.OUT文件就是能隙方程关于温度的关系，第一列是温度，第二列是能隙（能隙的单位是hartree,所以如果你想要转化为meV，就需要: 第二列 * 27211.38602)**
+1 Hartree = 27.21138602 eV 
 
+1 eV = 0.03674932 Hartree
 
 
 ###  <span style="color:yellow">  批量计算
