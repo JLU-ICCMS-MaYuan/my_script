@@ -411,7 +411,17 @@ class qephono_inputpara(qe_inputpara):
             shutil.copy(src_elph, dst_elph)
             print(f"elph.inp_.1 copy finished \n {dst_elph}")
 
-            src_dyn    = os.path.join(dir, str(i+1), self.system_name+".dyn")
+            
+            src_dyn_NoNum= os.path.join(dir, str(i+1), self.system_name+".dyn")
+            src_dyn_Num  = os.path.join(dir, str(i+1), self.system_name+f".dyn{str(i+1)}")
+            if os.path.exists(src_dyn_NoNum):
+                src_dyn = src_dyn_NoNum
+            elif  os.path.exists(src_dyn_Num):
+                src_dyn = src_dyn_Num
+            else:
+                print(f"In {str(i+1)}, dyn-file doesn't exist ! Exit the program!")
+                sys.exit(1)
+
             dst_dyn    = os.path.join(dir,           self.system_name+".dyn"+str(i+1))
             shutil.copy(src_dyn, dst_dyn)
             print(f"{self.system_name}.dyn copy finished {dst_dyn}")
@@ -420,7 +430,7 @@ class qephono_inputpara(qe_inputpara):
                 src_a2Fq2r = os.path.join(dir, str(i+1), "elph_dir", "a2Fq2r."+str(j)+".1")
                 dst_a2Fq2r = os.path.join(elph_dir_path,             "a2Fq2r."+str(j)+"."+str(i+1))
                 shutil.copy(src_a2Fq2r, dst_a2Fq2r)
-                print(f"a2Fq2r.{str(j)}.1 copy finished  {dst_dyn}")
+                print(f"a2Fq2r.{str(j)}.1 copy finished  {dst_a2Fq2r}")
 
     def get_top_freq(self, dosfile):
         phonon_dos = open(dosfile, "r").readlines()

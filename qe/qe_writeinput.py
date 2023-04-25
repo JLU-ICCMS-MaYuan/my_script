@@ -308,7 +308,7 @@ class qe_writeinput:
             return inputfilename     
         if mode == "split_assignQ":
             inputfilename = []
-            for i, q3 in enumerate(self.qirreduced):
+            for i in range(self.qirreduced):
                 split_ph_dir = self.work_path.joinpath(str(i+1))
                 if not os.path.exists(split_ph_dir):
                     os.makedirs(split_ph_dir)
@@ -711,7 +711,7 @@ class qe_writeinput:
 
     # split mode2
     def write_split_phassignQ(self, work_directory:Path, start_q, last_q):
-        inputfilename = "splitph_" + str(start_q) + "-" + str(last_q) + ".in"
+        inputfilename = "split_ph.in"
         split_ph_path = work_directory.joinpath(inputfilename)
         with open(split_ph_path, "w") as qe:
             qe.write("Electron-phonon coefficients for {}                \n".format(self.system_name))                                    

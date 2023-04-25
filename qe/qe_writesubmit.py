@@ -147,9 +147,10 @@ class qe_writesubmit:
                 split_ph_dir = os.path.join(self.work_path, str(i+1))
                 if not os.path.exists(split_ph_dir):
                     raise FileExistsError (f"There is no {split_ph_dir}")
+                input(inname)
                 jobname = self.s5_PhSplitDyn0(split_ph_dir, inname)
                 jobnames.append(jobname)
-                print(f"finish submit job script in {i+1}")
+                print(f"finish writing submit job script in {i+1}")
             return jobnames
         if mode =="split_assignQ":
             jobnames = []
@@ -159,7 +160,7 @@ class qe_writesubmit:
                     raise FileExistsError (f"There is no {split_ph_dir}")
                 jobname = self.s5_PhSplitAssignQ(split_ph_dir, inname)
                 jobnames.append(jobname)
-                print(f"finish submit job script in {i+1}")
+                print(f"finish writing submit job script in {i+1}")
             return jobnames
         if mode =="q2r":
             jobname = self.s6_q2r(self.work_path, inpufilename)
@@ -298,13 +299,20 @@ class qe_writesubmit:
         return jobname
 
     def s5_PhSplitAssignQ(self, _dirpath, inputfilename):
-        _inputsplitph_name = inputfilename
+        _inputscffit_name, _inputscf_name, _inputsplitph_name = inputfilename
+        _outputscffit_name  = _inputscffit_name.split(".")[0] + ".out"
+        _outputscf_name     = _inputscf_name.split(".")[0] + ".out"
         _outputsplitph_name = _inputsplitph_name.split(".")[0] + ".out"
-        jobname = "s5_"+_inputsplitph_name.split(".")[0]+".sh"
+        jobname = "s5_PhAssignQ.sh"
         _script_filepath = os.path.join(_dirpath, jobname)
         with open(_script_filepath, "w") as j:
             j.writelines(self.jobtitle)
-            j.write('mpirun -np {} {}/ph.x -npool {} <{}> {}  \n'.format(self.core, qebin_path, self.npool, _inputsplitph_name, _outputsplitph_name))
+            j.write('echo "run scf.fit"                                                     \n')
+            j.write('mpirun -np {} {}/pw.x -npool {} <{}> {} \n'.format(self.core, qebin_path,  self.npool, _inputscffit_name, _outputscffit_name))
+            j.write('echo "run scf"                                                         \n')
+            j.write('mpirun -np {} {}/pw.x -npool {} <{}> {} \n'.format(self.core, qebin_path,  self.npool, _inputscf_name,     _outputscf_name))
+            j.write('echo "run split_ph"                                                    \n')
+            j.write('mpirun -np {} {}/ph.x -npool {} <{}> {} \n'.format(self.core, qebin_path,  self.npool, _inputsplitph_name,  _outputsplitph_name))   
         return jobname
 
     def s6_q2r(self, _dirpath, inputfilename):
