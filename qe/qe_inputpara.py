@@ -57,37 +57,29 @@ class qe_inputpara(qe_base):
         # &CONTROL
         if not hasattr(self, "forc_conv_thr"):
             self.forc_conv_thr = "1.0d-6"
-            print("    You didn't set the `forc_conv_thr` ! The program will use default value: forc_conv_thr=1.0d-6")
 
         if not hasattr(self, "etot_conv_thr"):
             self.etot_conv_thr = "1.0d-7"
-            print("    You didn't set the `etot_conv_thr` ! The program will use default value: etot_conv_thr=1.0d-7")
 
         # &SYSTEM
         if not hasattr(self, "occupations"):
             self.occupations = "smearing"
-            print("    You didn't set the `occupations` ! The program will use default value: occupations=smearing")
 
         if not hasattr(self, "smearing"):
             self.smearing = "gauss"
-            print("    You didn't set the `smearing` ! The program will use default value: smearing=gauss")
 
         # self.smearing = methfessel-paxton 做scffit 和 scf 时候用这个参数
         if not hasattr(self, "degauss"):
             self.degauss = "0.02"
-            print("    You didn't set the `degauss` ! The program will use default value: degauss=0.02")
 
         if not hasattr(self, "ecutwfc"):
             self.ecutwfc = "60"
-            print("    You didn't set the `ecutwfc` ! The program will use default value: ecutwfc=60")
 
         if not hasattr(self, "ecutrho"):
             self.ecutrho = "720"
-            print("    You didn't set the `ecutrho` ! The program will use default value: ecutrho=720")
 
         if not hasattr(self, "lspinorb"):
             self.lspinorb = "false"
-            print("    You didn't set the `lspinorb` ! The program will use default value: lspinorb=false")
         else:
             print("Please carefully check the bool value of `lspinorb` you just set. Its format must be `false` or `true` without capital")
 
@@ -110,18 +102,16 @@ class qe_inputpara(qe_base):
         # &ELECTRONS
         if not hasattr(self, "diagonalization"):
             self.diagonalization = "david"
-            print("    You didn't set the `diagonalization`! The program will use default value: diagonalization=david")
         
         if not hasattr(self, "conv_thr"):
             self.conv_thr = "1.0d-9"
-            print("    You didn't set the `conv_thr` ! The program will use default value: conv_thr=1.0d-9")
             #  做结构弛豫 1.0-d8
             #  做scffit 和 scf 时候用1.0d-9
 
         if not hasattr(self, "mixing_beta"):
             self.mixing_beta = "0.7"
-            print("    You didn't set the `mixing_beta` ! The program will use default value: mixing_beta=0.7")
             #  做scffit 和 scf 时候用0.8
+        
         if not hasattr(self, "electron_maxstep"):
             self.electron_maxstep = "200"
             print("    You didn't set the `electron_maxstep`! The program will use default value: electron_maxstep=200")
@@ -129,7 +119,6 @@ class qe_inputpara(qe_base):
         # &CELL
         if not hasattr(self, "press_conv_thr"):
             self.press_conv_thr = "0.01"
-            print("    You didn't set the `press_conv_thr`! The program will use default value: press_conv_thr=0.01")
 
         # &kpoints
         if hasattr(self, "kpoints_dense"):
@@ -255,55 +244,40 @@ class qephono_inputpara(qe_inputpara):
             self.kpoints_dense = [kp*4 for kp in self.qpoints]
         elif dyn0_names.exists():
             print("Note: --------------------")
-            print(f"   !!!!!  You didn't set the `qpoints` ! The program will qpoints in read {self.system_name}.dyn0 file")
-            print(f"   !!!!!  You didn't set the `qpoints` ! The program will qpoints in read {self.system_name}.dyn0 file")
-            print(f"   !!!!!  You didn't set the `qpoints` ! The program will qpoints in read {self.system_name}.dyn0 file")
-            print("    If you want to calculate phonodos, you had better set `qpoints`! ")
-            print("    Its `qpoints` had better be set more densely than `qpoints` in `ph.in`")
+            print(f"    You didn't set the `qpoints` ! The program will qpoints in read {self.system_name}.dyn0 file")
+            print("    If you want to calculate phonodos, you had better set `qpoints`! Its `qpoints` had better be set more densely than `qpoints` in `ph.in`")
             print("    For example, In ph.in, qpoints='8 8 8', then in phono_dos.in, qpoints='16 16 16' ")
-            print(f"   You didn't set `qpoints`, the program will use `qpoints` in {self.system_name}.dyn0, and then multiply 2 for qpoints")
             self.qpoints = self.get_qpoints(dyn0_path=dyn0_names)
             self.kpoints_sparse= [kp*2 for kp in self.qpoints]
             self.kpoints_dense = [kp*4 for kp in self.qpoints] 
         else:
-            print("Note: --------------------")
-            print(f"   !!!!!  You didn't set the `qpoints` ! And The program can't get qpoints in {self.system_name}.dyn0 file")
-            print(f"   !!!!!  You didn't set the `qpoints` ! And The program can't get qpoints in {self.system_name}.dyn0 file")
-            print(f"   !!!!!  You didn't set the `qpoints` ! And The program can't get qpoints in {self.system_name}.dyn0 file")
-            print("    If you want to calculate phonodos, you had better set `qpoints`! ")
-            print("    Its `qpoints` had better be set more densely than `qpoints` in `ph.in`")
+            print(f"    You didn't set the `qpoints` ! And The program can't get qpoints in {self.system_name}.dyn0 file")
+            print("    If you want to calculate phonodos, you had better set `qpoints`! Its `qpoints` had better be set more densely than `qpoints` in `ph.in`")
             print("    For example, In ph.in, qpoints='8 8 8', then in phono_dos.in, qpoints='16 16 16' ")
-            print(f"   You didn't set `qpoints`, the program will use `qpoints` in {self.system_name}.dyn0, and then multiply 2 for qpoints")
             self.qpoints = [4,4,4]
             self.kpoints_sparse= [kp*2 for kp in self.qpoints]
             self.kpoints_dense = [kp*4 for kp in self.qpoints]
 
         if not hasattr(self, "tr2_ph"):
             self.tr2_ph = "1.0d-16"
-            print(f"    You didn't set the `tr2_ph` !  The program will use default value: tr2_ph=1.0d-16")
 
         if not hasattr(self, "electron_phonon"):
             self.electron_phonon="interpolated"
-            print(f"    You didn't set the `electron_phonon` ! The program will use default value: electron_phonon=interpolated")
 
         if not hasattr(self, "el_ph_nsigma"):
             self.el_ph_nsigma = "10"
-            print(f"You didn't set the `el_ph_nsigma` ! The program will use default value: el_ph_nsigma=10")
             
         if not hasattr(self, "el_ph_sigma"):
             self.el_ph_sigma = "0.005"
-            print(f"    You didn't set the `el_ph_sigma` ! The program will use default value: el_ph_sigma=0.005")
         
         if not hasattr(self, "alpha_mix"):
             self.alpha_mix = "0.3"
-            print(f"    You didn't set the `alpha_mix` ! The program will use default value: alpha_mix=0.3")
         
         if not hasattr(self, "dyn0_flag"):
             self.dyn0_flag = False
         else:
             self.dyn0_flag = eval(self.dyn0_flag)
         
-        print("Note: --------------------")
         dyn0_names = Path(self.work_path).joinpath(f"{self.system_name}.dyn0")
         if dyn0_names.exists():
             self.qtot, self.qirreduced, self.qirreduced_coords= self.get_q_from_dyn0(dyn0_path=dyn0_names) 

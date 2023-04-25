@@ -1,6 +1,7 @@
 import os
 import re
 import sys
+import time
 import shutil
 import logging
 import numpy as np
@@ -206,23 +207,31 @@ class qe_base:
         elif relax_out_path.exists():
             res_path = relax_out_path
         else:
-            print("scffit.out, scf.out and relax.out all don't exist")
-            sys.exit(1)
+            print("Note: --------------------")
+            print("    scffit.out, scf.out and relax.out all don't exist. The program can't get reciprocal lattice from them.")
+            time.sleep(2)
+            return None
 
-        # 从scffit.out中获得alat
-        alat = float(os.popen(f"sed -n '/lattice parameter (alat)/p' {res_path}").read().split()[4])
+        try:
+            # 从scffit.out中获得alat
+            alat = float(os.popen(f"sed -n '/lattice parameter (alat)/p' {res_path}").read().split()[4])
 
-        unit_reciprocal_axis = 2*np.pi/alat
-        print("Note: --------------------")
-        print(f"    unit_reciprocal_axis = 2pi/alat=2pi/{alat}={unit_reciprocal_axis}, the unit of alat is `1 a.u.`=0.529117 A")
-        print(f"    However !!!!! When you get cartesian coordinates of high symmetry points, unit_reciprocal_axis={1}. Only in this way can we guarantee the consistency of the coordinates of the q points !!!!")
-        reciprocal_lattice = []
-        for i in range(1,4):
-            b = os.popen(f"sed -n '/b({i})/p' {res_path}").read()
-            b = re.findall(r"-?\d+\.\d+", b)
-            b = [float(bi) for bi in b]  # 这里不需要乘以 unit_reciprocal_axis
-            reciprocal_lattice.append(b)
-        return np.array(reciprocal_lattice)
+            unit_reciprocal_axis = 2*np.pi/alat
+            print("Note: --------------------")
+            print(f"    unit_reciprocal_axis = 2pi/alat=2pi/{alat}={unit_reciprocal_axis}, the unit of alat is `1 a.u.`=0.529117 A")
+            print(f"    However !!!!! When you get cartesian coordinates of high symmetry points, unit_reciprocal_axis={1}. Only in this way can we guarantee the consistency of the coordinates of the q points !!!!")
+            reciprocal_lattice = []
+            for i in range(1,4):
+                b = os.popen(f"sed -n '/b({i})/p' {res_path}").read()
+                b = re.findall(r"-?\d+\.\d+", b)
+                b = [float(bi) for bi in b]  # 这里不需要乘以 unit_reciprocal_axis
+                reciprocal_lattice.append(b)
+            return np.array(reciprocal_lattice)
+        except:
+            print("Note: --------------------")
+            print("    The program fail to get reciprocal lattice from scffit.out, scf.out and relax.out.")
+            return None
+
 
 def get_cell_and_coords(relax_out_path:Path):
 
