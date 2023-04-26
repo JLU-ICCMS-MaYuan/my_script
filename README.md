@@ -71,14 +71,17 @@ qe_main.py -i relax.out -j bash scf -m mode=nscf kpoints_dense='32 32 32' core=2
 ```
 ### <span style="color:yellow"> 声子计算
 #### 重要参数的说明
-1. alpha_mix(1)=0.3 一般用0.3， 算的比较快，值越大算的越慢。
+1. alpha_mix(1)=0.3 一般用0.3， 算的比较快，值越大算的越慢。**所以我采用的默认参数alpha_mix(1)=0.3, 如果你自己需要高精度，自己调整**
+2. 自洽计算时的degauss是一个很重要的参数，一般用0.02，但是如果出现一个很小的虚频的话，可以试一试0.05
 
-**所以我采用的默认参数alpha_mix(1)=0.3, 如果你自己需要高精度，自己调整**
+
+
 
 ####  不分q点计算声子
 ```shell
 phono -m mode=nosplit qpoints='6 6 6' dyn0_flag=False queue=lhy core=48 npool=4  queue=lhy el_ph_nsigma=
 ```
+<span style="color:green"> **提示：如果你的工作目录中已经存在了dyn0文件，那么可以不用输入qpoints这个参数，程序会自动读入dyn0中的第一行以获得qpoints**
 
 ####  <span style="color:green"> 分q点计算声子 : split_dyn0模式
 ```shell

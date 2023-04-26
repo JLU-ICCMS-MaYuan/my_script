@@ -147,7 +147,6 @@ class qe_writesubmit:
                 split_ph_dir = os.path.join(self.work_path, str(i+1))
                 if not os.path.exists(split_ph_dir):
                     raise FileExistsError (f"There is no {split_ph_dir}")
-                input(inname)
                 jobname = self.s5_PhSplitDyn0(split_ph_dir, inname)
                 jobnames.append(jobname)
                 print(f"finish writing submit job script in {i+1}")
