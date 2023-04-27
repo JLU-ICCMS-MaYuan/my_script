@@ -53,21 +53,21 @@ def create_kmesh(kresolution, input_file_path, output_kpoints):
     #deal with structure for start
     interval_k = float(kresolution)
     input(interval_k)
-    ra = [ax,ay,az]
-    rb = [bx,by,bz]
-    rc = [cx,cy,cz]
-    a=mol(ra)
-    b=mol(rb)
-    c=mol(rc)
-    ka=axn(cross(rb,rc),2*math.pi/(dot(ra,cross(rb,rc))))
-    kb=axn(cross(rc,ra),2*math.pi/(dot(rb,cross(rc,ra))))
-    kc=axn(cross(ra,rb),2*math.pi/(dot(rc,cross(ra,rb))))
-    b1=mol(ka)
-    b2=mol(kb)
-    b3=mol(kc)
-    n_k1 = math.ceil(b1/interval_k)
-    n_k2 = math.ceil(b2/interval_k)
-    n_k3 = math.ceil(b3/interval_k)
+    a1 = [ax,ay,az]
+    a2 = [bx,by,bz]
+    a3 = [cx,cy,cz]
+    a1mol=mol(a1)
+    a2mol=mol(a2)
+    a3mol=mol(a3)
+    b1=axn(cross(a2,a3),2*math.pi/(dot(a1,cross(a2,a3))))
+    b2=axn(cross(a3,a1),2*math.pi/(dot(a2,cross(a3,a1))))
+    b3=axn(cross(a1,a2),2*math.pi/(dot(a3,cross(a1,a2))))
+    b1mol=mol(b1)
+    b2mol=mol(b2)
+    b3mol=mol(b3)
+    n_k1 = math.ceil(b1mol/interval_k)
+    n_k2 = math.ceil(b2mol/interval_k)
+    n_k3 = math.ceil(b3mol/interval_k)
     newpos = []
     for i_natom in range(n_atom):
         newpos.append([pos[i_natom][0],pos[i_natom][1],pos[i_natom][2]])
@@ -78,4 +78,10 @@ def create_kmesh(kresolution, input_file_path, output_kpoints):
     w_KPOINTS.write('Automatic mesh\n0\nGamma\n  %-3s %-3s %-3s\n  0.  0.  0.\n' %(int(n_k1),int(n_k2),int(n_k3)))
     w_KPOINTS.close()
 
+    print("%-3s %-3s %-3s" % (int(n_k1),int(n_k2),int(n_k3)))
     print('Kmesh is writen in KPOINTS-mesh')
+
+
+if __name__ == "__main__":
+    kresolution = float(input("(注意: 这个脚本的作用时将KSPACING转化为对应的KPOINTS, \n所应用的公式就是vasp官网给出的: N_i = max(1, ceiling(|b_i|*2*pi/KSPACING)), \n这里需要你输入的k点密度不同于vaspkit中需要你输入的k点密度。)\n请输入k点密度: \n"))
+    create_kmesh(kresolution, "POSCAR", "KPOINTS")

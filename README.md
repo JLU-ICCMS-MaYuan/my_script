@@ -42,8 +42,11 @@ qe_main.py -i 输入文件路径 -w 工作目录 -p 压强 -j 运行方式
 说明: 赝势文件最终存放在压强命名的目录的下面
 
 ## 具体其它详细的任务模式说明：
-**WARNING1 queue存在则会运行，queue不存在则只会产生输入文件和提交任务的脚本文件。**
-**WARNING2 如果你使用-j bash, 那么一定注意core设置的不要太大，小心把主节点搞崩溃了。**
+<span style="color:red"> **WARNING1 queue存在则会运行，queue不存在则只会产生输入文件和提交任务的脚本文件。**
+
+<span style="color:red"> **WARNING2 如果你使用-j bash, 那么一定注意core设置的不要太大，小心把主节点搞崩溃了。**
+
+<span style="color:red"> **WARNING3 在设置q点之前一定要非常谨慎，你设置的q点的密度，k点的密度必须与体系的对称性相匹配，必须匹配，所以建议你用vaspkit生成一下KPOINTS检查一下k点密度，以及用kmesh.py这个小脚本也生成一下k点密度，两者进行对比，最终确定你要用哪个k点密度。这个值最终要放在文章里，所以一定要非常谨慎！！！**
 
 ###  <span style="color:yellow"> 结构弛豫：
 
@@ -329,12 +332,13 @@ screen_constant(库伦屏蔽常数0.1~0.13)
 1 eV = 0.03674932 Hartree
 
 
-###  <span style="color:yellow">  批量计算
+###  <span style="color:yellow">  自动prepare计算
+**只需要指定qpoints即可，kpoints_dense和kpoints_sparse会自动通过qpoints*4， qpoints*2来获得**
 ```shell
-prepare -m mode=prepare electron_maxstep=1000 core=4 npool=1 queue=local
+prepare -m mode=prepare electron_maxstep=1000 core=4 npool=1 queue=local qpoints='4 4 5'
 ```
 ```shell
-prepare -m mode=prepare electron_maxstep=1000 core=4 npool=1 queue=local
+prepare -m mode=prepare electron_maxstep=1000 core=4 npool=1 queue=local  qpoints='4 4 5'
 ```
 
 

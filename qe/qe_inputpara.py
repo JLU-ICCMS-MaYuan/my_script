@@ -40,7 +40,9 @@ class qe_inputpara(qe_base):
             raise AttributeError("there is no attribution of mode")
 
         if not hasattr(self, "core"):
-            raise AttributeError("there is no attribution of core")
+            print("Note: --------------------")
+            print("    You didn't specify `core=xxx`. The program just prepare uspp for you in pp-directory, and it will exit!!!")
+            sys.exit(1)
 
         if not hasattr(self, "npool"):
             self.npool = 1
@@ -53,7 +55,6 @@ class qe_inputpara(qe_base):
             print("    You didn't specify queue, so the program will not submit the job in any way")
 
         print("Note: --------------------")
-        print("If you want to run `relax` `scffit` `fit`, you had better set these values!")
         # &CONTROL
         if not hasattr(self, "forc_conv_thr"):
             self.forc_conv_thr = "1.0d-6"
@@ -121,6 +122,14 @@ class qe_inputpara(qe_base):
             self.press_conv_thr = "0.01"
 
         # &kpoints
+        print("Note: --------------------")
+        print("    You have been confirmed that the kpoints_dense, kpoints_sparse, qpoints are all right and consistent with the symmetry")
+        print("    If you not make sure, you had better run 'vaspkit' or 'kmesh.py' to check it!!!")
+        print('    The order for vaspkit is:  (xxxx is corresponding to 1/LATTICE_PARA(i)*KPOINTS(i), (i) represents one axis, such as x_axis, y_axis, z_axis)')
+        print(r'         echo -e "1\n102\n2\nxxxx" | vaspkit')
+        print('    The order for kmesh.py is:  (xxxx is corresponding to the KSPACING in vasp)')
+        print("         kmesh.py xxxx")
+        time.sleep(5)
         if hasattr(self, "kpoints_dense"):
             _kpoints_dense = self.kpoints_dense.split()
             self.kpoints_dense = list(map(int, _kpoints_dense))
