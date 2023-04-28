@@ -218,6 +218,7 @@ class qe_eletron:
             fermi_energy = os.popen(f'grep "Fermi energy" {scf_out_path}').read().split()[4]
             print("    fermi_energy={} in scf.out".format(fermi_energy))
 
+
 class qe_superconduct:
 
     def __init__(self, args: ArgumentParser) -> None:

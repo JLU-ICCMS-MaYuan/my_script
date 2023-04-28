@@ -21,6 +21,10 @@ def get_cell_and_coords(relax_out_path:Path):
         print("    relax.out doesn't exist !!!")
         return cell_parameters, fractional_sites
     awk_order = "awk '/Begin final coordinates/,/End final coordinates/{print $0}'" + f" {os.path.abspath(relax_out_path)} " 
+    if not awk_order:
+        print("Note: --------------------")
+        print("    The program can't get anything from relax.out. Maybe it's not converged !!!")
+        return cell_parameters, fractional_sites
     content = os.popen(awk_order).readlines()
     for idx, line in enumerate(content):
         if "CELL_PARAMETERS (angstrom)" in line:
@@ -404,7 +408,7 @@ class qe_writeinput:
                     sys.exit(1)
             qe.write("CELL_PARAMETERS {angstrom}        \n")  # 如果选择angstrom单未，原子坐标选择分数坐标，即，ATOMIC_POSITIONS (crystal), 且不设置celldm(1). 这时alat和celldm(1)设置成v1的长度
             # 判断输入文件relax.out是否存在, 如果relax.out存在, 那么之直接使用relax.out里面的结构信息
-            cell_parameters, fractional_sites = get_cell_and_coords(work_directory.joinpath("relax.out"))
+            cell_parameters, fractional_sites = get_cell_and_coords(self.work_path.joinpath("relax.out"))
             if cell_parameters is None and fractional_sites is None:
                 print("Note: --------------------")
                 print("    The program will use cell_parameters and coords in inputfile specified by you !!!")

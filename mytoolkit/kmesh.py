@@ -52,7 +52,6 @@ def create_kmesh(kresolution, input_file_path, output_kpoints):
     formula = ''.join([l_atom[i_element]+str(l_n_atom[i_element]) for i_element in range(n_element)])
     #deal with structure for start
     interval_k = float(kresolution)
-    input(interval_k)
     a1 = [ax,ay,az]
     a2 = [bx,by,bz]
     a3 = [cx,cy,cz]
