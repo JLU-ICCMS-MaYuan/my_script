@@ -924,7 +924,7 @@ class qe_writeinput:
             sys.exit(1)
         else:
             a2Fq2r_elphInpLambda = os.listdir(elph_dir_path)
-            elphInpLambda = sorted(list(filter(lambda x: "elph.inp_lambda" in x, a2Fq2r_elphInpLambda)))
+            elphInpLambda = sorted(list(filter(lambda x: "elph.inp_lambda" in x, a2Fq2r_elphInpLambda)), key=lambda y: int(y.split('.')[-1]))
             # prepare input data
             top_freq        = self.top_freq
             broaden         = self.broaden

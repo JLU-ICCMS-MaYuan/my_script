@@ -827,7 +827,7 @@ class qesc_inputpara(qephono_inputpara):
             Tc = Tc[Tc_id[0]]
             return Tc
         except:
-            print("    Maybe the imaginary frequency of phono leads to NAN in ELIASHBERG_GAP_T.OUT")
+            print("    Maybe the imaginary frequency of phono leads to NAN in ELIASHBERG_GAP_T.OUT. So The program will exit.")
             sys.exit(1)
 
     def getTc_by_McAD(self, converged_gauss_index):
