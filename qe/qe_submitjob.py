@@ -144,13 +144,8 @@ class qe_submitjob:
 
     def submit_mode1(self, inputfilename, jobname):
         """
-        submit_mode1 can be used to submit:
-            relax-vc, 
-            scffit, 
-            scf, 
-            nscf,
-            q2r,
-            matdyn
+        submit_mode1 can be used to submit job by job-system, 
+            such as by PBS, SLURM or Background running mode of bash 
         """
         input_file = Path(self.work_path).joinpath(inputfilename)
         if not input_file.exists():
@@ -230,7 +225,6 @@ class qe_submitjob:
                 jobids = re.findall(r"\d+", res)
             print(f"finish submit {jobname}, jobids = {''.join(jobids)}")
             os.chdir(cwd)
-
 
     @staticmethod
     def getpid():
