@@ -329,6 +329,20 @@ class qephono_inputpara(qe_inputpara):
         else:
             self.path_name_coords = None
 
+        # 这一部分是关于如果获得收敛的gaussid和gauss
+        # 第一种情况你自己指定 gaussid 和 gauss
+        if hasattr(self, "gaussid") and hasattr(self, "gauss"):
+            self.gaussid = int(self.gaussid) - 1
+            self.gauss = float(self.gauss)
+        elif hasattr(self, "efermi_dos"):
+            self.efermi_dos = float(self.efermi_dos)
+            self.gaussid, self.gauss = self.check_convergence(efermi_dos=self.efermi_dos)
+        else:
+            self.efermi_dos = None
+            self.gaussid, self.gauss = self.check_convergence(efermi_dos=self.efermi_dos)
+
+
+
     def get_q_from_scfout(self, dir):
         if not os.path.exists(dir):
             print("scf.out didn't exist!")
@@ -454,7 +468,7 @@ class qephono_inputpara(qe_inputpara):
 
         return top_freq
 
-    def check_convergence(self):
+    def check_convergence(self, efermi_dos=None):
         """
         检查gaussian收敛性, 给出一个gaussian的索引, 获得收敛的gaussian
         """
@@ -486,12 +500,22 @@ class qephono_inputpara(qe_inputpara):
         # 判断哪一个gaussian是收敛的，给出的是gaussian列表的索引值。
         shlorder = f"grep DOS {self.work_path.joinpath('elph_dir', 'elph.inp_lambda.1')}" + "| awk '{print $3}'"
         dos = os.popen(shlorder).readlines()
-        dos = [float(i.split()[-1]) for i in dos]
-        delta_dos = [abs(dos[i + 1] - dos[i]) for i in range(len(dos) - 1)]
-
-        # 收敛Gaussian的索引
-        idx = np.argmin(delta_dos)
-        gauss = gaussian0[idx]
+        if not dos:
+            print("Note: --------------------")
+            print("    grep DOS elph_dir/elph.inp_lambda.1 failes !!! The progam will exit !!! Maybe calculation in elph get something wrong!!!")
+            sys.exit(1)
+        
+        dos = [float(i.strip('\n')) for i in dos]
+        if efermi_dos is None:
+            print("Note: --------------------")
+            print("    You didn't set efermi_dos, so the program will use its own method to get converged gauss value.")
+            delta_dos = [abs(dos[i + 1] - dos[i]) for i in range(len(dos) - 1)]
+            idx = np.argmin(delta_dos) # 收敛Gaussian的索引
+            gauss = gaussian0[idx]
+        else:
+            delta_dos = [idos-float(efermi_dos) for idos in range(len(dos))]
+            idx = np.argmin(delta_dos) # 收敛Gaussian的索引
+            gauss = gaussian0[idx]
         print("Note: --------------------")
         print(f'    Converged gaussid = {idx+1}, corresponding gaussian value={gaussian1[idx]}')
         return idx, gauss
@@ -745,17 +769,6 @@ class qesc_inputpara(qephono_inputpara):
             self.temperature_steps = 5000
             print("    You didn't set the `temperature_steps`.The program will use default value: temperature_steps=5000")
 
-        # Eliashberg
-        if hasattr(self, "gaussid"):
-            self.gaussid = str(self.gaussid)
-        else:
-            print("    You didn't specify `gaussid`. The program will obtain  `gaussid` by itself.")
-        
-        if hasattr(self, "gauss"):
-            self.gauss = str(self.gauss)
-        else:
-            print("    You didn't specify `gaussid`. The program will obtain  `gauss` by itself.")
-
         print("Note: --------------------")
         if hasattr(self, "a2fdos") and eval(self.a2fdos) == True:
             self.a2fdos = True
@@ -776,7 +789,7 @@ class qesc_inputpara(qephono_inputpara):
             print("    The omegas-alpha2F values will be getted from alpha2F.dat. Because you may not calculate phonodos")
             print("    The shell order used is:")
             print("    sed '1,1d' alpha2F.dat | awk '{print $1/6579.684, $%s}' > ALPHA2F.OUT "%("xxx"))
-        time.sleep(3)
+
 
     def getTc_by_eliashberg(self):
         '''

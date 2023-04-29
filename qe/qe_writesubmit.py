@@ -425,12 +425,12 @@ class qe_writesubmit:
         _script_filepath = os.path.join(_dirpath, jobname)
         with open(_script_filepath, "w") as j:
             j.writelines(self.jobtitle)
-            # 先做能带计算
+            # 先做能带计算 输入文件是 eleband.in
             eleband_in, eleband_out = input_output.__next__()
             j.write('echo "eleband"\n')
             j.write('mpirun -np {} {}/pw.x <{}> {}  \n\n'.format(self.core, qebin_path, eleband_in, eleband_out))
             
-            # 先做处理能带数据
+            # 先做处理能带数据 输入文件是 elebanddata.in
             elebanddata_in, elebanddata_out = input_output.__next__()
             j.write('echo "elebanddata"\n')
             j.write('{}/bands.x <{}> {}  \n\n'.format(qebin_path, elebanddata_in, elebanddata_out))

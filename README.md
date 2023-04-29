@@ -80,7 +80,7 @@ qe_main.py -i relax.out -j bash scf -m mode=nscf kpoints_dense='32 32 32' core=2
 
 
 
-####  不分q点计算声子
+####  <span style="color:green"> 不分q点计算声子
 ```shell
 phono -m mode=nosplit qpoints='6 6 6' dyn0_flag=False queue=lhy core=48 npool=4  queue=lhy el_ph_nsigma=
 ```
@@ -104,28 +104,47 @@ phono -m mode=split_assignQ qpoints='6 6 6' core=1 npool=1 queue=local
 phono -m mode=merge core=1 queue=local
 ```
 
-####  <span style="color:green"> 计算力常数
+###  <span style="color:yellow"> 计算力常数
 ```shell
 phono -m mode=q2r qpoints='6 6 6' core=1 npool=1 queue=local
 ```
 
-####  <span style="color:green"> 计算动力学矩阵元，获得高对称路径下的声子振动频率
+###  <span style="color:yellow"> 声子态密度计算
+####  <span style="color:green"> 计算phonodos, 计算态密度时要用更密的q点网格，这需设置nk1, nk2, nk3   
+```shell
+phono -m mode=phonodos core=1 npool=1 queue=local qpoints='8 8 8' ndos=500 
+```
+
+####  <span style="color:green"> 处理出投影到每种元素的phonodos，并且会输出一个文件phdos_proj2eles.csv用来绘制投影态密度
+```shell
+phono -m mode=phonodosdata core=1 queue=local
+```
+
+###  <span style="color:yellow"> 计算动力学矩阵元，获得高对称路径下的声子振动频率
+
+<span style="color:green"> **这一步会覆盖上一步计算声子态密度时产生的文件gam.lines 和 xxx.freq.qp 和 xxx.freq 三个文件。所以一定要确保计算完声子的态密度之后将声子态密度数据处理出来。**
+
 ```shell
 phono -m mode=matdyn qpoints='6 6 6' core=1 npool=1 queue=local qinserted=50
 ```
 
 ####  <span style="color:green"> 处理数据获得声子谱
-**注意！！！ 计算完高对称路径下的声子振动频率后，一定要记得处理数据获得声子谱。输出一个文件 qp_freq_width.csv 可以用来绘制声子谱以及每个振动频率对应的线宽**
-这里是处理声子谱的命令
+<span style="color:green"> **注意！！！ 计算完高对称路径下的声子振动频率后，一定要记得处理数据获得声子谱。输出一个文件 qp_freq_width.csv 可以用来绘制声子谱以及每个振动频率对应的线宽**
+
+####  <span style="color:green"> 这里是处理声子谱的命令
+
 ```shell
 phono -m mode=phonobanddata core=1
 ```
-**这里是获得高对称点投影路径的命令， 可以用来在origin中绘制高对称点的垂直参考线**
+####  <span style="color:green"> **这里是获得高对称点投影路径的命令， 可以用来在origin中绘制高对称点的垂直参考线**
 ```shell
 phono -m mode=hspp core=1
 ```
 
-**不然如果后续直接计算声子态密度phonodos的话，`体系名称`.freq文件, `体系名称`.freq.gq文件中声子的q点数目就和gam.lines文件中q点数目对不上了。**
+**因为计算声子谱设置的q点和计算声子态密度设置的q点不一样，但是它们两个计算完都会重新覆盖，`体系名称`.freq文件, `体系名称`.freq.gq文件这三个文件。所以请务必确保：无论是计算完声子态密度还是声子谱，都一定要处理数据，然后再进行下一步计算。**
+
+**不然，可能出现声子的q点数目就和gam.lines文件中q点数目对不上的情况。**
+
 这里展示计算完`动力学矩阵元，获得高对称路径下的声子振动频率`后的 `体系名称`.freq文件(因为`体系名称`.freq文件和`体系名称`.freq.gq文件类似，这里就不再展示）, gam.lines文件
 
 我先给出我的matdyn.in文件: 其中有6个高对称的q点，每2个q点之间插入20个q点，所以总的q点个数是：20*5+1=101， 101个q点。
@@ -201,36 +220,26 @@ gam.lines文件
        ...
 ```
 
-###  <span style="color:yellow"> 声子态密度计算
-####  <span style="color:green"> 计算phonodos, 计算态密度时要用更密的q点网格，这需设置nk1, nk2, nk3   
-```shell
-phono -m mode=phonodos core=1 npool=1 queue=local qpoints='8 8 8' ndos=500 
-```
-
-####  <span style="color:green"> 处理出投影到每种元素的phonodos，并且会输出一个文件phdos_proj2eles.csv用来绘制投影态密度
-```shell
-phono -m mode=phonodosdata core=1 queue=local
-```
 
 ###  <span style="color:yellow"> 电子态密度计算
 
-####  <span style="color:green">**先进行非自洽计算, k点要比自洽密一些**</span>
+####  <span style="color:green">**先进行非自洽计算获得dos数据, k点要比自洽密一些**</span>
 ```shell
 scf -m mode=nscf core=48 npool=4 queue=local kpoints_dense='16 16 16' 
 ```
 
-####  <span style="color:green">**同时获得eletdos 和 elepdos**</span>
+####  <span style="color:green">**处理eletdos和elepdos数据获得可以origin绘图的数据**</span>
 ```shell
 eletron -m mode=elepdosdata core=1 npool=1 queue=local kpoints_dense='8 8 8' 
 ```
 
 
-####  <span style="color:green">**总DOS: eletdos**</span>
+####  <span style="color:green">**单独处理eletdos数据**</span>
 ```shell
 eletron -m mode=eletdos core=1 npool=1 queue=local kpoints_dense='8 8 8' 
 ```
 
-####  <span style="color:green">**投影DOS: elepdos**</span>
+####  <span style="color:green">**单独处理elepdos数据**</span>
 ```shell
 eletron -m mode=elepdos core=1 npool=1 queue=local kpoints_dense='8 8 8' 
 ```
@@ -241,30 +250,82 @@ eletron -m mode=elepdos core=1 npool=1 queue=local kpoints_dense='8 8 8'
 eletron -m mode=eleband core=1 npool=1 queue=local kinserted=200 nbnd=500
 ```
 
-####  <span style="color:green">**处理eleband数据获得可以origin绘图的数据**</span>(这里计算电子的dos也用qpoints其实非常不合理)
+####  <span style="color:green">**处理eleband数据获得可以origin绘图的数据**</span>
 ```shell
 eletron -m mode=elebanddata core=1 queue=local
 ```
 
-###  <span style="color:yellow"> 同时 电子能带结构计算 电子态密度计算 **(qe计算出来的电子态密度的横坐标能量的单位是Ry, 而vasp计算出来的电子态密度的横坐标的单位是eV, 1 Ry = 13.605693122994, 1eV = 0.0734986443513 Ry)**
+###  <span style="color:yellow"> 同时进行 电子能带结构计算 电子态密度计算 并且 处理好数据
+
+<span style="color:green"> **(qe计算出来的电子态密度的横坐标能量的单位是Ry, 而vasp计算出来的电子态密度的横坐标的单位是eV, 1 Ry = 13.605693122994, 1eV = 0.0734986443513 Ry)**
+
 ```shell
-eletron -m mode=eleeletron core=48 npool=4 queue=local kinserted=200 nbnd=500  kpoints_dense='8 8 8' 
+eletron -m mode=eleproperties core=48 npool=4 queue=local kinserted=200 nbnd=500  kpoints_dense='8 8 8' 
 ```
-####  <span style="color:green">**处理eleband数据获得可以origin绘图的数据**</span>(这里计算电子的dos也用qpoints其实非常不合理)
-```shell
-eletron -m mode=elebanddata core=1 queue=local
-```
+**不必处理数据，数据是已经都处理好的了，可以直接绘图**
 
 
 ###  <span style="color:yellow"> 计算超导
+
+<span style="color:green"> **在使用lambda.x处理数据时，一定要注意两件事情**
+
+<span style="color:green"> 1. **如果elph_dir目录中有一个文件elph.inp_lambda.`number`文件中的频率是负值，那么就会导致lambda.out中无法处理处lambda和wlog.**
+
+<span style="color:green"> 2. **如果分q点计算时，每一个q点目录中的scffit.in和scf.in用的都是相同的degauss值并且split_ph.in中的el_ph_sigma和el_ph_nsigma都相同，那么在每一个q点的elph.inp_lambda.`number`文件中都会有相同个数的DOS值并且DOS的值也都相同，这一点(即：DOS的值也都相同）至关重要.**
+
+```shell
+# 例如使用`grep DOS elph.inp_lambda.1`，你会得到10个展宽对应的10个DOS值
+grep DOS elph.inp_lambda.1 # 有多少个elph.inp_lambda.*文件被dyn0文件中的不可约q点数决定
+     # 每个不可约q点有多少个DOS值被el_ph_nsigma决定，每个展宽的大小由l_ph_sigma和el_ph_nsigma共同决定
+     DOS = 10.687167 states/spin/Ry/Unit Cell at Ef= 16.291748 eV #（DOS 和 Ef 值的大小被 scffit.in 和 scf.in 中的 degauss 影响）
+     DOS = 10.436377 states/spin/Ry/Unit Cell at Ef= 16.288660 eV
+     DOS = 10.257347 states/spin/Ry/Unit Cell at Ef= 16.287513 eV
+     DOS = 10.299636 states/spin/Ry/Unit Cell at Ef= 16.287628 eV
+     DOS = 10.470458 states/spin/Ry/Unit Cell at Ef= 16.289191 eV
+     DOS = 10.651954 states/spin/Ry/Unit Cell at Ef= 16.291880 eV
+     DOS = 10.824777 states/spin/Ry/Unit Cell at Ef= 16.295156 eV
+     DOS = 11.028643 states/spin/Ry/Unit Cell at Ef= 16.298284 eV
+     DOS = 11.315351 states/spin/Ry/Unit Cell at Ef= 16.300248 eV
+     DOS = 11.712844 states/spin/Ry/Unit Cell at Ef= 16.299994 eV
+
+# 例如使用`grep DOS elph.inp_lambda.2`，你会得到10个展宽对应的10个DOS值
+grep DOS elph.inp_lambda.2
+     DOS = 10.687167 states/spin/Ry/Unit Cell at Ef= 16.291748 eV
+     DOS = 10.436377 states/spin/Ry/Unit Cell at Ef= 16.288660 eV
+     DOS = 10.257347 states/spin/Ry/Unit Cell at Ef= 16.287513 eV
+     DOS = 10.299636 states/spin/Ry/Unit Cell at Ef= 16.287628 eV
+     DOS = 10.470458 states/spin/Ry/Unit Cell at Ef= 16.289191 eV
+     DOS = 10.651954 states/spin/Ry/Unit Cell at Ef= 16.291880 eV
+     DOS = 10.824777 states/spin/Ry/Unit Cell at Ef= 16.295156 eV
+     DOS = 11.028643 states/spin/Ry/Unit Cell at Ef= 16.298284 eV
+     DOS = 11.315351 states/spin/Ry/Unit Cell at Ef= 16.300248 eV
+     DOS = 11.712844 states/spin/Ry/Unit Cell at Ef= 16.299994 eV
+......
+......
+......
+grep DOS elph.inp_lambda.10
+     DOS = 10.687167 states/spin/Ry/Unit Cell at Ef= 16.291748 eV
+     DOS = 10.436377 states/spin/Ry/Unit Cell at Ef= 16.288660 eV
+     DOS = 10.257347 states/spin/Ry/Unit Cell at Ef= 16.287513 eV
+     DOS = 10.299636 states/spin/Ry/Unit Cell at Ef= 16.287628 eV
+     DOS = 10.470458 states/spin/Ry/Unit Cell at Ef= 16.289191 eV
+     DOS = 10.651954 states/spin/Ry/Unit Cell at Ef= 16.291880 eV
+     DOS = 10.824777 states/spin/Ry/Unit Cell at Ef= 16.295156 eV
+     DOS = 11.028643 states/spin/Ry/Unit Cell at Ef= 16.298284 eV
+     DOS = 11.315351 states/spin/Ry/Unit Cell at Ef= 16.300248 eV
+     DOS = 11.712844 states/spin/Ry/Unit Cell at Ef= 16.299994 eV
+```
+
+**这两个文件中每一个展宽el_ph_sigma值对应的DOS和费米能级都一模一样。如果不一样的话，可能是你在算某一个q点时scffit.in和scf.in用的都是相同的degauss值与其它的不同导致。**
+
 处理电荷屏蔽常数为0.1和0.13,得到 $\lambda$ 和 $\omega_{log}$ 并且输出一个文件：w_alpha2f_lambda.csv 可以用来绘制alpha-lambda的函数图像
 
 ```shell
-sc -m mode=Tc core=1 npool=1 queue=local temperature_steps=100 qpoints='4 4 4' a2fdos=True alpha2fdat=False broaden=0.5 smearing_method=1 gaussid=3 gauss=0.015  top_freq=80
+sc -m mode=Tc core=1 npool=1 queue=local temperature_steps=100 a2fdos=True alpha2fdat=False broaden=0.5 smearing_method=1 efermi=xxxxx
 ```
 
 ```shell
-sc -m mode=Tc core=1 npool=1 queue=local temperature_steps=100 qpoints='4 4 4' a2fdos=True alpha2fdat=False broaden=0.5 smearing_method=1
+sc -m mode=Tc core=1 npool=1 queue=local temperature_steps=100 a2fdos=True alpha2fdat=False broaden=0.5 smearing_method=1
 ```
 指定最高频率
 ```shell

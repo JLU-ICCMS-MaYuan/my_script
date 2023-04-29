@@ -106,9 +106,9 @@ class qe_phono:
         if self.phono_inputpara.mode == "merge":
             self.phono_inputpara.merge(self.phono_inputpara.work_path)
         elif self.phono_inputpara.mode == "phonobanddata":
-            idx, gaussian = self.phono_inputpara.check_convergence()
+            gauss = self.phono_inputpara.gauss
             qpoints_freqs, q_number, freq_number = self.phono_inputpara.get_phono_freq()
-            phononwidth = self.phono_inputpara.get_gam_lines(gaussian, q_number, freq_number)
+            phononwidth = self.phono_inputpara.get_gam_lines(gauss, q_number, freq_number)
             self.phono_inputpara.merge_qp_freq_width(qpoints_freqs, phononwidth)
             print("Note: --------------------")
             print("    You can use `qp_freq_width.csv` to plot phonon-band")
@@ -157,13 +157,13 @@ class qe_eletron:
             self.get_fermi_energy()
         elif self.eletron_inputpara.mode == "elebanddata": 
             self.qe_writeinput = qe_writeinput.init_from_eletroninput(self.eletron_inputpara)
-            self.qe_submitjob  = qe_submitjob.init_from_eletroninput(self.eletron_inputpara)
             self.qe_writesubmit = qe_writesubmit.init_from_eletroninput(self.eletron_inputpara)
+            self.qe_submitjob  = qe_submitjob.init_from_eletroninput(self.eletron_inputpara)
             print("Note: --------------------")
             print("    !!!!!!!!!! Remember to run pw.x to get eleband.out before you run bands.x") 
             print("    Run bands.x to get eleband.dat and  eleband.dat.gnu")
             print("    eleband.dat.gnu can be used in origin to plot-eletronband")
-            inputfilename = self.qe_writeinput.write_elebanddata_in(self.eletron_inputpara.work_path)
+            inputfilename = self.qe_writeinput.writeinput(mode="elebanddata")
             if self.eletron_inputpara.queue is not None:
                 self.qe_submitjob.submit_mode0(inputfilename, dotx_file="bands.x")
             self.get_fermi_energy()
@@ -174,10 +174,10 @@ class qe_eletron:
             print("Note: --------------------")
             print("    !!!!!!!!!! Remember to run pw.x to get nscf.out before you run dos.x and projwfc.x") 
             print("    Run dos.x to get tdos and and run projwfc.x to get pdos")
-            inputfilename = self.qe_writeinput.write_eletdos_in(self.eletron_inputpara.work_path)
+            inputfilename = self.qe_writeinput.writeinput(mode="eletdos")
             if self.eletron_inputpara.queue is not None:
                 self.qe_submitjob.submit_mode0(inputfilename, dotx_file="dos.x")
-            inputfilename = self.qe_writeinput.write_elepdos_in(self.eletron_inputpara.work_path)
+            inputfilename = self.qe_writeinput.writeinput(mode="elepdos")
             if self.eletron_inputpara.queue is not None:
                 self.qe_submitjob.submit_mode0(inputfilename, dotx_file="projwfc.x")
             self.get_fermi_energy()
@@ -229,22 +229,19 @@ class qe_superconduct:
         # prepare input parameter
         self.sc_inputpara  = qesc_inputpara.init_from_config(self._config)
 
-        # 当电荷屏蔽常数为0.10
+        # 当电荷屏蔽常数为0.10 和 0.13 时
         results = []
         for screen_constant in self.sc_inputpara.screen_constant:
             # McAD
             self.qe_writeinput  = qe_writeinput.init_from_scinput(self.sc_inputpara)
             self.qe_submitjob = qe_submitjob.init_from_scinput(self.sc_inputpara)
 
-            # 尝试获得收敛的degauss
             inputfilename = self.qe_writeinput.write_lambda_in(self.sc_inputpara.work_path, screen_constant)
             if self.sc_inputpara.queue is not None:
                 self.qe_submitjob.submit_mode0(inputfilename, dotx_file="lambda.x")
-            try:
-                idx = int(self.sc_inputpara.gaussid)-1 # 因为输入的是要求获得第3列的gauss，但是实际上索引的是第2列
-                gauss = float(self.sc_inputpara.gauss)
-            except:
-                idx, gauss = self.sc_inputpara.check_convergence()
+
+            idx = self.sc_inputpara.gaussid
+            gauss = self.sc_inputpara.gauss
 
             # McAD-Tc
             Lambda_byqe, omega_log, Tc_McAD = self.sc_inputpara.getTc_by_McAD(idx)
