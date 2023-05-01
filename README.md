@@ -256,6 +256,15 @@ $$1Thz \Leftrightarrow 33.3564 cm^{-1}$$
 w_alpha2f_lambda.csv 中的第一列是频率，其单位是经过转化的$cm^{-1}$
 
 
+
+####  <span style="color:green"> **Eliashberg方法计算Tc需要INPUT文件中只需设置两个参数**
+1. 前者是screen_constant，一般取0.10~0.13；
+2. 后者是temperature_steps，表示对ntemp个温度点自洽求解Eliashberg方程，得到带隙Δ关于温度T的曲线(该程序首先处理McMillan方程，得到超导临界温度tc作为参考值，然后在温度区间[tc/6, tc*3]中线性插入ntemp个温度点。ntemp一般取40~100即可，也可以更大，建议根据体系差异灵活调控)。
+####  <span style="color:green"> **Eliashberg方法计算得到的ELIASHBERG_GAP_T.OUT文件就是能隙方程关于温度的关系，第一列是温度，第二列是能隙（能隙的单位是hartree, 所以如果你想要转化为meV，就需要: 第二列 * 27211.38602)**
+1 Hartree = 27.21138602 eV 
+
+1 eV = 0.03674932 Hartree
+
 ####  <span style="color:green"> McAD方法计算Tc需要lamda.in文件中的参数分别是：
 ```shell
 top_freq(最高声子频率)  deguass(展宽宽度取0.12)  smearing_method(展宽方法一般等于1）    
@@ -383,14 +392,6 @@ gam.lines文件
 ```
 
 
-
-####  <span style="color:green"> **Eliashberg方法计算Tc需要INPUT文件中只需设置两个参数**
-1. 前者是screen_constant，一般取0.10~0.13；
-2. 后者是temperature_steps，表示对ntemp个温度点自洽求解Eliashberg方程，得到带隙Δ关于温度T的曲线(该程序首先处理McMillan方程，得到超导临界温度tc作为参考值，然后在温度区间[tc/6, tc*3]中线性插入ntemp个温度点。ntemp一般取40~100即可，也可以更大，建议根据体系差异灵活调控)。
-####  <span style="color:green"> **Eliashberg方法计算得到的ELIASHBERG_GAP_T.OUT文件就是能隙方程关于温度的关系，第一列是温度，第二列是能隙（能隙的单位是hartree,所以如果你想要转化为meV，就需要: 第二列 * 27211.38602)**
-1 Hartree = 27.21138602 eV 
-
-1 eV = 0.03674932 Hartree
 
 
 ###  <span style="color:yellow">  自动prepare计算

@@ -331,15 +331,16 @@ class qephono_inputpara(qe_inputpara):
 
         # 这一部分是关于如果获得收敛的gaussid和gauss
         # 第一种情况你自己指定 gaussid 和 gauss
-        if hasattr(self, "gaussid") and hasattr(self, "gauss"):
-            self.gaussid = int(self.gaussid) - 1
-            self.gauss = float(self.gauss)
-        elif hasattr(self, "efermi_dos"):
-            self.efermi_dos = float(self.efermi_dos)
-            self.gaussid, self.gauss = self.check_convergence(efermi_dos=self.efermi_dos)
-        else:
-            self.efermi_dos = None
-            self.gaussid, self.gauss = self.check_convergence(efermi_dos=self.efermi_dos)
+        if self.mode == "Tc" or self.mode == "phonobanddata":
+            if hasattr(self, "gaussid") and hasattr(self, "gauss"):
+                self.gaussid = int(self.gaussid) - 1
+                self.gauss = float(self.gauss)
+            elif hasattr(self, "efermi_dos"):
+                self.efermi_dos = float(self.efermi_dos)
+                self.gaussid, self.gauss = self.check_convergence(efermi_dos=self.efermi_dos)
+            else:
+                self.efermi_dos = None
+                self.gaussid, self.gauss = self.check_convergence(efermi_dos=self.efermi_dos)
 
 
 
