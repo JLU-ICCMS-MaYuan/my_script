@@ -74,8 +74,56 @@ qe_main.py -i relax.out -j bash scf -m mode=nscf kpoints_dense='32 32 32' core=2
 ```
 ### <span style="color:yellow"> 声子计算
 #### 重要参数的说明
-1. alpha_mix(1)=0.3 一般用0.3， 算的比较快，值越大算的越慢。**所以我采用的默认参数alpha_mix(1)=0.3, 如果你自己需要高精度，自己调整**
-2. 自洽计算时的degauss是一个很重要的参数，一般用0.02，但是如果出现一个很小的虚频的话，可以试一试0.05
+1. alpha_mix(1)=0.3 一般用0.3， 算的比较快，值越大算的越慢。**所以我采用的默认参数alpha_mix(1)=0.3, 如果你自己需要高精度，自己调整**。
+2. 有时候会出现如下的报错：**在计算某一个q点的不可约表示电子自洽不收敛。可以通过将设置alpha_mix(1)=0.1解决。本质上它可以增大自洽的**
+```shell
+
+     Atomic displacements:
+     There are  197 irreducible representations # 这里表示总共有197个不可约表示
+      
+     Representation     1      1 modes -  To be done
+      
+     Representation     2      1 modes -  To be done
+     ....
+     ....
+     ....
+     Representation   196      1 modes -  To be done
+ 
+     Representation   197      1 modes -  To be done
+ 
+ 
+     Representation #   1 mode #   1 # 计算第一个不可约表示的自洽
+ 
+     Self-consistent Calculation
+ 
+      iter #   1 total cpu time :  1751.5 secs   av.it.:   9.3
+      thresh= 1.000E-02 alpha_mix =  0.300 |ddv_scf|^2 =  8.194E-06
+ 
+      iter #   2 total cpu time :  1883.1 secs   av.it.:  26.1
+      thresh= 2.863E-04 alpha_mix =  0.300 |ddv_scf|^2 =  1.522E-03
+
+    
+      iter # 149 total cpu time : 16231.8 secs   av.it.:  22.0 
+      thresh= 1.619E-06 alpha_mix =  0.300 |ddv_scf|^2 =  1.334E-10
+          
+      iter # 150 total cpu time : 16330.3 secs   av.it.:  23.8 
+      thresh= 1.155E-06 alpha_mix =  0.300 |ddv_scf|^2 =  1.702E-10
+    
+End of self-consistent calculation  # 计算第一个不可约表示的自洽失败。没有收敛
+    
+No convergence has been achieved 
+```
+
+3. 有时候可能不是在第一个不可约表示因为电子自洽停下来不收敛的，那么可以使用ph.in中的以下开关从停下来的那个不可约表示续算。这是一种更加精确的续算方法。
+
+```shell
+start_irr=210
+last_irr=240
+```
+
+4. 自洽计算时的degauss是一个很重要的参数，一般用0.02，但是如果出现一个很小的虚频的话，可以试一试0.05
+
+5. ph.in中的tr2_ph=1.0d-14开关设置14就很好了，有时候甚至可以设置13.
 
 
 

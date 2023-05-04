@@ -268,7 +268,7 @@ class qephono_inputpara(qe_inputpara):
             self.kpoints_dense = [kp*4 for kp in self.qpoints]
 
         if not hasattr(self, "tr2_ph"):
-            self.tr2_ph = "1.0d-16"
+            self.tr2_ph = "1.0d-14"
 
         if not hasattr(self, "electron_phonon"):
             self.electron_phonon="interpolated"

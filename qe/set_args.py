@@ -113,7 +113,7 @@ def set_more_args(parser: ArgumentParser):
         dest='more_args',
         nargs='+',
         help="输入更多关于声子计算的参数\n"
-            "tr2_ph = 1.0d-16 (default)\n"
+            "tr2_ph = 1.0d-14 (default)\n"
             "el_ph_nsigma=50 (default)\n"
             "el_ph_sigma=0.005 (default)\n"
             "alpha_mix=0.5 (default)\n"
