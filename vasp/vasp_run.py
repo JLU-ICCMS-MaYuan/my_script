@@ -59,7 +59,7 @@ def vaspbatch_relax(args: ArgumentParser) -> None:
         mode              = _config['mode']             ; del _config['mode']
         for input_file_path in input_files_path:
             # prepare the POSCAR POTCAR  
-            print("Note: --------------------")
+            print("\nNote: --------------------")
             print("    Create directory for {} file !!!")
             relax_inputpara  = vaspbatch_inputpara(
                 work_path=work_path,

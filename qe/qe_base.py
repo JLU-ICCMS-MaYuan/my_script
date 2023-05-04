@@ -61,7 +61,7 @@ class qe_base:
         try:
             self.ase_type          = read(self.input_file_path)
         except:
-            print("Note: --------------------")
+            print("\nNote: --------------------")
             print("    When reading `{}` file, the program get something wrong, you need to check it !!!".format(self.input_file_path))
             sys.exit(1)
 
@@ -69,7 +69,7 @@ class qe_base:
         self.get_struct_info(self.struct_type, self.work_path)
         
         ############################ prepare pp directory #########################
-        print("Note: ----------")
+        print("\nNote: ----------")
         print(f"    create potcar dir in {self.work_path}")
         self.workpath_pppath = Path(self.work_path).joinpath("pp")
         if not self.workpath_pppath.exists():
@@ -135,7 +135,7 @@ class qe_base:
                 while not choosed_flag:
                     for i, p in enumerate(dst_pps):
                         print(f"{i+1}.  ", p)
-                    print("Note: --------------------")
+                    print("\nNote: --------------------")
                     choosed_pp_number = int(input("    please input you want one(Enter the previous number, such as 1,2,3...)\n"))
                     choosed_pp = dst_pps[choosed_pp_number-1]
                     if choosed_pp in dst_pps:
@@ -149,7 +149,7 @@ class qe_base:
                 self.final_choosed_pp.append(dst_pps[0])
             elif len(dst_pps) == 0:
                 # 如果目标元素在pp目录中一个都没有，就从之前设置的赝势库中选择一个
-                print("Note: --------------------")
+                print("\nNote: --------------------")
                 print(f"    To prepare {species_name} uspp! ")
                 dst_pp = self.get_single_uspp(species_name, workpath_pppath)
                 self.final_choosed_pp.append(dst_pp)
@@ -207,7 +207,7 @@ class qe_base:
         elif relax_out_path.exists():
             res_path = relax_out_path
         else:
-            print("Note: --------------------")
+            print("\nNote: --------------------")
             print("    scffit.out, scf.out and relax.out all don't exist. The program can't get reciprocal lattice from them.")
             time.sleep(2)
             return None
@@ -217,7 +217,7 @@ class qe_base:
             alat = float(os.popen(f"sed -n '/lattice parameter (alat)/p' {res_path}").read().split()[4])
 
             unit_reciprocal_axis = 2*np.pi/alat
-            print("Note: --------------------")
+            print("\nNote: --------------------")
             print(f"    unit_reciprocal_axis = 2pi/alat=2pi/{alat}={unit_reciprocal_axis}, the unit of alat is `1 a.u.`=0.529117 A")
             print(f"    However !!!!! When you get cartesian coordinates of high symmetry points, unit_reciprocal_axis={1}. Only in this way can we guarantee the consistency of the coordinates of the q points !!!!")
             reciprocal_lattice = []
@@ -228,7 +228,7 @@ class qe_base:
                 reciprocal_lattice.append(b)
             return np.array(reciprocal_lattice)
         except:
-            print("Note: --------------------")
+            print("\nNote: --------------------")
             print("    The program fail to get reciprocal lattice from scffit.out, scf.out and relax.out.")
             return None
 
@@ -238,7 +238,7 @@ def get_cell_and_coords(relax_out_path:Path):
     cell_parameters = None
     fractional_sites = None
     if not relax_out_path.exists():
-        print("Note: --------------------")
+        print("\nNote: --------------------")
         print("    relax.out doesn't exist !!!")
         return cell_parameters, fractional_sites
     awk_order = "awk '/Begin final coordinates/,/End final coordinates/{print $0}'" + f" {os.path.abspath(relax_out_path)} " 

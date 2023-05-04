@@ -42,7 +42,7 @@ class HydrideClathrate:
             - shr_num, shr_num_avg  -- share number of each vertex
             - describe()
 
-        Note: we ignore the specie of cage vertex when finding cages.
+        \nNote: we ignore the specie of cage vertex when finding cages.
 
         Args:
             structure(Sturcutre): pymatgen structure.Structure
@@ -151,9 +151,9 @@ class HydrideClathrate:
         [i, j, jix, jiy, jiz]
         (Nnode * 5)
 
-        Note: g.edges(data='to_jimage') returns [(i, j, (to_jimage)), ...]
+        \nNote: g.edges(data='to_jimage') returns [(i, j, (to_jimage)), ...]
 
-        Note: graph of reversed direction is concatenated
+        \nNote: graph of reversed direction is concatenated
 
         """
         if not hasattr(self, '_graph'):

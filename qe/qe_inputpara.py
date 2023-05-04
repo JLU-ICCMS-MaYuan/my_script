@@ -40,21 +40,21 @@ class qe_inputpara(qe_base):
             raise AttributeError("there is no attribution of mode")
 
         if not hasattr(self, "core"):
-            print("Note: --------------------")
+            print("\nNote: --------------------")
             print("    You didn't specify `core=xxx`. The program just prepare uspp for you in pp-directory, and it will exit!!!")
             sys.exit(1)
 
         if not hasattr(self, "npool"):
             self.npool = 1
-            print("Note: --------------------")
+            print("\nNote: --------------------")
             print("    The program will set npool=1 in your submitjob scripts")
  
         if not hasattr(self, "queue"):
             self.queue = None
-            print("Note: ----------------------")
+            print("\nNote: ----------------------")
             print("    You didn't specify queue, so the program will not submit the job in any way")
 
-        print("Note: --------------------")
+        print("\nNote: --------------------")
         # &CONTROL
         if not hasattr(self, "forc_conv_thr"):
             self.forc_conv_thr = "1.0d-6"
@@ -122,14 +122,14 @@ class qe_inputpara(qe_base):
             self.press_conv_thr = "0.01"
 
         # &kpoints
-        print("Note: --------------------")
+        print("\nNote: --------------------")
         print("    You have been confirmed that the kpoints_dense, kpoints_sparse, qpoints are all right and consistent with the symmetry")
         print("    If you not make sure, you had better run 'vaspkit' or 'kmesh.py' to check it!!!")
         print('    The order for vaspkit is:  (xxxx is corresponding to 1/LATTICE_PARA(i)*KPOINTS(i), (i) represents one axis, such as x_axis, y_axis, z_axis)')
         print(r'         echo -e "1\n102\n2\nxxxx" | vaspkit')
         print('    The order for kmesh.py is:  (xxxx is corresponding to the KSPACING in vasp)')
         print("         kmesh.py xxxx")
-        time.sleep(5)
+        time.sleep(3)
         if hasattr(self, "kpoints_dense"):
             _kpoints_dense = self.kpoints_dense.split()
             self.kpoints_dense = list(map(int, _kpoints_dense))
@@ -243,7 +243,7 @@ class qephono_inputpara(qe_inputpara):
             **kwargs
             )
         
-        print("Note: --------------------")
+        print("\nNote: --------------------")
         print("If you want to run `phono`, you had better set these values!")
         dyn0_names = Path(self.work_path).joinpath(f"{self.system_name}.dyn0")
         if hasattr(self, "qpoints"):
@@ -252,7 +252,7 @@ class qephono_inputpara(qe_inputpara):
             self.kpoints_sparse= [kp*2 for kp in self.qpoints]
             self.kpoints_dense = [kp*4 for kp in self.qpoints]
         elif dyn0_names.exists():
-            print("Note: --------------------")
+            print("\nNote: --------------------")
             print(f"    You didn't set the `qpoints` ! The program will qpoints in read {self.system_name}.dyn0 file")
             print("    If you want to calculate phonodos, you had better set `qpoints`! Its `qpoints` had better be set more densely than `qpoints` in `ph.in`")
             print("    For example, In ph.in, qpoints='8 8 8', then in phono_dos.in, qpoints='16 16 16' ")
@@ -483,13 +483,17 @@ class qephono_inputpara(qe_inputpara):
             el_ph_nsigma = int(re.search(r'\d+', os.popen(greporder).read()).group())
             gaussian0 = [el_ph_sigma*(1+i) for i in range(0, el_ph_nsigma)]
         else:
-            print("Note: --------------------")
+            print("\nNote: --------------------")
             print("     The program didn't get `ph_no_split.in`. So you need input it by yourself.")
             el_ph_sigma = float(input("Input el_ph_sigma, it has to be a float number\n"))
             el_ph_nsigma= int(input("Input el_ph_nsigma, it has to be a integer number\n"))
             gaussian0 = [el_ph_sigma*(1+i) for i in range(0, el_ph_nsigma)]
 
         # 校验输入文件获得的gaussian和输出文件获得的gaussian是否一致
+        if not self.work_path.joinpath('elph_dir', 'elph.inp_lambda.1').exists():
+            print("\nNote: --------------------")
+            print("    elph_dir/elph.inp_lambda.1 doesn't exist !!! The program will exit!!!")
+            sys.exit(1)
         greporder = f"grep Gaussian {self.work_path.joinpath('elph_dir', 'elph.inp_lambda.1')}" + "| awk '{print $3}'"
         gaussian1 = [float(num.strip("\n")) for num in os.popen(greporder).readlines()]
         flag = np.allclose(np.array(gaussian0), np.array(gaussian1), rtol=1e-6)
@@ -502,23 +506,24 @@ class qephono_inputpara(qe_inputpara):
         shlorder = f"grep DOS {self.work_path.joinpath('elph_dir', 'elph.inp_lambda.1')}" + "| awk '{print $3}'"
         dos = os.popen(shlorder).readlines()
         if not dos:
-            print("Note: --------------------")
+            print("\nNote: --------------------")
             print("    grep DOS elph_dir/elph.inp_lambda.1 failes !!! The progam will exit !!! Maybe calculation in elph get something wrong!!!")
             sys.exit(1)
         
         dos = [float(i.strip('\n')) for i in dos]
         if efermi_dos is None:
-            print("Note: --------------------")
+            print("\nNote: --------------------")
             print("    You didn't set efermi_dos, so the program will use its own method to get converged gauss value.")
-            delta_dos = [abs(dos[i + 1] - dos[i]) for i in range(len(dos) - 1)]
+            delta_dos = [np.abs(dos[i + 1] - dos[i]) for i in range(len(dos) - 1)]
             idx = np.argmin(delta_dos) # 收敛Gaussian的索引
             gauss = gaussian0[idx]
         else:
-            delta_dos = [idos-float(efermi_dos) for idos in range(len(dos))]
+            delta_dos = [np.abs(idos-float(efermi_dos)) for idos in dos]
             idx = np.argmin(delta_dos) # 收敛Gaussian的索引
             gauss = gaussian0[idx]
-        print("Note: --------------------")
+        print("\nNote: --------------------")
         print(f'    Converged gaussid = {idx+1}, corresponding gaussian value={gaussian1[idx]}')
+        time.sleep(3)
         return idx, gauss
 
     def get_gam_lines(self, gauss:float, q_number:int, freq_number:int):
@@ -532,11 +537,11 @@ class qephono_inputpara(qe_inputpara):
         # 从gam.lines文件中获得指定Gaussian展宽对应的所有的声子线宽
         gam_lines_path = self.work_path.joinpath("gam.lines")
         if not gam_lines_path.exists():
-            print("Note: --------------------")
+            print("\nNote: --------------------")
             print("    Sorry, The gam.lines doesn't exist !")
         tmp_gam1_path = self.work_path.joinpath("temp_gam1")
         tmp_gam2_path = self.work_path.joinpath("temp_gam2")
-        print("Note: --------------------")
+        print("\nNote: --------------------")
         print("    Two temporary files named `temp_gam1` ad `temp_gam2` will be created, which are based on gam.lines ")
         print("    They will be removed after obtaining the phonon-line-width of the corresponding Gaussian")
         os.system(f"""sed -n '/Broadening   {gauss}/,/Broadening/p' {gam_lines_path} > {tmp_gam1_path}""")
@@ -554,7 +559,7 @@ class qephono_inputpara(qe_inputpara):
                     for pw in line.strip("\n").split():
                         phononwidth.append(pw)
         if len(phononwidth) != (q_number*freq_number):
-            print("Note: --------------------")
+            print("\nNote: --------------------")
             print("    The number of phonon-width is not equal to the number of `q_number*freq_number`")
             print(f"    phonon-width = {phononwidth}")
             print(f"    q_number * freq_number = {q_number} * {freq_number} = {q_number*freq_number}")
@@ -571,7 +576,7 @@ class qephono_inputpara(qe_inputpara):
         """获得可以在origin中作图的数据"""
         freq_gp_path = self.work_path.joinpath(self.system_name+".freq.gp")
         if not freq_gp_path.exists():
-            print("Note: --------------------")
+            print("\nNote: --------------------")
             print(f"    Sorry, {self.system_name}.freq.gp doesn't exist !")
         qpoints_freq = np.loadtxt(freq_gp_path)  # qpoints_freq 是一个 二维数组，第一列是q点坐标，其余列是振动频率
         q_number     = qpoints_freq.shape[0]     # q 点个数,          
@@ -616,14 +621,14 @@ class qephono_inputpara(qe_inputpara):
         # 获得phonodos计算的输出文件
         phonon_dos_path = self.work_path.joinpath(self.system_name+"_phono.dos")
         if not phonon_dos_path.exists():
-            print("Note: --------------------")
+            print("\nNote: --------------------")
             print(f"    Sorry, {self.system_name}_phono.dos doesn't exist !")
             sys.exit(1)
 
         # 获得元素的顺序 以及 每种元素的原子个数
         scffitin_path = self.work_path.joinpath("scffit.in")
         if not scffitin_path.exists():
-            print("Note: --------------------")
+            print("\nNote: --------------------")
             print(f"    Sorry, scffit.in doesn't exist !")
             sys.exit(1) 
         shlorder = "sed -n '/ATOMIC_POSITIONS (crystal)/,/K_POINTS {automatic}/ {//!p}' " + f"{scffitin_path}"
@@ -674,7 +679,7 @@ class qeeletron_inputpara(qe_inputpara):
             **kwargs
             )
 
-        print("Note: --------------------")
+        print("\nNote: --------------------")
         print("if you want to run `electron-dos`, you had better set these values!")
         
         # 电子态密度设置
@@ -685,8 +690,10 @@ class qeeletron_inputpara(qe_inputpara):
             self.emin = -10
             print("    You didn't set `emin`   for eledos.in, the program will use default value: emin=-10")
         if not hasattr(self, "emax"):
-            self.emax = 10
-            print("    You didn't set `emax`   for eledos.in, the program will use default value: emax=10 ")
+            self.emax = 30
+            print("    You didn't set `emax`   for eledos.in, the program will use default value: emax=30. ")
+            print("        The reason is to avoid E-fermi bigger than then max-energy. ")
+            print("        For example, E-fermi=16eV, the upper energy you set is 10eV, then you can't get positive energys.")
         if not hasattr(self, "ngauss"):
             self.ngauss = 0
             print("    You didn't set `emax`   for eledos.in, the program will use default value: ngauss=0 ")
@@ -705,7 +712,7 @@ class qeeletron_inputpara(qe_inputpara):
             self.kinserted = int(self.kinserted)
             
         if not hasattr(self, "nbnd"):
-            print("Note: --------------------")
+            print("\nNote: --------------------")
             print("    You didn't set nbnd, the default value nbnd=100")
             self.nbnd = 100
 
@@ -727,7 +734,7 @@ class qesc_inputpara(qephono_inputpara):
             input_file_path, 
             **kwargs
             )
-        print("Note: --------------------")
+        print("\nNote: --------------------")
         print("If you want to run `superconduct`, you had better set these values!")
         # Mc-A-D and Eliashberg
         self.screen_constant = [0.10, 0.13]
@@ -738,10 +745,9 @@ class qesc_inputpara(qephono_inputpara):
             q2r_path = q2r_names[0]
             self.qweights = self.get_q_from_q2r(q2r_path=q2r_path)
             print("    The number of qweights = {}".format(len(self.qweights)))
-            time.sleep(3)
             # 获得 self.qtot, self.qirreduced, self.qirreduced_coords, self.qweights 
         else:
-            print("No exist *.dyn0! ")
+            print("    No exist q2r.out ! The program will exit !!!")
             sys.exit(1)
         
         # Mc-A-D
@@ -770,7 +776,7 @@ class qesc_inputpara(qephono_inputpara):
             self.temperature_steps = 5000
             print("    You didn't set the `temperature_steps`.The program will use default value: temperature_steps=5000")
 
-        print("Note: --------------------")
+        print("\nNote: --------------------")
         if hasattr(self, "a2fdos") and eval(self.a2fdos) == True:
             self.a2fdos = True
             self.alpha2fdat = False
@@ -821,7 +827,7 @@ class qesc_inputpara(qephono_inputpara):
         
         # 获得eliashberg方法计算得到的Tc
         # 运行可能报错, 建议仔细检查ELIASHBERG_GAP_T.OUT文件的第二列, 有些数据本来应该是0.1666489645E-265, 但是实际可能为0.1666489645-265, 导致numpy无法将其转化为数字
-        print("Note: --------------------")
+        print("\nNote: --------------------")
         print("    It is recommended to carefully check the second column of the ELIASHBERG_GAP_T.OUT file. ")
         print("    Some data should be 0.1666489645E-265, but it may actually be 0.1666489645-265, causing numpy to fail to turn it into a number.")
         eliashberg_gap_t_out = Path(self.work_path).joinpath("ELIASHBERG_GAP_T.OUT")
@@ -852,7 +858,7 @@ class qesc_inputpara(qephono_inputpara):
         """
         lambda_out_path = self.work_path.joinpath("lambda.out")
         if not lambda_out_path.exists():
-            print("Note: --------------------")
+            print("\nNote: --------------------")
             print("    `lambda.out` file doesn't exist!!!")
             sys.exit(1)
         shlorder = "sed -n '/^lambda/,$ {/^lambda/!p}'" + f"  {lambda_out_path}" # -n 选项表示只打印匹配的行
@@ -873,7 +879,7 @@ class qesc_inputpara(qephono_inputpara):
 
         alpha2F_dat_path = self.work_path.joinpath("alpha2F.dat")
         if not alpha2F_dat_path.exists():
-            print("Note: --------------------")
+            print("\nNote: --------------------")
             print("    `alpha2F.dat` file doesn't exist!!!")
             sys.exit(1)
         shlorder = f"sed -i 's/#//g' {alpha2F_dat_path}" # 这是因为第一行由于一个#, 删除它才不影响pandas读入 # E(THz)     0.005     0.010     0.015     0.020     0.025     0.030     0.035     0.040     0.045     0.050
@@ -882,7 +888,7 @@ class qesc_inputpara(qephono_inputpara):
             alpha2F_dat_path,
             sep='\s+',
         )
-        print("Note: --------------------")
+        print("\nNote: --------------------")
         print(f"    Converged gauss index inputed = {converged_gauss_index+1}, its value = {gauss}")
         print(f"    So in alpha2F.dat, corresponding gauss value = {alpha2F_dat.columns[converged_gauss_index+1]} ")
         omegas  = np.array(alpha2F_dat.iloc[:, 0])
@@ -914,7 +920,7 @@ class qesc_inputpara(qephono_inputpara):
             )
             return lambdas[-1]
         else:
-            print("Note: --------------------")
+            print("\nNote: --------------------")
             print("    Number of omegas != Number of alpha2fs != Number of lambdas")
             sys.exit(1)
 

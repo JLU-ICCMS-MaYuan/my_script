@@ -253,7 +253,7 @@ class split_wyckoffs:
             import json
             composition_json = self.work_path.joinpath("composition.json")
             if composition_json.exists():
-                print("Note:-----------------------")
+                print("\nNote:-----------------------")
                 print("    The composition.json file exists, please confirm that you will read it !!!!")
                 with open(composition_json, 'r') as f:
                     _group = json.load(f)

@@ -44,7 +44,7 @@ class vasp_base:
         try:
             self.struct_type       = AseAtomsAdaptor.get_structure(self.ase_type)
         except:
-            print("Note: ------------------------------")
+            print("\nNote: ------------------------------")
             print("    Read inputfile {} occurs something wrong!".format(self.input_file_name))
             sys.exit(1)
             
@@ -335,7 +335,7 @@ class vasp_base:
 
     def write_highsymmetry_kpoints(self, ase_type, kpoints_path):
         
-        print("Note: --------------------------------")
+        print("\nNote: --------------------------------")
         vaspkitflag = input("If you have installed vaspkit and you want to use it, input: Yes\n")
         if vaspkitflag:
             cwd = os.getcwd()
@@ -376,14 +376,14 @@ class vaspbatch_base(vasp_base):
         
         self.input_file_name   = self.input_file_path.name.split(".")[0]
         if self.work_path is None:
-            print("Note: -------------------")
+            print("\nNote: -------------------")
             print("    You didn't specify the work_path, and this is parameters that must be set!!! the program will exit")
             sys.exit(1)
         else:
             self.work_path= Path(self.work_path).joinpath(str(self.press), self.input_file_name)
             if not self.work_path.exists():
                 self.work_path.mkdir(parents=True)
-            print("Note: --------------------")
+            print("\nNote: --------------------")
             print("    Now {} will be created".format(self.work_path))
 
         self.ase_type          = read(self.input_file_path)
@@ -392,7 +392,7 @@ class vaspbatch_base(vasp_base):
         
         ############################ prepare pp directory #########################
         self.workpath_pppath = Path(self.work_path).parent.parent.joinpath("potcar_lib")
-        print(f"Note: --------------------")
+        print(f"\nNote: --------------------")
         print(f"   To create potcar dir in \n {self.workpath_pppath}, it's convenient for you to choose POTCARs once.")
         if not self.workpath_pppath.exists():
             self.workpath_pppath.mkdir()

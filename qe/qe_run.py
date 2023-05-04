@@ -110,11 +110,11 @@ class qe_phono:
             qpoints_freqs, q_number, freq_number = self.phono_inputpara.get_phono_freq()
             phononwidth = self.phono_inputpara.get_gam_lines(gauss, q_number, freq_number)
             self.phono_inputpara.merge_qp_freq_width(qpoints_freqs, phononwidth)
-            print("Note: --------------------")
+            print("\nNote: --------------------")
             print("    You can use `qp_freq_width.csv` to plot phonon-band")
         elif self.phono_inputpara.mode == "phonodosdata":
             self.phono_inputpara.get_phonodos()
-            print("Note: --------------------")
+            print("\nNote: --------------------")
             print("    You can use `phdos_proj2eles.csv` to plot phonon-DOS")
         elif self.phono_inputpara.mode == "hspp":
             self.phono_inputpara.get_hspp()
@@ -135,7 +135,7 @@ class qe_phono:
                 elif self.phono_inputpara.mode == "split_dyn0" or self.phono_inputpara.mode == "split_assignQ":
                     self.qe_submitjob.submit_mode3(inputfilename, jobnames)
                 else:
-                    print("Note: --------------------")
+                    print("\nNote: --------------------")
                     print("    If mode=matdyn, please remerber process phono spectrum after finish matdyn.x computation")
                     print("    The reason is `systemname`.freq, `systemname`.freq.gq and gam.lines will be rewrited when you calcuate phonodos")
                     print("    In most cases, the number of q-points is different between matdyn.in(high symmetry path qpoints sample) and phonondos.in(even qpoints sample)")
@@ -159,7 +159,7 @@ class qe_eletron:
             self.qe_writeinput = qe_writeinput.init_from_eletroninput(self.eletron_inputpara)
             self.qe_writesubmit = qe_writesubmit.init_from_eletroninput(self.eletron_inputpara)
             self.qe_submitjob  = qe_submitjob.init_from_eletroninput(self.eletron_inputpara)
-            print("Note: --------------------")
+            print("\nNote: --------------------")
             print("    !!!!!!!!!! Remember to run pw.x to get eleband.out before you run bands.x") 
             print("    Run bands.x to get eleband.dat and  eleband.dat.gnu")
             print("    eleband.dat.gnu can be used in origin to plot-eletronband")
@@ -171,7 +171,7 @@ class qe_eletron:
             self.qe_writeinput = qe_writeinput.init_from_eletroninput(self.eletron_inputpara)
             self.qe_submitjob  = qe_submitjob.init_from_eletroninput(self.eletron_inputpara)
             self.qe_writesubmit = qe_writesubmit.init_from_eletroninput(self.eletron_inputpara)
-            print("Note: --------------------")
+            print("\nNote: --------------------")
             print("    !!!!!!!!!! Remember to run pw.x to get nscf.out before you run dos.x and projwfc.x") 
             print("    Run dos.x to get tdos and and run projwfc.x to get pdos")
             inputfilename = self.qe_writeinput.writeinput(mode="eletdos")
@@ -208,7 +208,7 @@ class qe_eletron:
             self.get_fermi_energy()
 
     def get_fermi_energy(self):
-        print("Note: --------------------")
+        print("\nNote: --------------------")
         scffit_out_path = self.eletron_inputpara.work_path.joinpath("scffit.out")
         if scffit_out_path.exists():
             fermi_energy = os.popen(f'grep "Fermi energy" {scffit_out_path}').read().split()[4]
@@ -270,7 +270,7 @@ class qe_superconduct:
         self.printinfo(results)
 
     def printinfo(self, results):
-        print("Note: --------------------")
+        print("\nNote: --------------------")
         for res in results:
             print(f'    screen_constant = {res["screen_constant"]}')
             print(f'    Converged gaussid = {res["gaussid"]+1}')

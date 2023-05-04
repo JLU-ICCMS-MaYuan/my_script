@@ -17,12 +17,12 @@ def get_cell_and_coords(relax_out_path:Path):
     cell_parameters = None
     fractional_sites = None
     if not relax_out_path.exists():
-        print("Note: --------------------")
+        print("\nNote: --------------------")
         print("    relax.out doesn't exist !!!")
         return cell_parameters, fractional_sites
     awk_order = "awk '/Begin final coordinates/,/End final coordinates/{print $0}'" + f" {os.path.abspath(relax_out_path)} " 
     if not awk_order:
-        print("Note: --------------------")
+        print("\nNote: --------------------")
         print("    The program can't get anything from relax.out. Maybe it's not converged !!!")
         return cell_parameters, fractional_sites
     content = os.popen(awk_order).readlines()
@@ -403,14 +403,14 @@ class qe_writeinput:
                     species_mass = str(element.atomic_mass).strip("amu")
                     qe.write(" {:<5}  {:<10}  {:<50} \n".format(species_name, species_mass, species_pseudo[0]))
                 else:
-                    print("Note: --------------------")
+                    print("\nNote: --------------------")
                     print("    When write pseudo-potentional information, something wrong. Maybe methdo `get_pps_for_a_element` is problematic !")
                     sys.exit(1)
             qe.write("CELL_PARAMETERS {angstrom}        \n")  # 如果选择angstrom单未，原子坐标选择分数坐标，即，ATOMIC_POSITIONS (crystal), 且不设置celldm(1). 这时alat和celldm(1)设置成v1的长度
             # 判断输入文件relax.out是否存在, 如果relax.out存在, 那么之直接使用relax.out里面的结构信息
             cell_parameters, fractional_sites = get_cell_and_coords(self.work_path.joinpath("relax.out"))
             if cell_parameters is None and fractional_sites is None:
-                print("Note: --------------------")
+                print("\nNote: --------------------")
                 print("    The program will use cell_parameters and coords in inputfile specified by you !!!")
                 for cell_p in self.cell_parameters:
                     cell_p = list(map(str, cell_p))
@@ -422,7 +422,7 @@ class qe_writeinput:
                     # 左对齐5个字符，左对齐30个字符
                     qe.write("{:<5} {:<30} {:<30} {:<30} \n".format(name, coord[0], coord[1], coord[2]))
             else:
-                print("Note: --------------------")
+                print("\nNote: --------------------")
                 print("    The program will use cell_parameters and coords in `relax.out` file !!!")
                 for cell_p in cell_parameters:
                     qe.write("{}\n".format(cell_p))
@@ -476,14 +476,14 @@ class qe_writeinput:
                     species_mass = str(element.atomic_mass).strip("amu")
                     qe.write(" {:<5}  {:<10}  {:<50} \n".format(species_name, species_mass, species_pseudo[0]))
                 else:
-                    print("Note: --------------------")
+                    print("\nNote: --------------------")
                     print("    When write pseudo-potentional information, something wrong. Maybe methdo `get_pps_for_a_element` is problematic !")
                     sys.exit(1)
             qe.write("CELL_PARAMETERS {angstrom}        \n")  # 如果选择angstrom单未，原子坐标选择分数坐标，即，ATOMIC_POSITIONS (crystal), 且不设置celldm(1). 这时alat和celldm(1)设置成v1的长度
             # 判断输入文件relax.out是否存在, 如果relax.out存在, 那么之直接使用relax.out里面的结构信息
             cell_parameters, fractional_sites = get_cell_and_coords(self.work_path.joinpath("relax.out"))
             if cell_parameters is None and fractional_sites is None:
-                print("Note: --------------------")
+                print("\nNote: --------------------")
                 print("    The program will use cell_parameters and coords in inputfile specified by you !!!")
                 for cell_p in self.cell_parameters:
                     cell_p = list(map(str, cell_p))
@@ -495,7 +495,7 @@ class qe_writeinput:
                     # 左对齐5个字符，左对齐30个字符
                     qe.write("{:<5} {:<30} {:<30} {:<30} \n".format(name, coord[0], coord[1], coord[2]))
             else:
-                print("Note: --------------------")
+                print("\nNote: --------------------")
                 print("    The program will use cell_parameters and coords in `relax.out` file !!!")
                 for cell_p in cell_parameters:
                     qe.write("{}\n".format(cell_p))
@@ -548,14 +548,14 @@ class qe_writeinput:
                     species_mass = str(element.atomic_mass).strip("amu")
                     qe.write(" {:<5}  {:<10}  {:<50} \n".format(species_name, species_mass, species_pseudo[0]))
                 else:
-                    print("Note: --------------------")
+                    print("\nNote: --------------------")
                     print("    When write pseudo-potentional information, something wrong. Maybe methdo `get_pps_for_a_element` is problematic !")
                     sys.exit(1)
             qe.write("CELL_PARAMETERS {angstrom}        \n")  # 如果选择angstrom单未，原子坐标选择分数坐标，即，ATOMIC_POSITIONS (crystal), 且不设置celldm(1). 这时alat和celldm(1)设置成v1的长度
             # 判断输入文件relax.out是否存在, 如果relax.out存在, 那么之直接使用relax.out里面的结构信息
             cell_parameters, fractional_sites = get_cell_and_coords(self.work_path.joinpath("relax.out"))
             if cell_parameters is None and fractional_sites is None:
-                print("Note: --------------------")
+                print("\nNote: --------------------")
                 print("    The program will use cell_parameters and coords in inputfile specified by you !!!")
                 for cell_p in self.cell_parameters:
                     cell_p = list(map(str, cell_p))
@@ -567,7 +567,7 @@ class qe_writeinput:
                     # 左对齐5个字符，左对齐30个字符
                     qe.write("{:<5} {:<30} {:<30} {:<30} \n".format(name, coord[0], coord[1], coord[2]))
             else:
-                print("Note: --------------------")
+                print("\nNote: --------------------")
                 print("    The program will use cell_parameters and coords in `relax.out` file !!!")
                 for cell_p in cell_parameters:
                     qe.write("{}\n".format(cell_p))
@@ -621,14 +621,14 @@ class qe_writeinput:
                     species_mass = str(element.atomic_mass).strip("amu")
                     qe.write(" {:<5}  {:<10}  {:<50} \n".format(species_name, species_mass, species_pseudo[0]))
                 else:
-                    print("Note: --------------------")
+                    print("\nNote: --------------------")
                     print("    When write pseudo-potentional information, something wrong. Maybe methdo `get_pps_for_a_element` is problematic !")
                     sys.exit(1)
             qe.write("CELL_PARAMETERS {angstrom}        \n")  # 如果选择angstrom单未，原子坐标选择分数坐标，即，ATOMIC_POSITIONS (crystal), 且不设置celldm(1). 这时alat和celldm(1)设置成v1的长度
             # 判断输入文件relax.out是否存在, 如果relax.out存在, 那么之直接使用relax.out里面的结构信息
             cell_parameters, fractional_sites = get_cell_and_coords(self.work_path.joinpath("relax.out"))
             if cell_parameters is None and fractional_sites is None:
-                print("Note: --------------------")
+                print("\nNote: --------------------")
                 print("    The program will use cell_parameters and coords in inputfile specified by you !!!")
                 for cell_p in self.cell_parameters:
                     cell_p = list(map(str, cell_p))
@@ -640,7 +640,7 @@ class qe_writeinput:
                     # 左对齐5个字符，左对齐30个字符
                     qe.write("{:<5} {:<30} {:<30} {:<30} \n".format(name, coord[0], coord[1], coord[2]))
             else:
-                print("Note: --------------------")
+                print("\nNote: --------------------")
                 print("    The program will use cell_parameters and coords in `relax.out` file !!!")
                 for cell_p in cell_parameters:
                     qe.write("{}\n".format(cell_p))
@@ -851,14 +851,14 @@ class qe_writeinput:
                     species_mass = str(element.atomic_mass).strip("amu")
                     qe.write(" {:<5}  {:<10}  {:<50} \n".format(species_name, species_mass, species_pseudo[0]))
                 else:
-                    print("Note: --------------------")
+                    print("\nNote: --------------------")
                     print("    When write pseudo-potentional information, something wrong. Maybe methdo `get_pps_for_a_element` is problematic !")
                     sys.exit(1)
             qe.write("CELL_PARAMETERS {angstrom}        \n")  # 如果选择angstrom单未，原子坐标选择分数坐标，即，ATOMIC_POSITIONS (crystal), 且不设置celldm(1). 这时alat和celldm(1)设置成v1的长度
             # 判断输入文件relax.out是否存在, 如果relax.out存在, 那么之直接使用relax.out里面的结构信息
             cell_parameters, fractional_sites = get_cell_and_coords(self.work_path.joinpath("relax.out"))
             if cell_parameters is None and fractional_sites is None:
-                print("Note: --------------------")
+                print("\nNote: --------------------")
                 print("    The program will use cell_parameters and coords in inputfile specified by you !!!")
                 for cell_p in self.cell_parameters:
                     cell_p = list(map(str, cell_p))
@@ -870,7 +870,7 @@ class qe_writeinput:
                     # 左对齐5个字符，左对齐30个字符
                     qe.write("{:<5} {:<30} {:<30} {:<30} \n".format(name, coord[0], coord[1], coord[2]))
             else:
-                print("Note: --------------------")
+                print("\nNote: --------------------")
                 print("    The program will use cell_parameters and coords in `relax.out` file !!!")
                 for cell_p in cell_parameters:
                     qe.write("{}\n".format(cell_p))
@@ -929,7 +929,7 @@ class qe_writeinput:
             top_freq        = self.top_freq
             broaden         = self.broaden
             smearing_method = self.smearing_method
-            print("Note: --------------------")
+            print("\nNote: --------------------")
             print("    Again, check to see if the four values are the same")
             print("    qirreduced_coords:{}   qweights:{}   qirreduced number:{}   elphInpLambda number:{}".format(len(self.qirreduced_coords),  len(self.qweights), int(self.qirreduced), len(elphInpLambda)))
             time.sleep(3)

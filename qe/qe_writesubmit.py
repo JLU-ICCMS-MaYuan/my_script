@@ -116,7 +116,7 @@ class qe_writesubmit:
 
     def write_submit_scripts(self, inpufilename, mode=None):
 
-        print("Note: -------------------")
+        print("\nNote: -------------------")
         print("You can use the modes, please carefully compare your input mode is one of the above modes")
         print("{:<20} {:<20} {:<20} {:<20}".format("relax-vc", "scffit", "scf", "prepare", "nscf"))
         print("{:<20} {:<20} {:<20} {:<20}".format("nosplit", "split_dyn0", "split_assignQ", "q2r"))
@@ -443,11 +443,13 @@ class qe_writesubmit:
             # 再做总dos计算TDOS
             eletdos_in, eletdos_out = input_output.__next__()
             j.write('echo "eletdos"\n')
+            # -pd .true. 避免调用mpirun时出错，似乎 dos.x并不能并行调用mpirun
             j.write('mpirun -np {} {}/dos.x -pd .true. <{}> {} \n\n'.format(self.core, qebin_path, eletdos_in, eletdos_out))
 
             # 再做投影dos计算PDOS
             elepdos_in, elepdos_out = input_output.__next__()
             j.write('echo "elepdos"\n')
+            # -pd .true. 避免调用mpirun时出错，似乎 projwfc.x并不能并行调用mpirun
             j.write('mpirun -np {} {}/projwfc.x -pd .true. <{}> {}  \n\n'.format(self.core, qebin_path, elepdos_in, elepdos_out))
 
         return jobname

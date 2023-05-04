@@ -109,7 +109,7 @@ class qe_submitjob:
         if not input_file.exists():
             raise FileExistsError(f" {inputfilename} doesn't exist")
         outputfilename = inputfilename.split(".")[0] + ".out"
-        print("Note: --------------------")
+        print("\nNote: --------------------")
         print("    !!!!!!!! Please Attention, You have been source your Intel Compiler !!!!!!!!")
         # 这种模式是专门为qe的其它模块设计，非阻塞式单核运行，
         # 只有一个目的，将ph.x任务提交到后台后，进行不可约q点产生计算。
@@ -133,7 +133,7 @@ class qe_submitjob:
         else: 
             cwd_path = os.getcwd()
             os.chdir(self.work_path)
-            print("Note: --------------------")
+            print("\nNote: --------------------")
             print(f"    killall -9 {dotx_file} > /dev/null")
             print(f"    {qebin_path}/{dotx_file} <{inputfilename} > {outputfilename}")
             os.system(f"killall -9 {dotx_file} > /dev/null")
@@ -186,7 +186,7 @@ class qe_submitjob:
             # 在运行ph.x之前，检查dyn0文件是否已经存在
             if self.checksuffix(self.work_path, ".dyn0"):
                 # 在运行ph.x之前，如果dyn0文件已经存在， 那么就直接退出程序
-                print("Note: ------------------------")
+                print("\nNote: ------------------------")
                 print("    Before running the ph.x, the program will check the *.dyn0 exists whether or not !")
                 print("    It seems that dyn0 is not create by you!! Please check it carefully!!! The program will exit!!!")
                 sys.exit(0)

@@ -1,5 +1,5 @@
 # SCF input for VASP
-# Note that VASP uses the FIRST occurence of a keyword
+# \nNote that VASP uses the FIRST occurence of a keyword
 #SYSTEM = (NaB3)4  (P1) ~ D:/NaB15-relax-r.cif (VASP)
 
     PREC = Accurate

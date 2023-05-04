@@ -138,6 +138,39 @@ eletron -m mode=elepdosdata core=1 npool=1 queue=local kpoints_dense='8 8 8'
 eletron -m mode=eletdos core=1 npool=1 queue=local kpoints_dense='8 8 8' 
 ```
 
+算出来的*.tdos文件就是可以画图的总电子态密度数据了
+
+第一列是能量值, 单位是eV
+
+第二列是dos(E),根据$DOS(E) dE$定义, 表示在E和E+dE的能量范围内的能级数，单位是：**states/eV/(Unit Cell)**
+
+注意：lambda.out中N(Ef)的单位是：**states/spin/Ry/(Unit Cell)**。如果想验证的话，可以从elph.inp_lambda.`number`文件获得相关信息：
+```shell
+     0.000000      0.000000      0.000000    10    60                            
+     w1 w2 .... wn # n个振动模式
+     Gaussian Broadening:   0.005 Ry, ngauss=   0     
+     DOS = 11.556540 states/spin/Ry/Unit Cell at Ef= 16.274226 eV # 这里的DOS就是lambda.out中的 N(Ef)
+     lambda(    1)=  0.0000   gamma=    0.01 GHz     
+     lambda(    2)=  0.0000   gamma=    0.01 GHz
+     ... ... ...
+     ... ... ...
+```
+
+第三列是Int dos(E), 根据$\int_{E_0}^{E_1} DOS(E) dE$定义, 表示从最低能级到当前能级总的态的数量。
+
+参考资料：http://hawk.fisica.uminho.pt/ricardo-ribeiro/QEnotes.html
+```shell 
+  E (eV)   dos(E)     Int dos(E) EFermi =   16.266 eV                                  
+ -10.000  0.0000E+00  0.8000E+01
+  -9.990  0.0000E+00  0.8000E+01
+  -9.980  0.0000E+00  0.8000E+01
+  ...     ...         ...
+  ...     ...         ...
+   9.980  0.2352E+01  0.3439E+02
+   9.990  0.2339E+01  0.3442E+02
+  10.000  0.2322E+01  0.3444E+02
+```
+
 ####  <span style="color:green">**单独处理elepdos数据**</span>
 ```shell
 eletron -m mode=elepdos core=1 npool=1 queue=local kpoints_dense='8 8 8' 
@@ -156,7 +189,11 @@ eletron -m mode=elebanddata core=1 queue=local
 
 ###  <span style="color:yellow"> 同时进行 电子能带结构计算 电子态密度计算 并且 处理好数据
 
-<span style="color:green"> **(qe计算出来的电子态密度的横坐标能量的单位是Ry, 而vasp计算出来的电子态密度的横坐标的单位是eV, 1 Ry = 13.605693122994, 1eV = 0.0734986443513 Ry)**
+<span style="color:green"> **(qe计算出来的电子态密度的横坐标能量的单位是Ry, 而vasp计算出来的电子态密度的横坐标的单位是eV)**
+
+**1 Ry = 13.605693122994**
+
+**1eV = 0.0734986443513 Ry**
 
 ```shell
 eletron -m mode=eleproperties core=48 npool=4 queue=local kinserted=200 nbnd=500  kpoints_dense='8 8 8' 
@@ -220,7 +257,7 @@ grep DOS elph.inp_lambda.10
 处理电荷屏蔽常数为0.1和0.13,得到 $\lambda$ 和 $\omega_{log}$ 并且输出一个文件：w_alpha2f_lambda.csv 可以用来绘制alpha-lambda的函数图像
 
 ```shell
-sc -m mode=Tc core=1 npool=1 queue=local temperature_steps=100 a2fdos=True alpha2fdat=False broaden=0.5 smearing_method=1 efermi=xxxxx
+sc -m mode=Tc core=1 npool=1 queue=local temperature_steps=100 a2fdos=True alpha2fdat=False broaden=0.5 smearing_method=1 nef=xxxxx
 ```
 
 ```shell

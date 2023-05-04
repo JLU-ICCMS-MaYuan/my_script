@@ -120,7 +120,7 @@ class vasp_phonopara(vasp_inputpara):
     add more paramaters for vasp phono calculate
     It inherits the vasp_inputpara class.
     
-    Note:
+    \nNote:
         please attention to specify the lreal(LREAL) and ncore(NCORE) 可能会影响计算速度
         The formate is:     lreal=.TRUE. or lreal=.FALSE.
                             ncore=4      or ncore=1 

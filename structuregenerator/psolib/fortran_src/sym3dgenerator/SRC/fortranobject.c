@@ -774,13 +774,13 @@ array_from_pyobj(const int type_num, npy_intp *dims, const int rank,
                  const int intent, PyObject *obj)
 {
     /*
-     * Note about reference counting
+     * \nNote about reference counting
      *  -----------------------------
      * If the caller returns the array to Python, it must be done with
      * Py_BuildValue("N",arr).
      * Otherwise, if obj!=arr then the caller must call Py_DECREF(arr).
      *
-     * Note on intent(cache,out,..)
+     * \nNote on intent(cache,out,..)
      * ---------------------
      * Don't expect correct data when returning intent(cache) array.
      *

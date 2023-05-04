@@ -1,5 +1,5 @@
 # Explicit k-points input for VASP
-# Note that VASP uses the FIRST occurence of a keyword
+# \nNote that VASP uses the FIRST occurence of a keyword
 #SYSTEM = (NaB3)4  (P1) ~ C:/Users/dell/Desktop/B60Na4-Pri.cif (VASP)
 
     PREC = Accurate
