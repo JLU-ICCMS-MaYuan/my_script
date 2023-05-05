@@ -71,13 +71,13 @@ class qe_inputpara(qe_base):
 
         # self.smearing = methfessel-paxton 做scffit 和 scf 时候用这个参数
         if not hasattr(self, "degauss"):
-            self.degauss = "0.05"
+            self.degauss = "0.02"
 
         if not hasattr(self, "ecutwfc"):
-            self.ecutwfc = "60"
+            self.ecutwfc = "80"
 
         if not hasattr(self, "ecutrho"):
-            self.ecutrho = "720"
+            self.ecutrho = "960"
 
         if not hasattr(self, "lspinorb"):
             self.lspinorb = "false"
