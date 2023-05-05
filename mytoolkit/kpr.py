@@ -64,9 +64,9 @@ def create_kmesh(kresolution, input_file_path, output_kpoints):
     b1mol=mol(b1)
     b2mol=mol(b2)
     b3mol=mol(b3)
-    n_k1 = math.ceil(b1mol/interval_k)
-    n_k2 = math.ceil(b2mol/interval_k)
-    n_k3 = math.ceil(b3mol/interval_k)
+    n_k1 = math.ceil(b1mol/interval_k*2*math.pi*0.04)
+    n_k2 = math.ceil(b2mol/interval_k*2*math.pi*0.04)
+    n_k3 = math.ceil(b3mol/interval_k*2*math.pi*0.04)
     newpos = []
     for i_natom in range(n_atom):
         newpos.append([pos[i_natom][0],pos[i_natom][1],pos[i_natom][2]])
@@ -82,5 +82,5 @@ def create_kmesh(kresolution, input_file_path, output_kpoints):
 
 
 if __name__ == "__main__":
-    kresolution = float(input("(注意: 这个脚本的作用时将KSPACING转化为对应的KPOINTS, \n所应用的公式就是vasp官网给出的(注意程序中bi已经乘了2pi, 所以这里列出的公式中bi前面没有2pi): N_i = max(1, ceiling(|b_i|/KSPACING)), \n这里需要你输入的k点密度不同于vaspkit中需要你输入的k点密度。)\n请输入k点密度: \n"))
+    kresolution = float(input("(注意: 这个脚本的作用时将USPEX中的KresolStart转化为对应的KPOINTS, \n所应用的公式就是vaspkit官网给出的(注意程序中bi已经乘了2pi, 所以这里列出的公式中bi前面没有2pi): N_i = max(1, ceiling(|b_i|/KSPACING)) = max(1, ceiling(2*pi*0.04*|b_i|/KSPACING)), \n这里需要你输入的k点密度不同于KSPACING中需要你输入的k点密度, 但是有点类似vaspkit中k点的密度。vaspkit中输入的k点的密度的单位是2pi*0.04 A-1. )\n请输入k点密度: \n"))
     create_kmesh(kresolution, "POSCAR", "KPOINTS")
