@@ -134,12 +134,12 @@ if __name__ == "__main__":
     print("    你需要在当前目录下准备好: POSCAR, POTCAR")
     print("    测试的KSPACING值分别是: 0.3, 0.2, 0.18, 0.15, 0.12")
     print("    该脚本不提供自动提任务的命令: 你可以用以下命令提供命令:")
-    print("        for i in 0.3, 0.2, 0.18, 0.15, 0.12; do cd $i; qsub submit.sh;   cd ..; done")
-    print("        for i in 0.3, 0.2, 0.18, 0.15, 0.12; do cd $i; sbatch submit.sh; cd ..; done")
+    print("        for i in 0.4 0.3 0.2 0.18 0.15 0.12; do cd $i; qsub submit.sh;   cd ..; done")
+    print("        for i in 0.4 0.3 0.2 0.18 0.15 0.12; do cd $i; sbatch submit.sh; cd ..; done")
 
     print("Note: --------------------")
     print("    创建测试VASP的KSPACING输入文件目录以及准备vasp的输入文件")
-    kspacings = [0.3, 0.2, 0.18, 0.15, 0.12]
+    kspacings = [0.4, 0.3, 0.2, 0.18, 0.15, 0.12]
     potcar_path = os.path.abspath("POTCAR")
     poscar_path = os.path.abspath("POSCAR")
     for kspacing in kspacings:
@@ -158,11 +158,11 @@ if __name__ == "__main__":
         dH_per_atom = get_enthalpy_per_atom(outcar_path)
         kspacing_dH.append([kspacing, dH_per_atom])
 
-    if len(kspacing_dH) == 8:
+    if len(kspacing_dH) == 6:
         with open("kspacing_dH.csv", 'w') as f:
             for kspacing, dH_per_atom in kspacing_dH:
                 f.write("{},{}\n".format(kspacing, dH_per_atom))
-                print("{:<5.3f}  {:12.8f}\n".format(kspacing, dH_per_atom))
+                print("{:<5.3f},{:12.8f}".format(kspacing, dH_per_atom))
         print("All OUTCARs are OK, kspacing_dH.csv has been wroten in current position")
     else:
         print("If all OUTCARs are OK, kspacing_dH.csv will be wroten in current position")

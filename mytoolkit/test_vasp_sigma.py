@@ -135,8 +135,8 @@ if __name__ == "__main__":
     print("    你需要在当前目录下准备好: POSCAR, POTCAR")
     print("    测试的SIGMA值分别是: 0.01, 0.02, 0.03, 0.04, 0.05, 0.1, 0.2, 0.5")
     print("    该脚本不提供自动提任务的命令: 你可以用以下命令提供命令:")
-    print("        for i in 0.01, 0.02, 0.03, 0.04, 0.05, 0.1, 0.2, 0.5; do cd $i; qsub submit.sh; cd ..; done")
-    print("        for i in 0.01, 0.02, 0.03, 0.04, 0.05, 0.1, 0.2, 0.5; do cd $i; sbatch submit.sh; cd ..; done")
+    print("        for i in 0.01 0.02 0.03 0.04 0.05 0.1 0.2 0.5; do cd $i; qsub submit.sh; cd ..; done")
+    print("        for i in 0.01 0.02 0.03 0.04 0.05 0.1 0.2 0.5; do cd $i; sbatch submit.sh; cd ..; done")
 
     print("Note: --------------------")
     print("    创建测试VASP的SIGMA输入文件目录以及准备vasp的输入文件")
@@ -163,7 +163,7 @@ if __name__ == "__main__":
         with open("sigma_dH.csv", 'w') as f:
             for sigma, dH_per_atom in sigmas_dH:
                 f.write("{},{}\n".format(sigma, dH_per_atom))
-                print("{},{}\n".format(sigma, dH_per_atom))
+                print("{},{}".format(sigma, dH_per_atom))
         print("All OUTCARs are OK, sigma_dH.csv has been wroten in current position")
     else:
         print("If all OUTCARs are OK, sigma_dH.csv will be wroten in current position")
