@@ -17,12 +17,8 @@ SIGMA    = {}
 NELM     = 200   
 NELMIN   = 6     
 EDIFF    = 1e-8  
-EDIFFG   = -0.001  
-NSW      = 500   
-IBRION   = 2     
-ISIF     = 3     
-POTIM    = 0.05  
-PSTRESS  = 1000.0  
+EDIFFG   = -0.001   
+POTIM    = 0.05
 NCORE    = 4     
 """.format(sigma)
     
@@ -111,12 +107,12 @@ def get_enthalpy_per_atom(outcar_path):
         N = 0; row_id=int(begin_id)
         while True:
             row_id = row_id+1
-            content  = os.popen("sed -n '{}p' OUTCAR".format(row_id)).read().strip().split()
+            content  = os.popen(f"sed -n '{row_id}p' {outcar_path}").read().strip().split()
             if len(content) == 3:
                 N += 1
             else:
                 break
-        dH_per_atom = dH/N
+        dH_per_atom = dH*1000/N
         return dH_per_atom
     except:
         print("Try to get DeltaH from {} failed So let dH_per_atoms = 1000000000000.0!".format(outcar_path))   
@@ -162,8 +158,8 @@ if __name__ == "__main__":
     if len(sigmas_dH) == 8:
         with open("sigma_dH.csv", 'w') as f:
             for sigma, dH_per_atom in sigmas_dH:
-                f.write("{},{}\n".format(sigma, dH_per_atom))
-                print("{},{}".format(sigma, dH_per_atom))
+                f.write("{:<5.3f},{:12.8f}\n".format(sigma, dH_per_atom))
+                print("{:<5.3f},{:12.8f}".format(sigma, dH_per_atom))
         print("All OUTCARs are OK, sigma_dH.csv has been wroten in current position")
     else:
         print("If all OUTCARs are OK, sigma_dH.csv will be wroten in current position")

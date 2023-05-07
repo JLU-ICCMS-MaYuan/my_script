@@ -4,7 +4,7 @@ import sys
 import shutil
 
 def write_incar(kspacing, work_path):
-    incar = """# test SIGMA
+    incar = """# test KSPACING
 ISTART   = 0     
 ICHARG   = 2     
 ENCUT    = 800   
@@ -17,12 +17,8 @@ SIGMA    = 0.2
 NELM     = 200   
 NELMIN   = 6     
 EDIFF    = 1e-8  
-EDIFFG   = -0.001  
-NSW      = 500   
-IBRION   = 2     
-ISIF     = 3     
-POTIM    = 0.05  
-PSTRESS  = 1000.0  
+EDIFFG   = -0.001     
+POTIM    = 0.05
 NCORE    = 4     
 """.format(kspacing)
     
@@ -111,7 +107,7 @@ def get_enthalpy_per_atom(outcar_path):
         N = 0; row_id=int(begin_id)
         while True:
             row_id = row_id+1
-            content  = os.popen("sed -n '{}p' OUTCAR".format(row_id)).read().strip().split()
+            content  = os.popen(f"sed -n '{row_id}p' {outcar_path}").read().strip().split()
             if len(content) == 3:
                 N += 1
             else:
@@ -161,7 +157,7 @@ if __name__ == "__main__":
     if len(kspacing_dH) == 6:
         with open("kspacing_dH.csv", 'w') as f:
             for kspacing, dH_per_atom in kspacing_dH:
-                f.write("{},{}\n".format(kspacing, dH_per_atom))
+                f.write("{:<5.3f},{:12.8f}\n".format(kspacing, dH_per_atom))
                 print("{:<5.3f},{:12.8f}".format(kspacing, dH_per_atom))
         print("All OUTCARs are OK, kspacing_dH.csv has been wroten in current position")
     else:
