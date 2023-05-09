@@ -9,7 +9,7 @@ def create_kmesh(kresolution, input_file_path, output_kpoints):
         output_kpoints: output the file of KPOINTS
     """
     def cross(a,b):
-        c=[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]]
+        c=[a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]]
         return c
     def dot(a,b):
         c=a[0]*b[0]+a[1]*b[1]+a[2]*b[2]

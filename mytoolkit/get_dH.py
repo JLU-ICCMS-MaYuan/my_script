@@ -13,7 +13,7 @@ print("    如果你想批量使用该脚本可以用这个命令: \n    for i i
 try:
     dH = os.popen("grep enthalpy OUTCAR | tail -n 1 | awk '{print $ 5}'").read().strip('\n')
     
-    print("    dH = {:<12.8f}".format(float(dH)))
+    print("    dH = {:<12.8f} eV".format(float(dH)))
 except:
     print("   OUTCAR有问题读不出来焓值")
     sys.exit(1)

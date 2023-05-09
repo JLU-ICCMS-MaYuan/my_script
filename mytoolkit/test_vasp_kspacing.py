@@ -112,7 +112,7 @@ def get_enthalpy_per_atom(outcar_path):
                 N += 1
             else:
                 break
-        dH_per_atom = dH*1000/N
+        dH_per_atom = dH/N
         return dH_per_atom
     except:
         print("Try to get DeltaH from {} failed So let dH_per_atoms = 1000000000000.0!".format(outcar_path))   
