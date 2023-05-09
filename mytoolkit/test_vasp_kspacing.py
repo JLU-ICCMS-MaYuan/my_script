@@ -3,11 +3,13 @@ import os
 import sys
 import shutil
 
+import numpy as np
+
 def write_incar(kspacing, work_path):
     incar = """# test KSPACING
 ISTART   = 0     
 ICHARG   = 2     
-ENCUT    = 800   
+kspacing    = 800   
 PREC     = A     
 SYMPREC  = 1e-05  
 NCORE    = 1     
@@ -123,8 +125,8 @@ def get_enthalpy_per_atom(outcar_path):
 
 if __name__ == "__main__":
     
-    jobsystem = "chaoyin_pbs"
-    # jobsystem = "tangB_slurm"
+    # jobsystem = "chaoyin_pbs"
+    jobsystem = "tangB_slurm"
     # jobsystem = "coshare_slurm"
     print("Note: --------------------")
     print("    你需要在当前目录下准备好: POSCAR, POTCAR")
@@ -154,11 +156,18 @@ if __name__ == "__main__":
         dH_per_atom = get_enthalpy_per_atom(outcar_path)
         kspacing_dH.append([kspacing, dH_per_atom])
 
-    if len(kspacing_dH) == 6:
+    kspacing_dH = np.array(kspacing_dH)
+    Ediff = np.diff(kspacing_dH, axis=0)[:,-1]
+    Ediff = np.insert(Ediff, 0, [0.0])
+    Ediff = Ediff[:, np.newaxis]
+    kspacing_dH_Hdiff = np.hstack((kspacing_dH, Ediff))
+    if len(kspacing_dH_Hdiff) == 6:
+        print("{:<12},{:<14},{:<14}".format("kspacing", "dH(eV/atom)", "diff(meV/atom)"))
         with open("kspacing_dH.csv", 'w') as f:
-            for kspacing, dH_per_atom in kspacing_dH:
-                f.write("{:<5.3f},{:12.8f}\n".format(kspacing, dH_per_atom))
-                print("{:<5.3f},{:12.8f}".format(kspacing, dH_per_atom))
+            f.write("{:<12},{:<14},{:<14}\n".format("kspacing", "dH(eV/atom)", "diff(meV/atom)"))
+            for kspacing, dH_per_atom, Hdiff in kspacing_dH_Hdiff:
+                f.write("{:<12.3f},{:<14.8f},{:<14.8f}\n".format(kspacing, dH_per_atom, Hdiff*1000))
+                print("{:<12.3f},{:<14.8f},{:<14.8f}".format(kspacing, dH_per_atom, Hdiff*1000))
         print("All OUTCARs are OK, kspacing_dH.csv has been wroten in current position")
     else:
         print("If all OUTCARs are OK, kspacing_dH.csv will be wroten in current position")

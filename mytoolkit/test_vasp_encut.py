@@ -3,6 +3,8 @@ import os
 import sys
 import shutil
 
+import numpy as np
+
 def write_incar(encut, work_path):
     incar = """# test ENCUT
 ISTART   = 0     
@@ -101,6 +103,7 @@ mpirun -n 64 /public/software/apps/vasp/intelmpi/5.4.4/bin/vasp_std > vasp.log 2
         jobfile.write(jobsystem)
 
 def get_enthalpy_per_atom(outcar_path):
+    """计算并返回每原子的焓值，单位是eV"""
     try:
         dH = float(os.popen(f"grep -s enthalpy {outcar_path}" + " | tail -n 1 | awk '{print $ 5}'").read().strip('\n'))
         begin_id = os.popen(f'grep -n "position of ions in cartesian coordinates" {outcar_path}').read().split(":")[0]
@@ -123,8 +126,8 @@ def get_enthalpy_per_atom(outcar_path):
 
 if __name__ == "__main__":
     
-    jobsystem = "chaoyin_pbs"
-    # jobsystem = "tangB_slurm"
+    # jobsystem = "chaoyin_pbs"
+    jobsystem = "tangB_slurm"
     # jobsystem = "coshare_slurm"
     print("Note: --------------------")
     print("    你需要在当前目录下准备好: POSCAR, POTCAR")
@@ -154,11 +157,18 @@ if __name__ == "__main__":
         dH_per_atom = get_enthalpy_per_atom(outcar_path)
         encut_dH.append([encut, dH_per_atom])
 
-    if len(encut_dH) == 7:
+    encut_dH = np.array(encut_dH)
+    Ediff = np.diff(encut_dH, axis=0)[:,-1]
+    Ediff = np.insert(Ediff, 0, [0.0])
+    Ediff = Ediff[:, np.newaxis]
+    encut_dH_Hdiff = np.hstack((encut_dH, Ediff))
+    if len(encut_dH_Hdiff) == 7:
+        print("{:<12},{:<14},{:<14}".format("ENCUT", "dH(eV/atom)", "diff(meV/atom)"))
         with open("encut_dH.csv", 'w') as f:
-            for encut, dH_per_atom in encut_dH:
-                f.write("{:<5.3f},{:12.8f}\n".format(encut, dH_per_atom))
-                print("{:<5.3f},{:12.8f}".format(encut, dH_per_atom))
+            f.write("{:<12},{:<14},{:<14}\n".format("ENCUT", "dH(eV/atom)", "diff(meV/atom)"))
+            for encut, dH_per_atom, Hdiff in encut_dH_Hdiff:
+                f.write("{:<12.3f},{:<14.8f},{:<14.8f}\n".format(encut, dH_per_atom, Hdiff*1000))
+                print("{:<12.3f},{:<14.8f},{:<14.8f}".format(encut, dH_per_atom, Hdiff*1000))
         print("All OUTCARs are OK, encut_dH.csv has been wroten in current position")
     else:
         print("If all OUTCARs are OK, encut_dH.csv will be wroten in current position")

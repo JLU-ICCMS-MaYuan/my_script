@@ -3,6 +3,8 @@ import os
 import sys
 import shutil
 
+import numpy as np
+
 def write_incar(sigma, work_path):
     incar = """# test SIGMA
 ISTART   = 0     
@@ -11,7 +13,7 @@ ENCUT    = 800
 PREC     = A     
 SYMPREC  = 1e-05  
 NCORE    = 1     
-KSPACING = 0.18  
+sigma = 0.18  
 ISMEAR   = 1     
 SIGMA    = {}    
 NELM     = 200   
@@ -149,17 +151,24 @@ if __name__ == "__main__":
         write_submit(jobsystem, test_path)
 
     print("    尝试获得每原子的焓值 dH(meV/atom)")
-    sigmas_dH = []
+    sigma_dH = []
     for sigma in sigmas:
         outcar_path = os.path.join(str(sigma), "OUTCAR")
         dH_per_atom = get_enthalpy_per_atom(outcar_path)
-        sigmas_dH.append([sigma, dH_per_atom])
+        sigma_dH.append([sigma, dH_per_atom])
 
-    if len(sigmas_dH) == 8:
+    sigma_dH = np.array(sigma_dH)
+    Ediff = np.diff(sigma_dH, axis=0)[:,-1]
+    Ediff = np.insert(Ediff, 0, [0.0])
+    Ediff = Ediff[:, np.newaxis]
+    sigma_dH_Hdiff = np.hstack((sigma_dH, Ediff))
+    if len(sigma_dH_Hdiff) == 8:
+        print("{:<12},{:<14},{:<14}".format("sigma", "dH(eV/atom)", "diff(meV/atom)"))
         with open("sigma_dH.csv", 'w') as f:
-            for sigma, dH_per_atom in sigmas_dH:
-                f.write("{:<5.3f},{:12.8f}\n".format(sigma, dH_per_atom))
-                print("{:<5.3f},{:12.8f}".format(sigma, dH_per_atom))
+            f.write("{:<12},{:<14},{:<14}\n".format("sigma", "dH(eV/atom)", "diff(meV/atom)"))
+            for sigma, dH_per_atom, Hdiff in sigma_dH_Hdiff:
+                f.write("{:<12.3f},{:<14.8f},{:<14.8f}\n".format(sigma, dH_per_atom, Hdiff*1000))
+                print("{:<12.3f},{:<14.8f},{:<14.8f}".format(sigma, dH_per_atom, Hdiff*1000))
         print("All OUTCARs are OK, sigma_dH.csv has been wroten in current position")
     else:
         print("If all OUTCARs are OK, sigma_dH.csv will be wroten in current position")
