@@ -20,16 +20,20 @@ def create_kmesh(kresolution, old_scf_in_path):
     a1 = np.array([ax,ay,az])
     a2 = np.array([bx,by,bz])
     a3 = np.array([cx,cy,cz])
+
     b1 = 2*np.pi*np.cross(a2, a3) / np.dot(a1, np.cross(a2, a3))
     b2 = 2*np.pi*np.cross(a3, a1) / np.dot(a2, np.cross(a3, a1))
     b3 = 2*np.pi*np.cross(a1, a2) / np.dot(a3, np.cross(a1, a2))
+
     b1mol=np.linalg.norm(b1)
     b2mol=np.linalg.norm(b2)
     b3mol=np.linalg.norm(b3)
+
     n_k1 = np.ceil(b1mol/kresolution)
     n_k2 = np.ceil(b2mol/kresolution)
     n_k3 = np.ceil(b3mol/kresolution)
     print("    kresolution={:<4.3f}, 相应的nk1, nk2, nk3 = {:<4} {:<4} {:<4}".format(kresolution, n_k1, n_k2, n_k3))
+    
     return n_k1, n_k2, n_k3
 
 def change_kpoints(old_scf_in_path, new_scf_in_path, kresolution):
@@ -123,8 +127,8 @@ mpirun -n 64 /public/software/apps/vasp/intelmpi/5.4.4/bin/vasp_std > vasp.log 2
 def get_total_energy(scf_out_path):
     """计算并返回每原子的能量 单位的Ry"""
     try:
-        Et = float(os.popen(f""" grep "!    total energy " {scf_out_path}""" + """  | awk '{print $5}' """).read().strip('\n'))
-        N = int(os.popen(f""" grep "number of atoms/cell" {scf_out_path}""" + """  | awk '{print $5}' """).read().strip('\n'))
+        Et = float(os.popen(f""" grep -s "!    total energy " {scf_out_path}""" + """  | awk '{print $5}' """).read().strip('\n'))
+        N = int(os.popen(f""" grep -s "number of atoms/cell" {scf_out_path}""" + """  | awk '{print $5}' """).read().strip('\n'))
         Et_per_atom = Et/N # 注意单位是Ry
         return Et_per_atom
     except:

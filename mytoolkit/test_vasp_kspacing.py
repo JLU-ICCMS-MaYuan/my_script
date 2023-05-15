@@ -9,13 +9,12 @@ def write_incar(kspacing, work_path):
     incar = """# test KSPACING
 ISTART   = 0     
 ICHARG   = 2     
-kspacing    = 800   
+ENCUT    = 800   
 PREC     = A     
-SYMPREC  = 1e-05  
-NCORE    = 1     
+SYMPREC  = 1e-05     
 KSPACING = {} 
 ISMEAR   = 0     
-SIGMA    = 0.2    
+SIGMA    = 0.01    
 NELM     = 200   
 NELMIN   = 6     
 EDIFF    = 1e-8  
@@ -102,9 +101,9 @@ mpirun -n 64 /public/software/apps/vasp/intelmpi/5.4.4/bin/vasp_std > vasp.log 2
     with open(submit_path, "w") as jobfile:
         jobfile.write(jobsystem)
 
-def get_enthalpy_per_atom(outcar_path):
+def get_energy_per_atom(outcar_path):
     try:
-        dH = float(os.popen(f"grep -s enthalpy {outcar_path}" + " | tail -n 1 | awk '{print $ 5}'").read().strip('\n'))
+        dE = float(os.popen(f'grep -s "free  energy   TOTEN" {outcar_path}' + " | tail -n 1 | awk '{print $ 5}'").read().strip('\n'))
         begin_id = os.popen(f'grep -n "position of ions in cartesian coordinates" {outcar_path}').read().split(":")[0]
         N = 0; row_id=int(begin_id)
         while True:
@@ -114,12 +113,12 @@ def get_enthalpy_per_atom(outcar_path):
                 N += 1
             else:
                 break
-        dH_per_atom = dH/N
-        return dH_per_atom
+        dE_per_atom = dE/N
+        return dE_per_atom
     except:
-        print("Try to get DeltaH from {} failed So let dH_per_atoms = 1000000000000.0!".format(outcar_path))   
-        dH_per_atom = 1000000000000.0
-        return dH_per_atom
+        print("Try to get DeltaH from {} failed So let dE_per_atoms = 1000000000000.0!".format(outcar_path))   
+        dE_per_atom = 1000000000000.0
+        return dE_per_atom
 
 
 
@@ -149,26 +148,26 @@ if __name__ == "__main__":
         write_incar(kspacing, test_path)
         write_submit(jobsystem, test_path)
 
-    print("    尝试获得每原子的焓值 dH(meV/atom)")
-    kspacing_dH = []
+    print("    尝试获得每原子的焓值 dE(meV/atom)")
+    kspacing_dE = []
     for kspacing in kspacings:
         outcar_path = os.path.join(str(kspacing), "OUTCAR")
-        dH_per_atom = get_enthalpy_per_atom(outcar_path)
-        kspacing_dH.append([kspacing, dH_per_atom])
+        dE_per_atom = get_energy_per_atom(outcar_path)
+        kspacing_dE.append([kspacing, dE_per_atom])
 
-    kspacing_dH = np.array(kspacing_dH)
-    Ediff = np.diff(kspacing_dH, axis=0)[:,-1]
+    kspacing_dE = np.array(kspacing_dE)
+    Ediff = np.diff(kspacing_dE, axis=0)[:,-1]
     Ediff = np.insert(Ediff, 0, [0.0])
     Ediff = Ediff[:, np.newaxis]
-    kspacing_dH_Hdiff = np.hstack((kspacing_dH, Ediff))
-    if len(kspacing_dH_Hdiff) == 6:
-        print("{:<12},{:<14},{:<14}".format("kspacing", "dH(eV/atom)", "diff(meV/atom)"))
-        with open("kspacing_dH.csv", 'w') as f:
-            f.write("{:<12},{:<14},{:<14}\n".format("kspacing", "dH(eV/atom)", "diff(meV/atom)"))
-            for kspacing, dH_per_atom, Hdiff in kspacing_dH_Hdiff:
-                f.write("{:<12.3f},{:<14.8f},{:<14.8f}\n".format(kspacing, dH_per_atom, Hdiff*1000))
-                print("{:<12.3f},{:<14.8f},{:<14.8f}".format(kspacing, dH_per_atom, Hdiff*1000))
-        print("All OUTCARs are OK, kspacing_dH.csv has been wroten in current position")
+    kspacing_dE_Hdiff = np.hstack((kspacing_dE, Ediff))
+    if len(kspacing_dE_Hdiff) == 6:
+        print("{:<12},{:<14},{:<14}".format("kspacing", "dE(eV/atom)", "diff(meV/atom)"))
+        with open("kspacing_dE.csv", 'w') as f:
+            f.write("{:<12},{:<14},{:<14}\n".format("kspacing", "dE(eV/atom)", "diff(meV/atom)"))
+            for kspacing, dE_per_atom, Hdiff in kspacing_dE_Hdiff:
+                f.write("{:<12.3f},{:<14.8f},{:<14.8f}\n".format(kspacing, dE_per_atom, Hdiff*1000))
+                print("{:<12.3f},{:<14.8f},{:<14.8f}".format(kspacing, dE_per_atom, Hdiff*1000))
+        print("All OUTCARs are OK, kspacing_dE.csv has been wroten in current position")
     else:
-        print("If all OUTCARs are OK, kspacing_dH.csv will be wroten in current position")
+        print("If all OUTCARs are OK, kspacing_dE.csv will be wroten in current position")
 

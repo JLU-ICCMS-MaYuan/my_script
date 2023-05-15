@@ -11,10 +11,8 @@ ISTART   = 0
 ICHARG   = 2     
 ENCUT    = 800   
 PREC     = A     
-SYMPREC  = 1e-05  
-NCORE    = 1     
-sigma = 0.18  
-ISMEAR   = 1     
+SYMPREC  = 1e-05     
+ISMEAR   = 0     
 SIGMA    = {}    
 NELM     = 200   
 NELMIN   = 6     
@@ -104,7 +102,7 @@ mpirun -n 64 /public/software/apps/vasp/intelmpi/5.4.4/bin/vasp_std > vasp.log 2
 
 def get_enthalpy_per_atom(outcar_path):
     try:
-        dH = float(os.popen(f"grep -s enthalpy {outcar_path}" + " | tail -n 1 | awk '{print $ 5}'").read().strip('\n'))
+        dE = float(os.popen(f'grep -s "free  energy   TOTEN" {outcar_path}' + " | tail -n 1 | awk '{print $ 5}'").read().strip('\n'))
         begin_id = os.popen(f'grep -n "position of ions in cartesian coordinates" {outcar_path}').read().split(":")[0]
         N = 0; row_id=int(begin_id)
         while True:
@@ -114,31 +112,52 @@ def get_enthalpy_per_atom(outcar_path):
                 N += 1
             else:
                 break
-        dH_per_atom = dH/N
-        return dH_per_atom
+        dE_per_atom = dE/N
+        return dE_per_atom
     except:
-        print("Try to get DeltaH from {} failed So let dH_per_atoms = 1000000000000.0!".format(outcar_path))   
-        dH_per_atom = 1000000000000.0
-        return dH_per_atom
+        print("Try to get DeltaH from {} failed So let dE_per_atoms = 1000000000000.0!".format(outcar_path))   
+        dE_per_atom = 1000000000000.0
+        return dE_per_atom
 
 
 
 
 if __name__ == "__main__":
     
-    jobsystem = "chaoyin_pbs"
-    # jobsystem = "tangB_slurm"
+    # jobsystem = "chaoyin_pbs"
+    jobsystem = "tangB_slurm"
     # jobsystem = "coshare_slurm"
     print("Note: --------------------")
     print("    你需要在当前目录下准备好: POSCAR, POTCAR")
     print("    测试的SIGMA值分别是: 0.01, 0.02, 0.03, 0.04, 0.05, 0.1, 0.2, 0.5")
+    print("    在生成测试脚本时, 默认使用ISMEAR=1  !!!!!!!!! ")
     print("    该脚本不提供自动提任务的命令: 你可以用以下命令提供命令:")
     print("        for i in 0.01 0.02 0.03 0.04 0.05 0.1 0.2 0.5; do cd $i; qsub submit.sh; cd ..; done")
     print("        for i in 0.01 0.02 0.03 0.04 0.05 0.1 0.2 0.5; do cd $i; sbatch submit.sh; cd ..; done")
-
-    print("Note: --------------------")
+    print("    为什么要优化 SIGMA 值？")
+    print("        若展宽 sigma 太小, 则计算难以收敛；若展宽 sigma 太大, 则会产生多余的熵(entropy), 因此必须选择合适的 sigma 值。")
+    print("        ISMEAR 和 SIGMA 这两个关键词要联合起来使用, 前者用来指定smearing 的方法, 后者用来指定 smearing 的展宽")
+    print("        ISMEAR 和 SIGMA 的默认值分别为 1 和 0.2。")
+    print("        ISMEAR 可能的取值为-5, -4, -3, -2, -1, 0, N (N 表示正整数):")
+    print("            ISMEAR=-5, 表示采用 Blochl 修正的四面体方法；")
+    print("            ISMEAR=-4, 表示采用四面体方法, 但是没有 Blochl 修正；")
+    print("            ISMEAR=-1, 表示采用 Fermi-Dirac smearing 方法")
+    print("            ISMEAR= 0, 表示采用 Gaussian smearing 方法")
+    print("            ISMEAR= N, 表示采用 Methfessel-Paxton smearing 方法, 其中 N 是表示此方法中的阶数, 一般情况下 N 取 1 或 2, 但是 In most cases and leads to very similarresults 。")
+    print("        sigma 值一般在 0.1 - 0.3 eV 范围内。")
+    print("        ISMEAR 取值的一些经验：")
+    print("            (1) 一般说来, 无论是对何种体系, 进行何种性质的计算, 采用ISMEAR = 0 并选择一个合适的 SIGMA 值, 都能得到合理的结果。")
+    print("            (2) 在进行静态计算(能量单点计算, no relaxation in metals ) 或态密度计算且 k 点数目大于 4 时, 取 ISMEAR = -5。")
+    print("            (3) 当原胞较大而 k 点数目较小(小于 4 个) 时, 取 ISMEAR = 0, 并选择一个合适的 SIGMA 值。( If the cell is too large (or if you use only a single or two k-points) use ISMEAR=0 in combination with a small SIGMA=0.05)")
+    print("            (4) 对半导体或绝缘体, 不论是静态还是结构优化计算, 都取ISMEAR = -5。( Mind: Avoid to use ISMEAR>0 for semiconductors and insulators, since it might cause problems. For insulators use ISMEAR=0 or ISMEAR=-5.)")
+    print("            (5) 对金属体系( for relaxations in metals ), 取 ISMEAR = 1 或 2, 并选择一个合适的 SIGMA 值。")
+    print("    判断标准")
+    print("        熵(entropy)越小越好, 选择 entropy T*S EENTRO 值中最小的那个所对应的 SIGMA 。( SIGMA should be as large as possible keeping the difference between the free energy and the total energy (i.e. the term 'entropy T*S') in the OUTCAR file negligible (1meV/atom). )")
+    print("        当 k 点的数目发生变化后, 要重新优化选择 SIGMA 值。")
+    print("\nNote: --------------------")
     print("    创建测试VASP的SIGMA输入文件目录以及准备vasp的输入文件")
-    sigmas = [0.01, 0.02, 0.03, 0.04, 0.05, 0.1, 0.2, 0.5]
+
+    sigmas = [0.5, 0.2, 0.1, 0.05, 0.04, 0.03, 0.02, 0.01]
     potcar_path = os.path.abspath("POTCAR")
     poscar_path = os.path.abspath("POSCAR")
     for sigma in sigmas:
@@ -150,26 +169,26 @@ if __name__ == "__main__":
         write_incar(sigma, test_path)
         write_submit(jobsystem, test_path)
 
-    print("    尝试获得每原子的焓值 dH(meV/atom)")
-    sigma_dH = []
+    print("    尝试获得每原子的焓值 dE(meV/atom)")
+    sigma_dE = []
     for sigma in sigmas:
         outcar_path = os.path.join(str(sigma), "OUTCAR")
-        dH_per_atom = get_enthalpy_per_atom(outcar_path)
-        sigma_dH.append([sigma, dH_per_atom])
+        dE_per_atom = get_enthalpy_per_atom(outcar_path)
+        sigma_dE.append([sigma, dE_per_atom])
 
-    sigma_dH = np.array(sigma_dH)
-    Ediff = np.diff(sigma_dH, axis=0)[:,-1]
+    sigma_dE = np.array(sigma_dE)
+    Ediff = np.diff(sigma_dE, axis=0)[:,-1]
     Ediff = np.insert(Ediff, 0, [0.0])
     Ediff = Ediff[:, np.newaxis]
-    sigma_dH_Hdiff = np.hstack((sigma_dH, Ediff))
-    if len(sigma_dH_Hdiff) == 8:
-        print("{:<12},{:<14},{:<14}".format("sigma", "dH(eV/atom)", "diff(meV/atom)"))
-        with open("sigma_dH.csv", 'w') as f:
-            f.write("{:<12},{:<14},{:<14}\n".format("sigma", "dH(eV/atom)", "diff(meV/atom)"))
-            for sigma, dH_per_atom, Hdiff in sigma_dH_Hdiff:
-                f.write("{:<12.3f},{:<14.8f},{:<14.8f}\n".format(sigma, dH_per_atom, Hdiff*1000))
-                print("{:<12.3f},{:<14.8f},{:<14.8f}".format(sigma, dH_per_atom, Hdiff*1000))
-        print("All OUTCARs are OK, sigma_dH.csv has been wroten in current position")
+    sigma_dE_Hdiff = np.hstack((sigma_dE, Ediff))
+    if len(sigma_dE_Hdiff) == 8:
+        print("{:<12},{:<14},{:<14}".format("sigma", "dE(eV/atom)", "diff(meV/atom)"))
+        with open("sigma_dE.csv", 'w') as f:
+            f.write("{:<12},{:<14},{:<14}\n".format("sigma", "dE(eV/atom)", "diff(meV/atom)"))
+            for sigma, dE_per_atom, Hdiff in sigma_dE_Hdiff:
+                f.write("{:<12.3f},{:<14.8f},{:<14.8f}\n".format(sigma, dE_per_atom, Hdiff*1000))
+                print("{:<12.3f},{:<14.8f},{:<14.8f}".format(sigma, dE_per_atom, Hdiff*1000))
+        print("All OUTCARs are OK, sigma_dE.csv has been wroten in current position")
     else:
-        print("If all OUTCARs are OK, sigma_dH.csv will be wroten in current position")
+        print("If all OUTCARs are OK, sigma_dE.csv will be wroten in current position")
 

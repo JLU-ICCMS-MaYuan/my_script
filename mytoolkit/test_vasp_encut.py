@@ -11,11 +11,10 @@ ISTART   = 0
 ICHARG   = 2     
 ENCUT    = {}   
 PREC     = A     
-SYMPREC  = 1e-05  
-NCORE    = 1     
+SYMPREC  = 1e-05     
 KSPACING = 0.18
 ISMEAR   = 0     
-SIGMA    = 0.2    
+SIGMA    = 0.01   
 NELM     = 200   
 NELMIN   = 6     
 EDIFF    = 1e-8  
@@ -102,10 +101,10 @@ mpirun -n 64 /public/software/apps/vasp/intelmpi/5.4.4/bin/vasp_std > vasp.log 2
     with open(submit_path, "w") as jobfile:
         jobfile.write(jobsystem)
 
-def get_enthalpy_per_atom(outcar_path):
-    """计算并返回每原子的焓值，单位是eV"""
+def get_energy_per_atom(outcar_path):
+    """计算并返回每原子的焓值, 单位是eV"""
     try:
-        dH = float(os.popen(f"grep -s enthalpy {outcar_path}" + " | tail -n 1 | awk '{print $ 5}'").read().strip('\n'))
+        dE = float(os.popen(f'grep -s "free  energy   TOTEN" {outcar_path}' + " | tail -n 1 | awk '{print $ 5}'").read().strip('\n'))
         begin_id = os.popen(f'grep -n "position of ions in cartesian coordinates" {outcar_path}').read().split(":")[0]
         N = 0; row_id=int(begin_id)
         while True:
@@ -115,12 +114,12 @@ def get_enthalpy_per_atom(outcar_path):
                 N += 1
             else:
                 break
-        dH_per_atom = dH/N
-        return dH_per_atom
+        dE_per_atom = dE/N
+        return dE_per_atom
     except:
-        print("Try to get DeltaH from {} failed So let dH_per_atoms = 1000000000000.0!".format(outcar_path))   
-        dH_per_atom = 1000000000000.0
-        return dH_per_atom
+        print("Try to get DeltaH from {} failed So let dE_per_atoms = 1000000000000.0!".format(outcar_path))   
+        dE_per_atom = 1000000000000.0
+        return dE_per_atom
 
 
 
@@ -150,26 +149,26 @@ if __name__ == "__main__":
         write_incar(encut, test_path)
         write_submit(jobsystem, test_path)
 
-    print("    尝试获得每原子的焓值 dH(meV/atom)")
-    encut_dH = []
+    print("    尝试获得每原子的焓值 dE(meV/atom)")
+    encut_dE = []
     for encut in encuts:
         outcar_path = os.path.join(str(encut), "OUTCAR")
-        dH_per_atom = get_enthalpy_per_atom(outcar_path)
-        encut_dH.append([encut, dH_per_atom])
+        dE_per_atom = get_energy_per_atom(outcar_path)
+        encut_dE.append([encut, dE_per_atom])
 
-    encut_dH = np.array(encut_dH)
-    Ediff = np.diff(encut_dH, axis=0)[:,-1]
+    encut_dE = np.array(encut_dE)
+    Ediff = np.diff(encut_dE, axis=0)[:,-1]
     Ediff = np.insert(Ediff, 0, [0.0])
     Ediff = Ediff[:, np.newaxis]
-    encut_dH_Hdiff = np.hstack((encut_dH, Ediff))
-    if len(encut_dH_Hdiff) == 7:
-        print("{:<12},{:<14},{:<14}".format("ENCUT", "dH(eV/atom)", "diff(meV/atom)"))
-        with open("encut_dH.csv", 'w') as f:
-            f.write("{:<12},{:<14},{:<14}\n".format("ENCUT", "dH(eV/atom)", "diff(meV/atom)"))
-            for encut, dH_per_atom, Hdiff in encut_dH_Hdiff:
-                f.write("{:<12.3f},{:<14.8f},{:<14.8f}\n".format(encut, dH_per_atom, Hdiff*1000))
-                print("{:<12.3f},{:<14.8f},{:<14.8f}".format(encut, dH_per_atom, Hdiff*1000))
-        print("All OUTCARs are OK, encut_dH.csv has been wroten in current position")
+    encut_dE_Hdiff = np.hstack((encut_dE, Ediff))
+    if len(encut_dE_Hdiff) == 7:
+        print("{:<12},{:<14},{:<14}".format("ENCUT", "dE(eV/atom)", "diff(meV/atom)"))
+        with open("encut_dE.csv", 'w') as f:
+            f.write("{:<12},{:<14},{:<14}\n".format("ENCUT", "dE(eV/atom)", "diff(meV/atom)"))
+            for encut, dE_per_atom, Hdiff in encut_dE_Hdiff:
+                f.write("{:<12.3f},{:<14.8f},{:<14.8f}\n".format(encut, dE_per_atom, Hdiff*1000))
+                print("{:<12.3f},{:<14.8f},{:<14.8f}".format(encut, dE_per_atom, Hdiff*1000))
+        print("All OUTCARs are OK, encut_dE.csv has been wroten in current position")
     else:
-        print("If all OUTCARs are OK, encut_dH.csv will be wroten in current position")
+        print("If all OUTCARs are OK, encut_dE.csv will be wroten in current position")
 

@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 import math
 
+from pymatgen.core.structure import Structure
+from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
+
 def create_kmesh(kresolution, input_file_path, output_kpoints):
     """
     input parameter:
@@ -80,7 +83,22 @@ def create_kmesh(kresolution, input_file_path, output_kpoints):
     print("%-3s %-3s %-3s" % (int(n_k1),int(n_k2),int(n_k3)))
     print('Kmesh is writen in KPOINTS-mesh')
 
+    return n_k1, n_k2, n_k3
+
+def get_irreduced_k(mesh_input):
+
+    shift_input= [0, 0, 0]
+    stc = Structure.from_file("POSCAR")
+    spg = SpacegroupAnalyzer(stc, symprec=0.01)
+
+    ir_reduced_kpoints = spg.get_ir_reciprocal_mesh(mesh=mesh_input, is_shift=shift_input)
+    # for coord, weight in ir_reduced_kpoints:
+    #     print("{:<8.6f} {:<8.6f} {:<8.6f} {:<4}".format(coord[0], coord[1], coord[2], weight))
+
+    print("总的k点是{}".format(mesh_input[0]*mesh_input[1]*mesh_input[2]))
+    print("不可约k点个数是{}".format(len(ir_reduced_kpoints)))
 
 if __name__ == "__main__":
     kresolution = float(input("(注意: 这个脚本的作用时将KSPACING转化为对应的KPOINTS, \n所应用的公式就是vasp官网给出的(注意程序中bi已经乘了2pi, 所以这里列出的公式中bi前面没有2pi): N_i = max(1, ceiling(|b_i|/KSPACING)), \n这里需要你输入的k点密度不同于vaspkit中需要你输入的k点密度。)\n请输入k点密度: \n"))
-    create_kmesh(kresolution, "POSCAR", "KPOINTS")
+    n_k1, n_k2, n_k3 = create_kmesh(kresolution, "POSCAR", "KPOINTS")
+    get_irreduced_k([n_k1, n_k2, n_k3])

@@ -98,8 +98,8 @@ mpirun -n 64 /public/software/apps/vasp/intelmpi/5.4.4/bin/vasp_std > vasp.log 2
 def get_total_energy(scf_out_path):
     """计算并返回每原子的能量 单位的Ry"""
     try:
-        Et = float(os.popen(f""" grep "!    total energy " {scf_out_path}""" + """  | awk '{print $5}' """).read().strip('\n'))
-        N = int(os.popen(f""" grep "number of atoms/cell" {scf_out_path}""" + """  | awk '{print $5}' """).read().strip('\n'))
+        Et = float(os.popen(f""" grep -s "!    total energy " {scf_out_path}""" + """  | awk '{print $5}' """).read().strip('\n'))
+        N = int(os.popen(f""" grep -s "number of atoms/cell" {scf_out_path}""" + """  | awk '{print $5}' """).read().strip('\n'))
         Et_per_atom = Et/N # 注意单位是Ry
         return Et_per_atom
     except:
