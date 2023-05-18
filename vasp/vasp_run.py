@@ -51,7 +51,11 @@ def vaspbatch_relax(args: ArgumentParser) -> None:
     _config = config(args).read_config()
     input_dir_path = Path(_config['input_file_path'])
     if input_dir_path.is_dir():
-        input_files_path = list(input_dir_path.glob("*.vasp"))
+        input_files_path  = [input_dir_path.joinpath(pathname) for pathname in os.listdir(input_dir_path) if input_dir_path.joinpath(pathname).suffix == ".cif" or input_dir_path.joinpath(pathname).suffix == ".vasp"]
+        if not input_files_path:
+            print("Note: --------------------")
+            print(f"    The program didn't get any structures from {input_dir_path}")
+            sys.exit(1)
         work_path         = _config['work_path']        ; del _config['work_path']
         press             = _config['press']            ; del _config['press']
         submit_job_system = _config['submit_job_system']; del _config['submit_job_system']
@@ -60,7 +64,7 @@ def vaspbatch_relax(args: ArgumentParser) -> None:
         for input_file_path in input_files_path:
             # prepare the POSCAR POTCAR  
             print("\nNote: --------------------")
-            print("    Create directory for {} file !!!")
+            print(f"    Create directory for {input_file_path} file !!!")
             relax_inputpara  = vaspbatch_inputpara(
                 work_path=work_path,
                 press=press,
@@ -85,6 +89,10 @@ def vaspbatch_relax(args: ArgumentParser) -> None:
             _vasp_submitjob   = vasp_submitjob.init_from_relaxinput(relax_inputpara)
             if relax_inputpara.queue is not None:
                 _vasp_submitjob.submit_mode1(jobname)
+    else:
+        print("Note: --------------------")
+        print(f"    The {input_dir_path} path doesn't exist!")
+        sys.exit(1)
 
 
 def vasp_phono(args: ArgumentParser) -> None:
@@ -265,7 +273,7 @@ class vasp_processdata(vasp_base):
         
         if self.mode == "dispband" or self.mode == "dfptband":
             self.post_progress_phono_band()
-        if self.mode == "dispphdos" or self.mode == "dispphdos":
+        if self.mode == "dispphdos" or self.mode == "dfptphdos":
             self.post_progress_phono_dos()
         if self.mode == "eband":
             self.post_progress_eletron_band()
@@ -386,7 +394,7 @@ class vasp_processdata(vasp_base):
             os.system("phonopy -p pdos.conf -c {}".format(self.input_file_path.name)) # 获得 total_dos.dat
             os.chdir(cwd)
 
-        elif self.mode == "dispphdos":
+        elif self.mode == "dfptphdos":
             # 获得total_dos.dat
             self.write_dfpt_mesh_conf(
                 self.work_path, 

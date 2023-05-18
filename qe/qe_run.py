@@ -116,6 +116,8 @@ class qe_phono:
             self.phono_inputpara.get_phonodos()
             print("\nNote: --------------------")
             print("    You can use `phdos_proj2eles.csv` to plot phonon-DOS")
+        elif self.phono_inputpara.mode == "gibbs_vb":
+            self.phono_inputpara.get_gibbs_free_energy()
         elif self.phono_inputpara.mode == "hspp":
             self.phono_inputpara.get_hspp()
         else:

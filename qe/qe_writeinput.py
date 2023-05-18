@@ -932,7 +932,7 @@ class qe_writeinput:
             print("\nNote: --------------------")
             print("    Again, check to see if the four values are the same")
             print("    qirreduced_coords:{}   qweights:{}   qirreduced number:{}   elphInpLambda number:{}".format(len(self.qirreduced_coords),  len(self.qweights), int(self.qirreduced), len(elphInpLambda)))
-            time.sleep(3)
+            # time.sleep(3)
             if len(self.qirreduced_coords) == len(self.qweights) == int(self.qirreduced) == len(elphInpLambda):
                 q_number = self.qirreduced
                 q_coords = self.qirreduced_coords

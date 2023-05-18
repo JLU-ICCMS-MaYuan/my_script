@@ -34,7 +34,7 @@ class vasp_base:
     ) -> None:
 
         self.work_path         = work_path
-        self.press             = press          
+        self.press             = int(press)          
         self.submit_job_system = submit_job_system
         self.input_file_path   = input_file_path
         self.mode              = mode
@@ -369,7 +369,7 @@ class vaspbatch_base(vasp_base):
     ) -> None:
 
         self.work_path         = work_path
-        self.press             = press          
+        self.press             = int(press)          
         self.submit_job_system = submit_job_system
         self.input_file_path   = input_file_path
         self.mode              = mode

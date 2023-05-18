@@ -129,7 +129,7 @@ class qe_inputpara(qe_base):
         print(r'         echo -e "1\n102\n2\nxxxx" | vaspkit')
         print('    The order for kmesh.py is:  (xxxx is corresponding to the KSPACING in vasp)')
         print("         kmesh.py xxxx")
-        time.sleep(3)
+        # time.sleep(3)
         if hasattr(self, "kpoints_dense"):
             _kpoints_dense = self.kpoints_dense.split()
             self.kpoints_dense = list(map(int, _kpoints_dense))
@@ -293,7 +293,7 @@ class qephono_inputpara(qe_inputpara):
             print("    qtot from No.1 line in {}.dyn0 = {}".format(self.system_name, self.qtot))
             print("    qirreduced from No.2 line in  {}.dyn0 = {}".format(self.system_name, self.qirreduced))
             print("    qirreduced_coords from the rest lines in {}.dyn0, the number = {}".format(self.system_name, len(self.qirreduced_coords)))
-            time.sleep(3)
+            # time.sleep(3)
             # 获得 self.qtot, self.qirreduced, self.qirreduced_coords, self.qweights 
         else:
             print(f"{self.system_name}.dyn0 doesn't exist in {self.work_path}. The qtot, qirreduced, qirreduced_coords will not get values.")
@@ -523,7 +523,7 @@ class qephono_inputpara(qe_inputpara):
             gauss = gaussian0[idx]
         print("\nNote: --------------------")
         print(f'    Converged gaussid = {idx+1}, corresponding gaussian value={gaussian1[idx]}')
-        time.sleep(3)
+        # time.sleep(3)
         return idx, gauss
 
     def get_gam_lines(self, gauss:float, q_number:int, freq_number:int):
@@ -641,13 +641,13 @@ class qephono_inputpara(qe_inputpara):
             header=None, # header=None：不将文件的第一行作为列名，而将其视为数据。
             sep='\s+'    # sep='\s+'：使用正则表达式 \s+ 作为列之间的分隔符，表示一个或多个空格字符。
             )
-        columns = ['freq', 'tdos']+[ele for ele in elements]
+        columns = ['omega', 'tdos']+[ele for ele in elements]
         phonondos.columns = columns
         # 对相同的列名(相同的元素的pdos相加)进行相加,
         phonondos_sum = phonondos.groupby(phonondos.columns, axis=1).sum()
-        # 将 'freq' 列移动到 DataFrame 的第一列
-        freq_col = phonondos_sum.pop('freq')
-        phonondos_sum.insert(0, 'freq', freq_col)
+        # 将 'omega' 列移动到 DataFrame 的第一列
+        omega_col = phonondos_sum.pop('omega')
+        phonondos_sum.insert(0, 'omega', omega_col)
         # 将 'tdos' 列移动到 DataFrame 的第二列
         tdos_col = phonondos_sum.pop('tdos')
         phonondos_sum.insert(1, 'tdos', tdos_col)
@@ -659,6 +659,57 @@ class qephono_inputpara(qe_inputpara):
             )
 
         return phonondos_sum
+
+    def get_gibbs_free_energy(self):
+
+        omega_phtdos_phpdos = self.get_phonodos()
+        omega_phtdos_phpdos = omega_phtdos_phpdos[omega_phtdos_phpdos["omega"]>0]  # 只保留正频率
+       
+        omegas = omega_phtdos_phpdos['omega'].values # 讲pandas中提取出的omegas转化为numpy类型  # omegas is circular frequency
+        omegas = omegas * 2.99792458E10 # convert unit cm-1 to Hz
+
+        tdos   = omega_phtdos_phpdos['tdos'].values 
+        temperature = np.array([i for i in range(0,5100,100)])
+
+        # tmp_gibbs_i = []
+        # for o, d in zip(omegas, tdos):
+        #     h_bar = 6.582119514E-16 # unit is eV·s
+        #     gibbs_i = (1/2 * h_bar * o) * d
+        #     tmp_gibbs_i.append(gibbs_i)
+        
+        # print(tmp_gibbs_i[0:10]); input("-----------1--------")
+        # 定义积分步长
+        d_omega = (omegas[-1] - omegas[0]) / (len(omegas) -1)
+        # print("d_omega={}".format(d_omega))
+
+        # 定义计算单个声子的吉布斯自由能gibbs_i 
+        def gibbs_i(omegas, T, dos):
+            """\int{ G_i * g(w) } = \int{ (zpe_i + temperature_effect_i ) * g(w) dw}"""
+            h_bar = 6.582119514E-16 # unit is eV·s
+            k_B   = 8.617343E-5  # unit is eV/K
+            if T == 0:
+                gibbs_i = (1/2 * h_bar * omegas) * dos
+            else:
+                # print("-(h_bar*omegas)/(k_B*T)={}".format(-(h_bar*omegas)/(k_B*T)))
+                # input("21")
+                # print("np.exp(-(h_bar*omegas)/(k_B*T))={}".format(np.exp(-(h_bar*omegas)/(k_B*T))))
+                # input("22")
+                # print("np.log(1-np.exp(-(h_bar*omegas)/(k_B*T)))={}".format(np.log(1-np.exp(-(h_bar*omegas)/(k_B*T)))))
+                # input("23")
+                gibbs_i = (1/2 * h_bar * omegas + k_B * T * np.log(1-np.exp(-(h_bar*omegas)/(k_B*T)))) * tdos
+            return gibbs_i
+
+        for T in temperature:
+            print(gibbs_i(omegas, T, tdos)[0:10])
+            input("-----------2----------")
+            gibbs = gibbs_i(omegas, T, tdos) * d_omega
+            # print(gibbs)
+            # print(len(gibbs))
+            # input("3")
+            gibbs = np.sum(gibbs)
+            print("T={}, gibbs={}".format(T, gibbs))
+            # input("4")
+
 
 
 class qeeletron_inputpara(qe_inputpara):

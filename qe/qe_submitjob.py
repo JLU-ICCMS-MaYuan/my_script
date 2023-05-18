@@ -196,7 +196,7 @@ class qe_submitjob:
                 # 如果执行完ph.x的运行后，检查返回的任务号不为空，说明ph.x的运行没有问题。
                 while True:
                     # 然后检查dyn0文件是否存在，一旦产生就退出ph.x的运行。
-                    time.sleep(3)
+                    # time.sleep(3)
                     if self.checksuffix(self.work_path, ".dyn0"):
                         print("The *.dyn0 has been created just now !!! The program will run `killall -9 ph.x`")
                         os.system("killall -9 ph.x")
@@ -230,7 +230,7 @@ class qe_submitjob:
     def getpid():
         """get pid number"""
         jobids = []
-        print("wait 6s, The program will tell you PID"); time.sleep(6); 
+        print("wait 6s, The program will tell you PID"); #time.sleep(6); 
         osawk = """ps -ef | grep -E "pw.x|ph.x|matdyn.x|lambda.x|q2r.x|eliashberg.x|dos.x|pp.x|projwfc.x" |  grep -v grep | awk '{print $2}'""" # return a series of number, such as: 423423 324233 423424
         # ps -ef ps -ef用于查看全格式的全部进程，其中“ps”是在Linux中是查看进程的命令，“-e ”参数代表显示所有进程，“-f”参数代表全格式。
         # grep -E  ‘grep’ ‘-E’ 选项表示使用扩展的正则表达式。如果你使用 ‘grep’ 命令时带 ‘-E’，你只需要用途 ‘|’ 来分隔OR条件。 grep -E 'pattern1|pattern2' filename

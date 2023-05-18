@@ -24,28 +24,30 @@ def sendQQemail(previous_content, content):
     server.sendmail("myth620137018@163.com", "1157421359@qq.com", msg.as_string())
     server.quit()
 
-def check_slurm(job_id=None):
+def check_slurm(job_ids=None):
     # 检查正在运行的任务数量
-    task = os.popen(f'squeue -u may -h --format "%A    %t    %R    %M    %Z     %s" | grep "{job_id}"').read().split('\n')
+    tasks = []
 
+    for job_id in job_ids:
+        task = os.popen(f'squeue -u may -h --format "%A    %t    %R    %M    %Z     %s" | grep "{job_id}"').read().strip("\n")
+        tasks.append(task)
+        
     # 准备发送的内容
-    content = "one_task" + "<br/>"
-    for string in task:
+    content = "one_tasks" + "<br/>"
+    for string in tasks:
         string = string + "<br/>"
         content+=string
 
-    if len(task) > 1:
+    if len(tasks) > 1:
         return False, content
     else:
         return True, content
     
-def check_pbs(job_id=None):
+def check_pbs(job_ids=None):
 
     # 获得正在运行的任务的任务号 qstat -r
-    tasknumber = os.popen("qstat -r | grep liuhy | awk '{print $1}' | cut -d . -f 1").read().split()
-    # 遍历任务号，找到正在运行的任务
-    task = []
-    if job_id in tasknumber:
+    tasks = []
+    for job_id in job_ids:
         tdata = os.popen('qstat -f ' + job_id + ' |grep Output_Path -A 5').read().split('\n')
         state = os.popen('qstat' + '| grep ' + job_id + " | awk '{print $5}'").read().strip('\n')
         for i in range(0, len(tdata)):
@@ -58,16 +60,16 @@ def check_pbs(job_id=None):
             iterm = iterm.strip()
             oneline += iterm
         predata = oneline.split('/')[1:-1]
-        task.append("{}    {}    {}".format(job_id , state, '/' + '/'.join(predata)))
+        tasks.append("{}    {}    {}".format(job_id , state, '/' + '/'.join(predata)))
 
     # 准备发送的内容
-    content = "one_task" + "<br/>"
-    for string in task:
+    content = "one_tasks" + "<br/>"
+    for string in tasks:
         string = string + "<br/>"
         content+=string
     content = content + "Waiting" + "<br/>"
 
-    if len(task) > 1:
+    if len(tasks) > 1:
         return False, content
     else:
         return True, content
@@ -80,19 +82,19 @@ if __name__ == "__main__":
     submit_system = "slurm"
 
     print("Note: --------------------")
-    print("    使用方法: sendQQemail_one_task.py <job_id>")
-    job_id = sys.argv[1]
+    print("    使用方法: sendQQemail_one_tasks.py <job_ids>")
+    job_ids = sys.argv[1:]
     previous_content  = ""
     while True:
         if submit_system == "slurm":
-            send_flag, content = check_slurm(job_id)
+            send_flag, content = check_slurm(job_ids)
             if send_flag: # 发送邮件，就把content， previous_content 一起发送
                 sendQQemail(previous_content, content)
                 sys.exit(0)
             else: #  不发送邮件，就把content保存下来
                 previous_content = content
         elif submit_system == "pbs":
-            send_flag, content = check_pbs(job_id)
+            send_flag, content = check_pbs(job_ids)
             if send_flag: # 发送邮件，就把content， previous_content 一起发送
                 sendQQemail(previous_content, content)
                 sys.exit(0)

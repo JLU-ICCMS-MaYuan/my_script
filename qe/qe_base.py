@@ -209,7 +209,7 @@ class qe_base:
         else:
             print("\nNote: --------------------")
             print("    scffit.out, scf.out and relax.out all don't exist. The program can't get reciprocal lattice from them.")
-            time.sleep(2)
+            # time.sleep(2)
             return None
 
         try:

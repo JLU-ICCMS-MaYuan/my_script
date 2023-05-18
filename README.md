@@ -636,22 +636,43 @@ phono -m supercell='2 2 2' kdensity='36 36 36' mode=dfpt core=48 ismear=1 encut=
 ###  <span style="color:yellow"> 有限位移法计算声子谱——数据处理band  </span>
 #### 最简参数
 ```shell
-data -m mode=dispprog supercell='2 2 2' spectrum=True 
+data -m mode=dispband supercell='2 2 2' spectrum=True 
 ```
 #### 最繁参数
 ```shell
-data -m mode=dispprog supercell='2 2 2' spectrum=True 
+data -m mode=dispband supercell='2 2 2' spectrum=True 
+```
+
+###  <span style="color:yellow"> 有限位移法计算声子谱——数据处理phdos  </span>
+#### 最简参数
+```shell
+data -m mode=dispphdos supercell='2 2 2' spectrum=True 
+```
+#### 最繁参数
+```shell
+data -m mode=dispphdos supercell='2 2 2' spectrum=True 
 ```
 
 ###  <span style="color:yellow"> 密度泛函微扰DFPT法计算声子谱——数据处理band  </span>
 #### 最简参数
 ```shell
-data -m mode=dfptprog supercell='2 2 2' spectrum=True
+data -m mode=dfptband supercell='2 2 2' spectrum=True
 ```
 #### 最繁参数
 ```shell
-data -m mode=dfptprog supercell='2 2 2' spectrum=True
+data -m mode=dfptband supercell='2 2 2' spectrum=True
 ```
+
+###  <span style="color:yellow"> 密度泛函微扰计算声子谱——数据处理phdos  </span>
+#### 最简参数
+```shell
+data -m mode=dfptphdos supercell='2 2 2' spectrum=True 
+```
+#### 最繁参数
+```shell
+data -m mode=dfptphdos supercell='2 2 2' spectrum=True 
+```
+
 
 ###  <span style="color:yellow"> 自洽计算  </span>
 #### 最简参数
