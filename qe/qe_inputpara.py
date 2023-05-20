@@ -342,31 +342,6 @@ class qephono_inputpara(qe_inputpara):
                 self.efermi_dos = None
                 self.gaussid, self.gauss = self.check_convergence(efermi_dos=self.efermi_dos)
 
-
-
-    def get_q_from_scfout(self, dir):
-        if not os.path.exists(dir):
-            print("scf.out didn't exist!")
-            sys.exit(1)
-        content = open(dir, "r").readlines()
-        def find_k(item):
-            if re.search(r"k\(\s*\d+\)\s*=\s*", item):
-                return item
-
-        result = filter(find_k, content)
-        for res in result:
-            ks  = re.findall(r"\-?\d+\.\d+", res.split(",")[0])
-            self.q_coordinate_list.append(ks)
-            wp = re.findall(r"\-?\d+\.\d+", res.split(",")[1])
-            nqs = float(wp[0]) * self.qtot / 2
-            self.q_weight_list.append(nqs)
-
-        self.qtot           = self.qpoints[0] * self.qpoints[1] * self.qpoints[2] 
-        self.q_non_irreducible_amount = len(self.q_coordinate_list)
-
-        return self.qtot,    self.q_non_irreducible_amount, \
-               self.q_coordinate_list, self.q_weight_list
-
     def get_qpoints(self, dyn0_path):
         '''
         input  : dir        dyn0文件的路径
@@ -395,8 +370,9 @@ class qephono_inputpara(qe_inputpara):
             raise FileExistsError ("dyn0 file doesn't exist!")
         content = open(dyn0_path, "r").readlines()
         # check qtot is right or not! 
-        qpoints = list(map(int, content[0].strip("\n").split()))
-        qtot  = list(map(int, qpoints))
+        qpoints   = list(map(int, content[0].strip("\n").split()))
+        qtot_list = list(map(int, qpoints))
+        qtot      = qtot_list[0] * qtot_list[1] * qtot_list[2]
 
         def find_q(item):
             if re.search(r"E[\+|\-]", item):
@@ -660,56 +636,150 @@ class qephono_inputpara(qe_inputpara):
 
         return phonondos_sum
 
-    def get_gibbs_free_energy(self):
+    def get_gibbs_from_phtdos(self):
 
         omega_phtdos_phpdos = self.get_phonodos()
         omega_phtdos_phpdos = omega_phtdos_phpdos[omega_phtdos_phpdos["omega"]>0]  # 只保留正频率
        
         omegas = omega_phtdos_phpdos['omega'].values # 讲pandas中提取出的omegas转化为numpy类型  # omegas is circular frequency
-        omegas = omegas * 2.99792458E10 # convert unit cm-1 to Hz
+        omegas = omegas * 2.997924E+10 # convert unit cm-1 to Hz
 
-        tdos   = omega_phtdos_phpdos['tdos'].values 
+        tdos   = omega_phtdos_phpdos['tdos'].values  # conserve unit is states/cm-1 = states·cm
         temperature = np.array([i for i in range(0,5100,100)])
+        # temperature = np.array([0])
 
-        # tmp_gibbs_i = []
-        # for o, d in zip(omegas, tdos):
-        #     h_bar = 6.582119514E-16 # unit is eV·s
-        #     gibbs_i = (1/2 * h_bar * o) * d
-        #     tmp_gibbs_i.append(gibbs_i)
-        
-        # print(tmp_gibbs_i[0:10]); input("-----------1--------")
         # 定义积分步长
-        d_omega = (omegas[-1] - omegas[0]) / (len(omegas) -1)
-        # print("d_omega={}".format(d_omega))
+        d_omega = np.round(0.333564E-10*(omegas[-1] - omegas[0])/(len(omegas) -1), decimals=6)  # conserve unit is cm-1
 
         # 定义计算单个声子的吉布斯自由能gibbs_i 
         def gibbs_i(omegas, T, dos):
             """\int{ G_i * g(w) } = \int{ (zpe_i + temperature_effect_i ) * g(w) dw}"""
-            h_bar = 6.582119514E-16 # unit is eV·s
+            h_bar = 6.582120E-16 # unit is eV·s
             k_B   = 8.617343E-5  # unit is eV/K
             if T == 0:
                 gibbs_i = (1/2 * h_bar * omegas) * dos
             else:
-                # print("-(h_bar*omegas)/(k_B*T)={}".format(-(h_bar*omegas)/(k_B*T)))
-                # input("21")
-                # print("np.exp(-(h_bar*omegas)/(k_B*T))={}".format(np.exp(-(h_bar*omegas)/(k_B*T))))
-                # input("22")
-                # print("np.log(1-np.exp(-(h_bar*omegas)/(k_B*T)))={}".format(np.log(1-np.exp(-(h_bar*omegas)/(k_B*T)))))
-                # input("23")
-                gibbs_i = (1/2 * h_bar * omegas + k_B * T * np.log(1-np.exp(-(h_bar*omegas)/(k_B*T)))) * tdos
+                gibbs_i = (1/2 * h_bar * omegas + k_B * T * np.log(1-np.exp(-(h_bar*omegas)/(k_B*T)))) * dos
             return gibbs_i
 
+        T_gibbs = []
         for T in temperature:
-            print(gibbs_i(omegas, T, tdos)[0:10])
-            input("-----------2----------")
             gibbs = gibbs_i(omegas, T, tdos) * d_omega
-            # print(gibbs)
-            # print(len(gibbs))
-            # input("3")
             gibbs = np.sum(gibbs)
-            print("T={}, gibbs={}".format(T, gibbs))
-            # input("4")
+            T_gibbs.append([T, gibbs])
 
+        with open(self.work_path.joinpath("thermodynamics_from_phtdos.csv"), "w") as f:
+            f.write("{:>5},{:>12},{:>12}\n".format("T", "gibbs(eV)", "gibbs(meV)"))
+            for T, gibbs in T_gibbs:
+                f.write("{:>5},{:>12.8f},{:>12.8f}\n".format(T, gibbs, 1000*gibbs/self.all_atoms_quantity))
+
+    def get_gibbs_from_freq(self):
+        """
+        从声子总态密度获得声子频率然后获得自由能
+            声子态密度的单位是: states/cm-1, 通过对声子态密度积分就可以得到总的振动模式数: 3N, 其中N是胞内总原子数
+        """
+        temperature = np.array([i for i in range(0,5100,100)])
+
+        def gibbs_q(omegas, T, weight):
+            """\int{ G_i * g(w) } = \int{ (zpe_i + temperature_effect_i ) * g(w) dw}"""
+            h_bar = 6.582119514E-16 # unit is eV·s
+            k_B   = 8.617343E-5  # unit is eV/K
+            omegas = omegas[ omegas > 0 ]
+            # print(len(omegas)); print(weight)
+            # input(omegas)
+            if T == 0:
+                _gibbs_q = (1/2 * h_bar * omegas)
+            else:
+                _gibbs_q = (1/2 * h_bar * omegas + k_B * T * np.log(1-np.exp(-(h_bar*omegas)/(k_B*T))))
+            # print(_gibbs_q); input()
+            _gibbs_q = np.sum(_gibbs_q) * weight
+            # print(_gibbs_q); input()
+            return _gibbs_q
+    
+        dyn_paths = list(filter(lambda x: 'dyn' in x and 'dyn0' not in x and 'dyna2F' not in x and 'matdyn.modes' not in x, os.listdir(self.work_path)))
+        full_dyns_paths = sorted([os.path.join(self.work_path, dyn_path) for dyn_path in dyn_paths])
+        if not full_dyns_paths:
+            print(f'WARNING: Unable to detect *dyn* files in {self.__path}. The program will exit')
+            sys.exit(1)
+        
+        dyns  = [Dyn(path) for path in full_dyns_paths]
+        
+        # 从所有的q点获得频率计算吉布斯自由能
+        T_gibbs_dyns = []
+        for T in temperature:
+            gibbs = 0
+            for dyn in dyns:
+                gibbs_Q = gibbs_q(dyn.omegas*1.0E+12, T, dyn.weight) # dyn.omegas 的单位是THz
+                gibbs += gibbs_Q
+            gibbs = gibbs/self.qtot # 除以总的q点数
+            T_gibbs_dyns.append([T, gibbs])
+        with open(self.work_path.joinpath("thermodynamics_from_dyns.csv"), "w") as f:
+            f.write("{:>5},{:>12},{:>12}\n".format("T", "gibbs(eV)", "gibbs(meV)"))
+            for T, gibbs in T_gibbs_dyns:
+                f.write("{:>5},{:>12.8f},{:>12.8f}\n".format(T, gibbs, 1000*gibbs/self.all_atoms_quantity))
+
+        # 从gamma点获得频率计算吉布斯自由能
+        T_gibbs_dyn1 = []
+        for T in temperature:
+            gibbs = 0
+            gibbs_Q = gibbs_q(dyns[0].omegas*1.0E+12, T, dyns[0].weight) # dyn.omegas 的单位是THz
+            gibbs += gibbs_Q
+            T_gibbs_dyn1.append([T, gibbs])
+        with open(self.work_path.joinpath("thermodynamics_from_dyn1.csv"), "w") as f:
+            f.write("{:>5},{:>12},{:>12}\n".format("T", "gibbs(eV)", "gibbs(meV)"))
+            for T, gibbs in T_gibbs_dyn1:
+                f.write("{:>5},{:>12.8f},{:>12.8f}\n".format(T, gibbs, 1000*gibbs/self.all_atoms_quantity))
+
+
+class Dyn(object):
+    """
+    Parses a single *dyn*.elph* file,
+    returning all it contains:
+    q-point, lambdas, gammas and squared frequencies
+    """
+    lines = list()
+    q_point = tuple()
+    weight = float()
+
+
+    def __init__(self, path):
+        with open(path) as read_obj:
+            lines = read_obj.readlines()
+            read_obj.close()
+        self.lines = lines
+        # print(f'q = ({", ".join(["%.3f" % round(_q, 3) for _q in self.q_point])}) '
+            #   f'with number of q in the star {int(self.weight)}')
+        
+    @property
+    def q_point(self):
+        q_idx = int()
+        for idx, line in enumerate(self.lines):
+            if 'q = (' in line:
+                q_idx = idx
+                break
+        self._q_point = tuple(float(x) for x in self.lines[q_idx].split()[-4:-1])
+        return self._q_point
+    
+    @property
+    def weight(self):
+        self._weight = 0
+        for line in self.lines:
+            if 'Diagonalizing the dynamical matrix' in line: # 这一行前面都是等价的q点坐标，这一行后面是针对这些等价的坐标选取一个进行动力学矩阵对角化
+                break
+            if 'q = (' in line:
+                self._weight = self._weight + 1
+        # self.weight = float(self.lines[2].split()[1])
+        return self._weight
+
+    @property
+    def omegas(self):
+        self._omegas = []
+        for line in self.lines:
+            if 'freq (' in line:
+                omega = float(line.split()[4])
+                self._omegas.append(omega)
+        self._omegas = np.array(self._omegas)
+        return self._omegas
 
 
 class qeeletron_inputpara(qe_inputpara):

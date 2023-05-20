@@ -30,7 +30,8 @@ def check_slurm(job_ids=None):
 
     for job_id in job_ids:
         task = os.popen(f'squeue -u may -h --format "%A    %t    %R    %M    %Z     %s" | grep "{job_id}"').read().strip("\n")
-        tasks.append(task)
+        if task:
+            tasks.append(task)
         
     # 准备发送的内容
     content = "one_tasks" + "<br/>"
@@ -38,10 +39,11 @@ def check_slurm(job_ids=None):
         string = string + "<br/>"
         content+=string
 
-    if len(tasks) > 1:
+    if len(tasks) > 0:
         return False, content
     else:
         return True, content
+
     
 def check_pbs(job_ids=None):
 
