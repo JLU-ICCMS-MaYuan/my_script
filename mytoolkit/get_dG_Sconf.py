@@ -18,7 +18,7 @@ kB = 8.6173324e-5 #eV/K
 Sconf_PerAtom = - kB * (xA * math.log(xA) + xB * math.log(xB))
 print("So entropy is {:<12.8f} eV/K".format(Sconf_PerAtom))
 print("{:<10} {:<12} {:<12}".format("T", "dH", "dG"))
-for T in range(0, 5100, 100):
+for T in range(0, 3100, 100):
     dG = dH-T*Sconf_PerAtom 
     print("{:<10} {:<12.8f} {:<12.8f}".format(T, dH, dG))
 

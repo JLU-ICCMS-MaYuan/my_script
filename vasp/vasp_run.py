@@ -304,7 +304,6 @@ class vasp_processdata(vasp_base):
             print("    Run disp-band-post-progress-module")
             _disp_num = len(list(Path(self.work_path).glob("disp-*")))
             disp_num  = str(_disp_num).rjust(3, '0')
-
             cwd = os.getcwd()
             os.chdir(self.work_path)
             print("NOTES: ------------------------------ ")

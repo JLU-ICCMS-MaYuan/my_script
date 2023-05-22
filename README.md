@@ -168,6 +168,43 @@ phono -m mode=phonodos core=1 npool=1 queue=local qpoints='8 8 8' ndos=500
 phono -m mode=phonodosdata core=1 queue=local
 ```
 
+###  <span style="color:yellow"> 考虑振动熵后的吉布斯自由能的计算
+
+```shell
+phono -m mode=gibbsvb core=1 queue=local
+```
+运行完该命令后会得到三个文件分别为： thermodynamics_from_dyn1.csv，thermodynamics_from_dyns.csv，thermodynamics_from_phtdos.csv。他们的文件格式都一样，第一列是温度，第二列是每个结构的自由能，单位是eV，第三列是平均到每原子的自由能，单位是meV。第一行是零点振动能（Zero Point ENERGY）
+
+**thermodynamics_from_dyn1.csv 代表自由能是通过dyn1文件中(即Gamma点)的振动频率得到的**
+**thermodynamics_from_dyns.csv 代表自由能是通过dyns文件中每个q点的振动频率得到的**
+**thermodynamics_from_phtdos.csv 代表自由能是通过xxx_phono.dos声子态密度文件中对总态密度积分得到的。**
+
+
+下面给出推到吉布斯自由能的推到过程。（参考链接：https://mp.weixin.qq.com/s?__biz=MzkyODI1MDkzMQ==&mid=2247483745&idx=1&sn=6d778b432d19423188077b703dd2dca1&chksm=c21aec3df56d652bc30408adaed234b6d1cc0bc7c23bfc816251ab5775cbbb999b6c8ab76cdb&scene=21#wechat_redirect）
+
+一个材料体系，可以将其看作是由声子和电子组成。材料体系的总能当然是电子总能与声子总能之和。
+
+电子总能包括电子间的相互作用能、原子核对电子的作用、范德华相互作用（如果考虑的话）等（这些都包含在第一性原理计算软件输出的能量中，以VASP为例，这一项就是使用“grep‘energy without entropy’  OUTCAR”这个命令搜索到的能量）以及电子熵对能量的贡献（这部分很小，较高温度、精确的计算中需要考虑，这无法直接从第一性原理计算软件中输出，而是需要额外的数据后处理）。
+
+声子总能包括声子的内能以及声子的振动熵的贡献。而ZPE是声子总能的一部分。需要特别注意的是，第一性原理的计算软件通常只能够计算出声子的本征振动模（振动频率w），而声子的ZPE以及吉布斯自由能需要结合统计力学的知识处理得到。
+
+既然ZPE是声子总能的一部分，那我们就从声子总能入手，看看ZPE到底是声子总能的那一部分？
+
+对原子间的相互作用势能取简谐近似，并引入简正坐标消除势能交叉项，从而得到3N（N是体系中原子的个数）个谐振子的振动方程（详见：黄昆先生-固体物理学（1988年10月第一版p78-81））。根据谐振子的振动方程，求得谐振子的能量本征值（详见：钱伯初先生-量子力学（2006年1月第1版）p52）：
+
+$$\varepsilon_{n_{\omega_{i}}} = (n_{\omega_i}+\frac{1}{2})\hbar\omega$$
+$$i=1,2,3,...,3N, n_{\omega_i}=0,1,2,...,\infty$$
+
+i等于3N，表示3N个谐振子。这3N个谐振子对应3N个声子，声子的频率分别为 W1....W3N（包含N个原子的体系共包含3N个声子）。将每个声子所有本征态看作一个独立的热力学系统，则这个声子本征态服从玻尔兹曼统计（下面涉及到的热力学公式详见：汪志诚先生-热力学.统计物理（第四版）第六、七章）。
+
+玻尔兹曼统计的配分函数$Z_1$:
+
+$$Z_1 = \sum_n e^{-\beta\varepsilon_n}$$
+$$\beta=1/k_BT$$
+
+
+
+
 ###  <span style="color:yellow"> 电子态密度计算
 
 ####  <span style="color:green">**先进行非自洽计算获得dos数据, k点要比自洽密一些**</span>

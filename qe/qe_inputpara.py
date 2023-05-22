@@ -321,7 +321,6 @@ class qephono_inputpara(qe_inputpara):
         # phonodos计算
         if not hasattr(self, "ndos"):
             self.ndos = 500
-            print("    You didn't set `ndos`, the program will use default value: ndos=500")
 
         # phonoband计算
         if self.mode == "matdyn":
@@ -703,7 +702,7 @@ class qephono_inputpara(qe_inputpara):
             sys.exit(1)
         
         dyns  = [Dyn(path) for path in full_dyns_paths]
-        
+
         # 从所有的q点获得频率计算吉布斯自由能
         T_gibbs_dyns = []
         for T in temperature:
