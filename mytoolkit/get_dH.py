@@ -2,6 +2,7 @@
 
 import os
 import sys
+import re
 
 try:
     dH = os.popen("grep enthalpy OUTCAR | tail -n 1 | awk '{print $ 5}'").read().strip('\n')
@@ -13,8 +14,9 @@ begin_id = os.popen('grep -n "position of ions in cartesian coordinates" OUTCAR'
 N = 0; row_id=int(begin_id)
 while True:
     row_id = row_id+1
-    content  = os.popen("sed -n '{}p' OUTCAR".format(row_id)).read().strip().split()
-    if len(content) == 3:
+    content  = os.popen("sed -n '{}p' OUTCAR".format(row_id)).read().strip('\n')
+    corrds   = re.findall(r"[-+]?\d+\.\d+", content)
+    if len(corrds) == 3:
         N += 1
     else:
         break

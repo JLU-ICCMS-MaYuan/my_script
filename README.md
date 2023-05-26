@@ -158,7 +158,7 @@ phono -m mode=q2r qpoints='6 6 6' core=1 npool=1 queue=local
 ```
 
 ###  <span style="color:yellow"> 声子态密度计算
-####  <span style="color:green"> 计算phonodos, 计算态密度时要用更密的q点网格，这需设置nk1, nk2, nk3   
+####  <span style="color:green"> 计算phonodos, 计算态密度时要用更密的q点网格, 通过设置qpoints获得更密集得q点网格
 ```shell
 phono -m mode=phonodos core=1 npool=1 queue=local qpoints='8 8 8' ndos=500 
 ```
