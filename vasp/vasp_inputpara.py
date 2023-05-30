@@ -78,7 +78,7 @@ class vasp_inputpara(vasp_base):
             self.nelm = 200
 
         if not hasattr(self, "ncore"):
-            self.ncore = 1
+            self.ncore = 4
 
         if not hasattr(self, "lreal"):
             self.lreal = "Auto"

@@ -1,0 +1,11 @@
+#!/usr/bin/env python3
+
+import os
+
+for root, dirs, files in os.walk(os.getcwd()):
+    if ("INCAR" in files) and ("POTCAR" in files) and ("POSCAR" in files) and ("vasp.log" in files):
+        line = os.popen("grep 'reached required accuracy - stopping structural energy minimisation' {}".format(os.path.join(root, "vasp.log"))).read().split()
+        if line:
+            print(f"{root} is ok")
+        else:
+            print(f"{root} is something wrong")
