@@ -18,10 +18,10 @@ ulimit -s unlimited
 srun hostname | sort | uniq >> /tmp/nodefile.$$
 NP=`srun hostname | wc -l`
 
-for i in {1..2}; do
+for i in {1..5}; do
     killall -9 vasp_std
-    mpirun -n 48 /work/software/vasp.5.4.4/vasp_std_5.4.4 > vasp.log_1 2>&1
-    #mpirun -n 48 /work/home/may/software/vasp.6.1.0/bin/vasp_std > vasp.log 2>&1
+    mpirun -np 48 /work/software/vasp.5.4.4/vasp_std_5.4.4 > vasp.log_$i 2>&1
     cp OUTCAR OUTCAR_$i
     cp CONTCAR POSCAR
+    cp CONTCAR CONTCAR_$i
 done

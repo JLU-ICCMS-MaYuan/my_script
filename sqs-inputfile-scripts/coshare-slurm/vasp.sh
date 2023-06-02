@@ -17,4 +17,11 @@ source /public/env/mpi_intelmpi-2021.3.0.sh
 source /public/env/compiler_intel-compiler-2021.3.0.sh
 ulimit -s unlimited
 
-mpirun -np 64 /public/software/apps/vasp/intelmpi/5.4.4/bin/vasp_std > vasp.log 2>&1
+
+for i in {1..5}; do
+    killall -9 vasp_std
+    mpirun -np 64 /public/software/apps/vasp/intelmpi/5.4.4/bin/vasp_std > vasp.log 2>&1
+    cp OUTCAR OUTCAR_$i
+    cp CONTCAR POSCAR
+    cp CONTCAR CONTCAR_$i
+done
