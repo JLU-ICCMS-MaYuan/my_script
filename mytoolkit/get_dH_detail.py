@@ -9,21 +9,24 @@ print("    这个脚本是从POTCAR中读取焓值 dH, 并且读取原子数 N, 
 print("    所以你一定要确保你的OUTCAR是没有问题的")
 print("    如果你想批量使用该脚本可以用这个命令: \n    for i in *; do if [ -d $i ]; then cd $i; echo $i; dHperatom.py ;cd ..; fi; done\n")
 
-
+try:
+    outcar_file = sys.argv[1]
+except:
+    outcar_file = "OUTCAR"
 
 try:
-    dH = os.popen("grep enthalpy OUTCAR | tail -n 1 | awk '{print $ 5}'").read().strip('\n')
+    dH = os.popen(f"grep enthalpy {outcar_file}" + " | tail -n 1 | awk '{print $ 5}'").read().strip('\n')
     
     print("    dH = {:<12.8f} eV".format(float(dH)))
 except:
     print("   OUTCAR有问题读不出来焓值")
     sys.exit(1)
 
-begin_id = os.popen('grep -n "position of ions in cartesian coordinates" OUTCAR').read().split(":")[0]
+begin_id = os.popen(f'grep -n "position of ions in cartesian coordinates" {outcar_file}').read().split(":")[0]
 N = 0; row_id=int(begin_id)
 while True:
     row_id = row_id+1
-    content  = os.popen("sed -n '{}p' OUTCAR".format(row_id)).read().strip('\n')
+    content  = os.popen("sed -n '{}p' {}".format(row_id, outcar_file)).read().strip('\n')
     corrds   = re.findall(r"[-+]?\d+\.\d+", content)
     if len(corrds) == 3:
         N += 1
