@@ -3,7 +3,7 @@
 # number of atoms = the number of atoms in primitive cell * dim = 44 * 8 = 352
  for id in {0..9}
  do
-   mcsqs -n=352 -ip=$id &
+   mcsqs -n=xxx -ip=$id &
    done
  wait
 
