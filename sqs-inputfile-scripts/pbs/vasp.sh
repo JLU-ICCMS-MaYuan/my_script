@@ -13,7 +13,7 @@ cd $PBS_O_WORKDIR
 
 for i in {1..5}; do
     killall -9 vasp_std
-    mpirun -n 28 /public/home/mayuan/software/vasp.6.1.0/bin/vasp_std > vasp.log_1 2>&1
+    mpirun -n 28 /public/home/mayuan/software/vasp.6.1.0/bin/vasp_std > vasp.log_$i 2>&1
     cp OUTCAR OUTCAR_$i
     cp CONTCAR POSCAR
     cp CONTCAR CONTCAR_$i
