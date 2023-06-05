@@ -131,12 +131,12 @@ if __name__ == "__main__":
     print("    你需要在当前目录下准备好: POSCAR, POTCAR")
     print("    测试的KSPACING值分别是: 0.3, 0.2, 0.18, 0.15, 0.12")
     print("    该脚本不提供自动提任务的命令: 你可以用以下命令提供命令:")
-    print("        for i in 0.4 0.3 0.2 0.18 0.15 0.12; do cd $i; qsub submit.sh;   cd ..; done")
-    print("        for i in 0.4 0.3 0.2 0.18 0.15 0.12; do cd $i; sbatch submit.sh; cd ..; done")
+    print("        for i in 0.4 0.3 0.2 0.19 0.18 0.17 0.16 0.15 0.14 0.13 0.12; do cd $i; qsub submit.sh;   cd ..; done")
+    print("        for i in 0.4 0.3 0.2 0.19 0.18 0.17 0.16 0.15 0.14 0.13 0.12; do cd $i; sbatch submit.sh; cd ..; done")
 
     print("Note: --------------------")
     print("    创建测试VASP的KSPACING输入文件目录以及准备vasp的输入文件")
-    kspacings = [0.4, 0.3, 0.2, 0.18, 0.15, 0.12]
+    kspacings = [0.4, 0.3, 0.2, 0.19, 0.18, 0.17, 0.16, 0.15, 0.14, 0.13, 0.12]
     potcar_path = os.path.abspath("POTCAR")
     poscar_path = os.path.abspath("POSCAR")
     for kspacing in kspacings:
