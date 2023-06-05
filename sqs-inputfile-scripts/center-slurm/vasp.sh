@@ -17,6 +17,7 @@ ulimit -s unlimited
 
 for i in {1..5}; do
     killall -9 vasp_std
+    cp INCAR_$i INCAR
     mpirun -np 48 /work/software/vasp.5.4.4/vasp_std_5.4.4 > vasp.log_$i 2>&1
     cp OUTCAR OUTCAR_$i
     cp CONTCAR POSCAR
