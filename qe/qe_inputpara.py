@@ -616,13 +616,13 @@ class qephono_inputpara(qe_inputpara):
             header=None, # header=None：不将文件的第一行作为列名，而将其视为数据。
             sep='\s+'    # sep='\s+'：使用正则表达式 \s+ 作为列之间的分隔符，表示一个或多个空格字符。
             )
-        columns = ['omega', 'tdos']+[ele for ele in elements]
+        columns = ['freq', 'tdos']+[ele for ele in elements]
         phonondos.columns = columns
         # 对相同的列名(相同的元素的pdos相加)进行相加,
         phonondos_sum = phonondos.groupby(phonondos.columns, axis=1).sum()
-        # 将 'omega' 列移动到 DataFrame 的第一列
-        omega_col = phonondos_sum.pop('omega')
-        phonondos_sum.insert(0, 'omega', omega_col)
+        # 将 'freq' 列移动到 DataFrame 的第一列
+        freq_col = phonondos_sum.pop('freq')
+        phonondos_sum.insert(0, 'freq', freq_col)
         # 将 'tdos' 列移动到 DataFrame 的第二列
         tdos_col = phonondos_sum.pop('tdos')
         phonondos_sum.insert(1, 'tdos', tdos_col)
@@ -637,40 +637,47 @@ class qephono_inputpara(qe_inputpara):
 
     def get_gibbs_from_phtdos(self):
 
-        omega_phtdos_phpdos = self.get_phonodos()
-        omega_phtdos_phpdos = omega_phtdos_phpdos[omega_phtdos_phpdos["omega"]>0]  # 只保留正频率
+        freq_phtdos_phpdos = self.get_phonodos()
+        freq_phtdos_phpdos = freq_phtdos_phpdos[freq_phtdos_phpdos["freq"]>0]  # 只保留正频率
        
-        omegas = omega_phtdos_phpdos['omega'].values # 讲pandas中提取出的omegas转化为numpy类型  # omegas is circular frequency
-        omegas = omegas * 2.997924E+10 # convert unit cm-1 to Hz
+        freqs = freq_phtdos_phpdos['freq'].values # 讲pandas中提取出的freqs转化为numpy类型  # freqs is circular frequency
+        freqs = freqs * 2.997924E+10 # convert unit cm-1 to Hz
 
-        tdos   = omega_phtdos_phpdos['tdos'].values  # conserve unit is states/cm-1 = states·cm
-        temperature = np.array([i for i in range(0,5100,100)])
-        # temperature = np.array([0])
-
+        # 这种归一化方式非常有趣，可以避免乘以频率步长d_freq
+        print("检验是否将声子态密度归一化到3N") 
+        sumdos = freq_phtdos_phpdos['tdos'].sum()
+        freq_phtdos_phpdos['tdos'] = freq_phtdos_phpdos['tdos']/sumdos*3*self.all_atoms_quantity
         # 定义积分步长
-        d_omega = np.round(0.333564E-10*(omegas[-1] - omegas[0])/(len(omegas) -1), decimals=6)  # conserve unit is cm-1
+        d_freq = np.round(0.333564E-10*(freqs[-1] - freqs[0])/(len(freqs) -1), decimals=6)  # conserve unit is cm-1
+        print("归一化至3N前:", d_freq*sumdos)
+        print("归一化至3N后:", freq_phtdos_phpdos['tdos'].sum())
+
+        tdos   = freq_phtdos_phpdos['tdos'].values  # conserve unit is states/cm-1 = states·cm
+        temperature = np.array([i for i in range(0,5100,100)])
 
         # 定义计算单个声子的吉布斯自由能gibbs_i 
-        def gibbs_i(omegas, T, dos):
+        def gibbs_i(freqs, T, dos):
             """\int{ G_i * g(w) } = \int{ (zpe_i + temperature_effect_i ) * g(w) dw}"""
-            h_bar = 6.582120E-16 # unit is eV·s
-            k_B   = 8.617343E-5  # unit is eV/K
+            # h_bar = 6.582120E-16 # unit is eV·s
+            h     = 4.13566770E-15 #  unit is eV·s 普朗克常数
+            k_B   = 8.61734315E-5  # unit is eV/K
             if T == 0:
-                gibbs_i = (1/2 * h_bar * omegas) * dos
+                gibbs_i = (0.5 * h * freqs) * dos
             else:
-                gibbs_i = (1/2 * h_bar * omegas + k_B * T * np.log(1-np.exp(-(h_bar*omegas)/(k_B*T)))) * dos
+                gibbs_i = (0.5 * h * freqs + k_B * T * np.log(1-np.exp(-(h*freqs)/(k_B*T)))) * dos
+                # gibbs_i = k_B*T * np.log(2*np.sinh(h*freqs/(2*k_B*T))) * dos
             return gibbs_i
 
         T_gibbs = []
         for T in temperature:
-            gibbs = gibbs_i(omegas, T, tdos) * d_omega
+            gibbs = gibbs_i(freqs, T, tdos) #* d_freq # 这里因为前面特殊的归一化方式避免了乘以步长的问题
             gibbs = np.sum(gibbs)
             T_gibbs.append([T, gibbs])
 
         with open(self.work_path.joinpath("thermodynamics_from_phtdos.csv"), "w") as f:
-            f.write("{:>5},{:>12},{:>12}\n".format("T", "gibbs(eV)", "gibbs(meV)"))
+            f.write("{:>5},{:>12},{:>12}\n".format("T", "gibbs(eV)", "gibbs(eV/atom)"))
             for T, gibbs in T_gibbs:
-                f.write("{:>5},{:>12.8f},{:>12.8f}\n".format(T, gibbs, 1000*gibbs/self.all_atoms_quantity))
+                f.write("{:>5},{:>12.8f},{:>12.8f}\n".format(T, gibbs, gibbs/self.all_atoms_quantity))
 
     def get_gibbs_from_freq(self):
         """
@@ -679,23 +686,31 @@ class qephono_inputpara(qe_inputpara):
         """
         temperature = np.array([i for i in range(0,5100,100)])
 
-        def gibbs_q(omegas, T, weight):
+        def gibbs_q(freqs, T, weight):
             """\int{ G_i * g(w) } = \int{ (zpe_i + temperature_effect_i ) * g(w) dw}"""
             h_bar = 6.582119514E-16 # unit is eV·s
             k_B   = 8.617343E-5  # unit is eV/K
-            omegas = omegas[ omegas > 0 ]
-            # print(len(omegas)); print(weight)
-            # input(omegas)
+            freqs = freqs[ freqs > 0 ] * 2*np.pi # 圆频率
+            # print(len(freqs)); print(weight)
+            # input(freqs)
             if T == 0:
-                _gibbs_q = (1/2 * h_bar * omegas)
+                _gibbs_q = (1/2 * h_bar * freqs)
             else:
-                _gibbs_q = (1/2 * h_bar * omegas + k_B * T * np.log(1-np.exp(-(h_bar*omegas)/(k_B*T))))
+                _gibbs_q = (1/2 * h_bar * freqs + k_B * T * np.log(1-np.exp(-(h_bar*freqs)/(k_B*T))))
             # print(_gibbs_q); input()
             _gibbs_q = np.sum(_gibbs_q) * weight
             # print(_gibbs_q); input()
             return _gibbs_q
-    
-        dyn_paths = list(filter(lambda x: 'dyn' in x and 'dyn0' not in x and 'dyna2F' not in x and 'matdyn.modes' not in x, os.listdir(self.work_path)))
+        dyn_paths = list(
+            filter(lambda x: 'dyn' in x \
+                        and 'dyn0' not in x \
+                        and 'dyna2F' not in x 
+                        and 'matdyn.modes' not in x \
+                        and 'thermodynamics_from_dyn1.csv' not in x \
+                        and "thermodynamics_from_dyns.csv" not in x \
+                        and "thermodynamics_from_phtdos.csv" not in x, 
+                        os.listdir(self.work_path))
+                )        
         full_dyns_paths = sorted([os.path.join(self.work_path, dyn_path) for dyn_path in dyn_paths])
         if not full_dyns_paths:
             print(f'WARNING: Unable to detect *dyn* files in {self.__path}. The program will exit')
@@ -708,26 +723,26 @@ class qephono_inputpara(qe_inputpara):
         for T in temperature:
             gibbs = 0
             for dyn in dyns:
-                gibbs_Q = gibbs_q(dyn.omegas*1.0E+12, T, dyn.weight) # dyn.omegas 的单位是THz
+                gibbs_Q = gibbs_q(dyn.freqs*1.0E+12, T, dyn.weight) # dyn.freqs 的单位是THz
                 gibbs += gibbs_Q
             gibbs = gibbs/self.qtot # 除以总的q点数
             T_gibbs_dyns.append([T, gibbs])
         with open(self.work_path.joinpath("thermodynamics_from_dyns.csv"), "w") as f:
-            f.write("{:>5},{:>12},{:>12}\n".format("T", "gibbs(eV)", "gibbs(meV)"))
+            f.write("{:>5},{:>12},{:>12}\n".format("T", "gibbs(eV)", "gibbs(eV/atom)"))
             for T, gibbs in T_gibbs_dyns:
-                f.write("{:>5},{:>12.8f},{:>12.8f}\n".format(T, gibbs, 1000*gibbs/self.all_atoms_quantity))
+                f.write("{:>5},{:>12.8f},{:>12.8f}\n".format(T, gibbs, gibbs/self.all_atoms_quantity))
 
         # 从gamma点获得频率计算吉布斯自由能
         T_gibbs_dyn1 = []
         for T in temperature:
             gibbs = 0
-            gibbs_Q = gibbs_q(dyns[0].omegas*1.0E+12, T, dyns[0].weight) # dyn.omegas 的单位是THz
+            gibbs_Q = gibbs_q(dyns[0].freqs*1.0E+12, T, dyns[0].weight) # dyn.freqs 的单位是THz
             gibbs += gibbs_Q
             T_gibbs_dyn1.append([T, gibbs])
         with open(self.work_path.joinpath("thermodynamics_from_dyn1.csv"), "w") as f:
-            f.write("{:>5},{:>12},{:>12}\n".format("T", "gibbs(eV)", "gibbs(meV)"))
+            f.write("{:>5},{:>12},{:>12}\n".format("T", "gibbs(eV)", "gibbs(eV/atom)"))
             for T, gibbs in T_gibbs_dyn1:
-                f.write("{:>5},{:>12.8f},{:>12.8f}\n".format(T, gibbs, 1000*gibbs/self.all_atoms_quantity))
+                f.write("{:>5},{:>12.8f},{:>12.8f}\n".format(T, gibbs, gibbs/self.all_atoms_quantity))
 
 
 class Dyn(object):
@@ -771,14 +786,14 @@ class Dyn(object):
         return self._weight
 
     @property
-    def omegas(self):
-        self._omegas = []
+    def freqs(self):
+        self._freqs = []
         for line in self.lines:
             if 'freq (' in line:
-                omega = float(line.split()[4])
-                self._omegas.append(omega)
-        self._omegas = np.array(self._omegas)
-        return self._omegas
+                freq = float(line.split()[4])
+                self._freqs.append(freq)
+        self._freqs = np.array(self._freqs)
+        return self._freqs
 
 
 class qeeletron_inputpara(qe_inputpara):
