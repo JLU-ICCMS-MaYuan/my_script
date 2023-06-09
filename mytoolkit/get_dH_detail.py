@@ -16,7 +16,8 @@ except:
 
 try:
     dH = os.popen(f"grep enthalpy {outcar_file}" + " | tail -n 1 | awk '{print $ 5}'").read().strip('\n')
-    
+    if not dH:
+        dH = 100000000000000.0
     print("    dH = {:<12.8f} eV".format(float(dH)))
 except:
     print("   OUTCAR有问题读不出来焓值")
