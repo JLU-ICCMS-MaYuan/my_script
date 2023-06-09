@@ -20,7 +20,7 @@ try:
     print("    dH = {:<12.8f} eV".format(float(dH)))
 except:
     print("   OUTCAR有问题读不出来焓值")
-    sys.exit(1)
+    dH = 100000000000000.0
 
 begin_id = os.popen(f'grep -n "position of ions in cartesian coordinates" {outcar_file}').read().split(":")[0]
 N = 0; row_id=int(begin_id)
