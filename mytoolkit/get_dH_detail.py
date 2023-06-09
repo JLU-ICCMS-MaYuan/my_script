@@ -21,18 +21,21 @@ try:
 except:
     print("   OUTCAR有问题读不出来焓值")
     dH = 100000000000000.0
-    N  = 1
 
-begin_id = os.popen(f'grep -n "position of ions in cartesian coordinates" {outcar_file}').read().split(":")[0]
-N = 0; row_id=int(begin_id)
-while True:
-    row_id = row_id+1
-    content  = os.popen("sed -n '{}p' {}".format(row_id, outcar_file)).read().strip('\n')
-    corrds   = re.findall(r"[-+]?\d+\.\d+", content)
-    if len(corrds) == 3:
-        N += 1
-    else:
-        break
-print("    NumberofTotalAtoms = {:<12}".format(N))
+
+try:
+    begin_id = os.popen(f'grep -n "position of ions in cartesian coordinates" {outcar_file}').read().split(":")[0]
+    N = 0; row_id=int(begin_id)
+    while True:
+        row_id = row_id+1
+        content  = os.popen("sed -n '{}p' {}".format(row_id, outcar_file)).read().strip('\n')
+        corrds   = re.findall(r"[-+]?\d+\.\d+", content)
+        if len(corrds) == 3:
+            N += 1
+        else:
+            break
+    print("    NumberofTotalAtoms = {:<12}".format(N))
+except:
+    N = 1
 
 print("    dH = {:<12.8f} eV/atom = {:<12.8f} meV/atom\n".format(float(dH)/N, float(dH)*1000/N))
