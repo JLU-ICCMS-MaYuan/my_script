@@ -9,6 +9,7 @@ try:
 except:
     print("   OUTCAR有问题读不出来焓值")
     dH = 100000000000000.0
+    N =1
 
 begin_id = os.popen('grep -n "position of ions in cartesian coordinates" OUTCAR').read().split(":")[0]
 N = 0; row_id=int(begin_id)
