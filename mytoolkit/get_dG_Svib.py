@@ -30,6 +30,9 @@ def get_phonodos(all_atoms_quantity):
     print("检验是否将声子态密度归一化到3N")
     sumdos = phonondos['tdos'].sum()
     phonondos['tdos'] = phonondos['tdos']/sumdos*3*all_atoms_quantity
+    # 这里这种归一化方式一定要注意：
+    #    这种归一化方式其实相当于给每一个dos都乘以了一个delta_freq, 
+    #    这么做的好处是避免后续对dos积分的时候乘以一个人为给定的delta_freq
     d_freq = phonondos.loc[2, 'freq']-phonondos.loc[1, 'freq']
     print("归一化至3N前:", d_freq*sumdos)
     print("归一化至3N后:", phonondos['tdos'].sum())
