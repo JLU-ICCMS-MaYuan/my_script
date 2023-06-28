@@ -84,7 +84,7 @@ export I_MPI_ADJUST_REDUCE=3
 export MPIR_CVAR_COLL_ALIAS_CHECK=0
 ulimit -s unlimited
 
-mpirun -np 48 /work/home/may/software/qe-7.1/bin/pw.x -npool 4 <scf.in> scf.out 
+mpirun -np 64 /public/software/apps/quantum-espresso/intelmpi/6.7/bin/pw.x -npool 8 <scf.in> scf.out
 """
 
     coshare_slurm = """#!/bin/sh 
@@ -148,12 +148,12 @@ if __name__ == "__main__":
     print("    测试的ecutwfc值分别是: 40  50  60  70  80  90")
     print("    测试的ecutrho值分别是: 480 600 720 840 960 10800")
     print("    该脚本不提供自动提任务的命令: 你可以用以下命令提供命令:")
-    print("        for i in 0.4 0.3 0.2 0.18 0.15 0.12 0.1; do cd $i; qsub submit.sh;   cd ..; done")
-    print("        for i in 0.4 0.3 0.2 0.18 0.15 0.12 0.1; do cd $i; sbatch submit.sh; cd ..; done")
+    print("        for i in 0.4 0.3 0.2 0.19 0.18 0.17 0.16 0.15 0.14 0.13 0.12 0.1 0.05; do cd $i; qsub submit.sh;   cd ..; done")
+    print("        for i in 0.4 0.3 0.2 0.19 0.18 0.17 0.16 0.15 0.14 0.13 0.12 0.1 0.05; do cd $i; sbatch submit.sh; cd ..; done")
 
     print("Note: --------------------")
     print("    创建测试VASP的ENCUT输入文件目录以及准备vasp的输入文件")
-    kresolutions = [0.4, 0.3, 0.2, 0.18, 0.15, 0.12, 0.1, 0.05]
+    kresolutions = [0.4, 0.3, 0.2, 0.19, 0.18, 0.17, 0.16, 0.15, 0.14, 0.13, 0.12, 0.1, 0.05]
     old_scf_in_path = os.path.abspath("scf.in")
     for kresolution in kresolutions:
         test_path = os.path.abspath(str(kresolution))
@@ -176,7 +176,7 @@ if __name__ == "__main__":
     Ediff = np.insert(Ediff, 0, [0.0])
     Ediff = Ediff[:, np.newaxis]
     kresolution_Et_Ediff = np.hstack((kresolution_Et, Ediff))
-    if len(kresolution_Et) == 8:
+    if len(kresolution_Et) == 13:
         print("{:<12},{:<14},{:<14},{:<14}".format("kresolution", "Et(Ry/atom)", "Et(eV/atom)", "diff(meV/atom)"))
         with open("kresolution.csv", 'w') as f:
             f.write("{:<12},{:<14},{:<14},{:<14}".format("kresolution", "Et(Ry/atom)", "Et(eV/atom)", "diff(meV/atom)"))

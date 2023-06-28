@@ -73,10 +73,8 @@ source /public/env/compiler_intel-compiler-2021.3.0.sh
 ulimit -s unlimited
 export I_MPI_ADJUST_REDUCE=3
 export MPIR_CVAR_COLL_ALIAS_CHECK=0
-export I_MPI_FABRICS=shm
-export MKL_DEBUG_CPU_TYPE=5
 
-mpirun -n 64 /public/software/apps/vasp/intelmpi/5.4.4/bin/vasp_std > vasp.log 2>&1
+mpirun -np 64 /public/software/apps/quantum-espresso/intelmpi/6.7/bin/pw.x -npool 8 <scf.in> scf.out
 """
 
     if jobtype == "chaoyin_pbs":

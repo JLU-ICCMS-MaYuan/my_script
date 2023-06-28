@@ -11,5 +11,6 @@ print("\n")
 # bohr -> Angstrom
 rcore   = np.array([eval(sys.argv[1])]) * 0.529 * 0.7 
 dists_m = rcore + rcore.T
-for row in dists_m:
-    print(np.round(row[0],decimals=3), np.round(row[1],decimals=3), np.round(row[2],decimals=3),)
+#for row in dists_m:
+#    print(np.round(row[0],decimals=3), np.round(row[1],decimals=3), np.round(row[2],decimals=3),)
+print(dists_m)

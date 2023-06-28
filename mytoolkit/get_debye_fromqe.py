@@ -8,12 +8,12 @@ import numpy as np
 import pandas as pd
 
 
-def get_phonodos(all_atoms_quantity):
+def get_phonodos(all_atoms_quantity, filename):
     """
     返回值是一个dataframe类型，是一个二维列表，第一行是freq+元素名称, 第二行
     """
     # 获得phonodos计算的输出文件
-    phonon_dos_path = Path.cwd().joinpath("phonon.dos")
+    phonon_dos_path = Path.cwd().joinpath(filename)
 
     # 获得元素的顺序 以及 每种元素的原子个数
 
@@ -91,5 +91,5 @@ if __name__ == "__main__":
         freq_max_fit = float(sys.argv[3])
     except:
         freq_max_fit = None
-    phonondos = get_phonodos(num_atoms)
+    phonondos = get_phonodos(num_atoms, dosfile)
     set_Debye_frequency(phonondos, num_atoms, freq_max_fit)

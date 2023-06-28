@@ -1,0 +1,35 @@
+# SCF input for VASP
+# \nNote that VASP uses the FIRST occurence of a keyword
+#SYSTEM = (NaB3)4  (P1) ~ D:/NaB15-relax-r.cif (VASP)
+
+    PREC = Accurate
+   ENCUT = 850
+  IBRION = -1
+     NSW = 0
+  NELMIN = 2
+   EDIFF = 1.0e-08
+  EDIFFG = -0.001
+KSPACING = 0.18 
+  KGAMMA = .TRUE.
+ VOSKOWN = 1
+  NBLOCK = 1
+  NWRITE = 1
+    NELM = 100
+    ALGO = Normal (blocked Davidson)
+   ISPIN = 1
+  INIWAV = 1
+  ISTART = 0
+ #NBANDS = 64
+  ICHARG = 2
+   LWAVE = .FALSE.
+  LCHARG = .TRUE.
+ ADDGRID = .FALSE.
+LHYPERFINE = .FALSE.
+  ISMEAR = 1
+   SIGMA = 0.01
+   LREAL = .FALSE.
+  #RWIGS = 1.54 0.82
+    NPAR = 4
+
+   LELF  =.TRUE.
+   LAECHG=.TRUE. 
