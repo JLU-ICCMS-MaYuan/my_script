@@ -306,10 +306,10 @@ class qe_writesubmit:
         _script_filepath = os.path.join(_dirpath, jobname)
         with open(_script_filepath, "w") as j:
             j.writelines(self.jobtitle)
-            j.write('echo "run scf.fit"                                                     \n')
-            j.write('mpirun -np {} {}/pw.x -npool {} <{}> {} \n'.format(self.core, qebin_path,  self.npool, _inputscffit_name, _outputscffit_name))
-            j.write('echo "run scf"                                                         \n')
-            j.write('mpirun -np {} {}/pw.x -npool {} <{}> {} \n'.format(self.core, qebin_path,  self.npool, _inputscf_name,     _outputscf_name))
+            # j.write('echo "run scf.fit"                                                     \n')
+            # j.write('mpirun -np {} {}/pw.x -npool {} <{}> {} \n'.format(self.core, qebin_path,  self.npool, _inputscffit_name, _outputscffit_name))
+            # j.write('echo "run scf"                                                         \n')
+            # j.write('mpirun -np {} {}/pw.x -npool {} <{}> {} \n'.format(self.core, qebin_path,  self.npool, _inputscf_name,     _outputscf_name))
             j.write('echo "run split_ph"                                                    \n')
             j.write('mpirun -np {} {}/ph.x -npool {} <{}> {} \n'.format(self.core, qebin_path,  self.npool, _inputsplitph_name,  _outputsplitph_name))   
         return jobname
