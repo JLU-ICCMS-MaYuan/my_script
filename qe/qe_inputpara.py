@@ -343,7 +343,7 @@ class qephono_inputpara(qe_inputpara):
 
     def get_qpoints(self, dyn0_path):
         '''
-        input  : dir        dyn0文件的路径
+        input  : directory        dyn0文件的路径
                  
         return : self.qtot 总q点数
                  self.qirreduced 不可约q点数
@@ -359,7 +359,7 @@ class qephono_inputpara(qe_inputpara):
 
     def get_q_from_dyn0(self, dyn0_path):
         '''
-        input  : dir        dyn0文件的路径
+        input  : directory        dyn0文件的路径
                  
         return : self.qtot 总q点数
                  self.qirreduced 不可约q点数
@@ -399,20 +399,29 @@ class qephono_inputpara(qe_inputpara):
         
         return qweights
 
-    def merge(self, dir):
-        elph_dir_path = os.path.join(dir, "elph_dir")
+    def merge(self, directory):
+        elph_dir_path = os.path.join(directory, "elph_dir")
         if not os.path.exists(elph_dir_path):
             os.makedirs(elph_dir_path)
         
         for i in range(self.qirreduced):
-            src_elph   = os.path.join(dir, str(i+1), "elph_dir", "elph.inp_lambda.1")
-            dst_elph   = os.path.join(elph_dir_path, "elph.inp_lambda."+str(i+1))
+            src_elph_NoNum = os.path.join(directory, str(i+1), "elph_dir", "elph.inp_lambda.1")
+            src_elph_Num   = os.path.join(directory, str(i+1), "elph_dir", "elph.inp_lambda."+str(i+1))
+            dst_elph = os.path.join(elph_dir_path, "elph.inp_lambda."+str(i+1))
+            if os.path.exists(src_elph_NoNum):
+                src_elph = src_elph_NoNum
+            elif  os.path.exists(src_elph_Num):
+                src_elph = src_elph_Num
+            else:
+                print(f"In {str(i+1)}, elph.inp_lambda-file doesn't exist ! Exit the program!")
+                sys.exit(1)
             shutil.copy(src_elph, dst_elph)
             print(f"elph.inp_.1 copy finished \n {dst_elph}")
-
             
-            src_dyn_NoNum= os.path.join(dir, str(i+1), self.system_name+".dyn")
-            src_dyn_Num  = os.path.join(dir, str(i+1), self.system_name+f".dyn{str(i+1)}")
+
+
+            src_dyn_NoNum= os.path.join(directory, str(i+1), self.system_name+".dyn")
+            src_dyn_Num  = os.path.join(directory, str(i+1), self.system_name+f".dyn{str(i+1)}")
             if os.path.exists(src_dyn_NoNum):
                 src_dyn = src_dyn_NoNum
             elif  os.path.exists(src_dyn_Num):
@@ -420,14 +429,23 @@ class qephono_inputpara(qe_inputpara):
             else:
                 print(f"In {str(i+1)}, dyn-file doesn't exist ! Exit the program!")
                 sys.exit(1)
-
-            dst_dyn    = os.path.join(dir,           self.system_name+".dyn"+str(i+1))
+            dst_dyn    = os.path.join(directory, self.system_name+".dyn"+str(i+1))
             shutil.copy(src_dyn, dst_dyn)
             print(f"{self.system_name}.dyn copy finished {dst_dyn}")
 
+
+
             for j in range(51, 61):
-                src_a2Fq2r = os.path.join(dir, str(i+1), "elph_dir", "a2Fq2r."+str(j)+".1")
-                dst_a2Fq2r = os.path.join(elph_dir_path,             "a2Fq2r."+str(j)+"."+str(i+1))
+                src_a2Fq2r_NoNum = os.path.join(directory, str(i+1), "elph_dir", "a2Fq2r."+str(j)+".1")
+                src_a2Fq2r_Num   = os.path.join(directory, str(i+1), "elph_dir", "a2Fq2r."+str(j)+"."+str(i+1))
+                dst_a2Fq2r = os.path.join(elph_dir_path, "a2Fq2r."+str(j)+"."+str(i+1))
+                if os.path.exists(src_a2Fq2r_NoNum):
+                    src_a2Fq2r = src_a2Fq2r_NoNum
+                elif  os.path.exists(src_a2Fq2r_Num):
+                    src_a2Fq2r = src_a2Fq2r_Num
+                else:
+                    print(f"In {str(i+1)}, dyn-file doesn't exist ! Exit the program!")
+                    sys.exit(1)
                 shutil.copy(src_a2Fq2r, dst_a2Fq2r)
                 print(f"a2Fq2r.{str(j)}.1 copy finished  {dst_a2Fq2r}")
 
