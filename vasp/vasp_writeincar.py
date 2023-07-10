@@ -170,7 +170,7 @@ class vasp_writeincar:
             incar.write("IBRION   = -1   \n")   
             incar.write("IALGO    = 38   \n")
 
-            #incar.write("NCORE    = {}    \n".format(str(self.ncore)))         
+            incar.write("NCORE    = {}    \n".format(str(self.ncore)))         
             incar.write("LREAL    = {}    \n".format(str(self.lreal)))
             incar.write("LWAVE    =.FALSE.\n")
             incar.write("LCHARG   =.FALSE.\n")
@@ -196,7 +196,7 @@ class vasp_writeincar:
             incar.write("IALGO    = 38     \n")
             incar.write("POTIM    = 0.01   \n") 
 
-            #incar.write("NCORE    = {}    \n".format(str(self.ncore)))         
+            incar.write("NCORE    = {}    \n".format(str(self.ncore)))         
             incar.write("LREAL    = {}    \n".format(str(self.lreal)))
             incar.write("LWAVE    = .FALSE.\n")  
             incar.write("LCHARG   = .FALSE.\n") 
