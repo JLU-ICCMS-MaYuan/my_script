@@ -111,11 +111,12 @@ def vasp_phono(args: ArgumentParser) -> None:
         _vasp_writeincar.dfpt_incar(phono_inputpara.work_path)
 
     # init the KPOINTS
-    phono_inputpara.create_kpoints_by_pymatgen(
-        phono_inputpara.sposcar_struct_type,
-        phono_inputpara.work_path.joinpath("KPOINTS"),
-        phono_inputpara.kdensity,
-        )
+    if phono_inputpara.kdensity is not None:
+        phono_inputpara.create_kpoints_by_pymatgen(
+            phono_inputpara.sposcar_struct_type,
+            phono_inputpara.work_path.joinpath("KPOINTS"),
+            phono_inputpara.kdensity,
+            )
 
     # init the submit job script
     _vasp_writesubmit = vasp_writesubmit.init_from_phonoinput(phono_inputpara)
@@ -123,7 +124,10 @@ def vasp_phono(args: ArgumentParser) -> None:
     # submit the job
     _vasp_submitjob   = vasp_submitjob.init_from_phonoinput(phono_inputpara)
     if phono_inputpara.queue is not None:
-        _vasp_submitjob.submit_mode2(jobname)
+        if phono_inputpara.mode == 'disp':
+            _vasp_submitjob.submit_mode2(jobname)
+        elif  phono_inputpara.mode == 'dfpt':
+            _vasp_submitjob.submit_mode1(jobname)
 
 
 def vaspbatch_phono(args: ArgumentParser) -> None:

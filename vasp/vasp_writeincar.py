@@ -47,6 +47,7 @@ class vasp_writeincar:
             ncore=other_class.ncore,
             lreal=other_class.lreal,
             mode=other_class.mode,
+            kspacing=other_class.kspacing,
         )
         return self
 
@@ -151,7 +152,8 @@ class vasp_writeincar:
             incar.write("IBRION   = {}   \n".format(str(self.ibrion)))   
             incar.write("ISIF     = {}   \n".format(str(self.isif)))    
             incar.write("POTIM    = {}   \n".format(str(self.potim)))
-            incar.write("PSTRESS  = {}   \n".format(str(float(self.press)*10)))    
+            incar.write("PSTRESS  = {}   \n".format(str(float(self.press)*10)))  
+
             
     def disp_incar(self, incar_dirpath):
         incar_filepath = os.path.join(incar_dirpath, "INCAR")
@@ -173,6 +175,9 @@ class vasp_writeincar:
             incar.write("LWAVE    =.FALSE.\n")
             incar.write("LCHARG   =.FALSE.\n")
             incar.write("ADDGRID  = .TRUE.\n")
+            if self.kspacing is not None:
+                incar.write("KSPACING    = {}   \n".format(str(self.kspacing)))
+
 
     def dfpt_incar(self, incar_dirpath):
         incar_filepath = os.path.join(incar_dirpath, "INCAR")
@@ -196,7 +201,10 @@ class vasp_writeincar:
             incar.write("LWAVE    = .FALSE.\n")  
             incar.write("LCHARG   = .FALSE.\n") 
             incar.write("ADDGRID  = .TRUE. \n")
+            if self.kspacing is not None:
+                incar.write("KSPACING    = {}   \n".format(str(self.kspacing)))
 
+                
     def scf_incar(self, incar_dirpath):
         incar_filepath = os.path.join(incar_dirpath, "INCAR")
         with open(incar_filepath, "w") as incar:

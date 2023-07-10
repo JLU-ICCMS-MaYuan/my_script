@@ -165,9 +165,15 @@ class vasp_phonopara(vasp_inputpara):
         if hasattr(self, "kdensity"):
             _kdensity = kwargs['kdensity'].split()
             self.kdensity = list(map(int, _kdensity))
+            self.kspacing = None
+        elif hasattr(self, "kspacing"):
+            self.kdensity = None
+            self.kspacing = kwargs["kspacing"]
         else:
-            print("You didn't specify kdensity, so the program will set kdensity='40 40 40'")
+            print("You didn't specify any information of k-mesh, so the program will set kdensity='40 40 40'")
             self.kdensity = [40, 40, 40]
+            self.kspacing = None
+        
         if self.mode == "disp" or self.mode == "dfpt":
             cwd = os.getcwd()
             os.chdir(self.work_path)
