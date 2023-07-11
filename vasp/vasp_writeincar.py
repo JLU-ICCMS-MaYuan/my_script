@@ -176,7 +176,7 @@ class vasp_writeincar:
             incar.write("LCHARG   =.FALSE.\n")
             incar.write("ADDGRID  = .TRUE.\n")
             if self.kspacing is not None:
-                incar.write("KSPACING    = {}   \n".format(str(self.kspacing)))
+                incar.write("KSPACING = {}   \n".format(str(self.kspacing)))
 
 
     def dfpt_incar(self, incar_dirpath):
@@ -202,7 +202,7 @@ class vasp_writeincar:
             incar.write("LCHARG   = .FALSE.\n") 
             incar.write("ADDGRID  = .TRUE. \n")
             if self.kspacing is not None:
-                incar.write("KSPACING    = {}   \n".format(str(self.kspacing)))
+                incar.write("KSPACING = {}   \n".format(str(self.kspacing)))
 
                 
     def scf_incar(self, incar_dirpath):
