@@ -59,15 +59,14 @@ class qe_base:
                 self.work_path.mkdir(parents=True, exist_ok=True)
                 
         try:
-            self.ase_type          = read(self.input_file_path)
+            self.ase_type = read(self.input_file_path)
         except:
             print("\nNote: --------------------")
             print("    When reading `{}` file, the program get something wrong, you need to check it !!!".format(self.input_file_path))
             sys.exit(1)
 
-        self.struct_type       = AseAtomsAdaptor.get_structure(self.ase_type)
+        self.struct_type = AseAtomsAdaptor.get_structure(self.ase_type)
         self.get_struct_info(self.struct_type, self.work_path)
-        
         ############################ prepare pp directory #########################
         print("\nNote: ----------")
         print(f"    create potcar dir in {self.work_path}")
@@ -102,9 +101,9 @@ class qe_base:
         # 获得每种元素的相对原子质量
         self.all_atoms_quantity = int(sum(self.composition.values()))
         # 获得晶格矩阵
-        self.cell_parameters    = pstruct.lattice.matrix
+        self.cell_parameters = self.get_cell(pstruct) 
         # 获得原子分数坐标
-        self.fractional_sites   = pstruct.sites
+        self.fractional_sites = self.get_coords(pstruct)
         # 获得倒格矢
         # 注意，这是用于固体物理的标准倒数晶格，因数为2π
         self.reciprocal_plattice = self.get_reciprocal_lattice()
@@ -232,31 +231,50 @@ class qe_base:
             print("    The program fail to get reciprocal lattice from scffit.out, scf.out and relax.out.")
             return None
 
+    def get_cell(self, struct):
+        cell_parameters = None
+        if self.input_file_path.name == "relax.out" and self.input_file_path.exists():
+            awk_order = "awk '/Begin final coordinates/,/End final coordinates/{print $0}'" + f" {os.path.abspath(self.input_file_path)} " 
+            content = os.popen(awk_order).readlines()
+            for idx, line in enumerate(content):
+                if "CELL_PARAMETERS (angstrom)" in line:
+                    cell_parameters = content[idx+1:idx+4]
+                    # 将里面的\n剔除
+                    cell_parameters = [cell.strip("\n") for cell in cell_parameters]
+            return cell_parameters
+        else:
+            print("You didn't specify relax.out as inputfile")
+            print("So We will get cell-information in the way of PYMATGEN")
+            print("cell_parameters")
+            cell_parameters = struct.lattice.matrix
+            cell_parameters = ['{:>14.10f}    {:>14.10f}    {:>14.10f}'.format(cell[0], cell[1], cell[2]) for cell in cell_parameters]
+            return cell_parameters
 
-def get_cell_and_coords(relax_out_path:Path):
-
-    cell_parameters = None
-    fractional_sites = None
-    if not relax_out_path.exists():
-        print("\nNote: --------------------")
-        print("    relax.out doesn't exist !!!")
-        return cell_parameters, fractional_sites
-    awk_order = "awk '/Begin final coordinates/,/End final coordinates/{print $0}'" + f" {os.path.abspath(relax_out_path)} " 
-    content = os.popen(awk_order).readlines()
-    for idx, line in enumerate(content):
-        if "CELL_PARAMETERS (angstrom)" in line:
-            cell_parameters = content[idx+1:idx+4]
-            # 将里面的\n剔除
-            cell_parameters = [cell.strip("\n") for cell in cell_parameters]
-
-    for idx, line in enumerate(content):
-        if "ATOMIC_POSITIONS (crystal)" in line:
-            fractional_sites = content[idx+1:-1]
-            # 将里面的\n剔除
-            fractional_sites = [coords.strip("\n") for coords in fractional_sites]
-
-    return cell_parameters, fractional_sites
-
+    def get_coords(self, struct):
+        fractional_sites = None
+        if self.input_file_path.name == "relax.out" and self.input_file_path.exists():
+            awk_order = "awk '/Begin final coordinates/,/End final coordinates/{print $0}'" + f" {os.path.abspath(self.input_file_path)} " 
+            content = os.popen(awk_order).readlines()
+            for idx, line in enumerate(content):
+                if "ATOMIC_POSITIONS (crystal)" in line:
+                    fractional_sites = content[idx+1:-1]
+                    # 将里面的\n剔除
+                    fractional_sites = [coords.strip("\n") for coords in fractional_sites]
+            return fractional_sites
+        else:
+            print("You didn't specify relax.out as inputfile")
+            print("So We will get coords-information in the way of PYMATGEN")
+            fractional_sites = struct.sites
+            element_names = [re.search(r"[A-Za-z]+", str(site.species)).group() for site in fractional_sites]
+            fractional_sites = [
+                '{:<4}    {:>14.10f}    {:>14.10f}    {:>14.10f}'.format(
+                ele,
+                site.frac_coords[0], 
+                site.frac_coords[1], 
+                site.frac_coords[2]) for ele, site in zip(element_names, struct.sites)
+                ]
+            return fractional_sites
+        
 def get_pps_for_a_element(species_name:str, pp_files:list):
     """
     species_name: 元素名

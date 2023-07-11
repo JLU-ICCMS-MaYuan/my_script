@@ -201,9 +201,8 @@ class vasp_base:
             src_potcar_path_list = []
             for ele in elements:
                 for pot in final_choosed_potcar:
-                    if ele in pot.name:
-                        if pot.exists():  
-                            src_potcar_path_list.append(pot)
+                    if ele == pot.name:
+                        src_potcar_path_list.append(pot)
             dst_potcar = dst_potcar_path.joinpath("POTCAR")
             print(f"POTCAR merge order is:")
             for path in src_potcar_path_list:
