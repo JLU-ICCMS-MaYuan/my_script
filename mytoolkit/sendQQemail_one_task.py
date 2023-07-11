@@ -39,7 +39,7 @@ def check_slurm(job_ids=None):
         string = string + "<br/>"
         content+=string
 
-    if len(tasks) > 0:
+    if len(tasks) >= 1:
         return False, content
     else:
         return True, content
@@ -71,7 +71,7 @@ def check_pbs(job_ids=None):
         content+=string
     content = content + "Waiting" + "<br/>"
 
-    if len(tasks) > 1:
+    if len(tasks) >= 1:
         return False, content
     else:
         return True, content
@@ -81,7 +81,7 @@ if __name__ == "__main__":
 
 
     meachine_name = "楼下集群"
-    submit_system = "slurm"
+    submit_system = "pbs"
 
     print("Note: --------------------")
     print("    使用方法: sendQQemail_one_tasks.py <job_ids>")

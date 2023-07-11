@@ -12,8 +12,13 @@ T=os.popen("grep -oP 'temperature:\s+\K\d+' thermal_properties.yaml").read().spl
 freeE=os.popen("grep -oP 'free_energy:\s+\K-?\d+(\.\d+)?' thermal_properties.yaml").read().split()
 #[@]是用于引用整个数组array的所有元素
 # #是获取数组长度的操作符。
+natom=int(os.popen("grep -oP 'natom:\s*\K\d+' thermal_properties.yaml").read().strip())
 
+print("该脚本获得得声子亥姆霍兹自由能是eV/atom")
+print("phonopy处理得到得thermal_properties.yaml文件中得声子亥姆霍兹自由能是kJ/mol, 它是1个formla的能量")
+print("POSCAR-init的原子数是: {}".format(natom))
 with open("T-freeE.dat", "w") as tf:
+    tf.write("{:>5} {:>12}\n".format("T(K)", "freeE(eV/atom)"))
     for t, f in zip(T, freeE):
-        tf.write("{:>5} {:>12.7f}\n".format(int(t), float(f)*0.0103642696554971))
+        tf.write("{:>5} {:>14.7f}\n".format(int(t), float(f)*0.0103642696554971/natom))
 
