@@ -780,6 +780,7 @@ vasp_main.py -i CONTCAR -j bash data -m mode=hspp core=1
 ## 格式转化
 ```shell
 tool_main.py -i 输入文件名称 -w ./ convert -m dst_format=输出文件名称
+输出文件名称必须包含后缀为.vasp, .cif, .struct的内容
 ```
 
 ### POSCAR -> cif, dst_format现在支持的参数为: cif, vasp, struct(wien2k格式)
