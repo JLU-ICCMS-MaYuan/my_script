@@ -93,7 +93,9 @@ class qe_base:
         print("Note: -------------------- ")
         print(f"    finish back up origin inputed structure file into workpath:\n         {self.work_path}")
         if not self.work_path.joinpath(self.input_file_path.name).exists():
-            shutil.copy(self.input_file_path, self.work_path)
+            # shutil.copy(self.input_file_path, self.work_path)
+            backup_inputfile = self.work_path.joinpath("origin-"+self.input_file_path.name)
+            os.system(f"cp -f {self.input_file_path} {backup_inputfile}")
 
         # 处理PPOSCAR的pymatgen对象
         # 获得元素名称 和 每种元素的原子个数
