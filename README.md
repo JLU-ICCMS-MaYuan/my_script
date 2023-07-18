@@ -157,6 +157,108 @@ phono -m mode=split_assignQ qpoints='6 6 6' core=1 npool=1 queue=local
 phono -m mode=merge core=1 queue=local
 ```
 
+####  <span style="color:green"> 合并某一个q点下的所有不可约表示
+首先讲解一下某一个q点目录下的tmp目录的文件结构
+```shell
+# 文件
+[prefix].a2Fsave 
+[prefix].wfc*
+[prefix].xml
+# 目录
+[prefix].save # 该目录下存储着赝势，波函函数文件等
+    *.UPF
+    wfc*.dat
+    charge-density.dat
+    data-file-schema.xml
+    paw.txt 
+_ph0 # 该目录存储着dv*文件， wfc文件， [prefix].phsave目录， [prefix].save目录
+    [prefix].[prefix].dv*
+    [prefix].[prefix].dv_paw*
+    [prefix].wcf*
+    [prefix].phsave # 该目录下存储着control_ph.xml，dynmat.1.*.xml，elph.1.*.xml, patterns.1.xml, status_run.xml
+        dynmat.1.*.xml
+        elph.1.*.xml
+        # 一般来说dynmat.1.*.xml的文件数等于elph.1.*.xml的文件数等于不可约表示的数目，
+        # 需要通过检查dynmat.1.*.xml中的</Root>关键字来
+        # 判断是否左右的不可约表示的动力学矩阵都计算完毕。
+        patterns.1.xml
+        status_run.xml
+        control_ph.xml
+        # status_run.xml 和 control_ph.xml 这两个文件很可能
+        # 成为你合并不可约表示、处理出dyn*文件、处理出elph_dir目录的障碍。
+        # 如果续算不成功的话，可以尝试把他们两个文件删掉了
+    [prefix].save 
+        # 如果你在中间某个不可约表示计算时出错，中断了计算，
+        # 后续采用指定起始不可约表示的方法（start_irr=***)完成了该q点所有表示的计算，
+        # 那么这个目录中将只有charge-density.dat  data-file-schema.xml两个文件。
+        # 但是后来，我检查了其它体系分q点计算的tmp/_ph0/[prefix].save目录
+        # 发现 tmp/_ph0/[prefix].save目录 中也只有charge-density.dat  data-file-schema.xml两个文件
+        charge-density.dat  
+        data-file-schema.xml
+        # 如果你的在合并不可约表示、准备处理出dyn*文件和elph_dir目录时，报了一些错，那么有可能是tmp/_ph0/[prefix].save目录中缺少文件，只需要把tmp/[prefix].save中所有的文件拷贝到tmp/_ph0/[prefix].save中即可。
+```
+
+下面讲解一下合并某一个q点的所有不可约表示的步骤：
+
+0. 第0步: 修改split_ph.in文件 以及 提交作业的脚本
+
+```shell
+删除  start_irr=***, 
+添加  recover=.true.,
+注释所有关于自洽计算的内容
+```
+
+1. 第1步: 检查文件
+```shell
+cd tmp/_ph0/La2Ce2Y2H54.phsave/
+grep "</Root>" dynmat.1.*.xml | wc -l
+grep "</Root>" elph.1.*.xml | wc -l 
+grep "</root>" elph.1.*.xml | wc -l 
+
+# 最好这两个grep的结果是一样的，但是有时候不一样，有时候会有一个dynmat.1.0.xml文件。
+
+sbatch s5_PhSplitDyn0.sh 
+# 尝试第1次合并该q点的所有表示
+```
+
+2. 第2步：如果第1步没有问题，那么就不必执行第2步。如果第1步有问题，比如爆出这样的错误
+```shell
+     Parallelization info
+     --------------------
+     sticks:   dense  smooth     PW     G-vecs:    dense   smooth      PW
+     Min         883     295     94                53185    10235    1875
+     Max         884     296     95                53187    10236    1877
+     Sum        7067    2365    757               425483    81885   15009
+ 
+
+     negative rho (up, down):  3.238E-02 0.000E+00
+     read_file_new: Wavefunctions not in collected format?!?
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+     Error in routine phq_readin (1):
+     Electron-phonon only for metals
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+     stopping ...
+     read_file: Wavefunctions in collected format not available
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+     Error in routine phq_readin (1):
+     Electron-phonon only for metals
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+     stopping ...
+```
+
+那么只需要把tmp/[prefix].save中所有的文件拷贝到tmp/_ph0/[prefix].save中即可
+```shell
+cd tmp
+cp La2Ce2Y2H54.save/* _ph0/La2Ce2Y2H54.save/
+
+sbatch s5_PhSplitDyn0.sh 
+# 尝试第2次合并该q点的所有表示
+```
+
 ###  <span style="color:yellow"> 计算力常数
 ```shell
 phono -m mode=q2r qpoints='6 6 6' core=1 npool=1 queue=local
@@ -347,26 +449,39 @@ grep DOS elph.inp_lambda.10
 处理电荷屏蔽常数为0.1和0.13,得到 $\lambda$ 和 $\omega_{log}$ 并且输出一个文件：w_alpha2f_lambda.csv 可以用来绘制alpha-lambda的函数图像
 
 ```shell
+# 根据真实费米面选择
 sc -m mode=Tc core=1 npool=1 queue=local temperature_steps=100 a2fdos=True alpha2fdat=False broaden=0.5 smearing_method=1 nef=xxxxx
 ```
 
 ```shell
+# 自动选择gaussid以及gauss
 sc -m mode=Tc core=1 npool=1 queue=local temperature_steps=100 a2fdos=True alpha2fdat=False broaden=0.5 smearing_method=1
 ```
-指定最高频率
+
 ```shell
+# 当然如果你不满意程序给你选择的gaussid以及gauss, 你也可以自己指定
+qe_main.py -i relax.out -j bash sc -m mode=Tc core=1 npool=1 queue=local temperature_steps=100 a2fdos=True alpha2fdat=False broaden=0.5 smearing_method=1 gaussid=10 gauss=0.05
+```
+
+```shell
+# 指定最高频率
 top_freq=80
-```
-**当然了，a2fdos， alpha2fdat 两个参数不设置也可以，默认使用的是从alpha2fdat中读取数据，因为很多时候，你不会计算phonodos，所以你也没有a2F.dos*这些文件。**
-使用eliashberg方法超导转变温度, 指定读取a2F.dos*文件
-```shell
+
+# 当然了，a2fdos， alpha2fdat 两个参数不设置也可以，
+# 默认使用的是从alpha2fdat中读取数据，
+# 因为很多时候，你不会计算phonodos，所以你也没有a2F.dos*这些文件。
+
+# 使用eliashberg方法超导转变温度, 指定读取a2F.dos*文件
 a2fdos=True alpha2fdat=False
-```
-使用eliashberg方法超导转变温度, 指定读取alpha2F.dat文件中使用哪一列的degauss对应的alpha2F数值。使用alpha2fdat来指定
-**(这个方法生成ALPHA2F.OUT可能有问题导致 ELIASHBERG_GAP_T.OUT 中出现NAN。所以更推荐a2fdos=True那种处理方法。)**
-```shell
+
+# 使用eliashberg方法超导转变温度, 
+# 指定读取alpha2F.dat文件中使用哪一列的degauss对应的alpha2F数值。
+# 使用alpha2fdat来指定
+# 这个方法生成ALPHA2F.OUT可能有问题导致 ELIASHBERG_GAP_T.OUT 中出现NAN。 所以更推荐a2fdos=True那种处理方法。
 a2fdos=False alpha2fdat=True
 ```
+
+**(这个方法生成ALPHA2F.OUT可能有问题导致 ELIASHBERG_GAP_T.OUT 中出现NAN。所以更推荐a2fdos=True那种处理方法。)**
 
 用到的公式：
 
@@ -524,10 +639,10 @@ gam.lines文件
 ###  <span style="color:yellow">  自动prepare计算
 **只需要指定qpoints即可，kpoints_dense和kpoints_sparse会自动通过qpoints*4， qpoints*2来获得**
 ```shell
-prepare -m mode=prepare electron_maxstep=1000 core=4 npool=1 queue=local qpoints='4 4 5'
+prepare -m mode=prepareall electron_maxstep=1000 core=4 npool=1 queue=local qpoints='4 4 5'
 ```
 ```shell
-prepare -m mode=prepare electron_maxstep=1000 core=4 npool=1 queue=local  qpoints='4 4 5'
+prepare -m mode=preparescf electron_maxstep=1000 core=4 npool=1 queue=local  qpoints='4 4 5'
 ```
 
 

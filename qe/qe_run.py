@@ -157,7 +157,13 @@ class qe_eletron:
 
         if self.eletron_inputpara.mode == "hspp":
             self.eletron_inputpara.get_hspp()
-            self.get_fermi_energy()
+            eV_To_Ry = 0.0734986443513116
+            ef_scffit,  ef_scf  = self.get_fermi_energy()
+            nef_scffit, nef_scf = self.get_Nef(ef_scffit, ef_scf)
+            print("\nNote: --------------------")
+            print("    fermi_energy = {:<8.4f} eV in scffit.out, N(Ef) = {:<8.4f} states/eV/(Unit Cell) = {:<10.6f} states/spin/Ry/(Unit Cell)".format(ef_scffit, nef_scffit, nef_scffit/2/eV_To_Ry))
+            print("    fermi_energy = {:<8.4f} eV in scf.out,    N(Ef) = {:<8.4f} states/eV/(Unit Cell) = {:<10.6f} states/spin/Ry/(Unit Cell)".format(ef_scf, nef_scf, nef_scf/2/eV_To_Ry))
+
         elif self.eletron_inputpara.mode == "elebanddata": 
             self.qe_writeinput = qe_writeinput.init_from_eletroninput(self.eletron_inputpara)
             self.qe_writesubmit = qe_writesubmit.init_from_eletroninput(self.eletron_inputpara)
@@ -211,15 +217,35 @@ class qe_eletron:
             self.get_fermi_energy()
 
     def get_fermi_energy(self):
-        print("\nNote: --------------------")
         scffit_out_path = self.eletron_inputpara.work_path.joinpath("scffit.out")
         if scffit_out_path.exists():
-            fermi_energy = os.popen(f'grep "Fermi energy" {scffit_out_path}').read().split()[4]
-            print("    fermi_energy={} in scffit.out".format(fermi_energy))
+            ef_scffit = float(os.popen(f'grep "Fermi energy" {scffit_out_path}').read().split()[4])
         scf_out_path = self.eletron_inputpara.work_path.joinpath("scf.out")
         if scf_out_path.exists():
-            fermi_energy = os.popen(f'grep "Fermi energy" {scf_out_path}').read().split()[4]
-            print("    fermi_energy={} in scf.out".format(fermi_energy))
+            ef_scf = float(os.popen(f'grep "Fermi energy" {scf_out_path}').read().split()[4])
+        return ef_scffit, ef_scf
+
+
+    def get_Nef(self, ef_scffit, ef_scf):
+        eletdos_path = self.eletron_inputpara.work_path.joinpath(self.eletron_inputpara.system_name+".tdos")
+        if not eletdos_path.exists():
+            print("\nNote: --------------------")
+            print(f"    Sorry, {self.system_name}_phono.dos doesn't exist !")
+            nef_scffi, nef_scf = 0, 0
+            return nef_scffit, nef_scf
+        else:
+            eletdos = pd.read_table(
+                eletdos_path,
+                skiprows=1,  # skiprows=1：跳过文件的第一行，即不将其作为数据的一部分进行读取。
+                header=None, # header=None：不将文件的第一行作为列名，而将其视为数据。
+                sep='\s+'    # sep='\s+'：使用正则表达式 \s+ 作为列之间的分隔符，表示一个或多个空格字符。
+                )
+            eletdos.columns = ['E(eV)', 'dos(E)', 'Int dos(E)']
+            idx_scffit = (eletdos['E(eV)'] - ef_scffit).abs().idxmin()
+            nef_scffit = eletdos['dos(E)'][idx_scffit]
+            idx_scf    = (eletdos['E(eV)'] - ef_scf).abs().idxmin()
+            nef_scf    = eletdos['dos(E)'][idx_scf]
+            return nef_scffit, nef_scf
 
 
 class qe_superconduct:
@@ -308,21 +334,38 @@ class qe_prepare:
         self.prepare_inputpara  = qeprepare_inputpara.init_from_config(self._config)
         # 准备relax.in,  scffit.in,  scf.in 的输入文件
 
-        self.qe_writeinput  = qe_writeinput.init_from_relaxinput(self.prepare_inputpara)
-        inputfilename1 = self.qe_writeinput.writeinput(mode="relax-vc")
+        if self.prepare_inputpara.mode == "prepareall":
+            self.qe_writeinput  = qe_writeinput.init_from_relaxinput(self.prepare_inputpara)
+            inputfilename1 = self.qe_writeinput.writeinput(mode="relax-vc")
 
-        self.qe_writeinput  = qe_writeinput.init_from_scfinput(self.prepare_inputpara)
-        inputfilename2 = self.qe_writeinput.writeinput(mode="scffit")
+            self.qe_writeinput  = qe_writeinput.init_from_scfinput(self.prepare_inputpara)
+            inputfilename2 = self.qe_writeinput.writeinput(mode="scffit")
+            
+            self.qe_writeinput  = qe_writeinput.init_from_scfinput(self.prepare_inputpara)
+            inputfilename3 = self.qe_writeinput.writeinput(mode="scf")
         
-        self.qe_writeinput  = qe_writeinput.init_from_scfinput(self.prepare_inputpara)
-        inputfilename3 = self.qe_writeinput.writeinput(mode="scf")
-    
-        # init the submit job script
-        self.qe_writesubmit = qe_writesubmit.init_from_prepareinput(self.prepare_inputpara)
-        jobname = self.qe_writesubmit.write_submit_scripts([inputfilename1, inputfilename2, inputfilename3])
-        # submit the job
-        self.qe_submitjob   = qe_submitjob.init_from_scinput(self.prepare_inputpara)
-        if self.prepare_inputpara.queue is not None:
-            self.qe_submitjob.submit_mode1(inputfilename1, jobname)
+            # init the submit job script
+            self.qe_writesubmit = qe_writesubmit.init_from_prepareinput(self.prepare_inputpara)
+            jobname = self.qe_writesubmit.write_submit_scripts([inputfilename1, inputfilename2, inputfilename3])
+            # submit the job
+            self.qe_submitjob   = qe_submitjob.init_from_scinput(self.prepare_inputpara)
+            if self.prepare_inputpara.queue is not None:
+                self.qe_submitjob.submit_mode1(inputfilename1, jobname)
+
+        elif self.prepare_inputpara.mode == "preparescf":
+
+            self.qe_writeinput  = qe_writeinput.init_from_scfinput(self.prepare_inputpara)
+            inputfilename2 = self.qe_writeinput.writeinput(mode="scffit")
+            
+            self.qe_writeinput  = qe_writeinput.init_from_scfinput(self.prepare_inputpara)
+            inputfilename3 = self.qe_writeinput.writeinput(mode="scf")
+        
+            # init the submit job script
+            self.qe_writesubmit = qe_writesubmit.init_from_prepareinput(self.prepare_inputpara)
+            jobname = self.qe_writesubmit.write_submit_scripts([inputfilename2, inputfilename3])
+            # submit the job
+            self.qe_submitjob   = qe_submitjob.init_from_scinput(self.prepare_inputpara)
+            if self.prepare_inputpara.queue is not None:
+                self.qe_submitjob.submit_mode1(inputfilename2, jobname)
 
 

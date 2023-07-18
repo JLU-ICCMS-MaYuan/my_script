@@ -89,6 +89,11 @@ class qe_base:
         bstruct = spa.get_conventional_standard_structure()
         pstruct = spa.get_primitive_standard_structure()
         Poscar(pstruct).write_file(output_poscar.joinpath("PPOSCAR"))
+        # 备份原始结构
+        print("Note: -------------------- ")
+        print(f"    finish back up origin inputed structure file into workpath:\n         {self.work_path}")
+        if not self.work_path.joinpath(self.input_file_path.name).exists():
+            shutil.copy(self.input_file_path, self.work_path)
 
         # 处理PPOSCAR的pymatgen对象
         # 获得元素名称 和 每种元素的原子个数
@@ -234,7 +239,7 @@ class qe_base:
     def get_cell(self, struct):
         cell_parameters = None
         if self.input_file_path.name == "relax.out" and self.input_file_path.exists():
-            awk_order = "awk '/Begin final coordinates/,/End final coordinates/{print $0}'" + f" {os.path.abspath(self.input_file_path)} " 
+            awk_order = "awk '/Begin final coordinates/,/End final coordinates/{print $0}'" + f" {self.input_file_path.absolute()} " 
             content = os.popen(awk_order).readlines()
             for idx, line in enumerate(content):
                 if "CELL_PARAMETERS (angstrom)" in line:
@@ -242,12 +247,17 @@ class qe_base:
                     # 将里面的\n剔除
                     cell_parameters = [cell.strip("\n") for cell in cell_parameters]
             return cell_parameters
+        elif self.input_file_path.name == "POSCAR" or self.input_file_path.name == "CONTCAR" or ".vasp" in self.input_file_path.name:
+            sed_order = "sed -n '3,5p' " + f" {self.input_file_path.absolute()} "
+            content = os.popen(sed_order).readlines()
+            cell_parameters = [cell.strip("\n") for cell in content]
+            return cell_parameters
         else:
             print("You didn't specify relax.out as inputfile")
             print("So We will get cell-information in the way of PYMATGEN")
             print("cell_parameters")
             cell_parameters = struct.lattice.matrix
-            cell_parameters = ['{:>14.10f}    {:>14.10f}    {:>14.10f}'.format(cell[0], cell[1], cell[2]) for cell in cell_parameters]
+            cell_parameters = ['{:>20.16f}    {:>20.16f}    {:>20.16f}'.format(cell[0], cell[1], cell[2]) for cell in cell_parameters]
             return cell_parameters
 
     def get_coords(self, struct):
@@ -261,13 +271,34 @@ class qe_base:
                     # 将里面的\n剔除
                     fractional_sites = [coords.strip("\n") for coords in fractional_sites]
             return fractional_sites
+        elif self.input_file_path.name == "POSCAR" or self.input_file_path.name == "CONTCAR" or ".vasp" in self.input_file_path.name:
+            sed_order1 = "sed -n '6p' " + f" {self.input_file_path.absolute()} "
+            elements   = os.popen(sed_order1).read().strip('\n').split()
+            sed_order2 = "sed -n '7p' " + f" {self.input_file_path.absolute()} "
+            numatoms   = os.popen(sed_order2).read().strip('\n').split()
+            # 检查元素的个数与原子种类的个数是否相同
+            assert len(elements) == len(numatoms)
+            # 检查该POSCAR是否是分数坐标
+            sed_order3 = "sed -n '8p' " + f" {self.input_file_path.absolute()} "
+            coordstype = os.popen(sed_order3).read().strip('\n')
+            assert coordstype[0] == 'D' or coordstype[0] == 'd'
+            # 将元素按照原子个数重复写进列表elementlist里
+            sed_order4 = "sed -n '9,$p' " + f" {self.input_file_path.absolute()} "
+            coordnates = os.popen(sed_order4).readlines()
+            element_names= []
+            for na, ele in zip(numatoms, elements): # extend() 函数用于在列表末尾一次性追加另一个序列中的多个值
+                element_names.extend([ele]*int(na))
+            # 建立元素列表elementlist与分数坐标的一一对应关系
+            fractional_sites = [
+                '{:<4}   {}'.format(ele, site.strip("\n")) for ele, site in zip(element_names, coordnates)]
+            return fractional_sites
         else:
             print("You didn't specify relax.out as inputfile")
             print("So We will get coords-information in the way of PYMATGEN")
             fractional_sites = struct.sites
             element_names = [re.search(r"[A-Za-z]+", str(site.species)).group() for site in fractional_sites]
             fractional_sites = [
-                '{:<4}    {:>14.10f}    {:>14.10f}    {:>14.10f}'.format(
+                '{:<4}    {:>20.16f}    {:>20.16f}    {:>20.16f}'.format(
                 ele,
                 site.frac_coords[0], 
                 site.frac_coords[1], 

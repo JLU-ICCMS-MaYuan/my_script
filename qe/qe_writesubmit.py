@@ -135,8 +135,11 @@ class qe_writesubmit:
         if mode == "scf":
             jobname = self.s3_scf(self.work_path, inpufilename)
             return jobname
-        if mode =="prepare":
+        if mode =="prepareall":
             jobname = self.s123_prepare(self.work_path, inpufilename)
+            return jobname
+        if mode =="preparescf":
+            jobname = self.s23_prepare(self.work_path, inpufilename)
             return jobname
         if mode =="nosplit":
             jobname = self.s4_PhNoSplit(self.work_path, inpufilename)
@@ -270,6 +273,20 @@ class qe_writesubmit:
             j.write('mpirun -np {} {}/pw.x -npool {} <{}> {} \n'.format(self.core, qebin_path, self.npool, scf_in,  scf_out))
         return jobname
 
+    def s23_prepare(self, _dirpath, inputfilenames):
+        _inpufilename   = inputfilenames
+        _outputfilename = [ipname.split(".")[0] + ".out" for ipname in _inpufilename]
+        input_output    = zip(_inpufilename, _outputfilename)
+        jobname = "s23_prepare.sh"
+        _script_filepath = os.path.join(_dirpath, jobname)
+        with open(_script_filepath, "w") as j:
+            j.writelines(self.jobtitle)
+            scffit_in, scffit_out = input_output.__next__()
+            j.write('mpirun -np {} {}/pw.x -npool {} <{}> {} \n'.format(self.core, qebin_path, self.npool, scffit_in, scffit_out))
+            scf_in, scf_out = input_output.__next__()
+            j.write('mpirun -np {} {}/pw.x -npool {} <{}> {} \n'.format(self.core, qebin_path, self.npool, scf_in,  scf_out))
+        return jobname
+
     def s4_PhNoSplit(self, _dirpath, inputfilename):
         _inpufilename = inputfilename
         _outputfilename = _inpufilename.split(".")[0] + ".out"
@@ -308,10 +325,10 @@ class qe_writesubmit:
         with open(_script_filepath, "w") as j:
             j.writelines(self.jobtitle)
             j.write('killall -9 vasp_std; killall -9 pw.x; killall -9 ph.x                  \n')
-            j.write('#### echo "run scf.fit"                                                \n')
-            j.write('#### mpirun -np {} {}/pw.x -npool {} <{}> {} \n'.format(self.core, qebin_path,  self.npool, _inputscffit_name, _outputscffit_name))
-            j.write('#### echo "run scf"                                                    \n')
-            j.write('#### mpirun -np {} {}/pw.x -npool {} <{}> {} \n'.format(self.core, qebin_path,  self.npool, _inputscf_name, _outputscf_name))
+            j.write('echo "run scf.fit"                                                \n')
+            j.write('mpirun -np {} {}/pw.x -npool {} <{}> {} \n'.format(self.core, qebin_path,  self.npool, _inputscffit_name, _outputscffit_name))
+            j.write('echo "run scf"                                                    \n')
+            j.write('mpirun -np {} {}/pw.x -npool {} <{}> {} \n'.format(self.core, qebin_path,  self.npool, _inputscf_name, _outputscf_name))
             j.write('echo "run split_ph"                                                    \n')
             j.write('mpirun -np {} {}/ph.x -npool {} <{}> {} \n'.format(self.core, qebin_path,  self.npool, _inputsplitph_name,  _outputsplitph_name))   
         return jobname

@@ -634,7 +634,7 @@ class qe_writeinput:
                 element      = Element(species_name)
                 species_mass = str(element.atomic_mass).strip("amu")
                 qe.write("  amass({})={},                                \n".format(i+1, species_mass))             
-            qe.write("  outdir='../tmp',                                 \n")               
+            qe.write("  outdir='./tmp',                                 \n")               
             qe.write("  fildyn='{}.dyn',                                 \n".format(self.system_name))                    
             qe.write("  trans=.true.,                                    \n")            
             qe.write("  ldisp=.true.,                                    \n")

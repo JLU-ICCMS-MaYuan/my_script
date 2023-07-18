@@ -329,7 +329,6 @@ class qephono_inputpara(qe_inputpara):
             self.path_name_coords = None
 
         # 这一部分是关于如果获得收敛的gaussid和gauss
-        # 第一种情况你自己指定 gaussid 和 gauss
         if self.mode == "Tc" or self.mode == "phonobanddata":
             if hasattr(self, "gaussid") and hasattr(self, "gauss"):
                 self.gaussid = int(self.gaussid) - 1
