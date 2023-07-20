@@ -161,7 +161,7 @@ phono -m mode=merge core=1 queue=local
 首先讲解一下某一个q点目录下的tmp目录的文件结构
 ```shell
 # 文件
-[prefix].a2Fsave 
+[prefix].a2Fsave # 非常重要，这个文件也要拷贝到总的tmp目录中。它产生自scffit.in计算中，因为在scffit.in中开启了la2f=.true.这个开关，所以会在tmp目录中产生该文件。在完成tmp/_ph0/[prefix].phsave/中所有动力学矩阵和电声耦合矩阵的读取后，将会读取[prefix].a2Fsave文件进行电声耦合计算。
 [prefix].wfc*
 [prefix].xml
 # 目录
@@ -184,9 +184,8 @@ _ph0 # 该目录存储着dv*文件， wfc文件， [prefix].phsave目录， [pre
         patterns.1.xml
         status_run.xml
         control_ph.xml
-        # status_run.xml 和 control_ph.xml 这两个文件很可能
-        # 成为你合并不可约表示、处理出dyn*文件、处理出elph_dir目录的障碍。
-        # 如果续算不成功的话，可以尝试把他们两个文件删掉了
+        # status_run.xml 和 control_ph.xml 这两个文件一定不可以删掉
+        # 这两个文件如果删掉了，即使ph.in中recover=.true.,也会从头计算声子，无法续算。
     [prefix].save 
         # 如果你在中间某个不可约表示计算时出错，中断了计算，
         # 后续采用指定起始不可约表示的方法（start_irr=***)完成了该q点所有表示的计算，
@@ -199,6 +198,33 @@ _ph0 # 该目录存储着dv*文件， wfc文件， [prefix].phsave目录， [pre
 ```
 
 下面讲解一下合并某一个q点的所有不可约表示的步骤：
+
+首先给出合并所有不可约表示所需要的全部文件：###表示该文件是合并所需要的文件
+
+```shell
+[prefix].a2Fsave           ###
+[prefix].wfc*
+[prefix].xml
+[prefix].save              ###
+    *.UPF                  ###
+    wfc*.dat               ###
+    charge-density.dat     ###
+    data-file-schema.xml   ###
+    paw.txt                ###
+_ph0                       ###
+    [prefix].[prefix].dv*
+    [prefix].[prefix].dv_paw*
+    [prefix].wcf*
+    [prefix].phsave        ###
+        dynmat.1.*.xml     ###
+        elph.1.*.xml       ###
+        patterns.1.xml     ###
+        status_run.xml     ###
+        control_ph.xml     ###
+    [prefix].save          ###
+        charge-density.dat ###
+        data-file-schema.xml
+```
 
 0. 第0步: 修改split_ph.in文件 以及 提交作业的脚本
 
@@ -223,17 +249,6 @@ sbatch s5_PhSplitDyn0.sh
 
 2. 第2步：如果第1步没有问题，那么就不必执行第2步。如果第1步有问题，比如爆出这样的错误
 ```shell
-     Parallelization info
-     --------------------
-     sticks:   dense  smooth     PW     G-vecs:    dense   smooth      PW
-     Min         883     295     94                53185    10235    1875
-     Max         884     296     95                53187    10236    1877
-     Sum        7067    2365    757               425483    81885   15009
- 
-
-     negative rho (up, down):  3.238E-02 0.000E+00
-     read_file_new: Wavefunctions not in collected format?!?
-
  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
      Error in routine phq_readin (1):
      Electron-phonon only for metals
@@ -242,10 +257,7 @@ sbatch s5_PhSplitDyn0.sh
      stopping ...
      read_file: Wavefunctions in collected format not available
 
- %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-     Error in routine phq_readin (1):
-     Electron-phonon only for metals
- %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
      stopping ...
 ```
@@ -258,6 +270,29 @@ cp La2Ce2Y2H54.save/* _ph0/La2Ce2Y2H54.save/
 sbatch s5_PhSplitDyn0.sh 
 # 尝试第2次合并该q点的所有表示
 ```
+
+3. 第3步：如果还是无法合并所有不可约q点，并且在ph.out中报出这样的警告和错误后停止运行ph.x。这多半是因为你编译的qe有问题。再重新编译qe后虽然这样的错误还会报出，但是不会中止程序运行。
+```shell
+warning: file closed at level 1 with tag Root open
+ end of file reached, tag PARTIAL_EL_PHON not found
+ end of file reached, tag NUMBER_OF_K not found
+ end of file reached, tag NUMBER_OF_BANDS not found
+ end of file reached, tag K_POINT.1 not found
+ end of file reached, tag K_POINT.2 not found
+ end of file reached, tag K_POINT.3 not found
+xmlr_closetag: severe error, closing tag that was never opened
+```
+4. 第4步：如果还是无法合并所有不可约q点，程序停在了electron-phonon interaction这里，虽然没有报出CRASH，但是在log.err(slurm作业系统提供的错误报告)文件中提示无法读取[prefix].a2Fsave文件。这是因为你缺少[prefix].a2Fsave文件，从某一个不可约表示计算目录的tmp文件中拷贝一个过来就好了。
+
+```shell
+     freq ( 176- 176) =       2060.7  [cm-1]   --> A_g
+     freq ( 177- 177) =       2096.1  [cm-1]   --> A_u
+     freq ( 178- 178) =       2102.2  [cm-1]   --> A_g
+     freq ( 179- 179) =       2177.1  [cm-1]   --> A_g
+     freq ( 180- 180) =       2183.9  [cm-1]   --> A_u
+     electron-phonon interaction  ...
+```
+
 
 ###  <span style="color:yellow"> 计算力常数
 ```shell
