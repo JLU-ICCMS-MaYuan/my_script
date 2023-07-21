@@ -10,6 +10,31 @@ class vasp_writeincar:
         for key, value in kwargs.items():
             setattr(self, key, value)
 
+    def writeinput(self, mode=None):
+        if mode == None:
+            mode = self.mode
+        if self.mode == 'rvf' or self.mode == 'rv1':
+            incar_dirpath = self.opt_fine_incar(self.work_path)
+        if self.mode == 'rv3':
+            incar_dirpath1 = self.opt_incar1(self.work_path)
+            incar_dirpath2 = self.opt_incar2(self.work_path)
+            incar_dirpath  = self.opt_incar3(self.work_path)
+        if self.mode == 'disp':
+            incar_dirpath = self.disp_incar(self.work_path)
+        if self.mode == 'dfpt':
+            incar_dirpath = self.dfpt_incar(self.work_path)
+        if self.mode == 'scf':
+            incar_dirpath = self.scf_incar(self.work_path)
+        if self.mode == 'eband':
+            incar_dirpath = self.eband_incar(self.work_path)
+        if self.mode == 'eledos':
+            incar_dirpath = self.eledos_incar(self.work_path)
+
+        if int(self.ispin)== 2:
+            self.append_magnet(incar_dirpath)
+        if self.ldau  == ".TRUE.":
+            self.append_u(incar_dirpath)
+
     @classmethod
     def init_from_relaxinput(cls, other_class: vasp_inputpara):
         self = cls(
@@ -30,6 +55,22 @@ class vasp_writeincar:
             
             press=other_class.press,
             mode=other_class.mode,
+
+            # consider magnetism
+            isym=other_class.isym,
+            ispin=other_class.ispin,
+            magmom=other_class.magmom,
+            lorbit=other_class.lorbit,
+            lasph=other_class.lasph,
+            gga=other_class.gga,
+
+            # DFT+U+J
+            ldau=other_class.ldau,
+            ldautype=other_class.ldautype,
+            ldaul=other_class.ldaul,
+            ldauu=other_class.ldauu,
+            ldauj=other_class.ldauj,
+            lmaxmix=other_class.lmaxmix,
         )
         return self
 
@@ -48,6 +89,22 @@ class vasp_writeincar:
             lreal=other_class.lreal,
             mode=other_class.mode,
             kspacing=other_class.kspacing,
+
+            # consider magnetism
+            isym=other_class.isym,
+            ispin=other_class.ispin,
+            magmom=other_class.magmom,
+            lorbit=other_class.lorbit,
+            lasph=other_class.lasph,
+            gga=other_class.gga,
+
+            # DFT+U+J
+            ldau=other_class.ldau,
+            ldautype=other_class.ldautype,
+            ldaul=other_class.ldaul,
+            ldauu=other_class.ldauu,
+            ldauj=other_class.ldauj,
+            lmaxmix=other_class.lmaxmix,
         )
         return self
 
@@ -65,6 +122,22 @@ class vasp_writeincar:
             lreal=other_class.lreal,
             mode=other_class.mode,
             kspacing=other_class.kspacing,
+
+            # consider magnetism
+            isym=other_class.isym,
+            ispin=other_class.ispin,
+            magmom=other_class.magmom,
+            lorbit=other_class.lorbit,
+            lasph=other_class.lasph,
+            gga=other_class.gga,
+
+            # DFT+U+J
+            ldau=other_class.ldau,
+            ldautype=other_class.ldautype,
+            ldaul=other_class.ldaul,
+            ldauu=other_class.ldauu,
+            ldauj=other_class.ldauj,
+            lmaxmix=other_class.lmaxmix,
         )
         return self
 
@@ -87,7 +160,8 @@ class vasp_writeincar:
             incar.write("IBRION   = 2    \n")   
             incar.write("ISIF     = 2    \n")
             incar.write("POTIM    = 0.3  \n")
-            incar.write("PSTRESS  = {}   \n".format(str(float(self.press)*10)))   
+            incar.write("PSTRESS  = {}   \n".format(str(float(self.press)*10)))
+        return incar_filepath
 
     def opt_incar2(self, incar_dirpath):
         incar_filepath = os.path.join(incar_dirpath, "INCAR_2")
@@ -108,7 +182,8 @@ class vasp_writeincar:
             incar.write("IBRION   = 2    \n")   
             incar.write("ISIF     = 4    \n")   
             incar.write("POTIM    = 0.1  \n")
-            incar.write("PSTRESS  = {}   \n".format(str(float(self.press)*10)) )   
+            incar.write("PSTRESS  = {}   \n".format(str(float(self.press)*10)) )  
+        return incar_filepath
 
     def opt_incar3(self, incar_dirpath):
         incar_filepath = os.path.join(incar_dirpath, "INCAR_3")
@@ -129,7 +204,8 @@ class vasp_writeincar:
             incar.write("IBRION   = 2    \n")   
             incar.write("ISIF     = 3    \n")        
             incar.write("POTIM    = 0.05 \n")
-            incar.write("PSTRESS  = {}   \n".format(str(float(self.press)*10)))    
+            incar.write("PSTRESS  = {}   \n".format(str(float(self.press)*10))) 
+        return incar_filepath   
 
     def opt_fine_incar(self, incar_dirpath):
         incar_filepath = os.path.join(incar_dirpath, "INCAR")
@@ -153,7 +229,7 @@ class vasp_writeincar:
             incar.write("ISIF     = {}   \n".format(str(self.isif)))    
             incar.write("POTIM    = {}   \n".format(str(self.potim)))
             incar.write("PSTRESS  = {}   \n".format(str(float(self.press)*10)))  
-
+        return incar_filepath
             
     def disp_incar(self, incar_dirpath):
         incar_filepath = os.path.join(incar_dirpath, "INCAR")
@@ -177,7 +253,7 @@ class vasp_writeincar:
             incar.write("ADDGRID  = .TRUE.\n")
             if self.kspacing is not None:
                 incar.write("KSPACING = {}   \n".format(str(self.kspacing)))
-
+        return incar_filepath
 
     def dfpt_incar(self, incar_dirpath):
         incar_filepath = os.path.join(incar_dirpath, "INCAR")
@@ -203,8 +279,8 @@ class vasp_writeincar:
             incar.write("ADDGRID  = .TRUE. \n")
             if self.kspacing is not None:
                 incar.write("KSPACING = {}   \n".format(str(self.kspacing)))
+        return incar_filepath
 
-                
     def scf_incar(self, incar_dirpath):
         incar_filepath = os.path.join(incar_dirpath, "INCAR")
         with open(incar_filepath, "w") as incar:
@@ -237,8 +313,9 @@ class vasp_writeincar:
             incar.write("#RWIGS   = 1.54 0.82\n")
             incar.write("LHYPERFINE = .FALSE.\n")
             incar.write("NPAR     = 4      \n")
+        return incar_filepath
 
-    def band_incar(self, incar_dirpath):
+    def eband_incar(self, incar_dirpath):
         incar_filepath = os.path.join(incar_dirpath, "INCAR")
         with open(incar_filepath, "w") as incar:
             incar.write("ISTART = 0           \n")
@@ -264,20 +341,20 @@ class vasp_writeincar:
             incar.write("LHYPERFINE = .FALSE. \n")                      
             incar.write("NPAR = 4             \n")          
             incar.write("LORBIT = 11          \n") # 算投影能带有用
-
+        return incar_filepath
 
     def eledos_incar(self, incar_dirpath):
         incar_filepath = os.path.join(incar_dirpath, "INCAR")
         with open(incar_filepath, "w") as incar:
             incar.write("ISTART = 1           \n") # if a WAVECAR file exists
             incar.write("ICHARG = 11          \n") # 从CHGCAR读取给定电荷密度的特征值(用于带结构图)或状态密度(DOS)。自洽CHGCAR文件必须事先通过一个跨越整个布里渊区的k点网格进行完全自洽计算来确定。
-            incar.write("ENCUT  = {}        \n".format(str(self.encut)))          
+            incar.write("ENCUT  = {}          \n".format(str(self.encut)))          
             incar.write("PREC = Accurate      \n") 
             incar.write("ISMEAR  = -5         \n")
-            incar.write("SIGMA   = {}     \n".format(str(self.sigma)))   
+            incar.write("SIGMA   = {}         \n".format(str(self.sigma)))   
             incar.write("NELM = 100           \n")                               
             incar.write("NELMIN = 2           \n")
-            incar.write("EDIFF    = {}     \n".format(self.ediff))
+            incar.write("EDIFF    = {}        \n".format(self.ediff))
             incar.write("IBRION = -1          \n")             
             incar.write("NSW = 0              \n")                         
             incar.write("VOSKOWN = 1          \n")       
@@ -295,5 +372,29 @@ class vasp_writeincar:
             incar.write("NPAR = 4             \n") #这个应该是DOS的采点个数，弄高一点无所谓。
             incar.write("NEDOS = 1201         \n") # NEDOS指定DOS被评估的网格点的数量
             incar.write("LORBIT = 11          \n") # 输出分波态密度信息
-            incar.write("#EMIN = -10           \n") # 此为DOS图的能量范围，根据能带的能量范围来决定min和max是多少。
-            incar.write("#EMAX =  10           \n") 
+            incar.write("#EMIN = -10          \n") # 此为DOS图的能量范围，根据能带的能量范围来决定min和max是多少。
+            incar.write("#EMAX =  10          \n") 
+        return incar_filepath
+
+    def append_magnet(self, incar_dirpath):
+        incar_filepath = os.path.join(incar_dirpath, "INCAR")
+        with open(incar_dirpath, "a") as incar:
+            incar.write("\n")
+            incar.write("# add parameters for magnetism\n")
+            incar.write("ISYM     = {}\n".format(self.isym))
+            incar.write("ISPIN    = {}\n".format(self.ispin))
+            incar.write("MAGMOM   = {}\n".format(self.magmom))
+            incar.write("LORBIT   = {}\n".format(self.lorbit))
+            incar.write("LASPH    = {}\n".format(self.lasph))
+            incar.write("GGA      = {}\n".format(self.gga))
+              
+    def append_u(self, incar_dirpath):
+        with open(incar_dirpath, "a") as incar:
+            incar.write("\n")
+            incar.write("# add parameters for U value\n")
+            incar.write("LDAU     = {}\n".format(self.ldau))
+            incar.write("LDAUTYPE = {}\n".format(self.ldautype))
+            incar.write("LDAUL    = {}\n".format(self.ldaul))
+            incar.write("LDAUU    = {}\n".format(self.ldauu))
+            incar.write("LDAUJ    = {}\n".format(self.ldauj)) 
+            incar.write("LMAXMIX  = {}\n".format(self.lmaxmix))

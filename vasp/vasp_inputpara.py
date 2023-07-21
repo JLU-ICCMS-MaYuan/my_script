@@ -96,6 +96,44 @@ class vasp_inputpara(vasp_base):
         if not hasattr(self, "core"):
             raise ValueError("    You must specify the number of core, such as 'core=48'")
 
+        # 关于磁性的参数设置：
+        if not hasattr(self, "isym"):
+            self.isym = 2
+        
+        if not hasattr(self, "ispin"):
+            self.ispin = 1
+        
+        if not hasattr(self, "magmom"):
+            self.magmom = None
+
+        if not hasattr(self, "lorbit"):
+            self.lorbit = 11
+        
+        if not hasattr(self, "lasph"):
+            self.lasph = ".TRUE."
+        
+        if not hasattr(self, "gga"):
+            self.gga = "PS"
+
+        # 关于DFT+U+J的参数设置
+        if not hasattr(self, "ldau"):
+            self.ldau = None
+
+        if not hasattr(self, "ldautype"):
+            self.ldautype = 2
+
+        if not hasattr(self, "ldaul"):
+            self.ldaul = None
+
+        if not hasattr(self, "ldauu"):
+            self.ldauu = None
+
+        if not hasattr(self, "ldauj"):
+            self.ldauj = None
+
+        if not hasattr(self, "lmaxmix"):
+            self.lmaxmix = 6
+
     @classmethod
     def init_from_config1(cls, config: dict):
 

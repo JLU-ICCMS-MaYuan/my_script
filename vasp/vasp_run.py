@@ -31,12 +31,8 @@ def vasp_relax(args: ArgumentParser) -> None:
 
     # init the INCAR
     _vasp_writeincar  = vasp_writeincar.init_from_relaxinput(relax_inputpara)
-    if relax_inputpara.mode == 'rvf' or relax_inputpara.mode == 'rv1':
-        _vasp_writeincar.opt_fine_incar(relax_inputpara.work_path) 
-    elif relax_inputpara.mode == 'rv3':
-        _vasp_writeincar.opt_incar1(relax_inputpara.work_path)
-        _vasp_writeincar.opt_incar2(relax_inputpara.work_path)
-        _vasp_writeincar.opt_incar3(relax_inputpara.work_path)
+    _vasp_writeincar.writeinput()
+    
     # init the submit job script
     _vasp_writesubmit = vasp_writesubmit.init_from_relaxinput(relax_inputpara)
     jobname = _vasp_writesubmit.write_submit_scripts()
@@ -76,12 +72,7 @@ def vaspbatch_relax(args: ArgumentParser) -> None:
 
             # init the INCAR
             _vasp_writeincar  = vasp_writeincar.init_from_relaxinput(relax_inputpara)
-            if relax_inputpara.mode == 'rvf' or relax_inputpara.mode == 'rv1':
-                _vasp_writeincar.opt_fine_incar(relax_inputpara.work_path) 
-            elif relax_inputpara.mode == 'rv3':
-                _vasp_writeincar.opt_incar1(relax_inputpara.work_path)
-                _vasp_writeincar.opt_incar2(relax_inputpara.work_path)
-                _vasp_writeincar.opt_incar3(relax_inputpara.work_path)
+            _vasp_writeincar.writeinput()
             # init the submit job script
             _vasp_writesubmit = vasp_writesubmit.init_from_relaxinput(relax_inputpara)
             jobname = _vasp_writesubmit.write_submit_scripts()
@@ -105,10 +96,7 @@ def vasp_phono(args: ArgumentParser) -> None:
 
     # init the INCAR
     _vasp_writeincar  = vasp_writeincar.init_from_phonoinput(phono_inputpara)
-    if phono_inputpara.mode == 'disp':
-        _vasp_writeincar.disp_incar(phono_inputpara.work_path)
-    elif phono_inputpara.mode == 'dfpt':
-        _vasp_writeincar.dfpt_incar(phono_inputpara.work_path)
+    _vasp_writeincar.writeinput()
 
     # init the KPOINTS
     if phono_inputpara.kdensity is not None:
@@ -154,10 +142,7 @@ def vaspbatch_phono(args: ArgumentParser) -> None:
 
             # init the INCAR
             _vasp_writeincar  = vasp_writeincar.init_from_phonoinput(phono_inputpara)
-            if phono_inputpara.mode == 'disp':
-                _vasp_writeincar.disp_incar(phono_inputpara.work_path)
-            elif phono_inputpara.mode == 'dfpt':
-                _vasp_writeincar.dfpt_incar(phono_inputpara.work_path)
+            _vasp_writeincar.writeinput()
             # init the KPOINTS
             phono_inputpara.create_kpoints_by_pymatgen(
                 phono_inputpara.sposcar_struct_type,
@@ -184,9 +169,9 @@ def vasp_eletron(args):
     # init the INCAR
     _vasp_writeincar  = vasp_writeincar.init_from_eletron(eletron_inputpara)
     if eletron_inputpara.mode == 'scf':
-        _vasp_writeincar.scf_incar(
-            eletron_inputpara.work_path
-            )
+        
+        _vasp_writeincar.writeinput()
+
         eletron_inputpara.write_evenly_kpoints(
             eletron_inputpara.kspacing, 
             eletron_inputpara.work_path
@@ -209,7 +194,9 @@ def vasp_eletron(args):
             eletron_inputpara.ase_type, 
             eletron_inputpara.work_path.joinpath("KPOINTS"),
             )
-        _vasp_writeincar.band_incar(eletron_inputpara.work_path)
+        
+        _vasp_writeincar.writeinput()
+
         _vasp_writesubmit = vasp_writesubmit.init_from_eletron(eletron_inputpara)
         jobname = _vasp_writesubmit.write_submit_scripts()
         _vasp_submitjob = vasp_submitjob.init_from_relaxinput(eletron_inputpara)
@@ -239,7 +226,9 @@ def vasp_eletron(args):
             eletron_inputpara.kspacing, 
             eletron_inputpara.work_path
             )
-        _vasp_writeincar.eledos_incar(eletron_inputpara.work_path)
+        
+        _vasp_writeincar.writeinput()
+        
         _vasp_writesubmit = vasp_writesubmit.init_from_eletron(eletron_inputpara)
         jobname = _vasp_writesubmit.write_submit_scripts()
         _vasp_submitjob = vasp_submitjob.init_from_relaxinput(eletron_inputpara)
