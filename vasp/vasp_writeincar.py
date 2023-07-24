@@ -19,6 +19,11 @@ class vasp_writeincar:
             incar_dirpath1 = self.opt_incar1(self.work_path)
             incar_dirpath2 = self.opt_incar2(self.work_path)
             incar_dirpath  = self.opt_incar3(self.work_path)
+        if self.mode == 'rv4':
+            incar_dirpath1 = self.opt_incar1(self.work_path)
+            incar_dirpath2 = self.opt_incar2(self.work_path)
+            incar_dirpath3 = self.opt_incar3(self.work_path)
+            incar_dirpath  = self.opt_incar4(self.work_path)
         if self.mode == 'disp':
             incar_dirpath = self.disp_incar(self.work_path)
         if self.mode == 'dfpt':
@@ -150,7 +155,7 @@ class vasp_writeincar:
             incar.write("PREC     = LOW  \n") 
             incar.write("NCORE    = 4    \n")         
             incar.write("KSPACING = 0.8  \n")            
-            incar.write("ISMEAR   = 1    \n")   
+            incar.write("ISMEAR   = 0    \n")   
             incar.write("SIGMA    = 0.2  \n")   
             incar.write("NELM     = 200   \n")   
             incar.write("NELMIN   = 6    \n")   
@@ -172,7 +177,7 @@ class vasp_writeincar:
             incar.write("PREC     = Normal\n") 
             incar.write("NCORE    = 4    \n")         
             incar.write("KSPACING = 0.5  \n")
-            incar.write("ISMEAR   = 1    \n")   
+            incar.write("ISMEAR   = 0    \n")   
             incar.write("SIGMA    = 0.2  \n")   
             incar.write("NELM     = 200   \n")   
             incar.write("NELMIN   = 6    \n")   
@@ -194,18 +199,42 @@ class vasp_writeincar:
             incar.write("PREC     = A    \n")
             incar.write("NCORE    = 4    \n")         
             incar.write("KSPACING = 0.30 \n")            
-            incar.write("ISMEAR   = 1    \n")   
+            incar.write("ISMEAR   = 0    \n")   
             incar.write("SIGMA    = 0.05 \n")   
             incar.write("NELM     = 90   \n")   
             incar.write("NELMIN   = 6    \n")   
-            incar.write("EDIFF    = 1e-7 \n")
-            incar.write("EDIFFG   = -0.001\n")
+            incar.write("EDIFF    = 1e-5 \n")
+            incar.write("EDIFFG   = -0.1\n")
             incar.write("NSW      = 500  \n")   
             incar.write("IBRION   = 2    \n")   
             incar.write("ISIF     = 3    \n")        
             incar.write("POTIM    = 0.05 \n")
             incar.write("PSTRESS  = {}   \n".format(str(float(self.press)*10))) 
         return incar_filepath   
+
+    def opt_incar4(self, incar_dirpath):
+        incar_filepath = os.path.join(incar_dirpath, "INCAR_4")
+        with open(incar_filepath, "w") as incar:
+            incar.write("ISTART   = 0    \n")   
+            incar.write("ICHARG   = 2    \n")   
+            incar.write("ENCUT    = {}   \n".format(str(self.encut)))        
+            incar.write("PREC     = A    \n")
+            incar.write("SYMPREC  = {}   \n".format(str(self.symprec)))
+
+            incar.write("NCORE    = {}   \n".format(str(self.ncore)))         
+            incar.write("KSPACING = {}   \n".format(str(self.kspacing))) 
+            incar.write("ISMEAR   = {}   \n".format(str(self.ismear)))   
+            incar.write("SIGMA    = {}   \n".format(str(self.sigma)))   
+            incar.write("NELM     = {}   \n".format(str(self.nelm)))   
+            incar.write("NELMIN   = 6    \n")   
+            incar.write("EDIFF    = {}   \n".format(str(self.ediff)))
+            incar.write("EDIFFG   = {}   \n".format(str(self.ediffg)))
+            incar.write("NSW      = 500  \n")   
+            incar.write("IBRION   = {}   \n".format(str(self.ibrion)))   
+            incar.write("ISIF     = {}   \n".format(str(self.isif)))    
+            incar.write("POTIM    = {}   \n".format(str(self.potim)))
+            incar.write("PSTRESS  = {}   \n".format(str(float(self.press)*10)))  
+        return incar_filepath 
 
     def opt_fine_incar(self, incar_dirpath):
         incar_filepath = os.path.join(incar_dirpath, "INCAR")

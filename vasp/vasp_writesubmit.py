@@ -85,6 +85,9 @@ class vasp_writesubmit:
         elif mode == 'rv3':
             jobname = self.threeopt(self.work_path)
             return jobname
+        elif mode == 'rv4':
+            jobname = self.foutopt(self.work_path)
+            return jobname
         elif mode == 'disp':
             jobname = self.disp(self.work_path)
             return jobname
@@ -142,7 +145,21 @@ class vasp_writesubmit:
             submit.write("cp CONTCAR POSCAR                    \n")
             submit.write("done                                 \n")
         return jobname
-         
+
+    def fouropt(self, submit_dirpath):
+        jobname = "fouropt.sh"
+        submit_script_filepath = os.path.join(submit_dirpath, jobname)
+        with open(submit_script_filepath, "w") as submit:
+            submit.writelines(self.jobtitle)
+            submit.write("for i in {1..4}; do                  \n")
+            submit.write("cp INCAR_$i INCAR                    \n")
+            submit.write("killall -9 vasp_std                  \n")
+            submit.write("sleep 3                              \n")
+            submit.write("timeout 14400s mpirun -np {} {} > vasp.log_$i 2>&1\n".format(self.core, vaspbin_path))
+            submit.write("cp CONTCAR POSCAR                    \n")
+            submit.write("done                                 \n")
+        return jobname
+
     def dfpt(self, submit_dirpath):
         jobname = "dfpt.sh"
         submit_script_filepath = os.path.join(submit_dirpath, jobname)
