@@ -86,7 +86,7 @@ class vasp_writesubmit:
             jobname = self.threeopt(self.work_path)
             return jobname
         elif mode == 'rv4':
-            jobname = self.foutopt(self.work_path)
+            jobname = self.fouropt(self.work_path)
             return jobname
         elif mode == 'disp':
             jobname = self.disp(self.work_path)

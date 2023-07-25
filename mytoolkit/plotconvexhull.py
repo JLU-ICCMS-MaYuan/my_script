@@ -130,14 +130,17 @@ except:
     # Number,formula,enthalpy
     # 1,Ax1By1Cz1,-1.34343
     # 2,Ax2By2C2z,-2.324324
-    convexhull_data = pd.read_csv(input_csv_path, header=0, sep=',')
+    convexhull_data = pd.read_csv("nnconvexhull.csv", header=0, sep=',')
     ini_entries = []
     for idx, row in convexhull_data.iterrows():
         comp = Composition(row['formula'])
-        enth = row['enthalpy']
+        num_at = comp.num_atoms
+        enth = row['enthalpy']*num_at
         entry_id = row['Number']
         _entry = PDEntry(comp, enth)
         _entry.entry_id = entry_id
+        # print(entry_id, comp, enth)
+        # input()
         ini_entries.append(_entry)
     ini_pd = PhaseDiagram(ini_entries)
 # 输出参考单质或化合物
@@ -154,7 +157,7 @@ for entry in ini_pd.stable_entries:
     form_energy = ini_pd.get_form_energy(entry)
     stable_dict["Number"] = entry.entry_id
     stable_dict["formula"] = entry.composition.formula
-    print(entry.composition.formula)
+    print(entry.entry_id, entry.composition.formula)
     stable_dict["enthalpy"] = 0.0
     stable_list.append(stable_dict)
     stable_structs_amount += 1
