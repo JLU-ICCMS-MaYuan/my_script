@@ -25,9 +25,11 @@ def get_volume(scf_path):
 
 
 if __name__ == "__main__":
-    pstress_s = [0.00001, 50, 100, 150, 200, 250, 300, 350, 400]
+        
+    print("    测试的PSTRESS值分别是: -5 0.0001 50 100 150 200 250 300 350 400")
+    press_s = [-5, 0.00001, 50, 100, 150, 200, 250, 300, 350, 400]
 
-    for pstress in pstress_s:
+    for pstress in press_s:
         if type(pstress) == int :
             src_file = os.path.join('p{:+d}'.format(pstress)+'.cif')
             test_path = os.path.abspath('p{:+d}'.format(pstress))
@@ -47,7 +49,7 @@ if __name__ == "__main__":
 
     V_pstress = []
     v_energy = []
-    for pstress in pstress_s:
+    for pstress in press_s:
         if type(pstress) == int :
             scf_path = os.path.join('p{:+d}'.format(pstress), 'p{:+d}'.format(pstress)+'.scf')
         elif type(pstress) == float:
@@ -70,7 +72,7 @@ if __name__ == "__main__":
         print("If all case.scf are OK, V_pstress.csv will be wroten in current position")
 
     v_energy = np.array(v_energy)
-    if len(v_energy) == 9:
+    if len(v_energy) == 10:
         print("{:<14},{:<14}".format("V(bohr^3)", "E(hartree)", ))
         with open("eos.in", 'w') as f:
             name             = input("晶体结构名称(建议:crystal)\n");             f.write("{}\n".format(name))
@@ -85,4 +87,8 @@ if __name__ == "__main__":
     else:
         print("If all case.scf are OK, V_pstress.csv will be wroten in current position")
 
+    print("Note: --------------------")
+    print("    现在获得了eos.in文件, 直接./eos就可以获得PVPAI.OUT文件了")
+    print("    HPPAI.OUT: (H-P)的关系")
+    print("    PARAM.OUT: 体弹模量")
 

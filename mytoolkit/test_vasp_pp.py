@@ -132,19 +132,19 @@ if __name__ == "__main__":
     # jobsystem = "coshare_slurm"
     print("Note: --------------------")
     print("    你需要在当前目录下准备好: POSCAR, POTCAR, INCAR")
-    print("    测试的PSTRESS值分别是: 0.0001 50 100 150 200 250 300 350 400")
+    print("    测试的PSTRESS值分别是: -5 0.0001 50 100 150 200 250 300 350 400")
     print("    该脚本不提供自动提任务的命令: 你可以用以下命令提供命令:")
-    print("        for i in p+0.00001 p+50 p+100 p+150 p+200 p+250 p+300 p+350 p+400; do cd $i; qsub submit.sh; cd ..; done")
-    print("        for i in p+0.00001 p+50 p+100 p+150 p+200 p+250 p+300 p+350 p+400; do cd $i; sbatch submit.sh; cd ..; done")
+    print("        for i in p-5 p+0.00001 p+50 p+100 p+150 p+200 p+250 p+300 p+350 p+400; do cd $i; qsub submit.sh; cd ..; done")
+    print("        for i in p-5 p+0.00001 p+50 p+100 p+150 p+200 p+250 p+300 p+350 p+400; do cd $i; sbatch submit.sh; cd ..; done")
     print("\nNote: --------------------")
     print("    创建测试VASP的SIGMA输入文件目录以及准备vasp的输入文件")
 
-    pstress_s = [0.00001, 50, 100, 150, 200, 250, 300, 350, 400]
+    press_s = [-5, 0.00001, 50, 100, 150, 200, 250, 300, 350, 400]
     potcar_path = os.path.abspath("POTCAR")
     poscar_path = os.path.abspath("POSCAR")
     incar_path  = os.path.abspath("INCAR")
 
-    for pstress in pstress_s:
+    for pstress in press_s:
         if type(pstress) == int :
             test_path = os.path.abspath('p{:+d}'.format(pstress))
         elif type(pstress) == float:
@@ -159,7 +159,7 @@ if __name__ == "__main__":
 
     V_pstress = []
     v_energy = []
-    for pstress in pstress_s:
+    for pstress in press_s:
         if type(pstress) == int :
             outcar_path = os.path.join('p{:+d}'.format(pstress), "OUTCAR")
         elif type(pstress) == float:
@@ -183,7 +183,7 @@ if __name__ == "__main__":
         print("If all OUTCARs are OK, V_pstress.csv will be wroten in current position")
 
     v_energy = np.array(v_energy)
-    if len(v_energy) == 9:
+    if len(v_energy) == 10:
         print("{:<14},{:<14}".format("V(bohr^3)", "E(hartree)", ))
         with open("eos.in", 'w') as f:
             name             = input("晶体结构名称(建议:crystal)\n");             f.write("{}\n".format(name))
@@ -197,3 +197,8 @@ if __name__ == "__main__":
         print("All OUTCARs are OK, V_pstress.csv has been wroten in current position")
     else:
         print("If all OUTCARs are OK, V_pstress.csv will be wroten in current position")
+
+    print("Note: --------------------")
+    print("    现在获得了eos.in文件, 直接./eos就可以获得PVPAI.OUT文件了")
+    print("    HPPAI.OUT: (H-P)的关系")
+    print("    PARAM.OUT: 体弹模量")
