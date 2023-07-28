@@ -5,26 +5,18 @@ import shutil
 
 import numpy as np
 
-def write_incar(sigma, work_path):
-    incar = """# test SIGMA
-ISTART   = 0     
-ICHARG   = 2     
-ENCUT    = 800   
-PREC     = A     
-SYMPREC  = 1e-05     
-ISMEAR   = 0     
-SIGMA    = {}    
-NELM     = 200   
-NELMIN   = 6     
-EDIFF    = 1e-8  
-EDIFFG   = -0.001   
-POTIM    = 0.05
-NCORE    = 4     
-""".format(sigma)
-    
+def write_incar(sigma, input_incar, work_path):
+
+    with open(input_incar, 'r') as f:
+        lines = f.readlines()
+
+    for idx, line in enumerate(lines):
+        if "SIGMA" in line:
+            lines[idx] = f" SIGMA = {sigma}\n"
+
     incar_path = os.path.join(work_path, "INCAR")
     with open(incar_path, "w") as incarfile:
-        incarfile.write(incar)
+        incarfile.writelines(lines)
 
 def write_submit(jobtype:str, work_path):
 
@@ -128,7 +120,7 @@ if __name__ == "__main__":
     jobsystem = "tangB_slurm"
     # jobsystem = "coshare_slurm"
     print("Note: --------------------")
-    print("    你需要在当前目录下准备好: POSCAR, POTCAR")
+    print("    你需要在当前目录下准备好: POSCAR, POTCAR, INCAR")
     print("    测试的SIGMA值分别是: 0.01, 0.02, 0.03, 0.04, 0.05, 0.1, 0.2, 0.5")
     print("    在生成测试脚本时, 默认使用ISMEAR=1  !!!!!!!!! ")
     print("    该脚本不提供自动提任务的命令: 你可以用以下命令提供命令:")
@@ -160,13 +152,15 @@ if __name__ == "__main__":
     sigmas = [0.5, 0.2, 0.1, 0.05, 0.04, 0.03, 0.02, 0.01]
     potcar_path = os.path.abspath("POTCAR")
     poscar_path = os.path.abspath("POSCAR")
+    incar_path  = os.path.abspath("INCAR")
+
     for sigma in sigmas:
         test_path = os.path.abspath(str(sigma))
         if not os.path.exists(test_path):
             os.mkdir(test_path)
-        shutil.copy(potcar_path, test_path)
-        shutil.copy(poscar_path, test_path)
-        write_incar(sigma, test_path)
+        os.system(f"cp -f {potcar_path} {test_path}")
+        os.system(f"cp -f {poscar_path} {test_path}")
+        write_incar(sigma, incar_path, test_path)
         write_submit(jobsystem, test_path)
 
     print("    尝试获得每原子的焓值 dE(meV/atom)")

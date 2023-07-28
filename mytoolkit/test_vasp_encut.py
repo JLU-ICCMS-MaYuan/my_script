@@ -5,27 +5,18 @@ import shutil
 
 import numpy as np
 
-def write_incar(encut, work_path):
-    incar = """# test ENCUT
-ISTART   = 0     
-ICHARG   = 2     
-ENCUT    = {}   
-PREC     = A     
-SYMPREC  = 1e-05     
-KSPACING = 0.18
-ISMEAR   = 0     
-SIGMA    = 0.01   
-NELM     = 200   
-NELMIN   = 6     
-EDIFF    = 1e-8  
-EDIFFG   = -0.001     
-POTIM    = 0.05  
-NCORE    = 4     
-""".format(encut)
-    
+def write_incar(encut, input_incar, work_path):
+
+    with open(input_incar, 'r') as f:
+        lines = f.readlines()
+
+    for idx, line in enumerate(lines):
+        if "ENCUT" in line:
+            lines[idx] = f" ENCUT = {encut}\n"
+
     incar_path = os.path.join(work_path, "INCAR")
     with open(incar_path, "w") as incarfile:
-        incarfile.write(incar)
+        incarfile.writelines(lines)
 
 def write_submit(jobtype:str, work_path):
 
@@ -129,7 +120,7 @@ if __name__ == "__main__":
     jobsystem = "tangB_slurm"
     # jobsystem = "coshare_slurm"
     print("Note: --------------------")
-    print("    你需要在当前目录下准备好: POSCAR, POTCAR")
+    print("    你需要在当前目录下准备好: POSCAR, POTCAR, INCAR")
     print("    测试的ENCUT值分别是: 400, 500, 600, 700, 800, 900, 1000")
     print("    该脚本不提供自动提任务的命令: 你可以用以下命令提供命令:")
     print("        for i in 400 500 600 700 800 900 1000; do cd $i; qsub submit.sh;   cd ..; done")
@@ -140,13 +131,14 @@ if __name__ == "__main__":
     encuts = [400, 500, 600, 700, 800, 900, 1000]
     potcar_path = os.path.abspath("POTCAR")
     poscar_path = os.path.abspath("POSCAR")
+    incar_path  = os.path.abspath("INCAR")
     for encut in encuts:
         test_path = os.path.abspath(str(encut))
         if not os.path.exists(test_path):
             os.mkdir(test_path)
-        shutil.copy(potcar_path, test_path)
-        shutil.copy(poscar_path, test_path)
-        write_incar(encut, test_path)
+        os.system(f"cp -f {potcar_path} {test_path}")
+        os.system(f"cp -f {poscar_path} {test_path}")
+        write_incar(encut, incar_path, test_path)
         write_submit(jobsystem, test_path)
 
     print("    尝试获得每原子的焓值 dE(meV/atom)")
