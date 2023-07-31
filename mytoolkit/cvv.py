@@ -15,6 +15,7 @@ for system_name in Path.cwd().iterdir():
     if system_name.is_dir():
         ourcar_path = system_name.joinpath("OUTCAR")
         if ourcar_path.exists():
+            # 抑制错误消息
             res = os.system(f'grep -s "reached required accuracy - stopping structural energy minimisation" {ourcar_path}') # 如果没有找到指定内容不输出错误结果。
             if res != 0:
                 fail_d.append(system_name.__str__())
