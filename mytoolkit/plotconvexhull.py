@@ -123,6 +123,8 @@ try:
         entry_id = row['Number']
         _entry = PDEntry(comp, enth)
         _entry.entry_id = entry_id
+        # print(entry_id, comp, enth)
+        # # input()
         ini_entries.append(_entry)
     ini_pd = PhaseDiagram(ini_entries)
 except:
@@ -171,13 +173,13 @@ unstable_structs_amount = 0
 for entry in ini_entries:
     unstable_dict = {}
     energy_above_hull = ini_pd.get_e_above_hull(entry)*1000
-    print(entry.composition.formula, energy_above_hull)
+    # print(entry.composition.formula, energy_above_hull)
     form_energy = ini_pd.get_form_energy(entry)
     if 0.0 < energy_above_hull <= EnthalpyAboveHullValue: # 这里取高于convex hull 能量在0~50个meV范围内的亚稳结构
-        print("stoichiometry: {:<10}  No.{:<10} is above convell hull {:<10}".format(
+        print("stoichiometry: {:<10}  No.{:<10} is above convell hull {:<10} meV".format(
             entry.name, 
             entry.entry_id,
-            energy_above_hull,"meV",
+            energy_above_hull,
             ))
         unstable_dict["Number"]  = entry.entry_id
         unstable_dict["formula"] = entry.composition.formula
@@ -228,8 +230,9 @@ if collect_stable:
     for ent in ini_pd.stable_entries:
         src_vaspfile = Path.cwd().joinpath(str(ent.entry_id), "POSCAR")
         dst_vaspfile = stable_structs.joinpath(f"{ent.entry_id}_{ent.composition.formula.replace(' ', '')}_.vasp")
-        shutil.copy(src_vaspfile, dst_vaspfile)
-        print(src_vaspfile)
+        if src_vaspfile.exists():
+            shutil.copy(src_vaspfile, dst_vaspfile)
+            print(src_vaspfile)
 
 # 搜集所有亚稳的结构
 if collect_unstable:
@@ -259,15 +262,16 @@ if collect_unstable:
                         break
 
     # 自定义结构优化后结构搜集
-    for ent in ini_pd.ini_entries:
+    for ent in ini_entries:
         unstable_dict = {}
         energy_above_hull = ini_pd.get_e_above_hull(entry)*1000
         form_energy = ini_pd.get_form_energy(entry)        
         if 0.0 < energy_above_hull <= 50.0:
             src_vaspfile = Path.cwd().joinpath(str(ent.entry_id), "POSCAR")
             dst_vaspfile = unstable_structs.joinpath(f"{ent.entry_id}_{ent.composition.formula.replace(' ', '')}_.vasp")
-            shutil.copy(src_vaspfile, dst_vaspfile)
-            print(src_vaspfile)
+            if src_vaspfile.exist():
+                shutil.copy(src_vaspfile, dst_vaspfile)
+                print(src_vaspfile)
 
 
 if hand_plot_dat:

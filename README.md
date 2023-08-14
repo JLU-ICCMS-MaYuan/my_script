@@ -888,6 +888,11 @@ ISTART = 1    # 读取WAVECAR，如果WAVECAR不存在，就自己构造
 ICHARG = 11   # 读取CHGCAR， 进行非自洽计算
 #EMIN = -10   # 该脚本中默认将其注释了，EMIN指定了DOS评估的能量范围的下限。
 #EMAX =  10   # 该脚本中默认将其注释了，EMAX指定了DOS评估的能量范围的上限。
+ISMEAR  = -5  # For DOS
+LCHARG =.TRUE.# For Bader
+LAECHG =.TRUE.# For Bader
+LELF   =.TRUE.# For ELF
+LORBIT = 11   # 输出分波态密度信息
 ```
 
 电子态密度计算时，其kspacing需要是scf计算的2倍
@@ -924,6 +929,19 @@ ICHARG = 11   # 读取CHGCAR， 进行非自洽计算
 ```shell
 vasp_main.py -i CONTCAR -j bash data -m mode=hspp core=1
 ```
+
+### 计算能带和DOS经常报出一些错：
+
+**第一个**
+```shell
+WARNING: dimensions on CHGCAR file are different
+
+ERROR: charge density could not be read from file CHGCAR for ICHARG>10
+```
+
+出现这个这个错误的可能原因有：
+1. 自洽的结构和能带、dos的结构不一致
+2. 自洽的INCAR的PREC和ENCUT 与 能带、dos的INCAR的PREC和ENCUT不一致
 
 # <div align="center"> <span style="color:red"> mytoolkit篇 </span> </div>
 

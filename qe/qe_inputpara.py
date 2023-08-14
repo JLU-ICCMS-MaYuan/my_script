@@ -913,7 +913,8 @@ class qesc_inputpara(qephono_inputpara):
         # Mc-A-D
         if not hasattr(self, "broaden"):
             self.broaden = 0.5
-            print("    You didn't set the `broaden` !         The program will use default value: broaden=0.12")
+            print("    You didn't set the `broaden` ! ")
+            print("    The program will use default value: broaden=0.5")
             print("    ***** Don't change easily the parameter of broaden, 0.5 is good enough !!!! ***** ")
 
         # Mc-A-D
@@ -925,7 +926,7 @@ class qesc_inputpara(qephono_inputpara):
         print("    If you use Eliashberg method, you have to specify the temperature_steps, a2fdos*(alpha2fdat*)!")
         print("    If you set both a2fdos* and alpha2fdat*, the program will run in the way of `a2fdos*`")
         if not hasattr(self, "temperature_steps"):
-            self.temperature_steps = 5000
+            self.temperature_steps = 500
             print("    You didn't set the `temperature_steps`.The program will use default value: temperature_steps=5000")
 
         print("\nNote: --------------------")
@@ -942,12 +943,13 @@ class qesc_inputpara(qephono_inputpara):
             print("    The shell order used is:")
             print("    sed '1,1d' alpha2F.dat | awk '{print $1/6579.684, $%s}' > ALPHA2F.OUT "%("xxx"))
         else:
-            self.a2fdos = False
-            self.alpha2fdat = True
+            self.a2fdos = True
+            self.alpha2fdat = False
             print("    You didn't specify the either `a2fdos` or `alpha2fdat`")
-            print("    The omegas-alpha2F values will be getted from alpha2F.dat. Because you may not calculate phonodos")
+            print("    The omegas-alpha2F values willbe getted from a2F.dos")
+            print("    Because alpha2f.dat usually get something wrong")
             print("    The shell order used is:")
-            print("    sed '1,1d' alpha2F.dat | awk '{print $1/6579.684, $%s}' > ALPHA2F.OUT "%("xxx"))
+            print("    sed '1,5d' a2F.dos%s | sed '/lambda/d' | awk '{print $1/2, $2}' ALPHA2F.OUT"%("xxx"))
 
 
     def getTc_by_eliashberg(self):

@@ -4,7 +4,7 @@ import sys
 from ase.io import read
 import numpy as np
 
-file = sys[1]
+file = sys.argv[1]
 # 从文件中读取晶体结构
 atoms = read(file)
 

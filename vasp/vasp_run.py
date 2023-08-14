@@ -273,7 +273,7 @@ class vasp_processdata(vasp_base):
         if self.mode == "eledos":
             self.post_progress_eletron_dos()
         if self.mode == "hspp":
-            self.get_hspp(self.ase_type)
+            self.read_hspp(self.work_path.joinpath("KPOINTS"))
     # 绘制 phonoband 
     def post_progress_phono_band(self):
 

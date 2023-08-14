@@ -14,11 +14,11 @@ for system_name in Path.cwd().iterdir():
     if system_name.is_dir():
         relax_out = system_name.joinpath("relax.out")
         if relax_out.exists():
-            res = os.system(f'grep -s "JOB DONE" {relax_out}') # 如果没有找到指定内容不输出错误结果。
-            if res != 0:
-                fail_d.append(system_name.__str__())
-            else:
+            res = os.popen(f'grep -s "JOB DONE" {relax_out}').read() # 如果没有找到指定内容不输出错误结果。
+            if res:
                 success_d.append(system_name.__str__())
+            else:
+                fail_d.append(system_name.__str__())
         else:
             none_d.append(system_name.__str__())
 print("\nrelax-none")

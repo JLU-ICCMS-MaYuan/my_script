@@ -22,6 +22,8 @@ checkvasp_vasplog_converge.py | grep ok| awk '{print $1}' > check.log
 2. 提取名称和焓值
 ```shell
 for i in `cat check.log`; do cd $i; filename=$(basename "$i"); E=$(get_dH_peratoms.py | awk '{print $1}'); echo $filename $E >> ../dH.dat; done
+
+for i in `cat check.log`; do if test -d "$i"; then cd $i; filename=$(basename "$i"); E=$(get_dH_peratoms.py | awk '{print $1}'); echo $filename $E >> ../dH.dat; cd ..; fi; done
 ```
 
 3. 按照焓值排序

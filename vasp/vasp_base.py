@@ -332,6 +332,27 @@ class vasp_base:
         
         return path_name_list, path_coords
 
+    def read_hspp(self, hsppfile_path):
+        with open(hsppfile_path, "r") as f:
+            lines = f.readlines()
+
+        hspplist         = [line.strip() for line in lines[4:] if line != "\n"]
+        path_name_coords = [hspplist[i] for i in range(0, len(hspplist), 2)] + [hspplist[-1]]
+        print(path_name_coords)
+        projected_path_name_coords = [[path_name_coords[0].split()[-1], list(map(float, path_name_coords[0].split()[:-1]))[0]]]
+        total_dist = 0
+        for idx in range(1, len(path_name_coords)):
+            current_name   = path_name_coords[idx].split()[-1]
+            current_coords = np.dot(self.reciprocal_plattice, list(map(float, path_name_coords[idx].split()[:-1])))
+            last_coords    = np.dot(self.reciprocal_plattice, list(map(float, path_name_coords[idx-1].split()[:-1])))
+            dist = np.linalg.norm(current_coords-last_coords, 2)
+            total_dist += dist
+            projected_path_name_coords.append([current_name, total_dist])
+        string_names = '  '.join(coord[0] for coord in projected_path_name_coords)
+        string_coord = '  '.join(str(np.round(coord[1], 6)) for coord in projected_path_name_coords)
+        print(string_names)
+        print(string_coord)
+
     def write_highsymmetry_kpoints(self, ase_type, kpoints_path):
         
         print("\nNote: --------------------------------")

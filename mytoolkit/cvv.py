@@ -16,11 +16,11 @@ for system_name in Path.cwd().iterdir():
         ourcar_path = system_name.joinpath("OUTCAR")
         if ourcar_path.exists():
             # 抑制错误消息
-            res = os.system(f'grep -s "reached required accuracy - stopping structural energy minimisation" {ourcar_path}') # 如果没有找到指定内容不输出错误结果。
-            if res != 0:
-                fail_d.append(system_name.__str__())
-            else:
+            res = os.popen(f'grep -s "reached required accuracy - stopping structural energy minimisation" {ourcar_path}').read() # 如果没有找到指定内容不输出错误结果。
+            if res:
                 success_d.append(system_name.__str__())
+            else:
+                fail_d.append(system_name.__str__())
         else:
             none_d.append(system_name.__str__())
 
