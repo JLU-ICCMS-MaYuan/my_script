@@ -119,10 +119,13 @@ try:
     ini_entries = []
     for idx, row in convexhull_data.iterrows():
         comp = Composition(row['formula'])
-        enth = row['enthalpy']
+        num_at = comp.num_atoms
+        enth = row['enthalpy']*num_at
         entry_id = row['Number']
         _entry = PDEntry(comp, enth)
         _entry.entry_id = entry_id
+        # if entry_id == 12647:
+        #     print(comp)
         # print(entry_id, comp, enth)
         # # input()
         ini_entries.append(_entry)
@@ -141,6 +144,8 @@ except:
         entry_id = row['Number']
         _entry = PDEntry(comp, enth)
         _entry.entry_id = entry_id
+        # if entry_id == 12647:
+        #     print(comp)
         # print(entry_id, comp, enth)
         # input()
         ini_entries.append(_entry)
@@ -269,7 +274,7 @@ if collect_unstable:
         if 0.0 < energy_above_hull <= 50.0:
             src_vaspfile = Path.cwd().joinpath(str(ent.entry_id), "POSCAR")
             dst_vaspfile = unstable_structs.joinpath(f"{ent.entry_id}_{ent.composition.formula.replace(' ', '')}_.vasp")
-            if src_vaspfile.exist():
+            if src_vaspfile.exists():
                 shutil.copy(src_vaspfile, dst_vaspfile)
                 print(src_vaspfile)
 

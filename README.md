@@ -130,6 +130,22 @@ last_irr=240
 
 5. ph.in中的tr2_ph=1.0d-14开关设置14就很好了，有时候甚至可以设置13.
 
+6. 报错 from set_irr_sym_new : error。wrong representation。在计算声子那一步时，在某些不可约q点计算电声耦合时，总是出现这样的一个错误。
+
+解决方法:
+```shell
+#1. 进入qe的安装目录的PHono的PH模块中：
+cd PHonon/PH/
+
+# 2. 打开随机矩阵这个文件
+vi random_matrix.f90
+
+# 3. 取消这行代码的注释
+!! #defineUNIFORM DISTRIB
+
+修改后正确的是：
+#defineUNIFORM DISTRIB
+```
 
 
 
