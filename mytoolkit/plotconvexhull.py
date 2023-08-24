@@ -192,7 +192,7 @@ for entry in ini_entries:
         unstable_dict["enthalpy"] = ini_pd.get_e_above_hull(entry) 
         unstable_list.append(unstable_dict)
         unstable_structs_amount += 1
-print(f"unstable structures above the convex hull 0-50 meV is {unstable_structs_amount}\n")
+print(f"unstable structures above the convex hull 0-{EnthalpyAboveHullValue} meV is {unstable_structs_amount}\n")
 unstable_pd = pd.DataFrame(unstable_list)
 unstable_pd.to_csv("unstable.csv", index=False)
 

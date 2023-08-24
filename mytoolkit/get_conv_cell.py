@@ -8,6 +8,7 @@ from pymatgen.io.vasp import Poscar
 
 try:
     print("Please input filename and symprec, for example:")
+    print("    get_conv_cell.py POSCAR 1e-5get")
     filename = sys.argv[1]
     symprec  = float(sys.argv[2])
 except:
