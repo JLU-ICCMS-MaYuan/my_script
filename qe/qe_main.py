@@ -25,7 +25,7 @@ if __name__ == "__main__":
     
     pre_words()
 
-    parser = ArgumentParser(prog="run_vasp", formatter_class=RawTextHelpFormatter)
+    parser = ArgumentParser(prog="run_qe", formatter_class=RawTextHelpFormatter)
     args = set_more_args(parser)
 
     print(f"{args} \n")
