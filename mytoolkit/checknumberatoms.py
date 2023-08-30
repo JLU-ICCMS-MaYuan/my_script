@@ -1,12 +1,20 @@
 #!/usr/bin/env python
 import os
 import sys
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
 
-from pymatgen.core.structure import Structure
+from ase.io import read, write
 
+i = 0
 for root, dirs, files in os.walk(os.getcwd()):
-    if "POSCAR" in files:
-        struct = Structure.from_file(os.path.join(root, "POSCAR"))
-        comp = dict(struct.composition.get_el_amt_dict())
-        numatom = sum(list(comp.values()))
-        print("{}  composition: {} numatom: {}".format(root, comp, numatom))
+    for file in files:
+        # print(file)
+        if "cif" in file:
+            atoms = read(os.path.join(root, file))
+            numatom = atoms.get_number_of_atoms()
+            formula = atoms.get_chemical_formula()
+            print("{}  composition: {} numatom: {}".format(root, formula, numatom))
+            # if numatom <= 25:
+            i = i+1
+            write("POSCAR_"+(str(i)), atoms, format="vasp")

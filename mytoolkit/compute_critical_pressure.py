@@ -43,8 +43,9 @@ for chemical_path, press_enthalpy in Enthalpy_curve_data.iteritems():
 
 print(critical_press_data)
 
-print(f"chemical_path={critical_press_data['lower_limit'].idxmax()} \
-        lower_limit={critical_press_data['lower_limit'].max()}\n")
-print(f"chemical_path={critical_press_data['upper_limit'].nsmallest(4).index[0]} \
-        upper_limit={critical_press_data['upper_limit'].nsmallest(4).iloc[0]}\n")
+# print(f"chemical_path={critical_press_data['lower_limit'].nlargest(4).index[:]} \
+#         lower_limit={critical_press_data['lower_limit'].nlargest(4).iloc[:]}\n")
+print(f"lower_limit=\n{critical_press_data['lower_limit'].nlargest(12).iloc[:]}\n")
+# print(f"chemical_path={critical_press_data['upper_limit'].nsmallest(4).index[:]} \
+#         upper_limit={critical_press_data['upper_limit'].nsmallest(4).iloc[:]}\n")
 # 13*(1-H1)+ 1*(3-La1H3)+ 1*(4-Y1H2)+ 1*(9-Ce1H3)+ 1*(13-Th1H3)+ 4*(19-Be1H2) -> 1*(20-La1Ce1Y1Th1Be4H32)

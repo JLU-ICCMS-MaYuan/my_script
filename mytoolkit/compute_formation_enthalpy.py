@@ -164,6 +164,7 @@ if __name__ == "__main__":
         # 拿到所有反应物的排列组合
         prods_reacs = [rec + product for rec in combination_reacants] 
         for prod_reac in prods_reacs:
+            # print(prod_reac); input()
             ele_matrix = make_elementMatrix(prod_reac)
             ele_matrix = Matrix(ele_matrix)
             ele_matrix = ele_matrix.transpose()
@@ -172,13 +173,15 @@ if __name__ == "__main__":
             coeffients = abs(multiple*solution)
             # print(coeffients); input()
             chemical_equation   = get_chemical_equation(coeffients, prod_reac, numberofproducts)
+            # print(chemical_equation); input()
             form_energy_peratom = compute_form_energy(coeffients, prod_reac, numberofproducts)
+            # print(form_energy_peratom); input()
             # parital_result_pd.at[press, chemical_equation] = form_energy_peratom
             result_dt[chemical_equation].append(form_energy_peratom)
             # print(parital_result_pd);input()
         # total_result_pd = pd.concat([total_result_pd, parital_result_pd], axis=1)
     
-    total_result_pd = pd.DataFrame(data=result_dt, index=[p for p in range(10, 210, 10)])
+    total_result_pd = pd.DataFrame(data=result_dt, index=[p for p in range(10, 210, 10)]+[250, 300])
     total_result_pd.to_csv("formed-enthalpy.csv")
     
 
