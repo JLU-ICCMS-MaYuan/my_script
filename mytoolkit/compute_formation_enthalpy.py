@@ -3,16 +3,15 @@
 import sys
 import itertools
 import collections
-import time
 
 import pandas as pd
 import numpy as np
 from pprint import pprint
-from sympy import Matrix, lcm, Rational
+from sympy import Matrix, lcm
 
 from pymatgen.core.composition import Composition
 from pymatgen.analysis.phase_diagram import PDEntry
-from pymatgen.analysis.phase_diagram import CompoundPhaseDiagram
+
 
 # 如果你要使用这个脚本，你需要按照如下的格式准备数据，
 # 1. 这个数据格式必须是csv格式，
@@ -166,14 +165,17 @@ if __name__ == "__main__":
         for prod_reac in prods_reacs:
             # print(prod_reac); input()
             ele_matrix = make_elementMatrix(prod_reac)
+            # print(ele_matrix); input()
             ele_matrix = Matrix(ele_matrix)
             ele_matrix = ele_matrix.transpose()
+            # print(ele_matrix); input("transpose")
             solution   = ele_matrix.nullspace()[0]
+            # print(solution); input("solution")
             multiple   = lcm([val.q for val in solution]) # 获得所有系数的分母的值，然后取它们的最小公倍数
             coeffients = abs(multiple*solution)
-            # print(coeffients); input()
+            # print(coeffients); input("coeffients")
             chemical_equation   = get_chemical_equation(coeffients, prod_reac, numberofproducts)
-            # print(chemical_equation); input()
+            # print(chemical_equation); input("chemical_equation")
             form_energy_peratom = compute_form_energy(coeffients, prod_reac, numberofproducts)
             # print(form_energy_peratom); input()
             # parital_result_pd.at[press, chemical_equation] = form_energy_peratom
