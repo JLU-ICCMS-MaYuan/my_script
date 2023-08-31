@@ -1,7 +1,7 @@
 SYSTEM = OPT
 PREC = Accurate 
 ENCUT = 700
-EDIFF = 1e-7
+EDIFF = 1e-6
 EDIFFG = -0.01
 KSPACING = 0.25
 IBRION = 2
