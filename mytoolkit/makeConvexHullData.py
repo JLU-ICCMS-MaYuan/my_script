@@ -39,7 +39,7 @@ if __name__ == "__main__":
     none_d = []
     current_directory = Path.cwd()
     directories = [item.name for item in current_directory.iterdir() if item.is_dir()]
-    convexhull_file = open("convexhull.csv", "w")
+    convexhull_file = open(str(press)+"GPa"+"convexhull.csv", "w")
     print("{},{},{}".format("Number","formula","enthalpy"), file=convexhull_file)
     for dirs in directories:
         work_path = Path(dirs).joinpath(str(press))
