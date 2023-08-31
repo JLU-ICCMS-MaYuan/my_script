@@ -77,6 +77,7 @@ parser.add_argument(
     "-ebh",
     type=int,
     dest="EnthalpyAboveHullValue",
+    default=10,
     help="高于convex hull xxx emV 的能量的上限\n"
         "在0 ~ EnthalpyAboveHullValue 这个范围内的亚稳的结构确定出来\n"
 )

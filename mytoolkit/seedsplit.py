@@ -22,7 +22,8 @@ def split_seeds(filename, dst_dir):
 
     with open(filename) as f:
         lines = f.readlines()
-        ids = [i for i, line in enumerate(lines) if re.search("[0-9]+-[a-zA-Z]+-*", line)]
+        ids = [i for i, line in enumerate(lines) if re.search(r":", line)]
+        # ids = [i for i, line in enumerate(lines) if re.search("[0-9]+-[a-zA-Z]+-*", line)]
         ids.append(len(lines))
         names_paths = []
         for i in range(len(ids)-1):
@@ -30,7 +31,7 @@ def split_seeds(filename, dst_dir):
             i2 = ids[i+1]
             struct_lst = lines[i1:i2]
             print("title is ", struct_lst[0])
-            seed_file_path = Path(dst_dir).joinpath(struct_lst[0].strip('\n')+'.vasp')
+            seed_file_path = Path(dst_dir).joinpath(str(i+1)+"-Y-Al-H"+'.vasp')
             with open(seed_file_path, 'w') as poscar:
                 poscar.writelines(struct_lst)
             names_paths.append([struct_lst[0].strip('\n'), seed_file_path])
