@@ -255,7 +255,9 @@ class vasp_eletron:
              ('eband'  not in self.eletron_inputpara.mode):
             # 准备任务脚本
             _vasp_writesubmit = vasp_writesubmit.init_from_eletron(self.eletron_inputpara)
-            jobname = _vasp_writesubmit.write_submit_scripts(mode="only-eledos")
+            jobname = _vasp_writesubmit.write_submit_scripts(
+                mode="only-eledos",
+                submitjob_path=eledos_band)
             chgcar_src = self.eletron_inputpara.work_path.joinpath("scf", "CHGCAR")
             if not chgcar_src.exists():
                 print(f"The CHGCAR is not found in path \n{chgcar_src.absolute()}")

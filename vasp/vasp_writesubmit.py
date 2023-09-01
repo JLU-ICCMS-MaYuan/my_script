@@ -235,7 +235,7 @@ class vasp_writesubmit:
             submit.writelines(self.jobtitle)
             submit.write("cd scf\n")
             submit.write('mpirun -n {} {} > vasp.log 2>&1    \n'.format(self.core, vaspbin_path))  
-            submit.write("cd ../eband\n")
+            submit.write("cd ../eledos\n")
             submit.write("cp ../scf/CHGCAR .\n")
             submit.write('mpirun -n {} {} > vasp.log 2>&1    \n'.format(self.core, vaspbin_path))       
         return jobname
