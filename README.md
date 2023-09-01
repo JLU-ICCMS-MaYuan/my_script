@@ -922,6 +922,23 @@ LELF   =.TRUE.# For ELF
 LORBIT = 11   # 输出分波态密度信息
 ```
 
+```shell
+1. If you meet the erros in eband just like:
+
+ERROR: charge density could not be read from file CHGCAR for ICHARG>10
+
+ANALYSIS: Possible reason is that NGX, NGY, NGZ in scf/OUTCAR are different from those in eband/OUTCAR 
+
+SOLUTION: You can let NGX,NGY,NGZ in eledos/INCAR be the same as scf/OUTCAR
+
+2. If you meet the erros in eledos just like:
+WARING: Your FFT grids (NGX, NGY, NGZ) are not sufficient for an accurate calculation. Thus, the results might be wrong. 
+
+ANALYSIS: Possible reason is that NGX, NGY, NGZ you'v customized aren't matched with the PREC=Accurate 
+
+SOLUTION: You can let PREC=Normal eband/INCAR
+```
+
 电子态密度计算时，其kspacing需要是scf计算的2倍
 #### 最简参数
 ```shell

@@ -197,14 +197,14 @@ class vasp_base:
         if self.work_path.joinpath("POSCAR").exists():
             src_poscar = self.work_path.joinpath("POSCAR") 
             elements = open(src_poscar, "r").readlines()[5].split()
-            print("The program will merge the POTCAR of element {}".format(elements))
+            print("Merge POTCAR of element {}".format(elements))
             src_potcar_path_list = []
             for ele in elements:
                 for pot in final_choosed_potcar:
                     if ele == pot.name:
                         src_potcar_path_list.append(pot)
             dst_potcar = dst_potcar_path.joinpath("POTCAR")
-            print(f"POTCAR merge order is:")
+            print(f"Order is:")
             for path in src_potcar_path_list:
                 print(path.name)
             # 将多个POTCAR写入总的POTCAR中 方法1
@@ -222,7 +222,7 @@ class vasp_base:
         else:
             print("POSCAR not exist")
 
-    def write_evenly_kpoints(self, kspacing, position):
+    def write_evenly_kpoints(self, kspacing, kpoints_path):
         lattice = self.cell_parameters
         a1 = lattice[0]
         a2 = lattice[1]
@@ -237,7 +237,7 @@ class vasp_base:
         N2 = np.ceil(b2_mol*2*np.pi / float(kspacing))
         N3 = np.ceil(b3_mol*2*np.pi / float(kspacing))
 
-        kpoints = Path(position).joinpath("KPOINTS")
+        kpoints = Path(kpoints_path).joinpath("KPOINTS")
         with open(kpoints, "w") as kp:
             kp.write("from kspacing is {}\n".format(kspacing))
             kp.write("0\n")
@@ -354,12 +354,13 @@ class vasp_base:
         print(string_coord)
 
     def write_highsymmetry_kpoints(self, ase_type, kpoints_path):
-        
+
+        kpoints_filepath = kpoints_path.joinpath("KPOINTS")
         print("\nNote: --------------------------------")
         vaspkitflag = input("If you have installed vaspkit and you want to use it, input: Yes\n")
         if vaspkitflag:
             cwd = os.getcwd()
-            os.chdir(self.work_path)
+            os.chdir(kpoints_path)
             os.system('echo -e "3\n303" | vaspkit')
             shutil.copy("KPATH.in", "KPOINTS")
             os.chdir(cwd)
@@ -367,7 +368,7 @@ class vasp_base:
             path_name_list, path_coords = self.get_hspp(ase_type)
             pair_two_names  = [[path_name_list[i], path_name_list[i+1]] for i in range(len(path_name_list)-1)]
             pair_two_coords = [[path_coords[i], path_coords[i+1]] for i in range(len(path_coords)-1)]
-            with open(kpoints_path, "w") as kp:
+            with open(kpoints_filepath, "w") as kp:
                 kp.write("KPATH\n")
                 kp.write("50\n")
                 kp.write("Line-Mode\n")

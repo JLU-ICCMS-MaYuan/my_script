@@ -52,6 +52,8 @@ class vasp_inputpara(vasp_base):
         
         if not hasattr(self, "kspacing"):
             self.kspacing = 0.3
+        else:
+            self.kspacing = float(self.kspacing)
 
         if not hasattr(self, "ismear"):
             self.ismear = 0
@@ -235,6 +237,33 @@ class vasp_phonopara(vasp_inputpara):
                 print("When mode=disp, the program will copy POSCAR to POSCAR-init and note that SPOSCAR won't be copied to POSCAR")
                 shutil.copy(poscar_file, poscar_init)
                 
+class vasp_eletronpara(vasp_inputpara):
+
+    def __init__(
+        self,
+        work_path: str,
+        press: int,
+        submit_job_system: str,
+        input_file_path: str,
+        mode: str,
+        **kwargs: dict,
+        ):
+        super(vasp_inputpara, self).__init__(
+            work_path, 
+            press, 
+            submit_job_system, 
+            input_file_path,
+            mode,
+            )
+        
+        self.set_default_inputpara(kwargs)
+        try:
+            self.mode = self.mode.split()
+        except:
+            print("You are using `vasp eletron module`, what you use mode is:")
+            print(f"{self.mode}")
+            
+
 
 class vaspbatch_inputpara(vaspbatch_base, vasp_inputpara):
 

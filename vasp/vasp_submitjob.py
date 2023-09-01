@@ -34,28 +34,32 @@ class vasp_submitjob:
 
     @classmethod
     def init_from_relaxinput(cls, other_class: vasp_inputpara):
-        
         self = cls(
             work_path=other_class.work_path,
             submit_job_system=other_class.submit_job_system,
             mode=other_class.mode,
         )
-        
         return self
 
     @classmethod
     def init_from_phonoinput(cls, other_class: vasp_inputpara):
-        
         self = cls(
             work_path=other_class.work_path,
             submit_job_system=other_class.submit_job_system,
             mode=other_class.mode,
         )
-        
+        return self
+    
+    @classmethod
+    def init_from_eletroninput(cls, other_class: vasp_inputpara):
+        self = cls(
+            work_path=other_class.work_path,
+            submit_job_system=other_class.submit_job_system,
+            mode=other_class.mode,
+        )
         return self
 
-
-    def submit_mode1(self, jobname):
+    def submit_mode1(self, jobname, submit_path=None):
         """
         submit_mode1 can be used to submit:
             rvf
@@ -63,13 +67,16 @@ class vasp_submitjob:
             dfpt
             disp
         """
+        if submit_path is None:
+            submit_path = self.work_path
+            
         inputfilename = ["POSCAR", "POTCAR"]
         for input_name in inputfilename:
-            input_file = Path(self.work_path).joinpath(input_name)
+            input_file =submit_path.joinpath(input_name)
             if not input_file.exists():
                 raise FileExistsError(f" {input_name} doesn't exist")
                 
-        job_file = Path(self.work_path).joinpath(jobname)
+        job_file = submit_path.joinpath(jobname)
         if not job_file.exists():
             raise FileExistsError(f" {jobname} doesn't exist")
         cwd = input_file.cwd()

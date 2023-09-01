@@ -10,30 +10,32 @@ class vasp_writeincar:
         for key, value in kwargs.items():
             setattr(self, key, value)
 
-    def writeinput(self, mode=None):
+    def writeinput(self, mode=None, incar_path=None):
         if mode == None:
             mode = self.mode
-        if self.mode == 'rvf' or self.mode == 'rv1':
-            incar_dirpath = self.opt_fine_incar(self.work_path)
-        if self.mode == 'rv3':
-            incar_dirpath1 = self.opt_incar1(self.work_path)
-            incar_dirpath2 = self.opt_incar2(self.work_path)
-            incar_dirpath  = self.opt_incar3(self.work_path)
-        if self.mode == 'rv4':
-            incar_dirpath1 = self.opt_incar1(self.work_path)
-            incar_dirpath2 = self.opt_incar2(self.work_path)
-            incar_dirpath3 = self.opt_incar3(self.work_path)
-            incar_dirpath  = self.opt_incar4(self.work_path)
-        if self.mode == 'disp':
-            incar_dirpath = self.disp_incar(self.work_path)
-        if self.mode == 'dfpt':
-            incar_dirpath = self.dfpt_incar(self.work_path)
-        if self.mode == 'scf':
-            incar_dirpath = self.scf_incar(self.work_path)
-        if self.mode == 'eband':
-            incar_dirpath = self.eband_incar(self.work_path)
-        if self.mode == 'eledos':
-            incar_dirpath = self.eledos_incar(self.work_path)
+        if incar_path == None:
+            incar_path = self.work_path
+        if mode == 'rvf' or mode == 'rv1':
+            incar_dirpath = self.opt_fine_incar(incar_path)
+        if mode == 'rv3':
+            incar_dirpath1 = self.opt_incar1(incar_path)
+            incar_dirpath2 = self.opt_incar2(incar_path)
+            incar_dirpath  = self.opt_incar3(incar_path)
+        if mode == 'rv4':
+            incar_dirpath1 = self.opt_incar1(incar_path)
+            incar_dirpath2 = self.opt_incar2(incar_path)
+            incar_dirpath3 = self.opt_incar3(incar_path)
+            incar_dirpath  = self.opt_incar4(incar_path)
+        if mode == 'disp':
+            incar_dirpath = self.disp_incar(incar_path)
+        if mode == 'dfpt':
+            incar_dirpath = self.dfpt_incar(incar_path)
+        if mode == 'scf':
+            incar_dirpath = self.scf_incar(incar_path)
+        if mode == 'eband':
+            incar_dirpath = self.eband_incar(incar_path)
+        if mode == 'eledos':
+            incar_dirpath = self.eledos_incar(incar_path)
 
         if int(self.ispin)== 2:
             self.append_magnet(incar_dirpath)

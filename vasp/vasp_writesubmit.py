@@ -71,33 +71,46 @@ class vasp_writesubmit:
         
         return self
 
-    def write_submit_scripts(self, mode=None):
+    def write_submit_scripts(self, mode=None, submitjob_path=None):
 
-        if mode==None:
-            mode=self.mode
+        if mode == None:
+            mode = self.mode
+        if submitjob_path == None:
+            submitjob_path = self.work_path
 
         if mode == 'rvf':
-            jobname = self.fopt(self.work_path)
+            jobname = self.fopt(submitjob_path)
             return jobname
         elif mode == "rv1":
-            jobname = self.oneopt(self.work_path)
+            jobname = self.oneopt(submitjob_path)
             return jobname
         elif mode == 'rv3':
-            jobname = self.threeopt(self.work_path)
+            jobname = self.threeopt(submitjob_path)
             return jobname
         elif mode == 'rv4':
-            jobname = self.fouropt(self.work_path)
+            jobname = self.fouropt(submitjob_path)
             return jobname
         elif mode == 'disp':
-            jobname = self.disp(self.work_path)
+            jobname = self.disp(submitjob_path)
             return jobname
         elif mode == 'dfpt':
-            jobname = self.dfpt(self.work_path)
+            jobname = self.dfpt(submitjob_path)
             return jobname
-        elif mode in ['scf', 'eband', 'eledos']:
-            jobname = self.scf_eband_eledos(self.work_path)
+        elif mode in ['only-scf', "only-eband", 'only-eledos']:
+            jobname = self.only_scf_or_eband_or_eledos(submitjob_path)
             return jobname
-
+        elif mode == "scf-eband-eledos":
+            jobname = self.scf_eband_eledos(submitjob_path)
+            return jobname
+        elif mode == "scf-eband":
+            jobname = self.scf_eband(submitjob_path)
+            return jobname
+        elif mode == "scf-eledos":
+            jobname = self.scf_eledos(submitjob_path)
+            return jobname
+        elif mode == "eband-eledos":
+            jobname = self.eband_eledos(submitjob_path)
+            return jobname
     # submit job scripts
     def fopt(self, submit_dirpath):
         jobname = "fopt.sh"
@@ -180,10 +193,62 @@ class vasp_writesubmit:
             submit.write('mpirun -np {} {} > vasp.log 2>&1  \n'.format(self.core, vaspbin_path))   
         return jobname
 
-    def scf_eband_eledos(self, submit_dirpath):
-        jobname = "scf-eband-eledos.sh"
+    def only_scf_or_eband_or_eledos(self, submit_dirpath):
+        jobname = "only_scf_or_eband_or_eledos.sh"
         submit_script_filepath = os.path.join(submit_dirpath, jobname)
         with open(submit_script_filepath, "w") as submit:
             submit.writelines(self.jobtitle)
             submit.write('mpirun -n {} {} > vasp.log 2>&1    \n'.format(self.core, vaspbin_path))                                                                         
+        return jobname
+    
+    def scf_eband_eledos(self, submit_dirpath):
+        jobname = "scf_eband_eledos.sh"
+        submit_script_filepath = os.path.join(submit_dirpath, jobname)
+        with open(submit_script_filepath, "w") as submit:
+            submit.writelines(self.jobtitle)
+            submit.write("cd scf\n")
+            submit.write('mpirun -n {} {} > vasp.log 2>&1    \n'.format(self.core, vaspbin_path))                                                                         
+            submit.write("cd ../eband\n")
+            submit.write("cp ../scf/CHGCAR .\n")
+            submit.write('mpirun -n {} {} > vasp.log 2>&1    \n'.format(self.core, vaspbin_path))                                                                         
+            submit.write("cd ../eledos\n")
+            submit.write("cp ../scf/CHGCAR .\n")
+            submit.write('mpirun -n {} {} > vasp.log 2>&1    \n'.format(self.core, vaspbin_path))                                                                         
+        return jobname
+    
+    def scf_eband(self, submit_dirpath):
+        jobname = "scf_eband.sh"
+        submit_script_filepath = os.path.join(submit_dirpath, jobname)
+        with open(submit_script_filepath, "w") as submit:
+            submit.writelines(self.jobtitle)
+            submit.write("cd scf\n")
+            submit.write('mpirun -n {} {} > vasp.log 2>&1    \n'.format(self.core, vaspbin_path))  
+            submit.write("cd ../eband\n")
+            submit.write("cp ../scf/CHGCAR .\n")
+            submit.write('mpirun -n {} {} > vasp.log 2>&1    \n'.format(self.core, vaspbin_path))       
+        return jobname
+    
+    def scf_eledos(self, submit_dirpath):
+        jobname = "scf_eledos.sh"
+        submit_script_filepath = os.path.join(submit_dirpath, jobname)
+        with open(submit_script_filepath, "w") as submit:
+            submit.writelines(self.jobtitle)
+            submit.write("cd scf\n")
+            submit.write('mpirun -n {} {} > vasp.log 2>&1    \n'.format(self.core, vaspbin_path))  
+            submit.write("cd ../eband\n")
+            submit.write("cp ../scf/CHGCAR .\n")
+            submit.write('mpirun -n {} {} > vasp.log 2>&1    \n'.format(self.core, vaspbin_path))       
+        return jobname
+    
+    def eband_eledos(self, submit_dirpath):
+        jobname = "eband_eledos.sh"
+        submit_script_filepath = os.path.join(submit_dirpath, jobname)
+        with open(submit_script_filepath, "w") as submit:
+            submit.writelines(self.jobtitle)
+            submit.write("cd eband\n")
+            submit.write("cp ../scf/CHGCAR .\n")
+            submit.write('mpirun -n {} {} > vasp.log 2>&1    \n'.format(self.core, vaspbin_path))  
+            submit.write("cd ../eledos\n")
+            submit.write("cp ../scf/CHGCAR .\n")
+            submit.write('mpirun -n {} {} > vasp.log 2>&1    \n'.format(self.core, vaspbin_path))       
         return jobname
