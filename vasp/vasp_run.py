@@ -241,10 +241,13 @@ class vasp_eletron:
                 mode="only-eband",
                 submitjob_path=eband_path)
             chgcar_src = self.eletron_inputpara.work_path.joinpath("scf", "CHGCAR")
+            chgcar_dst = self.eletron_inputpara.work_path.joinpath("eband", "CHGCAR")
             if not chgcar_src.exists():
                 print(f"The CHGCAR is not found in path \n{chgcar_src.absolute()}")
                 print("So The program will exit")
                 sys.exit(1)
+            else:
+                shutil.copy(chgcar_src, chgcar_dst)
             # 提交任务
             _vasp_submitjob = vasp_submitjob.init_from_eletroninput(self.eletron_inputpara)
             if self.eletron_inputpara.queue is not None:
@@ -259,10 +262,13 @@ class vasp_eletron:
                 mode="only-eledos",
                 submitjob_path=eledos_band)
             chgcar_src = self.eletron_inputpara.work_path.joinpath("scf", "CHGCAR")
+            chgcar_dst = self.eletron_inputpara.work_path.joinpath("eledos", "CHGCAR")
             if not chgcar_src.exists():
                 print(f"The CHGCAR is not found in path \n{chgcar_src.absolute()}")
                 print("So The program will exit")
                 sys.exit(1)
+            else:
+                shutil.copy(chgcar_src, chgcar_dst)
             # 提交任务
             _vasp_submitjob = vasp_submitjob.init_from_eletroninput(self.eletron_inputpara)
             if self.eletron_inputpara.queue is not None:
@@ -349,6 +355,26 @@ class vasp_eletron:
             )
         return eledos_path
 
+    def elf(self, kspacing):
+        elf_path = self.eletron_inputpara.work_path.joinpath('elf')
+        if not elf_path.exists():
+            os.mkdir(elf_path)   
+        # 准备POSCAR
+        self.eletron_inputpara.get_struct_info(
+            self.eletron_inputpara.struct_type,
+            elf_path)    
+        self.eletron_inputpara.get_potcar(elf_path)
+        # 准备计算电子DOS的INCAR
+        self._vasp_writeincar.writeinput(mode='elf', incar_path=elf_path)
+        # 为电子自洽均匀撒点准备KPOINTS
+        self.eletron_inputpara.write_evenly_kpoints(
+            kspacing, 
+            kpoints_path=elf_path,
+            )
+        return elf_path
+
+    def bader(self):
+        pass
 
 class vasp_processdata(vasp_base):
 

@@ -363,6 +363,7 @@ class vasp_base:
             os.chdir(kpoints_path)
             os.system('echo -e "3\n303" | vaspkit')
             shutil.copy("KPATH.in", "KPOINTS")
+            os.system("sed -i '2s/.*/200/' KPOINTS")
             os.chdir(cwd)
         else: 
             path_name_list, path_coords = self.get_hspp(ase_type)
@@ -370,7 +371,7 @@ class vasp_base:
             pair_two_coords = [[path_coords[i], path_coords[i+1]] for i in range(len(path_coords)-1)]
             with open(kpoints_filepath, "w") as kp:
                 kp.write("KPATH\n")
-                kp.write("50\n")
+                kp.write("200\n")
                 kp.write("Line-Mode\n")
                 kp.write("Reciprocal\n")
                 for two_names, two_coords in zip(pair_two_names, pair_two_coords):

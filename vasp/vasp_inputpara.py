@@ -98,6 +98,14 @@ class vasp_inputpara(vasp_base):
         if not hasattr(self, "core"):
             raise ValueError("    You must specify the number of core, such as 'core=48'")
 
+        if not hasattr(self, "nbands"):
+            raise ValueError("    You must specify NBANDS, such as 'nbands=64'")
+
+        # 关于并行计算的参数
+        if not hasattr(self, "npar"):
+            self.npar=4
+        
+
         # 关于磁性的参数设置：
         if not hasattr(self, "isym"):
             self.isym = 2
@@ -236,7 +244,8 @@ class vasp_phonopara(vasp_inputpara):
             elif self.mode == 'disp':
                 print("When mode=disp, the program will copy POSCAR to POSCAR-init and note that SPOSCAR won't be copied to POSCAR")
                 shutil.copy(poscar_file, poscar_init)
-                
+
+
 class vasp_eletronpara(vasp_inputpara):
 
     def __init__(
@@ -263,7 +272,6 @@ class vasp_eletronpara(vasp_inputpara):
             print("You are using `vasp eletron module`, what you use mode is:")
             print(f"{self.mode}")
             
-
 
 class vaspbatch_inputpara(vaspbatch_base, vasp_inputpara):
 
