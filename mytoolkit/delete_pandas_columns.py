@@ -26,7 +26,8 @@ for col in Enthalpy_curve_data.columns:
     if name not in col:
         new_colums.append(col)
     else:
-        print("delete {}".format(col))
+        # print("delete {}".format(col))
+        pass
 
 # print(new_colums);input()
 new_Enthalpy_curve_data = Enthalpy_curve_data[new_colums]

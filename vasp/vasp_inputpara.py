@@ -1,10 +1,9 @@
 import os
 import re
+import sys
 import shutil
 import logging
 from pathlib import Path
-
-import numpy as np
 
 from ase.io import read
 from pymatgen.io.ase import AseAtomsAdaptor
@@ -96,16 +95,22 @@ class vasp_inputpara(vasp_base):
             print("    You didn't specify queue, so the program will not submit the job in any way")
 
         if not hasattr(self, "core"):
-            raise ValueError("    You must specify the number of core, such as 'core=48'")
+            print("Error: ----------------------")
+            print("    You must specify the number of core, such as 'core=48'")
+            print("-----------------------------")
+            sys.exit(1)
 
         if not hasattr(self, "nbands"):
-            raise ValueError("    You must specify NBANDS, such as 'nbands=64'")
+            self.nbands = 100
+            print("Warning: --------------------")
+            print("    NBANDS had better to specify when you do eletronic properties calculation!!!")
+            print("    Therefore, the default value,  NBANDS = 100")
+            print("-----------------------------")
 
         # 关于并行计算的参数
         if not hasattr(self, "npar"):
             self.npar=4
         
-
         # 关于磁性的参数设置：
         if not hasattr(self, "isym"):
             self.isym = 2

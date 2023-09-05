@@ -3,6 +3,7 @@
 import sys
 import itertools
 import collections
+from typing import DefaultDict, Iterable, List, Tuple
 
 import pandas as pd
 import numpy as np
@@ -11,7 +12,6 @@ from sympy import Matrix, lcm
 
 from pymatgen.core.composition import Composition
 from pymatgen.analysis.phase_diagram import PDEntry
-
 
 # 如果你要使用这个脚本，你需要按照如下的格式准备数据，
 # 1. 这个数据格式必须是csv格式，
@@ -46,86 +46,83 @@ Press(GPa), 1-H,         3-LaH3,     5-YH2,        8-CeH3,        14-ThH4,      
 200,        0.0315527,   3.83767844, 3.67441807,   3.26454873,    2.70524702,         -1.50507977,   0.57597564
 """
 
-def make_elementMatrix(product_reacants_entries):
-    # input(product_reacants_entries)
-    elementmatrix = []
-    elementlist   = []
-    for idx, entry in enumerate(product_reacants_entries):
-        if(idx == len(elementmatrix)):
-            elementmatrix.append([])
-        for x in elementlist:
-            elementmatrix[idx].append(0)
-        # print(f"第一次补零: elementmatrix={elementmatrix}"); input()
-        el_amt_dict = entry.composition.get_el_amt_dict()
-        for ele, amt in el_amt_dict.items():
-            if (ele not in elementlist):
-                elementlist.append(ele)
-                for i in range(len(elementmatrix)):
-                    elementmatrix[i].append(0)
-            column=elementlist.index(ele)
-            elementmatrix[idx][column]+=int(amt)
-        # pprint(entry)
-        # print(f"第2次: elementmatrix={elementmatrix}"); input()
-    return elementmatrix
+def distinct_elems(mols: List[DefaultDict[str, int]]) -> List[str]:
+    """Get the distinct elements that form the molecules."""
+    elems = set()
+    for mol in mols:
+        for key in mol:
+            elems.add(key)
+    return list(elems)
 
-def get_chemical_equation(coeffients, product_reacants_entries, number_of_products):
-    product_entries   = product_reacants_entries[-number_of_products:]
-    product_coeffient = coeffients[-number_of_products:]
-    reactant_entries  = product_reacants_entries[:-number_of_products]
-    reactant_coeffient= coeffients[:-number_of_products]
 
-    reactants_items = []
-    for rea_coef, rea_entry in zip(reactant_coeffient, reactant_entries):
-        formula = rea_entry.composition.formula.replace(' ', '')
-        entryid = rea_entry.entry_id
-        reactants_items.append(str(int(rea_coef)) +'*'+ '('+str(entryid)+'-'+formula+')')
-    reactants_strings ='+ '.join(reactants_items)
+def balance(left: List[DefaultDict[str, int]],
+            right: List[DefaultDict[str, int]],
+            verbose: bool) \
+        -> Iterable[Tuple[np.ndarray, np.ndarray]]:
+    """Balance the parsed left and ride sides."""
+    elems = distinct_elems(left + right)
+    if verbose:
+        print('Distinct elements:', ', '.join(elems))
+    lin_sys = np.zeros((len(elems), len(left) + len(right)), dtype=int)
+    for idx_elem, elem in enumerate(elems):
+        for idx_mol, mol in enumerate(itertools.chain(left, right)):
+            lin_sys[idx_elem, idx_mol] = mol[elem]
+    lin_sys[:, len(left):] *= -1
+    if verbose:
+        print('Linear system of equations matrix', lin_sys, sep='\n')
+    kernel = Matrix(lin_sys).nullspace(simplify=True)
+    if verbose:
+        print('Nullity =', len(kernel))
+    for ker in kernel:
+        numers = np.array([num.as_numer_denom()[0] for num in ker])
+        denoms = np.array([num.as_numer_denom()[1] for num in ker])
+        lcm = np.lcm.reduce(denoms)
+        coefs = numers * lcm / denoms
+        coefs /= np.gcd.reduce(coefs)
+        if np.any(coefs < 0) and np.any(coefs > 0):
+            continue
+        coefs = np.abs(coefs)
+        if verbose:
+            print('Kernel basis', ker, 'simplified to', coefs)
+    yield coefs[:len(left)], coefs[len(left):]
 
-    products_items = []
-    for rea_coef, prod_entry in zip(product_coeffient, product_entries):
-        formula = prod_entry.composition.formula.replace(' ', '')
-        entryid = prod_entry.entry_id
-        products_items.append(str(int(rea_coef)) +'*'+ '('+str(entryid)+'-'+formula+')')
-    products_strings ='+ '.join(products_items)
+def get_chemical_equation(coefs_left, entries):
+    """Construct string of coefficients and molecules."""
+    multipled = []
+    # print(coefs_left, formula); input()
+    for coef, entry in zip(coefs_left, entries):
+        formula = entry.composition.formula.replace(' ', '')
+        entryid = entry.entry_id
+        speciel_formula = 'id' + str(entryid) + '_' + formula
+        multipled.append(f'{coef}*{speciel_formula}' if coef != 1 else speciel_formula)
+    return ' + '.join(multipled)
 
-    chemical_equation = reactants_strings + " -> " + products_strings
-    # print(chemical_equation)
-    return chemical_equation
-
-def compute_form_energy(coeffients, product_reacants_entries, number_of_products):
+def compute_form_energy(left_coef, left_compound, right_coef, right_compound):
     # product_idx 是生成物在product_reacants_entries中的索引号组成的列表
-    product_idx = list(range((len(product_reacants_entries)-number_of_products), len(product_reacants_entries)))
-    # print(product_idx); input("product_idx") # 输出生成物的索引号
-    # product_numatm = 0
-    # reactant_numatm= 0
-    # for prod_entry in product_reacants_entries[-number_of_products:]:
-    #     natm = prod_entry.composition.num_atoms
-    #     product_numatm += natm
-    # for react_entry in product_reacants_entries[:-number_of_products]:
-    #     natm = react_entry.composition.num_atoms
-    #     reactant_numatm += natm
-    # if product_numatm == reactant_numatm:
-    #     total_numatm = product_numatm
-    # else:
-    #     print(f"product_numatm={product_numatm}")
-    #     print(f"reactant_numatm={reactant_numatm}")
-    #     print("Number of atoms in product and reactant are not equal. I will exit !!!")
-    #     # sys.exit(1)
     form_energy = 0
-    total_numatm = 0
-    for prod_entry in product_reacants_entries[-number_of_products:]:
-        natm = prod_entry.composition.num_atoms
-        total_numatm += natm
-    for idx, prod_reac in enumerate(product_reacants_entries):
-        numatm = prod_reac.composition.num_atoms
-        energy = prod_reac.energy
-        if idx not in product_idx :
-            # print(f"numatm={numatm}, coeffients[{idx}]={coeffients[idx]}")
-            form_energy += numatm*coeffients[idx]*energy
-        else:
-            form_energy += -numatm*coeffients[idx]*energy
-    form_energy_peratom = 1000*form_energy/total_numatm
-    # print(f"form_energy_peratom={form_energy_peratom}")#; input()
+    left_total_numatm = 0
+    right_total_numatm = 0
+    # print(left_compound, right_compound); input()
+    for coef, mol in zip(left_coef, left_compound):
+        # print(coef, mol); input()
+        natm = mol.composition.num_atoms
+        energy = mol.energy
+        left_total_numatm += natm*coef
+        form_energy  += natm*coef*energy
+
+    for coef, mol in zip(right_coef, right_compound):
+        natm = mol.composition.num_atoms
+        energy = mol.energy
+        right_total_numatm += natm*coef
+        form_energy  += -natm*coef*energy
+    
+    if left_total_numatm == right_total_numatm and left_total_numatm != 0:
+        form_energy_peratom = 1000*form_energy/right_total_numatm
+    elif left_total_numatm == right_total_numatm and left_total_numatm == 0:
+        form_energy_peratom = None
+    else:
+        print(f"The left part numberofatom:{left_total_numatm} != the left part numberofatom:{right_total_numatm}")
+        sys.exit
     return form_energy_peratom
 
 
@@ -137,7 +134,9 @@ if __name__ == "__main__":
     numberofreactions= int(sys.argv[3])
     enthalpy_datas   = pd.read_csv(enthalpy_csvfile, index_col=0, header=1, na_values=['--'])
     result_dt = collections.defaultdict(list)
+    presses = []
     for press, idxcomp_energy in enthalpy_datas.iterrows():
+        presses.append(press)
         print(f"press={press}")
         ini_entries = []
         for idxcomp, enthalpy in idxcomp_energy.items():
@@ -152,38 +151,37 @@ if __name__ == "__main__":
 
         product    = ini_entries[-numberofproducts:]
         reactants  = ini_entries[:-numberofproducts]
+
         combination_reacants = []
         for combination in list(itertools.combinations(reactants, numberofreactions)):
             for compound1, compound2 in list(itertools.combinations(combination, 2)):
-                if compound1.composition.elements == compound2.composition.elements:
+                formula1 = compound1.composition.formula.replace(' ', '')
+                formula2 = compound2.composition.formula.replace(' ', '')
+                if formula1 == formula2:
+                    # print(f'formula1 = {formula1}, its entry_id = {compound1.entry_id}')
+                    # print(f'formula2 = {formula2}, its entry_id = {compound2.entry_id}')
                     break
             else:
                 combination_reacants.append(list(combination))
         
         # 拿到所有反应物的排列组合
-        prods_reacs = [rec + product for rec in combination_reacants] 
-        for prod_reac in prods_reacs:
-            # print(prod_reac); input()
-            ele_matrix = make_elementMatrix(prod_reac)
-            # print(ele_matrix); input()
-            ele_matrix = Matrix(ele_matrix)
-            ele_matrix = ele_matrix.transpose()
-            # print(ele_matrix); input("transpose")
-            solution   = ele_matrix.nullspace()[0]
-            # print(solution); input("solution")
-            multiple   = lcm([val.q for val in solution]) # 获得所有系数的分母的值，然后取它们的最小公倍数
-            coeffients = abs(multiple*solution)
-            # print(coeffients); input("coeffients")
-            chemical_equation   = get_chemical_equation(coeffients, prod_reac, numberofproducts)
-            # print(chemical_equation); input("chemical_equation")
-            form_energy_peratom = compute_form_energy(coeffients, prod_reac, numberofproducts)
-            # print(form_energy_peratom); input()
-            # parital_result_pd.at[press, chemical_equation] = form_energy_peratom
-            result_dt[chemical_equation].append(form_energy_peratom)
-            # print(parital_result_pd);input()
-        # total_result_pd = pd.concat([total_result_pd, parital_result_pd], axis=1)
-    
-    total_result_pd = pd.DataFrame(data=result_dt, index=[p for p in range(10, 210, 10)]+[250, 300])
+        for reactions in combination_reacants:
+            left_compound  = [comp.composition.get_el_amt_dict() for comp in reactions]
+            right_compound = [comp.composition.get_el_amt_dict() for comp in product]
+            left_formula   = [comp.composition.formula.replace(' ', '') for comp in reactions]
+            right_formula  = [comp.composition.formula.replace(' ', '') for comp in product]
+            solutions = balance(left_compound, right_compound, verbose=False)
+            for left_coef, right_coef in solutions:
+                # print(left_coef, right_coef); input()
+                left_part  = get_chemical_equation(left_coef, reactions)
+                right_part = get_chemical_equation(right_coef, product)
+                chemical_equation = left_part + ' = ' + right_part
+                # print(left_part, '->', right_part); input()
+                form_energy_peratom = compute_form_energy(left_coef, reactions, right_coef, product)
+                if form_energy_peratom is not None:
+                    result_dt[chemical_equation].append(form_energy_peratom)
+    # print(result_dt)
+    total_result_pd = pd.DataFrame(data=result_dt, index=presses)
     total_result_pd.to_csv("formed-enthalpy.csv")
     
 
