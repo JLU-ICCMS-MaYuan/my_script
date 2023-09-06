@@ -121,14 +121,14 @@ if __name__ == "__main__":
     # jobsystem = "coshare_slurm"
     print("Note: --------------------")
     print("    你需要在当前目录下准备好: POSCAR, POTCAR, INCAR")
-    print("    测试的ENCUT值分别是: 400, 500, 600, 700, 800, 900, 1000")
+    print("    测试的ENCUT值分别是: 400, 500, 600, 700, 800, 900, 1000  1100 1200 1300 1400")
     print("    该脚本不提供自动提任务的命令: 你可以用以下命令提供命令:")
-    print("        for i in 400 500 600 700 800 900 1000; do cd $i; qsub submit.sh;   cd ..; done")
-    print("        for i in 400 500 600 700 800 900 1000; do cd $i; sbatch submit.sh; cd ..; done")
+    print("        for i in 400 500 600 700 800 900 1000 1100 1200 1300 1400; do cd $i; qsub submit.sh;   cd ..; done")
+    print("        for i in 400 500 600 700 800 900 1000 1100 1200 1300 1400; do cd $i; sbatch submit.sh; cd ..; done")
 
     print("Note: --------------------")
     print("    创建测试VASP的ENCUT输入文件目录以及准备vasp的输入文件")
-    encuts = [400, 500, 600, 700, 800, 900, 1000]
+    encuts = [400, 500, 600, 700, 800, 900, 1000, 1100, 1200, 1300, 1400]
     potcar_path = os.path.abspath("POTCAR")
     poscar_path = os.path.abspath("POSCAR")
     incar_path  = os.path.abspath("INCAR")
@@ -153,7 +153,7 @@ if __name__ == "__main__":
     Ediff = np.insert(Ediff, 0, [0.0])
     Ediff = Ediff[:, np.newaxis]
     encut_dE_Hdiff = np.hstack((encut_dE, Ediff))
-    if len(encut_dE_Hdiff) == 7:
+    if len(encut_dE_Hdiff) == 11:
         print("{:<12},{:<14},{:<14}".format("ENCUT", "dE(eV/atom)", "diff(meV/atom)"))
         with open("encut_dE.csv", 'w') as f:
             f.write("{:<12},{:<14},{:<14}\n".format("ENCUT", "dE(eV/atom)", "diff(meV/atom)"))

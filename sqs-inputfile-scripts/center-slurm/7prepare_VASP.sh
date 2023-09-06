@@ -1,9 +1,14 @@
 #!/bin/sh 
 
-#pot_PATH=/work/home/zhangpy/workplace/HEA/SQS/7/pot
-#pot_PATH=/work/home/zhangpy/workplace/HEA/SQS/8-ReW/2/pot
 
-pot_PATH=/public/home/liuhanyu/workplace/mayuan/sqs/prepare-coshare
+# 获取当前工作目录
+current_dir=$(pwd)
+
+# 定义变量 potcar_lib
+potcar_lib="potcar_lib"
+
+# 构建新的路径
+pot_PATH="${current_dir}/${potcar_lib}"
 
 ls stru/poscar > ls.log
 for aa in $(cat ls.log)
@@ -23,6 +28,10 @@ do
         if [ $el = 'La' ]; then
             cat $pot_PATH/$el >> POTCAR
         elif [ $el = 'Y' ]; then
+            cat $pot_PATH/$el >> POTCAR
+        elif [ $el = 'Ce' ]; then
+            cat $pot_PATH/$el >> POTCAR
+        elif [ $el = 'Th' ]; then
             cat $pot_PATH/$el >> POTCAR
         elif [ $el = 'Be' ]; then
             cat $pot_PATH/$el >> POTCAR
