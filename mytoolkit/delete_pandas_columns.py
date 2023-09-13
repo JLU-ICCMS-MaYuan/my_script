@@ -14,23 +14,28 @@ Enthalpy_curve_file = sys.argv[1]
 
 Enthalpy_curve_data = pd.read_csv(Enthalpy_curve_file, index_col=0, header=0,)
 
-Enthalpy_curve_data = Enthalpy_curve_data.dropna()
+new_Enthalpy_curve_data = Enthalpy_curve_data.dropna()
 
+
+with open("DeleteEquation.dat", 'r') as delete_dat:
+    lines = delete_dat.readlines()
+
+
+for line in lines:
 # 获得要删除的列包含的关键词
-name = input("获得要删除的列包含的关键词\n")
-
-
-# Enthalpy_curve_data = Enthalpy_curve_data.loc[:, ~Enthalpy_curve_data.columns.str.contains(name)]
-new_colums = []
-for col in Enthalpy_curve_data.columns:
-    if name not in col:
-        new_colums.append(col)
+    line = line.strip('\n')
+    if line:
+        # Enthalpy_curve_data = Enthalpy_curve_data.loc[:, ~Enthalpy_curve_data.columns.str.contains(line)]
+        new_columns = []
+        for col in new_Enthalpy_curve_data.columns:
+            if line not in col: # 如果不包含 目标关键字, 就保留下来到new_columns
+                new_columns.append(col)
+            else:
+                # print("delete {}".format(col))
+                pass
+        new_Enthalpy_curve_data = new_Enthalpy_curve_data[new_columns]
     else:
-        # print("delete {}".format(col))
-        pass
-
-# print(new_colums);input()
-new_Enthalpy_curve_data = Enthalpy_curve_data[new_colums]
+        break
 
 new_Enthalpy_curve_data.to_csv("new-formed-enthalpy.csv")
 

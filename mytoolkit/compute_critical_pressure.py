@@ -15,7 +15,7 @@ Enthalpy_curve_file = sys.argv[1]
 Enthalpy_curve_data = pd.read_csv(Enthalpy_curve_file, index_col=0, header=0,)
 # 去除NaN值
 Enthalpy_curve_data = Enthalpy_curve_data.dropna()
-print(Enthalpy_curve_data.head(5))
+# print(Enthalpy_curve_data.head(5))
 
 critical_press_data = pd.DataFrame()
 for chemical_path, press_enthalpy in Enthalpy_curve_data.iteritems():
@@ -42,15 +42,16 @@ for chemical_path, press_enthalpy in Enthalpy_curve_data.iteritems():
             critical_press_data.at[chemical_path, "lower_limit"] = critical_press[1]
             critical_press_data.at[chemical_path, "upper_limit"] = critical_press[0]
     else:
-        print(f"critical pressure has {len(critical_press)}")
+        pass
+        # print(f"critical pressure is None, {len(critical_press)}")
     # critical_press_data = critical_press_data.sort_values(by=["lower_limit", "upper_limit"])
 # 获取零点的值
 
-print(critical_press_data)
+# print(critical_press_data)
 
 # print(f"chemical_path={critical_press_data['lower_limit'].nlargest(4).index[:]} \
 #         lower_limit={critical_press_data['lower_limit'].nlargest(4).iloc[:]}\n")
-print(f"lower_limit=\n{critical_press_data['lower_limit'].nlargest(16).iloc[:]}\n")
+print(f"{critical_press_data['lower_limit'].nlargest(60).iloc[:]}\n")
 # print(f"chemical_path={critical_press_data['upper_limit'].nsmallest(4).index[:]} \
 #         upper_limit={critical_press_data['upper_limit'].nsmallest(4).iloc[:]}\n")
-print(f"upper_limit=\n{critical_press_data['upper_limit'].nsmallest(4).iloc[:]}\n")
+# print(f"upper_limit=\n{critical_press_data['upper_limit'].nsmallest(4).iloc[:]}\n")

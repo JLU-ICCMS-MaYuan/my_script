@@ -1,7 +1,7 @@
 #!/bin/bash
 
-
-enthalpy=$(grep -a 'enthalpy' OUTCAR | tail -n 1 | awk '{print $ 5}')
+outcar_file=$1
+enthalpy=$(grep -a 'enthalpy' $outcar_file | tail -n 1 | awk '{print $ 5}')
 # 读取文件并将第七行存储为变量
 line=$(sed -n '7p' POSCAR)
 # 将第七行按空格分割成数组

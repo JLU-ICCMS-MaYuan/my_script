@@ -151,8 +151,8 @@ if __name__ == "__main__":
 
         product    = ini_entries[-numberofproducts:]
         reactants  = ini_entries[:-numberofproducts]
-
         combination_reacants = []
+        
         for combination in list(itertools.combinations(reactants, numberofreactions)):
             for compound1, compound2 in list(itertools.combinations(combination, 2)):
                 formula1 = compound1.composition.formula.replace(' ', '')
@@ -172,7 +172,6 @@ if __name__ == "__main__":
             right_formula  = [comp.composition.formula.replace(' ', '') for comp in product]
             solutions = balance(left_compound, right_compound, verbose=False)
             for left_coef, right_coef in solutions:
-                # print(left_coef, right_coef); input()
                 left_part  = get_chemical_equation(left_coef, reactions)
                 right_part = get_chemical_equation(right_coef, product)
                 chemical_equation = left_part + ' = ' + right_part
@@ -180,6 +179,7 @@ if __name__ == "__main__":
                 form_energy_peratom = compute_form_energy(left_coef, reactions, right_coef, product)
                 if form_energy_peratom is not None:
                     result_dt[chemical_equation].append(form_energy_peratom)
+    
     # print(result_dt)
     total_result_pd = pd.DataFrame(data=result_dt, index=presses)
     total_result_pd.to_csv("formed-enthalpy.csv")

@@ -37,8 +37,11 @@ df1.insert(loc=2, column="hcontent", value=0.0) # 添加一列存储氢所占百
 for ridx, row in df1.iterrows():
     _formula = Formula(row['formula'])
     species_amounts = _formula.count()
-    h_content = np.round(species_amounts['H'] / sum(list(species_amounts.values())), 3)
-    # loc 方法需要两个坐标索引目标值，第一个是第ridx行, 第二个是列名称，如hcontent。
+    try:
+        h_content = np.round(species_amounts['H'] / sum(list(species_amounts.values())), 3)
+    except KeyError:
+        h_content = 0
+    #  loc 方法需要两个坐标索引目标值，第一个是第ridx行, 第二个是列名称，如hcontent。
     df1.loc[ridx, "hcontent"] = h_content
 
 df1.to_csv('nnconvexhull.csv', index=False)
