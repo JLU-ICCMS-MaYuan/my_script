@@ -1,0 +1,100 @@
+PARAMETERS EVOLUTIONARY ALGORITHM
+ 
+******************************************
+******************************************
+*      TYPE OF RUN AND SYSTEM            *
+******************************************
+******************************************
+USPEX : calculationMethod (USPEX, VCNEB, META)
+301   : calculationType (dimension: 0-3; molecule: 0/1; varcomp: 0/1)
+
+% optType (1=enthalpy, 2=volume, 3=hardness, 4=struc_order, 5=aver_dist)
+1
+% EndOptType
+ 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% What symmetry(s) have to be satisfied by the randomly created structures
+% symmetries
+2-230
+% endSymmetries
+
+% IonDistances
+1.555 1.407 1.185
+1.407 1.259 1.037
+1.185 1.037 0.815
+% EndDistances
+
+% numbers of specices (ions/molecules/blocks) of each type
+% numSpecices
+1 0 0
+0 1 0
+0 0 1
+% EndNumSpecices
+%%%%%%%%%%%%%%%%%%%%
+% Here come the atomic numbers of the atoms involved
+% atomType
+Y Al H
+% EndAtomType
+%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%
+
+4 : minAt
+16 : maxAt
+30 : firstGeneMax
+
+******************************************
+*               POPULATION               *
+******************************************
+30 : populationSize (how many individuals per generation)
+10  : initialPopSize 
+100 : numGenerations (how many generations shall be calculated)
+50  : stopCrit 
+ 
+******************************************
+%       FIRST VAR. COMP. GENERATION      *
+******************************************
+******************************************
+*  SURVIVAL OF THE FITTEST AND SELECTION *
+******************************************
+0     : reoptOld 
+0.5   : bestFrac 
+******************************************
+******************************************
+*          VARIATION OPERATORS           *
+******************************************
+******************************************
+0.40  : fracGene (fraction of generation produced by heredity)
+0.60  : fracRand (fraction of generation produced randomly from space groups)
+0.00  : fracAtomsMut (fraction of the generation produced by softmutation)
+0.00  : fracTrans (fraction of the generation produced by transmutations)
+0.00  : fracLatMut (fraction of the generation produced by softmutation)
+0.00  : fracPerm
+ 
+*****************************************
+*   DETAILS OF AB INITIO CALCULATIONS   * 
+*****************************************
+% abinitioCode (which code from CommandExecutable shall be used for calculation? )
+1 1 1 1
+% ENDabinit
+ 
+%Resolution for KPOINTS - one number per step or just one number in total)
+% KresolStart
+0.12 0.10 0.08 0.06
+% Kresolend
+ 
+50  : numParallelCalcs (how many parallel calculations shall be performed)
+1    : whichCluster (0: no-job-script, 1: local submission, 2: remote submission)
+100  : ExternalPressure(GPa)
+
+% commandExecutable
+mpirun -n 28 /public/home/mayuan/software/vasp.6.1.0/bin/vasp_std > vasp.log 2>&1
+% EndExecutable
+ 
+*****************************************
+*               RESTART                 *
+*****************************************
+1    : pickUpYN (if pickUpYN~=0 , then a previous calculation will be continued )
+82   : pickUpGen (at which generation shall the previous calculation be picked up?)
+1    : pickUpFolder (number of the results folder to be used.)

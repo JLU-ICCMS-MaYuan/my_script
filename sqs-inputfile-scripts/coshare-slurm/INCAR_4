@@ -1,5 +1,5 @@
 SYSTEM = OPT
-PREC = Accurate 
+PREC = Normal 
 ENCUT = 500
 EDIFF = 1e-6
 EDIFFG = -0.1

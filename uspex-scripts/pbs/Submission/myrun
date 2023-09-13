@@ -1,0 +1,18 @@
+#!/bin/bash
+#PBS -N USPEX-1
+#PBS -q liuhy
+#PBS -l nodes=1:ppn=28,walltime=4:00:00
+#PBS -j oe
+#PBS -V
+
+ulimit -s unlimited
+cd $PBS_O_WORKDIR
+killall -9 vasp_std
+
+ulimit -s unlimited
+export I_MPI_ADJUST_REDUCE=3
+export MPIR_CVAR_COLL_ALIAS_CHECK=0
+export I_MPI_FABRICS=shm
+export MKL_DEBUG_CPU_TYPE=5
+
+sleep 20
