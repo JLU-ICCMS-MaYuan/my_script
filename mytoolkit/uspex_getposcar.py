@@ -11,7 +11,10 @@ print("    最后将获得的结构存储在seeds.vasp中")
 
 lower_limit = float(sys.argv[1])
 upper_limit = float(sys.argv[2])
-prefix      = sys.argv[3]
+try:
+    prefix = sys.argv[3]
+except:
+    prefix = ''
 
 
 # 从extended_convex_hull中获得相应结构的编号
