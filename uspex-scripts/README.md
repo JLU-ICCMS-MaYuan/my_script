@@ -3,6 +3,8 @@
 1. http://www.pwmat.com:8080/upload/module/pdf/PWmatUSPEX.pdf
 2. https://uspex-team.org/zh/uspex/overview
 3. https://uspex-team.org/online_utilities/uspex_manual_release/ChineseVersion/uspex_manual_chinese_V10.2/index.html
+4. https://uspex-team.org/online_utilities/uspex_manual_release/ChineseVersion/uspex_manual_chinese_V10.2/sect0018.html (变组分结构预测)
+5. https://uspex-team.org/online_utilities/uspex_manual_release/ChineseVersion/uspex_manual_chinese_V10.2/faq_compositions.html (如何控制成分)
 
 ## 2. 准备好输入文件后，提交任务
 ```shell
