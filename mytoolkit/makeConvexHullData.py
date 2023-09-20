@@ -46,7 +46,7 @@ if __name__ == "__main__":
         ourcar_path = work_path.joinpath("OUTCAR")
         poscar_path = work_path.joinpath("POSCAR")
         if ourcar_path.exists() and poscar_path.exists():
-            idx = work_path.parent.name.split("-")[0]
+            idx = work_path.parent.name.split(".")[0]
             # 抑制错误消息
             res = os.popen(f'grep -s "reached required accuracy - stopping structural energy minimisation" {ourcar_path}').read() # 如果没有找到指定内容不输出错误结果。
             if res:
