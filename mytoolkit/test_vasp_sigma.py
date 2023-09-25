@@ -171,10 +171,17 @@ if __name__ == "__main__":
         sigma_dE.append([sigma, dE_per_atom])
 
     sigma_dE = np.array(sigma_dE)
-    Ediff = np.diff(sigma_dE, axis=0)[:,-1]
-    Ediff = np.insert(Ediff, 0, [0.0])
+    # 方式一：通过相邻两个sigma的能量的差判断收敛性
+    # Ediff = np.diff(sigma_dE, axis=0)[:,-1]
+    # Ediff = np.insert(Ediff, 0, [0.0])
+    # Ediff = Ediff[:, np.newaxis]
+    # sigma_dE_Hdiff = np.hstack((sigma_dE, Ediff))
+
+    # 方式二：所有sigma的能量减去最小sigma的能量判断收敛性
+    Ediff = sigma_dE[:, 1] - sigma_dE[-1, -1]
     Ediff = Ediff[:, np.newaxis]
     sigma_dE_Hdiff = np.hstack((sigma_dE, Ediff))
+
     if len(sigma_dE_Hdiff) == 8:
         print("{:<12},{:<14},{:<14}".format("sigma", "dE(eV/atom)", "diff(meV/atom)"))
         with open("sigma_dE.csv", 'w') as f:

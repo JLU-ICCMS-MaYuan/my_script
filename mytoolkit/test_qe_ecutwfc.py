@@ -142,10 +142,18 @@ if __name__ == "__main__":
         ecutwfc_Et.append([ecutwfc, Et_per_atom])
 
     ecutwfc_Et = np.array(ecutwfc_Et)
-    Ediff = np.diff(ecutwfc_Et, axis=0)[:,-1]
-    Ediff = np.insert(Ediff, 0, [0.0])
+    # 方式一：通过相邻两个ecutwfc的能量的差判断收敛性
+    # Ediff = np.diff(ecutwfc_Et, axis=0)[:,-1]
+    # Ediff = np.insert(Ediff, 0, [0.0])
+    # Ediff = Ediff[:, np.newaxis]
+    # ecutwfc_Et_Ediff = np.hstack((ecutwfc_Et, Ediff))
+    
+    # 方式二：所有ecutwfc的能量减去最小ecutwcf的能量判断收敛性
+    Ediff = ecutwfc_Et[:, 1] - ecutwfc_Et[-1, -1]
     Ediff = Ediff[:, np.newaxis]
+    degauss_Et_Ediff = np.hstack((ecutwfc_Et, Ediff))
     ecutwfc_Et_Ediff = np.hstack((ecutwfc_Et, Ediff))
+    
     if len(ecutwfc_Et) == 6:
         print("{:<12},{:<14},{:<14},{:<14}".format("ewcutwfc", "Et(Ry/atom)", "Et(eV/atom)", "diff(meV/atom)"))
         with open("ecutwfc.csv", 'w') as f:

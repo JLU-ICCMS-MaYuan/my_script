@@ -149,10 +149,18 @@ if __name__ == "__main__":
         encut_dE.append([encut, dE_per_atom])
 
     encut_dE = np.array(encut_dE)
-    Ediff = np.diff(encut_dE, axis=0)[:,-1]
-    Ediff = np.insert(Ediff, 0, [0.0])
+
+    # 方式一：通过相邻两个encut的能量的差判断收敛性
+    # Ediff = np.diff(encut_dE, axis=0)[:,-1]
+    # Ediff = np.insert(Ediff, 0, [0.0])
+    # Ediff = Ediff[:, np.newaxis]
+    # encut_dE_Hdiff = np.hstack((encut_dE, Ediff))
+
+    # 方式二：所有encut的能量减去最高encut的能量判断收敛性
+    Ediff = encut_dE[:, 1] - encut_dE[-1, -1]
     Ediff = Ediff[:, np.newaxis]
     encut_dE_Hdiff = np.hstack((encut_dE, Ediff))
+    
     if len(encut_dE_Hdiff) == 11:
         print("{:<12},{:<14},{:<14}".format("ENCUT", "dE(eV/atom)", "diff(meV/atom)"))
         with open("encut_dE.csv", 'w') as f:

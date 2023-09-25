@@ -172,10 +172,18 @@ if __name__ == "__main__":
         kresolution_Et.append([kresolution, Et_per_atom])
 
     kresolution_Et = np.array(kresolution_Et)
-    Ediff = np.diff(kresolution_Et, axis=0)[:,-1]
-    Ediff = np.insert(Ediff, 0, [0.0])
+
+    # 方式一：通过相邻两个kpoints的能量的差判断收敛性
+    # Ediff = np.diff(kresolution_Et, axis=0)[:,-1]
+    # Ediff = np.insert(Ediff, 0, [0.0])
+    # Ediff = Ediff[:, np.newaxis]
+    # kresolution_Et_Ediff = np.hstack((kresolution_Et, Ediff))
+    
+    # 方式二：所有kpoints的能量减去最密kpoints的能量判断收敛性
+    Ediff = kresolution_Et[:, 1] - kresolution_Et[-1, -1]
     Ediff = Ediff[:, np.newaxis]
     kresolution_Et_Ediff = np.hstack((kresolution_Et, Ediff))
+    
     if len(kresolution_Et) == 13:
         print("{:<12},{:<14},{:<14},{:<14}".format("kresolution", "Et(Ry/atom)", "Et(eV/atom)", "diff(meV/atom)"))
         with open("kresolution.csv", 'w') as f:

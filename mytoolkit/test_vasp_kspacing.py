@@ -150,10 +150,18 @@ if __name__ == "__main__":
         kspacing_dE.append([kspacing, dE_per_atom])
 
     kspacing_dE = np.array(kspacing_dE)
-    Ediff = np.diff(kspacing_dE, axis=0)[:,-1]
-    Ediff = np.insert(Ediff, 0, [0.0])
+
+    # 方式一：通过相邻两个kspacing的能量的差判断收敛性
+    # Ediff = np.diff(kspacing_dE, axis=0)[:,-1]
+    # Ediff = np.insert(Ediff, 0, [0.0])
+    # Ediff = Ediff[:, np.newaxis]
+    # kspacing_dE_Hdiff = np.hstack((kspacing_dE, Ediff))
+
+    # 方式二：所有kpoints的能量减去最密kspacing的能量判断收敛性
+    Ediff = kspacing_dE[:, 1] - kspacing_dE[-1, -1]
     Ediff = Ediff[:, np.newaxis]
     kspacing_dE_Hdiff = np.hstack((kspacing_dE, Ediff))
+
     if len(kspacing_dE_Hdiff) == 12:
         print("{:<12},{:<14},{:<14}".format("kspacing", "dE(eV/atom)", "diff(meV/atom)"))
         with open("kspacing_dE.csv", 'w') as f:

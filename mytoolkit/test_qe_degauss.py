@@ -137,10 +137,18 @@ if __name__ == "__main__":
         degauss_Et.append([degauss, Et_per_atom])
 
     degauss_Et = np.array(degauss_Et)
-    Ediff = np.diff(degauss_Et, axis=0)[:,-1]
-    Ediff = np.insert(Ediff, 0, [0.0])
+
+    # 方式一：通过相邻两个degauss的能量的差判断收敛性
+    # Ediff = np.diff(degauss_Et, axis=0)[:,-1]
+    # Ediff = np.insert(Ediff, 0, [0.0])
+    # Ediff = Ediff[:, np.newaxis]
+    # degauss_Et_Ediff = np.hstack((degauss_Et, Ediff))
+
+    # 方式二：所有degauss的能量减去最小degauss的能量判断收敛性
+    Ediff = degauss_Et[:, 1] - degauss_Et[-1, -1]
     Ediff = Ediff[:, np.newaxis]
     degauss_Et_Ediff = np.hstack((degauss_Et, Ediff))
+
     if len(degauss_Et) == 8:
         print("{:<12},{:<14},{:<14},{:<14}".format("degauss", "Et(Ry/atom)", "Et(eV/atom)", "diff(meV/atom)"))
         with open("degauss.csv", 'w') as f:
