@@ -1,17 +1,43 @@
 # Deep+结构预测
 
-## 1. 准备数据
-### 1.1 准备的数据需要保证的收敛精度
+## <span style="color:red">  1. 准备数据
+
+###  <span style="color:yellow"> 准备的数据需要保证的收敛精度
 ```shell
 total energy < 1meV/atom
 force < 10meV/A
 virial tensors < 1meV/atom
 ```
 
-## 2. 训练模型
-### 2.1 如果训练完了，需要检查哪些文件去判断模型是否可以投入使用？
+###  <span style="color:yellow"> 自洽计算
+测试encut, kspacing, 精度参考上图
 
-#### 2.1.1检查lcurve.out文件的第4、5行, 第6、7行, 分别是能量的训练和测试误差，力的训练和测试误差
+如果要提取能量，力，维里力的信息，可以参考extract_info.py
+
+如果是三元体系，例如Lu-Li-H，最好准备Lu, Li, H, Lu-H, Li-H, Lu-Li的结构预测数据
+四元同理
+
+### <span style="color:yellow"> 转化数据
+
+将计算好的vasp自洽数据通过脚本convertVasp2DpRaw.py转化为dp可以读取的数据
+
+##  <span style="color:red"> 2. 训练模型
+
+### <span style="color:yellow"> 输入文件input.json
+开始训练模型之前，需要准备好
+
+### <span style="color:yellow">  训练模型命令：
+```shell
+dp train input.json
+```
+
+###  <span style="color:yellow"> 远程提交作业
+不在本地训练，而是在集群训练，需要准备提交作业的脚本。参考center-slurm目录下的slurm作业脚本
+
+###  <span style="color:yellow"> 检查模型收敛性
+训练完了，需要检查哪些文件去判断模型是否可以投入使用？
+
+检查lcurve.out文件的第4、5行, 第6、7行, 分别是能量的训练和测试误差，力的训练和测试误差
 ```shell
 #                                      能量误差     能量误差      力的误差     力的误差
 #  step      rmse_val    rmse_trn    rmse_e_val  rmse_e_trn    rmse_f_val  rmse_f_trn         lr
@@ -31,15 +57,16 @@ virial tensors < 1meV/atom
 1000000      5.58e-02    4.34e-02      6.83e-03    1.53e-04      3.83e-02    4.32e-02    1.0e-08
 
 ```
-## 3. 冻结模型以及测试模型
 
-### 3.1 冻结模型的命令
+##  <span style="color:red"> 3. 冻结模型以及测试模型
+
+###  <span style="color:yellow"> 冻结模型的命令
 
 ```shell
 deep freeze -o graph.pb 
 ```
 
-### 3.2 测试模型
+###  <span style="color:yellow"> 测试模型
 
 ```shell
 # -m 指定模型

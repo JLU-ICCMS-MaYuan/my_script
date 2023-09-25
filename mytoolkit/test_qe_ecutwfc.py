@@ -124,7 +124,7 @@ if __name__ == "__main__":
 
     print("Note: --------------------")
     print("    创建测试VASP的ENCUT输入文件目录以及准备vasp的输入文件")
-    ecutwfcs = [40, 50, 60, 70, 80, 90]
+    ecutwfcs = [40, 50, 60, 65, 70, 75, 80, 85, 90, 95, 100, 105, 110]
     old_scf_in_path = os.path.abspath("scf.in")
     for ecutwfc in ecutwfcs:
         test_path = os.path.abspath(str(ecutwfc))
@@ -154,7 +154,7 @@ if __name__ == "__main__":
     degauss_Et_Ediff = np.hstack((ecutwfc_Et, Ediff))
     ecutwfc_Et_Ediff = np.hstack((ecutwfc_Et, Ediff))
     
-    if len(ecutwfc_Et) == 6:
+    if len(ecutwfc_Et) == 13:
         print("{:<12},{:<14},{:<14},{:<14}".format("ewcutwfc", "Et(Ry/atom)", "Et(eV/atom)", "diff(meV/atom)"))
         with open("ecutwfc.csv", 'w') as f:
             f.write("{:<12},{:<14},{:<14},{:<14}".format("ewcutwfc", "Et(Ry/atom)", "Et(eV/atom)", "diff(meV/atom)"))

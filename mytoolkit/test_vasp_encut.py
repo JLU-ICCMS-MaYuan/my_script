@@ -128,7 +128,7 @@ if __name__ == "__main__":
 
     print("Note: --------------------")
     print("    创建测试VASP的ENCUT输入文件目录以及准备vasp的输入文件")
-    encuts = [400, 500, 600, 700, 800, 900, 1000, 1100, 1200, 1300, 1400]
+    encuts = [400, 500, 600, 650, 700, 750, 800, 850, 900, 950, 1000, 1050, 1100, 1150, 1200, 1250, 1300, 1350, 1400, 1450, 1500]
     potcar_path = os.path.abspath("POTCAR")
     poscar_path = os.path.abspath("POSCAR")
     incar_path  = os.path.abspath("INCAR")
@@ -161,7 +161,7 @@ if __name__ == "__main__":
     Ediff = Ediff[:, np.newaxis]
     encut_dE_Hdiff = np.hstack((encut_dE, Ediff))
     
-    if len(encut_dE_Hdiff) == 11:
+    if len(encut_dE_Hdiff) == 21:
         print("{:<12},{:<14},{:<14}".format("ENCUT", "dE(eV/atom)", "diff(meV/atom)"))
         with open("encut_dE.csv", 'w') as f:
             f.write("{:<12},{:<14},{:<14}\n".format("ENCUT", "dE(eV/atom)", "diff(meV/atom)"))
