@@ -17,7 +17,7 @@ Enthalpy_curve_data = pd.read_csv(Enthalpy_curve_file, index_col=0, header=0,)
 new_Enthalpy_curve_data = Enthalpy_curve_data.dropna()
 
 
-with open("DeleteEquation.dat", 'r') as delete_dat:
+with open("D.dat", 'r') as delete_dat:
     lines = delete_dat.readlines()
 
 
@@ -37,6 +37,6 @@ for line in lines:
     else:
         break
 
-new_Enthalpy_curve_data.to_csv("new-formed-enthalpy.csv")
+new_Enthalpy_curve_data.to_csv("new_formed_enthalpy.csv")
 
 # 2\*(6-Y1H6)+ 1\*(14-Sr1H22)

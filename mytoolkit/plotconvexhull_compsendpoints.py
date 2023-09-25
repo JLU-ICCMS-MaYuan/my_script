@@ -192,6 +192,7 @@ for entry in ini_pd.stable_entries:
     stable_dict["enthalpy"] = 0.0
     stable_list.append(stable_dict)
     stable_structs_amount += 1
+    print(entry.name)
 print(f"stable structures on the convex hull is {stable_structs_amount - len(ini_pd.el_refs)}\n")
 # stable_pd = pd.DataFrame(stable_list)
 # stable_pd.to_csv("stable.csv", index=False)
@@ -203,18 +204,13 @@ unstable_structs_amount = 0
 print("Meta-Stable")
 for entry in ini_pd.unstable_entries:
     unstable_dict = {}
-    energy_above_hull = ini_pd.get_e_above_hull(entry)
+    energy_above_hull = ini_pd.get_e_above_hull(entry)*1000
     form_energy = ini_pd.get_form_energy_per_atom(entry)
-    print(entry.name, entry, form_energy)
     # print(entry.composition.formula, energy_above_hull)
     if 0.0 < energy_above_hull <= EnthalpyAboveHullValue: # 这里取高于convex hull 能量在0~50个meV范围内的亚稳结构
-        # print(entry.composition.formula)
-        # unstable_dict["Number"]  = entry.entry_id
-        # unstable_dict["formula"] = entry.composition.formula
-        #!!!!!!!!!!!!!!!!!特别注意这里的单位是meV!!!!!!!!!!!!!!!!!!!!!!!
-        # unstable_dict["enthalpy"] = ini_pd.get_e_above_hull(entry) 
         unstable_list.append(unstable_dict)
         unstable_structs_amount += 1
+        print(entry.name, energy_above_hull)
 print(f"unstable structures above the convex hull 0-{EnthalpyAboveHullValue} meV is {unstable_structs_amount}\n")
 # unstable_pd = pd.DataFrame(unstable_list)
 # unstable_pd.to_csv("unstable.csv", index=False)
@@ -223,5 +219,5 @@ print(f"unstable structures above the convex hull 0-{EnthalpyAboveHullValue} meV
 
 if save_pnd:
     plotter = PDPlotter(ini_pd, show_unstable=EnthalpyAboveHullValue*0.001, backend='matplotlib')
-    plotter.write_image('pd.png', image_format='png')
+    plotter.write_image('pd_cpd.png', image_format='png')
 

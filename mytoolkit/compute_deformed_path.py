@@ -71,15 +71,23 @@ def check_repeatability(composition_entries:list, numberofreactions):
     else:
         return False
 
-def check_product_number(all_coefs):
-    count_positive = 0
-
+def check_number(all_coefs: list):
+    '''
+    all_coefs is a list.
+    the positive elements represent Product, it should has only one positive element
+    the negative elements represent Reactant, it should has many negative elements, but none zero element.
+    '''
+    count_products = 0
+    # print(all_coefs);input()
     for num in all_coefs:
         if num > 0:
-            count_positive += 1
-            if count_positive > 1:
+            count_products += 1
+            if count_products > 1:
                 return False
-    return True
+        elif np.isclose(num, 0.0, rtol=1e-4):
+            return False
+    else:
+        return True
 
 def check_product_coeffs(products_entries):
     for prod in products_entries:
@@ -109,7 +117,7 @@ if __name__ == '__main__':
             if check_repeatability(reactant_entry, numberofreactions):
                 try:
                     reaction = ComputedReaction(reactant_entry, products_entries)
-                    if check_product_coeffs(products_entries) and check_product_number(reaction.coeffs):
+                    if check_product_coeffs(products_entries) and check_number(reaction.coeffs):
                         print(reaction.__str__())
                         reactions.append(reaction)
                         validnum += 1
@@ -159,10 +167,10 @@ if __name__ == '__main__':
                 result_dt[total_string].append(form_energy_peratom)
 
     result_json = json.dumps(result_dt)
-    result_file = open("formed-enthalpy.json", 'w')
+    result_file = open("formed_enthalpy.json", 'w')
     result_file.write(result_json)
     result_file.close()
 
     total_result_pd = pd.DataFrame(data=result_dt, index=presses)
-    total_result_pd.to_csv("formed-enthalpy.csv")
+    total_result_pd.to_csv("formed_enthalpy.csv")
     

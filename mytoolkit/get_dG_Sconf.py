@@ -16,7 +16,7 @@ def binary_alloy(dH, dG_file):
     Sconf_PerAtom = - kB * (xA * math.log(xA) + xB * math.log(xB))
     print("So entropy is {:<12.8f} eV/K".format(Sconf_PerAtom))
     print("{:<10} {:<12} {:<12} {:<12}".format("T", "dH", "TS", "dG"), file=dG_file)
-    for T in range(0, 3100, 100):
+    for T in range(0, 3100, 50):
         ts_item = T*Sconf_PerAtom 
         dG = dH-ts_item
         print("{:<10} {:<12.8f} {:<12.8f} {:<12.8f}".format(T, dH, ts_item, dG), file=dG_file)
@@ -38,7 +38,7 @@ def ternary_alloy(dH, dG_file):
     Sconf_PerAtom = - kB * (xA * math.log(xA) + xB * math.log(xB) + xC * math.log(xC))
     print("So entropy is {:<12.8f} eV/K".format(Sconf_PerAtom))
     print("{:<10} {:<12} {:<12} {:<12}".format("T", "dH", "TS", "dG"), file=dG_file)
-    for T in range(0, 3100, 100):
+    for T in range(0, 3100, 50):
         ts_item = T*Sconf_PerAtom 
         dG = dH-ts_item
         print("{:<10} {:<12.8f} {:<12.8f} {:<12.8f}".format(T, dH, ts_item, dG), file=dG_file)
@@ -63,7 +63,7 @@ def quaternary_alloy(dH, dG_file):
     Sconf_PerAtom = - kB * (xA * math.log(xA) + xB * math.log(xB) + xC * math.log(xC) + xD * math.log(xD))
     print("So entropy is {:<12.8f} eV/K".format(Sconf_PerAtom))
     print("{:<10} {:<12} {:<12} {:<12}".format("T", "dH", "TS", "dG"), file=dG_file)
-    for T in range(0, 3100, 100):
+    for T in range(0, 3100, 50):
         ts_item = T*Sconf_PerAtom 
         dG = dH-ts_item
         print("{:<10} {:<12.8f} {:<12.8f} {:<12.8f}".format(T, dH, ts_item, dG), file=dG_file)

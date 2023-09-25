@@ -11,6 +11,7 @@ import collections
 from scipy import interpolate
 
 Enthalpy_curve_file = sys.argv[1]
+Solution_range = sys.argv[2:4]
 
 Enthalpy_curve_data = pd.read_csv(Enthalpy_curve_file, index_col=0, header=0,)
 # 去除NaN值
@@ -29,7 +30,7 @@ for chemical_path, press_enthalpy in Enthalpy_curve_data.iteritems():
     # 使用root_scalar函数来寻找根
     piecewise_polynomial = interpolate.PPoly.from_spline(tck, extrapolate=None)
     critical_press = piecewise_polynomial.roots()
-    critical_press = critical_press[np.where(np.logical_and(critical_press>=0, critical_press<=200))]
+    critical_press = critical_press[np.where(np.logical_and(critical_press>=int(Solution_range[0]), critical_press<=int(Solution_range[1])))]
 
     if len(critical_press) == 1:
         critical_press_data.at[chemical_path, "lower_limit"] = critical_press[0]

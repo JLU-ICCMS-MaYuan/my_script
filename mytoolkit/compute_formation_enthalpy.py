@@ -182,7 +182,7 @@ if __name__ == "__main__":
     
     # print(result_dt)
     total_result_pd = pd.DataFrame(data=result_dt, index=presses)
-    total_result_pd.to_csv("formed-enthalpy.csv")
+    total_result_pd.to_csv("formed_enthalpy.csv")
     
 
 

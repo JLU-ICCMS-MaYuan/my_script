@@ -307,7 +307,7 @@ class qe_superconduct:
             print(f'    Corresponding Lambda_byqe = {res["Lambda_byqe"]}')
             print(f'    Corresponding Lambda_byalpha2f = {res["Lambda_byalpha2f"]}')
             print(f'    Corresponding omega_log = {res["omega_log"]}')
-            print(f'    Corresponding Tc_McAD = {res["Tc_McAD"]}')
+            print(f'    Corresponding Tc_Mc = {res["Tc_McAD"]}')
             print(f'    Corresponding Tc_eliashberg = {res["Tc_eliashberg"]}')
             print("\n")
 

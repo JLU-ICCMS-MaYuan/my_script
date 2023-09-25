@@ -32,7 +32,28 @@ def get_convexhull_info(poscar_path, outcar_path):
 
 
 if __name__ == "__main__":
-
+    info='''
+    注意：-------------------------------
+        这个脚本必须在压强目录的上一层目录中使用，比如：
+            1.LaY
+                1.La1-Y1  
+                    10 30 50 80 100 150 200
+                2.La3-Y1  
+                    10 30 50 80 100 150 200
+                3.La1-Y3
+                    10 30 50 80 100 150 200
+            2.LaCe
+                ....
+            3.YCe
+                ....
+        你必须在与1.La1-Y1, 2.La3-Y1 ,3.La1-Y3同一级的目录中使用
+    
+    使用方法是：
+        makeConvexHullData.py 压强值
+    
+    该脚本会自动将1.La1-Y1, 2.La3-Y1, 3.La1-Y3中相同压强值的结构的焓值提取出来
+    '''
+    print(info)
     press = sys.argv[1]
     fail_d = []
     success_d = []
