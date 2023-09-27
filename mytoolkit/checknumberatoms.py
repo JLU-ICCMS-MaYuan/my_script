@@ -11,7 +11,7 @@ i = 0
 for root, dirs, files in os.walk(os.getcwd()):
     # print(root)
     for file in files:
-        if "POSCAR" == file:
+        if "EA" in file:
             atoms = read(os.path.join(root, file))
             numatom = atoms.get_global_number_of_atoms()
             formula = atoms.get_chemical_formula()

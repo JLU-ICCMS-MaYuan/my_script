@@ -21,10 +21,14 @@ for root, dirs, files in os.walk("."):
             # 抑制错误消息
             nelm = os.popen(f'grep -s "NELM   =" {ourcar_path} ' + " | cut -d ';' -f 1 | cut -d '=' -f 2 ").read()
             iteration = os.popen(f'grep -s "Iteration" {ourcar_path} | wc -l').read() # 如果没有找到指定内容不输出错误结果。
-            if int(iteration) < int(nelm):
-                success_d.append(system_name.__str__())
-            else:
+            try:
+                if int(iteration) < int(nelm):
+                    success_d.append(system_name.__str__())
+                else:
+                    fail_d.append(system_name.__str__())
+            except:
                 fail_d.append(system_name.__str__())
+
         else:
             none_d.append(system_name.__str__())
 
