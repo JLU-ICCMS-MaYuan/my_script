@@ -1,5 +1,19 @@
 # Deep+结构预测
 
+##  <span style="color:red">  0. 准备目录
+
+```shell
+mkdir -p 1_scf_datasets/1_traindatas
+mkdir -p 1_scf_datasets/2_testdatas
+mkdir -p 1_scf_datasets/3_createdatas
+
+mkdir -p 2_dp_rawdata/1_traindatas
+mkdir -p 2_dp_rawdata/2_testdatas
+
+mkdir    3_module
+
+```
+
 ## <span style="color:red">  1. 准备数据
 
 ###  <span style="color:yellow"> 准备的数据需要保证的收敛精度
