@@ -16,11 +16,14 @@ import os
 import re
 import shutil
 from pathlib import Path
+from pprint import pprint
 from argparse import ArgumentParser, RawTextHelpFormatter
 
 import pandas as pd
+
 from pymatgen.analysis.phase_diagram import PDEntry, PhaseDiagram, PDPlotter
 from pymatgen.core.composition import Composition
+from pymatgen.core.periodic_table import Element
 
 
 parser = ArgumentParser(formatter_class=RawTextHelpFormatter)
@@ -37,6 +40,26 @@ parser.add_argument(
         "   然后运行`data_processer.py 得到nnconvexhull.csv 和 得到 nconvexhull.csv`\n"
         "\n"
         "整个命令在执行命令后, 将会在屏幕上输出高于convex hull 0 ~ EnthalpyAboveHullValue meV 的结构 !!!"
+)
+parser.add_argument(
+    "-ed",
+    "--endnotes",
+    action="store",
+    default=None,
+    dest="endnotes",
+    nargs="+",
+    help="如果使用该参数, 需要用户指定某几个单质作为端点值"
+)
+parser.add_argument(
+    "-dei",
+    "--destination-entry-index",
+    action="store",
+    default=-1,
+    dest="dst_entry_index",
+    type=int,
+    help="该参数用于输出指定entry的分解路径, 使用者需要事先了解相应化合物的entry编号\n"
+        "一般情况看nnconvexhull.csv文件中目标化合物在第几行就可以, 例如:\n"
+        "对于最后一行的化合物可以用-1来代表最后一个entry\n"
 )
 parser.add_argument(
     "-save",
@@ -108,6 +131,9 @@ collect_stable = args.collect_stable
 collect_unstable = args.collect_unstable
 hand_plot_dat = args.hand_plot_dat
 EnthalpyAboveHullValue = args.EnthalpyAboveHullValue
+endnotes = args.endnotes
+dst_entry_index = args.dst_entry_index
+
 # 生成 凸包图对象
 # convexhull_data = pd.read_csv(input_csv_path, header=0, sep=',') #  header表示第一行为标题行
 print("读入文件中的能量和化学式 (注意：能量必须是化学式的能量，不是每原子的能量) ")
@@ -130,7 +156,6 @@ try:
         # print(entry_id, comp, enth)
         # # input()
         ini_entries.append(_entry)
-    ini_pd = PhaseDiagram(ini_entries)
 except:
     # 该情况处理的文件：
     # Number,formula,enthalpy
@@ -150,10 +175,17 @@ except:
         # print(entry_id, comp, enth)
         # input()
         ini_entries.append(_entry)
-    ini_pd = PhaseDiagram(ini_entries)
-# 输出参考单质或化合物
-print(f" reference material {ini_pd.el_refs}\n");
 
+
+# 建立相图
+elements_endnotes = [Element(ed) for ed in endnotes]
+ini_pd = PhaseDiagram(ini_entries, elements=elements_endnotes)
+
+
+# 输出参考单质或化合物
+for re in ini_pd.el_refs:
+    print(re)
+print(f"reference endnotes\n")
 
 
 # 获得 落在convex hull上的稳定结构的 化学式配比, 编号, 形成焓(编号用来索引搜索到的结构)
@@ -310,6 +342,63 @@ if hand_plot_dat:
     total_pd.to_csv("for_origin_plot.csv", index=False)
 
 
+if dst_entry_index:
+    dst_entry_index = int(dst_entry_index)
+    dst_entry = ini_pd.entries[dst_entry_index]
+    print(f"dst_entry[{dst_entry_index}]={dst_entry}")
 
+    print("\nget_decomp_and_e_above_hull")
+    pprint(ini_pd.get_decomp_and_e_above_hull(dst_entry))
+    # 该方法用于获得某个化合物的分解路径和e_above_hull
+    # >>> (
+    #   {
+    #       PDEntry : H8 Be1 La1 with energy = -12.3002: 0.1999999999999993, 
+    #       PDEntry : H11 La1 with energy = -8.5370: 0.3600000000000012, 
+    #       PDEntry : H3 Y1 with energy = -4.5156: 0.2, 
+    #       PDEntry : H2 Be1 with energy = -9.9223: 0.2400000000000002
+    #   }, 
+    #   0.05023214710000068 这个值是e_above_hull)
+    print("\nget_decomp_and_phase_separation_energy")
+    pprint(ini_pd.get_decomp_and_phase_separation_energy(dst_entry, stable_only=True))
+    # 该方法用于获得某个化合物的分解路径和相分解能
+    # >>> (
+    #   {
+    #       PDEntry : H8 Be1 La1 with energy = -12.3002: 0.1999999999999993, 
+    #       PDEntry : H11 La1 with energy = -8.5370: 0.3600000000000012, 
+    #       PDEntry : H3 Y1 with energy = -4.5156: 0.2, 
+    #       PDEntry : H2 Be1 with energy = -9.9223: 0.2400000000000002
+    #   }, 
+    #   0.05023214710000068 这个值是分解能)
+    # print("\nget_equilibrium_reaction_energy")
+    # print(ini_pd.get_equilibrium_reaction_energy(dst_entry[-1]))
 
+    # print("\nget_decomposition")
+    # pprint(ini_pd.get_decomposition(Composition("LaYBe2H16"))) 
+    # # >>> get_decomposition 该方法用于获得一个输入Compositon的分解路径
+    # # >>> {
+    # #       PDEntry : H8 Be1 La1 with energy = -12.3002: 0.1999999999999993, 
+    # #       PDEntry : H11 La1 with energy = -8.5370: 0.3600000000000012, 
+    # #       PDEntry : H3 Y1 with energy = -4.5156: 0.2, 
+    # #       PDEntry : H2 Be1 with energy = -9.9223: 0.2400000000000002
+    # # }
+    # print("\nget_composition_chempots")
+    # pprint(ini_pd.get_composition_chempots(Composition("LaYBe2H16"))) 
+    # # 该方法用于获得组分的化学势
+    # # >>> {
+    # #       Element La: 5.012848794000001, 
+    # #       Element Y: -0.8202034879999995, 
+    # #       Element Be: -7.458649852, 
+    # #       Element H: -1.2318046440000001
+    # # }
+    # print("\nget_decomp_and_hull_energy_per_atom")
+    # pprint(ini_pd.get_decomp_and_hull_energy_per_atom(Composition("LaYBe2H16"))) #该方法用于获得
+    # # 该方法用于获得某个化合物的分解路径和形成焓
+    # # >>> (
+    # #   {
+    # #       PDEntry : H8 Be1 La1 with energy = -12.3002: 0.1999999999999993, 
+    # #       PDEntry : H11 La1 with energy = -8.5370: 0.3600000000000012, 
+    # #       PDEntry : H3 Y1 with energy = -4.5156: 0.2, 
+    # #       PDEntry : H2 Be1 with energy = -9.9223: 0.2400000000000002
+    # #   }, 
+    # #   -1.5216764351000007 这个值是形成焓)
 

@@ -893,21 +893,23 @@ data -m mode=dfptphdos supercell='2 2 2' spectrum=True
 ```
 
 
-###  <span style="color:yellow"> 自洽计算  </span>
-#### 最简参数
-```shell
--w 你的路径/scf eletron -m mode=scf core=核数
-```
-#### 最繁参数
-```shell
--w 你的路径/scf eletron -m mode=scf core=28 ediff=1e-8 ediffg=-0.001 ismear=1 kspacing=0.18 encut=800 queue=lhy
-```
+###  <span style="color:yellow"> 电子性质计算  </span>
 
-###  <span style="color:yellow"> 电子态密度计算  </span>
+如果通过-w指定工作路径，那么就在指定路径下进行电子性质计算。
 
-如果指定 "-w 工作路径work_path"， 那么eledos计算时就会在工作路径work_path的母路径下寻找一个叫scf的目录，并将scf其中的CHGCAR拷贝入指定的路径work_path下; 所以在指定work_path时，尽量写出来目录eledos
+如果没有通过-w指定路径，那么就在当前路径下进行电子性质计算。
 
-如果没有指定 "-w 工作路径work_path"， 那么eledos计算时就会在当前路径的母路径下寻找一个叫scf的目录，并将scf其中的CHGCAR拷贝入当前路径work_path下。
+当前可以计算的电子性质包括：
+
+    1.自洽: scf 
+        在指定的目录或默认的目录下创建scf目录，例如 -w 指定了eletron，那么实际自洽计算的目录为eletron/scf
+        1.1 在计算自洽时同时打开了LCHARG =.TRUE.和LAECHG =.TRUE.，所以会同时计算bader电荷转移
+        1.2 在计算自洽时同时打开了LELF =.TRUE.，所以会同时计算ELF电子局域函数
+    2.电子态密度: eledos
+        2.1 在指定的目录或默认的目录下创建eledos目录，例如 -w 指定了eletron，那么实际自洽计算的目录为eletron/eledos。计算eledos时需要将scf的CHGCAR拷贝过来。
+        2.2 电子态密度计算时，其kspacing需要是scf计算的2倍
+    3.能带: eband
+        在指定的目录或默认的目录下创建eband目录，例如 -w 指定了eletron，那么实际自洽计算的目录为eletron/eband。计算eledos时需要将scf的CHGCAR拷贝过来。
 
 **电子态密度计算时，INCAR中有几个参数需要格外注意，这里我将这些参数给出，请你使用该脚本产生eledos计算的INCAR后稍作检查(原因是我在设置了EMIN和EMAX后算出来的dos的能量范围没有正值。)**
 ```shell
@@ -916,76 +918,70 @@ ICHARG = 11   # 读取CHGCAR， 进行非自洽计算
 #EMIN = -10   # 该脚本中默认将其注释了，EMIN指定了DOS评估的能量范围的下限。
 #EMAX =  10   # 该脚本中默认将其注释了，EMAX指定了DOS评估的能量范围的上限。
 ISMEAR  = -5  # For DOS
-LCHARG =.TRUE.# For Bader
-LAECHG =.TRUE.# For Bader
-LELF   =.TRUE.# For ELF
 LORBIT = 11   # 输出分波态密度信息
 ```
 
+#### 计算命令介绍
+
 ```shell
-1. If you meet the erros in eband just like:
+#只计算自洽
+eletron -m mode=scf encut=800 ediff=1e-8 ediffg=-0.001 ismear=0 sigma=0.01 kspacing=0.18 queue=lhy core=48
 
-ERROR: charge density could not be read from file CHGCAR for ICHARG>10
 
-ANALYSIS: Possible reason is that NGX, NGY, NGZ in scf/OUTCAR are different from those in eband/OUTCAR 
+# 只计算能带, 会先检查有没有scf/CHGCAR，如果没有就退出。
+eletron -m mode=eband  encut=800 ediff=1e-8 ediffg=-0.001 ismear=0 sigma=0.01 kspacing=0.18 queue=lhy core=48
 
-SOLUTION: You can let NGX,NGY,NGZ in eledos/INCAR be the same as scf/OUTCAR
 
-2. If you meet the erros in eledos just like:
-WARING: Your FFT grids (NGX, NGY, NGZ) are not sufficient for an accurate calculation. Thus, the results might be wrong. 
+# 只计算电子态密度, 会先检查有没有scf/CHGCAR，如果没有就退出。
+# 前面提到自洽的kspacing是电子态密度的一半，不需要你自己指定，只需要保持你设置的kspacing与scf的kspacing保持一致即可，程序自己会加倍kspacing。
+eletron -m mode=eledos  encut=800 ediff=1e-8 ediffg=-0.001 ismear=0 sigma=0.01 kspacing=0.18 queue=lhy core=48
 
-ANALYSIS: Possible reason is that NGX, NGY, NGZ you'v customized aren't matched with the PREC=Accurate 
 
-SOLUTION: You can let PREC=Normal eband/INCAR
-```
+# 同时计算scf和eband
+eletron -m mode='scf eband'  encut=800 ediff=1e-8 ediffg=-0.001 ismear=0 sigma=0.01 kspacing=0.18 queue=lhy core=48
 
-电子态密度计算时，其kspacing需要是scf计算的2倍
-#### 最简参数
-```shell
--w 你的路径/eledos eletron -m mode=eledos core=核数
-```
-#### 最繁参数
-```shell
--w 你的路径/eledos eletron -m mode=eledos core=28 ediff=1e-8 ediffg=-0.001 ismear=1 kspacing=0.09 encut=800 queue=lhy
-```
 
-###  <span style="color:yellow"> 电子能带结构计算  </span>
+# 同时计算scf和eledos。# 前面提到自洽的kspacing是电子态密度的一半，不需要你自己指定，只需要保持你设置的kspacing与scf的kspacing保持一致即可，程序自己会加倍kspacing。
+eletron -m mode='scf eledos' encut=800  ediff=1e-8 ediffg=-0.001 ismear=0 sigma=0.01 kspacing=0.18 queue=lhy core=48
 
-如果指定 "-w 工作路径work_path"， 那么eband计算时就会在工作路径work_path的母路径下寻找一个叫scf的目录，并将scf其中的CHGCAR拷贝入指定的路径work_path下; 所以在指定work_path时，尽量写出来目录eband。
 
-如果没有指定 "-w 工作路径work_path"， 那么eband计算时就会在当前路径的母路径下寻找一个叫scf的目录，并将scf其中的CHGCAR拷贝入当前路径work_path下。
+# 同时计算scf和eledos和eband。# 前面提到自洽的kspacing是电子态密度的一半，不需要你自己指定，只需要保持你设置的kspacing与scf的kspacing保持一致即可，程序自己会加倍kspacing。
+eletron -m mode='scf eledos eband' encut=800  ediff=1e-8 ediffg=-0.001 ismear=0 sigma=0.01 kspacing=0.18 queue=lhy core=48
 
-**电子态密度计算时，INCAR中有几个参数需要格外注意，这里我将这些参数给出，请你使用该脚本产生eledos计算的INCAR后稍作检查**
-```shell
-ISTART = 0    # 读取WAVECAR，如果WAVECAR不存在，就自己构造
-ICHARG = 11   # 读取CHGCAR， 进行非自洽计算
-```
 
-#### 最简参数
-```shell
--w 你的路径/eband eletron -m mode=eband core=核数
-```
-#### 最繁参数
-```shell
--w 你的路径/eband eletron -m mode=eband core=28 ediff=1e-8 ediffg=-0.001 ismear=1 encut=800 queue=lhy
-```
-#### 获得投影到一维路径的高对称路径点
-```shell
+#获得投影到一维路径的高对称路径点
 vasp_main.py -i CONTCAR -j bash data -m mode=hspp core=1
 ```
 
-### 计算能带和DOS经常报出一些错：
 
-**第一个**
+
+#### 常见错误分析
 ```shell
-WARNING: dimensions on CHGCAR file are different
+错误: charge density could not be read from file CHGCAR for ICHARG>10
 
-ERROR: charge density could not be read from file CHGCAR for ICHARG>10
+分析: 可能原因是scf的NGX, NGY, NGZ与eband的不同, 但是归根结底还是可能设置的kpoints出了问题。
+
+解决: 可以通过手动指定 NGX,NGY,NGZ in eledos/INCAR 与 scf/OUTCAR 的保持一致。
 ```
+```shell
+错误: Your FFT grids (NGX, NGY, NGZ) are not sufficient for an accurate calculation. Thus, the results might be wrong. 
 
-出现这个这个错误的可能原因有：
+分析: 可能原因是scf的NGX, NGY, NGZ与eband的不同,有可能是因为PREC设置的精度在scf和eband中不同导致。
+
+解决: 可以通过手动指定 eband/INCAR 的 PREC 与 scf/INCAR保持一致
+```
+```shell
+警告: dimensions on CHGCAR file are different
+
+错误: charge density could not be read from file CHGCAR for ICHARG>10
+
+分析：出现这个这个错误的可能原因有：
 1. 自洽的结构和能带、dos的结构不一致
 2. 自洽的INCAR的PREC和ENCUT 与 能带、dos的INCAR的PREC和ENCUT不一致
+```
+
+
+
 
 # <div align="center"> <span style="color:red"> mytoolkit篇 </span> </div>
 

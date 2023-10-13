@@ -16,6 +16,13 @@ Enthalpy_curve_data = pd.read_csv(Enthalpy_curve_file, index_col=0, header=0,)
 
 new_Enthalpy_curve_data = Enthalpy_curve_data.dropna()
 
+info="""创建一个目录叫:
+D.dat
+在该目录中写下要删除的内容
+执行delete_pandas_columns.py formed_enthalpy.csv
+生成new_formed_enthalpy.csv
+"""
+print(info)
 
 with open("D.dat", 'r') as delete_dat:
     lines = delete_dat.readlines()
@@ -38,5 +45,5 @@ for line in lines:
         break
 
 new_Enthalpy_curve_data.to_csv("new_formed_enthalpy.csv")
-
+print("完成")
 # 2\*(6-Y1H6)+ 1\*(14-Sr1H22)

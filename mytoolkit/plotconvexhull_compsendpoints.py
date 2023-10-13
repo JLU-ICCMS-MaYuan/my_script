@@ -39,11 +39,11 @@ parser.add_argument(
         "整个命令在执行命令后, 将会在屏幕上输出高于convex hull 0 ~ EnthalpyAboveHullValue meV 的结构 !!!"
 )
 parser.add_argument(
-    "-cpd",
-    "--Compound-Phase-Diagram",
+    "-ed",
+    "--endnotes",
     action="store",
     default=None,
-    dest="CompoundPhaseDiagram_endpoints",
+    dest="endnotes",
     nargs="+",
     help="如果使用该参数, 需要用户指定某几个化合物作为端点值"
 )
@@ -117,7 +117,7 @@ collect_stable = args.collect_stable
 collect_unstable = args.collect_unstable
 hand_plot_dat = args.hand_plot_dat
 EnthalpyAboveHullValue = args.EnthalpyAboveHullValue
-CompoundPhaseDiagram_endpoints = args.CompoundPhaseDiagram_endpoints
+endnotes = args.endnotes
 # 生成 凸包图对象
 # convexhull_data = pd.read_csv(input_csv_path, header=0, sep=',') #  header表示第一行为标题行
 print("读入文件中的能量和化学式 (注意：能量必须是化学式的能量，不是每原子的能量) ")
@@ -162,14 +162,16 @@ except:
 
 
 # 建立相图
-terminal_comps = [Composition(formula) for formula in CompoundPhaseDiagram_endpoints]
+terminal_comps = [Composition(formula) for formula in endnotes]
 ini_pd = CompoundPhaseDiagram(
     entries = ini_entries,
     terminal_compositions = terminal_comps,
     normalize_terminal_compositions = True,
     )
+    
 # 输出参考单质或化合物
-print(f" reference material {ini_pd.el_refs}\n");
+print(f" reference material {ini_pd.el_refs}\n")
+
 
 # # 获得新的变换坐标后的entry
 # trans_entries = []

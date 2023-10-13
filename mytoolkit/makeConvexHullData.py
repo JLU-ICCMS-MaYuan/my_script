@@ -32,8 +32,7 @@ def get_convexhull_info(poscar_path, outcar_path):
 
 
 if __name__ == "__main__":
-    info='''
-    注意：-------------------------------
+    info='''注意：-------------------------------
         这个脚本必须在压强目录的上一层目录中使用，比如：
             1.LaY
                 1.La1-Y1  
