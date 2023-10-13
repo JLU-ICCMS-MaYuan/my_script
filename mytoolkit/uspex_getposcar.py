@@ -2,12 +2,14 @@
 
 import os
 import sys
+info = '''Note:--------------------
+    该脚本的作用是从uspex中提取出指定fitness能量范围内的结构
+    一旦指定了fitness的范围, 脚本就会从extended_convex_hull中获得相应能量范围内的结构的编号
+    指定的fitness范围单位是eV/atom, 所以如果指定范围是0~0.010eV, 那么这么写: uspex_getposcar.py 0 0.01
+    获得的结构将存储在poscars目录中'''
 
-print("Note:--------------------")
-print("    该脚本的作用是从uspex中提取出指定fitness能量范围内的结构")
-print("    一旦指定了fitness的范围, 脚本就会从extended_convex_hull中获得相应能量范围内的结构的编号")
-print("    然后根据指定的编号在symmetrized_structures.cif文件中获得相应的cif结构")
-print("    最后将获得的结构存储在seeds.vasp中")
+print(info)
+
 
 lower_limit = float(sys.argv[1])
 upper_limit = float(sys.argv[2])
@@ -30,6 +32,7 @@ for line in content1:
         struct_id = line[0]
         struct_ids.append(struct_id)
 titlenames = ["EA"+idx for idx in struct_ids]
+
 print("Note:--------------------")
 print("    在extended_convex_hull中的fitness符合你的能量要求的结构有{}个".format(len(titlenames)))
 # print("    它们的编号分别是：")
