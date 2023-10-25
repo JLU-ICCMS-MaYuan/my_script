@@ -339,9 +339,9 @@ class vasp_writeincar:
             incar.write("INIWAV   = 1      \n")
             incar.write("NBANDS   = {}     \n".format(self.nbands))
             #incar.write("NCORE    = {}    \n".format(str(self.ncore)))         
-            incar.write("LREAL    = .FALSE.  \n")
-            incar.write("LWAVE    = .FALSE.  \n")  
-            incar.write("ADDGRID  = .FALSE.  \n")
+            incar.write("LREAL    = Auto    \n")
+            incar.write("LWAVE    = .TRUE.  \n")  
+            incar.write("ADDGRID  = .TRUE.  \n")
             incar.write("#RWIGS   = 1.54 0.82\n")
             incar.write("LHYPERFINE = .FALSE.\n")
             incar.write("NPAR   = {}         \n".format(self.npar))          
@@ -370,11 +370,11 @@ class vasp_writeincar:
             incar.write("ALGO   = Normal       \n")                                  
             incar.write("ISPIN  = 1            \n")           
             incar.write("INIWAV = 1            \n")            
-            incar.write("LREAL  = .FALSE.      \n")
+            incar.write("LREAL  = Auto         \n")
             incar.write("NBANDS = {}           \n".format(self.nbands))
             incar.write("LWAVE  = .FALSE.      \n")                 
             incar.write("LCHARG = .FALSE.      \n")           
-            incar.write("ADDGRID= .FALSE.      \n")   
+            incar.write("ADDGRID= .TRUE.      \n")   
             incar.write("#RWIGS = 1.54 0.82    \n")     
             incar.write("LHYPERFINE = .FALSE.  \n")                      
             incar.write("NPAR   = {}           \n".format(self.npar))          
@@ -400,10 +400,10 @@ class vasp_writeincar:
             incar.write("ALGO    = Normal       \n")                                  
             incar.write("ISPIN   = 1            \n")           
             incar.write("INIWAV  = 1            \n")            
-            incar.write("LREAL   = .FALSE.      \n")
+            incar.write("LREAL   = Auto         \n")
             incar.write("NBANDS   = {}          \n".format(self.nbands))
             incar.write("LWAVE   = .FALSE.      \n")                 
-            incar.write("ADDGRID = .FALSE.      \n")   
+            incar.write("ADDGRID = .TRUE.      \n")   
             incar.write("#RWIGS  = 1.54 0.82    \n")     
             incar.write("LHYPERFINE = .FALSE.   \n")                      
             incar.write("NPAR   = {}            \n".format(self.npar))          
@@ -411,7 +411,7 @@ class vasp_writeincar:
             incar.write("LORBIT  = 11           \n") # 输出分波态密度信息
             incar.write("#EMIN   = -10          \n") # 此为DOS图的能量范围，根据能带的能量范围来决定min和max是多少。
             incar.write("#EMAX   =  10          \n") 
-            incar.write("LCHARG  =.FALSE.       \n")                  
+            incar.write("LCHARG  = .TRUE.       \n")                  
         return incar_filepath
 
     def append_magnet(self, incar_dirpath):
