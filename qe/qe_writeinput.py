@@ -67,6 +67,7 @@ class qe_writeinput:
             mixing_beta=other_class.mixing_beta,
             electron_maxstep=other_class.electron_maxstep,
             press_conv_thr=other_class.press_conv_thr,
+            nbnd=other_class.nbnd,
         )
         return self
 
@@ -106,6 +107,7 @@ class qe_writeinput:
             mixing_beta=other_class.mixing_beta,
             electron_maxstep=other_class.electron_maxstep,
             press_conv_thr=other_class.press_conv_thr,
+            nbnd=other_class.nbnd,
         )
         return self
 
@@ -196,6 +198,7 @@ class qe_writeinput:
             conv_thr=other_class.conv_thr,
             mixing_beta=other_class.mixing_beta,
             electron_maxstep=other_class.electron_maxstep,
+            nbnd=other_class.nbnd,
 
             # eletrondos 
             # lspinorb=other_class.lspinorb,
@@ -346,6 +349,8 @@ class qe_writeinput:
             qe.write(" ecutrho = {},                   \n".format(self.ecutrho))
             qe.write(" lspinorb = .{}.,                \n".format(self.lspinorb))
             qe.write(" noncolin = .{}.,                \n".format(self.noncolin))
+            if self.nbnd is not None:
+                qe.write(" nbnd = .{}.,                \n".format(self.nbnd))
             qe.write("/\n")
 
             qe.write("&ELECTRONS\n")
@@ -413,6 +418,8 @@ class qe_writeinput:
             qe.write(" lspinorb = .{}.,                \n".format(self.lspinorb))
             qe.write(" noncolin = .{}.,                \n".format(self.noncolin))
             qe.write(" la2F = .{}.,                    \n".format(self.la2F))
+            if self.nbnd is not None:
+                qe.write(" nbnd = .{}.,                \n".format(self.nbnd))
             qe.write("/\n")
 
             qe.write("&ELECTRONS\n")
@@ -468,6 +475,8 @@ class qe_writeinput:
             qe.write(" ecutrho = {},                   \n".format(self.ecutrho))
             qe.write(" lspinorb = .{}.,                \n".format(self.lspinorb))
             qe.write(" noncolin = .{}.,                \n".format(self.noncolin))
+            if self.nbnd is not None:
+                qe.write(" nbnd = .{}.,                \n".format(self.nbnd))
             qe.write("/\n")
 
             qe.write("&ELECTRONS\n")
@@ -523,6 +532,8 @@ class qe_writeinput:
             qe.write(" ecutrho = {},                   \n".format(self.ecutrho))
             qe.write(" lspinorb = .{}.,                \n".format(self.lspinorb))
             qe.write(" noncolin = .{}.,                \n".format(self.noncolin))
+            if self.nbnd is not None:
+                qe.write(" nbnd = .{}.,                \n".format(self.nbnd))
             qe.write("/\n")
 
             qe.write("&ELECTRONS\n")
