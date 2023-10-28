@@ -65,6 +65,7 @@ class vasp_base:
 
         print("Step 3 ------------------------------")
         print("    Prepare the directory of `potcar_lib` and merge POTCARs ")
+        print(f"   Pick up POTCARs from: \n        {potcar_source_libs}")
         self.workpath_pppath = Path(self.work_path).joinpath("potcar_lib")
         if not self.workpath_pppath.exists():
             self.workpath_pppath.mkdir() 

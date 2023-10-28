@@ -160,6 +160,7 @@ class qe_writeinput:
             mixing_beta=other_class.mixing_beta,
             electron_maxstep=other_class.electron_maxstep,
             press_conv_thr=other_class.press_conv_thr,
+            nbnd=other_class.nbnd,
 
             # phonodos
             ndos=other_class.ndos,

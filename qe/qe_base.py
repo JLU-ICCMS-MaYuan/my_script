@@ -69,7 +69,8 @@ class qe_base:
         self.get_struct_info(self.struct_type, self.work_path)
         ############################ prepare pp directory #########################
         print("\nNote: ----------")
-        print(f"    create potcar dir in {self.work_path}")
+        print(f"    Create pp in {self.work_path}")
+        print(f"    Pick up UPF from: \n        {qe_source_libs}")
         self.workpath_pppath = Path(self.work_path).joinpath("pp")
         if not self.workpath_pppath.exists():
             self.workpath_pppath.mkdir(parents=True)
