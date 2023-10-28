@@ -1,0 +1,116 @@
+mustar =   0.13000          ntemp =  100
+Number of points in Eliashberg spectral function =  500
+ndos =  500
+lambda =   1.88517
+McMillan equation: lamba =   1.88517  wlog =1264.47845  Tc = 186.02955
+Info(eliashberg): temperature step      1 of    100
+Info(eliashberg): temperature step      2 of    100
+Info(eliashberg): temperature step      3 of    100
+Info(eliashberg): temperature step      4 of    100
+Info(eliashberg): temperature step      5 of    100
+Info(eliashberg): temperature step      6 of    100
+Info(eliashberg): temperature step      7 of    100
+Info(eliashberg): temperature step      8 of    100
+Info(eliashberg): temperature step      9 of    100
+Info(eliashberg): temperature step     10 of    100
+Info(eliashberg): temperature step     11 of    100
+Info(eliashberg): temperature step     12 of    100
+Info(eliashberg): temperature step     13 of    100
+Info(eliashberg): temperature step     14 of    100
+Info(eliashberg): temperature step     15 of    100
+Info(eliashberg): temperature step     16 of    100
+Info(eliashberg): temperature step     17 of    100
+Info(eliashberg): temperature step     18 of    100
+Info(eliashberg): temperature step     19 of    100
+Info(eliashberg): temperature step     20 of    100
+Info(eliashberg): temperature step     21 of    100
+Info(eliashberg): temperature step     22 of    100
+Info(eliashberg): temperature step     23 of    100
+Info(eliashberg): temperature step     24 of    100
+Info(eliashberg): temperature step     25 of    100
+Info(eliashberg): temperature step     26 of    100
+Info(eliashberg): temperature step     27 of    100
+Info(eliashberg): temperature step     28 of    100
+Info(eliashberg): temperature step     29 of    100
+Info(eliashberg): temperature step     30 of    100
+Info(eliashberg): temperature step     31 of    100
+Info(eliashberg): temperature step     32 of    100
+Info(eliashberg): temperature step     33 of    100
+Info(eliashberg): temperature step     34 of    100
+ 
+Warning(eliashberg): failed to converge: possibly close to T_c
+Info(eliashberg): temperature step     35 of    100
+ 
+Warning(eliashberg): failed to converge: possibly close to T_c
+Info(eliashberg): temperature step     36 of    100
+Info(eliashberg): temperature step     37 of    100
+Info(eliashberg): temperature step     38 of    100
+Info(eliashberg): temperature step     39 of    100
+Info(eliashberg): temperature step     40 of    100
+Info(eliashberg): temperature step     41 of    100
+Info(eliashberg): temperature step     42 of    100
+Info(eliashberg): temperature step     43 of    100
+Info(eliashberg): temperature step     44 of    100
+Info(eliashberg): temperature step     45 of    100
+Info(eliashberg): temperature step     46 of    100
+Info(eliashberg): temperature step     47 of    100
+Info(eliashberg): temperature step     48 of    100
+Info(eliashberg): temperature step     49 of    100
+Info(eliashberg): temperature step     50 of    100
+Info(eliashberg): temperature step     51 of    100
+Info(eliashberg): temperature step     52 of    100
+Info(eliashberg): temperature step     53 of    100
+Info(eliashberg): temperature step     54 of    100
+Info(eliashberg): temperature step     55 of    100
+Info(eliashberg): temperature step     56 of    100
+Info(eliashberg): temperature step     57 of    100
+Info(eliashberg): temperature step     58 of    100
+Info(eliashberg): temperature step     59 of    100
+Info(eliashberg): temperature step     60 of    100
+Info(eliashberg): temperature step     61 of    100
+Info(eliashberg): temperature step     62 of    100
+Info(eliashberg): temperature step     63 of    100
+Info(eliashberg): temperature step     64 of    100
+Info(eliashberg): temperature step     65 of    100
+Info(eliashberg): temperature step     66 of    100
+Info(eliashberg): temperature step     67 of    100
+Info(eliashberg): temperature step     68 of    100
+Info(eliashberg): temperature step     69 of    100
+Info(eliashberg): temperature step     70 of    100
+Info(eliashberg): temperature step     71 of    100
+Info(eliashberg): temperature step     72 of    100
+Info(eliashberg): temperature step     73 of    100
+Info(eliashberg): temperature step     74 of    100
+Info(eliashberg): temperature step     75 of    100
+Info(eliashberg): temperature step     76 of    100
+Info(eliashberg): temperature step     77 of    100
+Info(eliashberg): temperature step     78 of    100
+Info(eliashberg): temperature step     79 of    100
+Info(eliashberg): temperature step     80 of    100
+Info(eliashberg): temperature step     81 of    100
+Info(eliashberg): temperature step     82 of    100
+Info(eliashberg): temperature step     83 of    100
+Info(eliashberg): temperature step     84 of    100
+Info(eliashberg): temperature step     85 of    100
+Info(eliashberg): temperature step     86 of    100
+Info(eliashberg): temperature step     87 of    100
+Info(eliashberg): temperature step     88 of    100
+Info(eliashberg): temperature step     89 of    100
+Info(eliashberg): temperature step     90 of    100
+Info(eliashberg): temperature step     91 of    100
+Info(eliashberg): temperature step     92 of    100
+Info(eliashberg): temperature step     93 of    100
+Info(eliashberg): temperature step     94 of    100
+Info(eliashberg): temperature step     95 of    100
+Info(eliashberg): temperature step     96 of    100
+Info(eliashberg): temperature step     97 of    100
+Info(eliashberg): temperature step     98 of    100
+Info(eliashberg): temperature step     99 of    100
+Info(eliashberg): temperature step    100 of    100
+ 
+Info(eliashberg):
+ calculation information written to ELIASHBERG.OUT
+ gap and Z functions on the imaginary axis written to ELIASHBERG_IA.OUT
+ gap vs. temperature written to ELIASHBERG_GAP_T.OUT
+ gap function on the real axis written to ELIASHBERG_GAP_RA.OUT
+ Z function on the real axis written to ELIASHBERG_Z_RA.OUT

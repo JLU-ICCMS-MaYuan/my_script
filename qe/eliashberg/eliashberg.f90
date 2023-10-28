@@ -47,8 +47,8 @@ call init0
 !call init1
 ! input mustar and ntemp
 open (1,file='INPUT',status='old',form='formatted')
-read(1,*) mustar, ntemp
-write(*,'("mustar =",f10.5,10x, "ntemp =",i5)') mustar, ntemp
+read (1,*) mustar, ntemp
+write (*,'("mustar =",f10.5,10x, "ntemp =",i5)') mustar, ntemp
 allocate(w(nwdos),a2f(nwdos))
 ! read in the Eliashberg function
 call readalpha2f(w,a2f,ndos)
@@ -97,6 +97,7 @@ write(62,'(" phonons : ",G18.10)') wfmax
 write(62,'(" Coulomb : ",G18.10)') wrms
 d0(:)=1.d-4
 z0(:)=1.d0
+
 ! main loop over temperature
 do itemp=1,ntemp
   write(*,'("Info(eliashberg): temperature step ",I6," of ",I6)') itemp,ntemp
@@ -104,7 +105,7 @@ do itemp=1,ntemp
   write(62,*)
   write(62,'("Temperature (kelvin) : ",G18.10)') temp
   t0=pi*kboltz*temp
-! number of Matsubara frequencies
+  ! number of Matsubara frequencies
   nwf=nint(wfmax/(2.d0*t0))
   if (nwf.gt.maxwf) nwf=maxwf
   nwfcl=nint(wrms/(2.d0*t0))
@@ -113,15 +114,15 @@ do itemp=1,ntemp
   write(62,'("Number of Matsubara frequencies")')
   write(62,'(" phonons : ",I8)') nwf
   write(62,'(" Coulomb : ",I8)') nwfcl
-! make Pade approximant input points same as Matsubara frequencies
+  imant input points same as Matsubara frequencies
   nin=nwf
-! generate fermionic Matsubara frequencies
+  ! generate fermionic Matsubara frequencies
   do m=-nwf,nwf
     wf(m)=t0*dble(2*m+1)
   end do
-! compute lambda
-!$OMP PARALLEL DEFAULT(SHARED) PRIVATE(t1,sum,i)
-!$OMP DO
+  ! compute lambda
+  !$OMP PARALLEL DEFAULT(SHARED) PRIVATE(t1,sum,i)
+  !$OMP DO
   do m=-2*nwf,2*nwf
     t1=(t0*dble(2*m))**2
     sum=0.d0
@@ -130,9 +131,9 @@ do itemp=1,ntemp
     end do
     l(m)=2.d0*sum*dw
   end do
-!$OMP END DO
-!$OMP END PARALLEL
-! begin iteration loop
+  !$OMP END DO
+  !$OMP END PARALLEL
+  ! begin iteration loop
   do it=1,maxit
     do m=0,nwf
       r(m)=sqrt((wf(m)**2+d0(m)**2)*z0(m)**2)
@@ -146,13 +147,13 @@ do itemp=1,ntemp
     end do
     z(0:nwf)=z(0:nwf)+1.d0
     z0(0:nwf)=z(0:nwf)
-! Coulomb part of summation
+    ! Coulomb part of summation
     dmu=0.d0
     do n=0,nwfcl
       dmu=dmu+mustar*d0(n)*z(n)/r(n)
     end do
     dmu=dmu*2.d0
-! Gap
+    ! Gap
     do n=0,nwf
       sum=0.d0
       do m=0,nwf-1
@@ -160,7 +161,7 @@ do itemp=1,ntemp
       end do
       d(n)=t0*(sum-dmu)/z(n)
     end do
-! mix old and new gap functions
+    ! mix old and new gap functions
     d(0:nwf)=beta*d(0:nwf)+(1.d0-beta)*d0(0:nwf)
     sum=0.d0
     do m=0,nwf
@@ -172,12 +173,13 @@ do itemp=1,ntemp
       write(62,'("Eliashberg equations converged in ",I6," iterations")') it
       goto 10
     end if
-! end iteration loop
+  ! end iteration loop
   end do
+
   write(*,*)
   write(*,'("Warning(eliashberg): failed to converge: possibly close to T_c")')
   write(62,'("Failed to converge: possibly close to T_c")')
-10 continue
+  10 continue
   call flushifc(62)
   do n=-nwf,nwf
     if (n.ge.0) then
@@ -191,7 +193,7 @@ do itemp=1,ntemp
   call flushifc(63)
   write(64,'(3G18.10)') temp,d(0),z(0)
   call flushifc(64)
-! analytic continuation to real axis
+  ! analytic continuation to real axis
   do m=0,nin
     zin(m)=cmplx(0.d0,wf(m),8)
     uin(m)=cmplx(d(m),0.d0,8)
@@ -215,8 +217,10 @@ do itemp=1,ntemp
   end do
   write(66,*)
   call flushifc(66)
-! end loop over temperatures
+  ! end loop over temperatures
 end do
+
+
 close(62); close(63); close(64); close(65); close(66)
 write(*,*)
 write(*,'("Info(eliashberg):")')

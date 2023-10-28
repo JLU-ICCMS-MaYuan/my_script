@@ -1,6 +1,5 @@
-63.637807852852866         0.12       1                          
-  29
-                                    
+64         0.5        1                          
+29                                       
  0.000000000000000E+00 0.000000000000000E+00 0.000000000000000E+00  1                    
  0.108253175473051E+00 0.108253175473051E+00 0.000000000000000E+00  12                    
  0.216506350946102E+00 0.216506350946102E+00 0.000000000000000E+00  12                    
@@ -31,6 +30,14 @@
  -0.866025403784408E+00 -0.108253175473051E+00 -0.108253175473051E+00  12                    
  -0.866025403784407E+00 -0.866025403784407E+00 -0.866025403784408E+00  1                    
  elph_dir/elph.inp_lambda.1                              
+ elph_dir/elph.inp_lambda.2                              
+ elph_dir/elph.inp_lambda.3                              
+ elph_dir/elph.inp_lambda.4                              
+ elph_dir/elph.inp_lambda.5                              
+ elph_dir/elph.inp_lambda.6                              
+ elph_dir/elph.inp_lambda.7                              
+ elph_dir/elph.inp_lambda.8                              
+ elph_dir/elph.inp_lambda.9                              
  elph_dir/elph.inp_lambda.10                              
  elph_dir/elph.inp_lambda.11                              
  elph_dir/elph.inp_lambda.12                              
@@ -41,7 +48,6 @@
  elph_dir/elph.inp_lambda.17                              
  elph_dir/elph.inp_lambda.18                              
  elph_dir/elph.inp_lambda.19                              
- elph_dir/elph.inp_lambda.2                              
  elph_dir/elph.inp_lambda.20                              
  elph_dir/elph.inp_lambda.21                              
  elph_dir/elph.inp_lambda.22                              
@@ -52,11 +58,4 @@
  elph_dir/elph.inp_lambda.27                              
  elph_dir/elph.inp_lambda.28                              
  elph_dir/elph.inp_lambda.29                              
- elph_dir/elph.inp_lambda.3                              
- elph_dir/elph.inp_lambda.4                              
- elph_dir/elph.inp_lambda.5                              
- elph_dir/elph.inp_lambda.6                              
- elph_dir/elph.inp_lambda.7                              
- elph_dir/elph.inp_lambda.8                              
- elph_dir/elph.inp_lambda.9                              
-0.01                                   
+0.13                                   

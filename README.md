@@ -151,7 +151,7 @@ vi random_matrix.f90
 
 ####  <span style="color:green"> 不分q点计算声子
 ```shell
-phono -m mode=nosplit qpoints='6 6 6' dyn0_flag=False queue=lhy core=48 npool=4  queue=lhy el_ph_nsigma=
+phono -m mode=nosplit qpoints='6 6 6' dyn0_flag=False queue=lhy core=48 npool=4  queue=lhy el_ph_nsigma=10 
 ```
 <span style="color:green"> **提示：如果你的工作目录中已经存在了dyn0文件，那么可以不用输入qpoints这个参数，程序会自动读入dyn0中的第一行以获得qpoints**
 
