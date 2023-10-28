@@ -349,7 +349,7 @@ class qe_writeinput:
             qe.write(" lspinorb = .{}.,                \n".format(self.lspinorb))
             qe.write(" noncolin = .{}.,                \n".format(self.noncolin))
             if self.nbnd is not None:
-                qe.write(" nbnd = .{}.,                \n".format(self.nbnd))
+                qe.write(" nbnd = {},                \n".format(self.nbnd))
             qe.write("/\n")
 
             qe.write("&ELECTRONS\n")
@@ -418,7 +418,7 @@ class qe_writeinput:
             qe.write(" noncolin = .{}.,                \n".format(self.noncolin))
             qe.write(" la2F = .{}.,                    \n".format(self.la2F))
             if self.nbnd is not None:
-                qe.write(" nbnd = .{}.,                \n".format(self.nbnd))
+                qe.write(" nbnd = {},                \n".format(self.nbnd))
             qe.write("/\n")
 
             qe.write("&ELECTRONS\n")
@@ -475,7 +475,7 @@ class qe_writeinput:
             qe.write(" lspinorb = .{}.,                \n".format(self.lspinorb))
             qe.write(" noncolin = .{}.,                \n".format(self.noncolin))
             if self.nbnd is not None:
-                qe.write(" nbnd = .{}.,                \n".format(self.nbnd))
+                qe.write(" nbnd = {},                \n".format(self.nbnd))
             qe.write("/\n")
 
             qe.write("&ELECTRONS\n")
@@ -532,7 +532,7 @@ class qe_writeinput:
             qe.write(" lspinorb = .{}.,                \n".format(self.lspinorb))
             qe.write(" noncolin = .{}.,                \n".format(self.noncolin))
             if self.nbnd is not None:
-                qe.write(" nbnd = .{}.,                \n".format(self.nbnd))
+                qe.write(" nbnd = {},                \n".format(self.nbnd))
             qe.write("/\n")
 
             qe.write("&ELECTRONS\n")
