@@ -198,7 +198,6 @@ class qe_writeinput:
             conv_thr=other_class.conv_thr,
             mixing_beta=other_class.mixing_beta,
             electron_maxstep=other_class.electron_maxstep,
-            nbnd=other_class.nbnd,
 
             # eletrondos 
             # lspinorb=other_class.lspinorb,
