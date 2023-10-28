@@ -108,6 +108,14 @@ class vasp_phono:
                 phono_inputpara.work_path.joinpath("KPOINTS"),
                 phono_inputpara.kdensity,
                 )
+        elif phono_inputpara.kspacing is not None:
+            supercell_lattice = phono_inputpara.sposcar_struct_type.lattice.matrix
+            phono_inputpara.write_evenly_kpoints(
+                lattice = supercell_lattice,
+                kspacing=phono_inputpara.kspacing, 
+                kpoints_path=phono_inputpara.work_path,
+                )
+
 
         # init the submit job script
         _vasp_writesubmit = vasp_writesubmit.init_from_phonoinput(phono_inputpara)
@@ -163,6 +171,7 @@ class vaspbatch_phono:
 
 
 class vasp_eletron:
+
     def __init__(self, args: ArgumentParser):
         
         # read input para
@@ -290,7 +299,6 @@ class vasp_eletron:
             _vasp_submitjob = vasp_submitjob.init_from_eletroninput(self.eletron_inputpara)
             if self.eletron_inputpara.queue is not None:
                 _vasp_submitjob.submit_mode1(jobname)
-
 
     def scf(self, kspacing):  
         scf_path = self.eletron_inputpara.work_path.joinpath("scf")

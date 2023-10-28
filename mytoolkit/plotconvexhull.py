@@ -11,8 +11,6 @@
 # plot_convexhull.py -i ./nnconvexhull.csv -ebh 100 -cs -cu
 # '''
 
-import sys
-import os
 import re
 import shutil
 from pathlib import Path
@@ -55,6 +53,7 @@ parser.add_argument(
     "--destination-entry-index",
     action="store",
     default=-1,
+    nargs="+",
     dest="dst_entry_index",
     type=int,
     help="该参数用于输出指定entry的分解路径, 使用者需要事先了解相应化合物的entry编号\n"
@@ -142,7 +141,7 @@ try:
     # Number  formula     enthalpy
     # 1       Ax1By1Cz1   -1.34343
     # 2       Ax2By2C2z   -2.324324
-    convexhull_data = pd.read_table(input_csv_path, header=0, sep='\s+') #  header表示第一行为标题行
+    convexhull_data = pd.read_table(input_csv_path, header=0, sep=',') #  header表示第一行为标题行 sep='\s+'表示使用多个空格作为分隔符
     ini_entries = []
     for idx, row in convexhull_data.iterrows():
         comp = Composition(row['formula'])
@@ -343,62 +342,73 @@ if hand_plot_dat:
 
 
 if dst_entry_index:
-    dst_entry_index = int(dst_entry_index)
-    dst_entry = ini_pd.entries[dst_entry_index]
-    print(f"dst_entry[{dst_entry_index}]={dst_entry}")
+    for dei in dst_entry_index:
+        dei = int(dei)
+        dst_entry = ini_pd.entries[dei]
+        print(f"\n------------dst_entry[{dei}]={dst_entry.entry_id}-{dst_entry.composition.reduced_formula}------------")
 
-    print("\nget_decomp_and_e_above_hull")
-    pprint(ini_pd.get_decomp_and_e_above_hull(dst_entry))
-    # 该方法用于获得某个化合物的分解路径和e_above_hull
-    # >>> (
-    #   {
-    #       PDEntry : H8 Be1 La1 with energy = -12.3002: 0.1999999999999993, 
-    #       PDEntry : H11 La1 with energy = -8.5370: 0.3600000000000012, 
-    #       PDEntry : H3 Y1 with energy = -4.5156: 0.2, 
-    #       PDEntry : H2 Be1 with energy = -9.9223: 0.2400000000000002
-    #   }, 
-    #   0.05023214710000068 这个值是e_above_hull)
-    print("\nget_decomp_and_phase_separation_energy")
-    pprint(ini_pd.get_decomp_and_phase_separation_energy(dst_entry, stable_only=True))
-    # 该方法用于获得某个化合物的分解路径和相分解能
-    # >>> (
-    #   {
-    #       PDEntry : H8 Be1 La1 with energy = -12.3002: 0.1999999999999993, 
-    #       PDEntry : H11 La1 with energy = -8.5370: 0.3600000000000012, 
-    #       PDEntry : H3 Y1 with energy = -4.5156: 0.2, 
-    #       PDEntry : H2 Be1 with energy = -9.9223: 0.2400000000000002
-    #   }, 
-    #   0.05023214710000068 这个值是分解能)
-    # print("\nget_equilibrium_reaction_energy")
-    # print(ini_pd.get_equilibrium_reaction_energy(dst_entry[-1]))
+        decomp_path = ini_pd.get_decomp_and_e_above_hull(dst_entry)[0]
+        decomp_eabovehull = ini_pd.get_decomp_and_e_above_hull(dst_entry)[1]
+        decomp_formenergy = ini_pd.get_decomp_and_hull_energy_per_atom(dst_entry.composition)[1]
+        for key, value in decomp_path.items():
+            print("{:<15} {:<20} {:<20}".format(key.entry_id, key.composition.reduced_formula, value))
+        print(f"e_above_hull={decomp_eabovehull}")
+        print(f"formed_enthalpy={decomp_formenergy}")
 
-    # print("\nget_decomposition")
-    # pprint(ini_pd.get_decomposition(Composition("LaYBe2H16"))) 
-    # # >>> get_decomposition 该方法用于获得一个输入Compositon的分解路径
-    # # >>> {
-    # #       PDEntry : H8 Be1 La1 with energy = -12.3002: 0.1999999999999993, 
-    # #       PDEntry : H11 La1 with energy = -8.5370: 0.3600000000000012, 
-    # #       PDEntry : H3 Y1 with energy = -4.5156: 0.2, 
-    # #       PDEntry : H2 Be1 with energy = -9.9223: 0.2400000000000002
-    # # }
-    # print("\nget_composition_chempots")
-    # pprint(ini_pd.get_composition_chempots(Composition("LaYBe2H16"))) 
-    # # 该方法用于获得组分的化学势
-    # # >>> {
-    # #       Element La: 5.012848794000001, 
-    # #       Element Y: -0.8202034879999995, 
-    # #       Element Be: -7.458649852, 
-    # #       Element H: -1.2318046440000001
-    # # }
-    # print("\nget_decomp_and_hull_energy_per_atom")
-    # pprint(ini_pd.get_decomp_and_hull_energy_per_atom(Composition("LaYBe2H16"))) #该方法用于获得
-    # # 该方法用于获得某个化合物的分解路径和形成焓
-    # # >>> (
-    # #   {
-    # #       PDEntry : H8 Be1 La1 with energy = -12.3002: 0.1999999999999993, 
-    # #       PDEntry : H11 La1 with energy = -8.5370: 0.3600000000000012, 
-    # #       PDEntry : H3 Y1 with energy = -4.5156: 0.2, 
-    # #       PDEntry : H2 Be1 with energy = -9.9223: 0.2400000000000002
-    # #   }, 
-    # #   -1.5216764351000007 这个值是形成焓)
+        # get_decomp_and_e_above_hull
+        # 该方法用于获得某个化合物的分解路径和e_above_hull
+        # >>> (
+        #   {
+        #       PDEntry : H8 Be1 La1 with energy = -12.3002: 0.1999999999999993, 
+        #       PDEntry : H11 La1 with energy = -8.5370: 0.3600000000000012, 
+        #       PDEntry : H3 Y1 with energy = -4.5156: 0.2, 
+        #       PDEntry : H2 Be1 with energy = -9.9223: 0.2400000000000002
+        #   }, 
+        #   0.05023214710000068 这个值是e_above_hull)
+
+        # print("\nget_decomp_and_phase_separation_energy")
+        # pprint(ini_pd.get_decomp_and_phase_separation_energy(dst_entry, stable_only=True))
+        # 该方法用于获得某个化合物的分解路径和相分解能
+        # >>> (
+        #   {
+        #       PDEntry : H8 Be1 La1 with energy = -12.3002: 0.1999999999999993, 
+        #       PDEntry : H11 La1 with energy = -8.5370: 0.3600000000000012, 
+        #       PDEntry : H3 Y1 with energy = -4.5156: 0.2, 
+        #       PDEntry : H2 Be1 with energy = -9.9223: 0.2400000000000002
+        #   }, 
+        #   0.05023214710000068 这个值是分解能)
+        # print("\nget_equilibrium_reaction_energy")
+        # print(ini_pd.get_equilibrium_reaction_energy(dst_entry[-1]))
+
+        # print("\nget_decomposition")
+        # pprint(ini_pd.get_decomposition(Composition("LaYBe2H16"))) 
+        # # >>> get_decomposition 该方法用于获得一个输入Compositon的分解路径
+        # # >>> {
+        # #       PDEntry : H8 Be1 La1 with energy = -12.3002: 0.1999999999999993, 
+        # #       PDEntry : H11 La1 with energy = -8.5370: 0.3600000000000012, 
+        # #       PDEntry : H3 Y1 with energy = -4.5156: 0.2, 
+        # #       PDEntry : H2 Be1 with energy = -9.9223: 0.2400000000000002
+        # # }
+        
+        # print("\nget_composition_chempots")
+        # pprint(ini_pd.get_composition_chempots(Composition("LaYBe2H16"))) 
+        # # 该方法用于获得组分的化学势
+        # # >>> {
+        # #       Element La: 5.012848794000001, 
+        # #       Element Y: -0.8202034879999995, 
+        # #       Element Be: -7.458649852, 
+        # #       Element H: -1.2318046440000001
+        # # }
+
+        # print("\nget_decomp_and_hull_energy_per_atom")
+        # pprint(ini_pd.get_decomp_and_hull_energy_per_atom(Composition("LaYBe2H16"))) #该方法用于获得
+        # # 该方法用于获得某个化合物的分解路径和形成焓
+        # # >>> (
+        # #   {
+        # #       PDEntry : H8 Be1 La1 with energy = -12.3002: 0.1999999999999993, 
+        # #       PDEntry : H11 La1 with energy = -8.5370: 0.3600000000000012, 
+        # #       PDEntry : H3 Y1 with energy = -4.5156: 0.2, 
+        # #       PDEntry : H2 Be1 with energy = -9.9223: 0.2400000000000002
+        # #   }, 
+        # #   -1.5216764351000007 这个值是形成焓)
 

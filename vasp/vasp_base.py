@@ -221,8 +221,7 @@ class vasp_base:
         else:
             print("POSCAR not exist")
 
-    def write_evenly_kpoints(self, kspacing, kpoints_path):
-        lattice = self.cell_parameters
+    def write_evenly_kpoints(self, lattice, kspacing, kpoints_path):
         a1 = lattice[0]
         a2 = lattice[1]
         a3 = lattice[2]
