@@ -149,6 +149,11 @@ class vasp_inputpara(vasp_base):
         if not hasattr(self, "lmaxmix"):
             self.lmaxmix = 6
 
+        # 关于电子态密度计算参数设置
+        if not hasattr(self, "nedos"):
+            self.nedos = 2000
+
+
     @classmethod
     def init_from_config1(cls, config: dict):
 

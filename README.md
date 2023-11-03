@@ -882,6 +882,16 @@ data -m mode=dfptphdos supercell='2 2 2' spectrum=True
         2.2 电子态密度计算时，其kspacing需要是scf计算的2倍
     3.能带: eband
         在指定的目录或默认的目录下创建eband目录，例如 -w 指定了eletron，那么实际自洽计算的目录为eletron/eband。计算eledos时需要将scf的CHGCAR拷贝过来。
+    4. 晶体轨道重叠布居COOP和COHP
+        参考网页: 
+            https://blog.shishiruqi.com//2019/04/22/cohp/
+            https://zhuanlan.zhihu.com/p/470592188
+        参考书：
+            Roald Hoffman-Solids and Surfaces_ A Chemist’s View of Bonding in Extended Structures (1988)
+        参考文献：
+            J. Phys. Chem. 1993, 97, 8617-8624
+            J. Phys. Chem. A 2011, 115, 5461-5466
+            J. Comput. Chem. 2016, 37, 1030-1035
 
 **电子态密度计算时，INCAR中有几个参数需要格外注意，这里我将这些参数给出，请你使用该脚本产生eledos计算的INCAR后稍作检查(原因是我在设置了EMIN和EMAX后算出来的dos的能量范围没有正值。)**
 ```shell
@@ -896,15 +906,15 @@ LORBIT = 11   # 输出分波态密度信息
 #### 计算命令介绍
 
 ```shell
-#只计算自洽
+# 只计算scf,  工作路径-w下一定包含eband, scf, eledos三个文件，即使单独算其中一个，也要在eletron目录下，不要进入scf目录计算。
 eletron -m mode=scf encut=800 ediff=1e-8 ediffg=-0.001 ismear=0 sigma=0.01 kspacing=0.18 queue=lhy core=48
 
 
-# 只计算能带, 会先检查有没有scf/CHGCAR，如果没有就退出。
+# 只计算能带,  工作路径-w下一定包含eband, scf, eledos三个文件，即使单独算其中一个，也要在eletron目录下，不要进入eband目录计算。在准备输入阶段，会先检查eletron目录中有没有scf/CHGCAR，如果没有就退出。
 eletron -m mode=eband  encut=800 ediff=1e-8 ediffg=-0.001 ismear=0 sigma=0.01 kspacing=0.18 queue=lhy core=48
 
 
-# 只计算电子态密度, 会先检查有没有scf/CHGCAR，如果没有就退出。
+# 只计算电子态密度,  工作路径-w下一定包含eband, scf, eledos三个文件，即使单独算其中一个，也要在eletron目录下，不要进入eledos目录计算。在准备输入阶段，会先检查eletron目录中有没有scf/CHGCAR，如果没有就退出。
 # 前面提到自洽的kspacing是电子态密度的一半，不需要你自己指定，只需要保持你设置的kspacing与scf的kspacing保持一致即可，程序自己会加倍kspacing。
 eletron -m mode=eledos  encut=800 ediff=1e-8 ediffg=-0.001 ismear=0 sigma=0.01 kspacing=0.18 queue=lhy core=48
 

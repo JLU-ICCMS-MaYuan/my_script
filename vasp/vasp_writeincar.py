@@ -147,6 +147,9 @@ class vasp_writeincar:
             ldauu=other_class.ldauu,
             ldauj=other_class.ldauj,
             lmaxmix=other_class.lmaxmix,
+
+            # Eledos
+            nedos=other_class.nedos
         )
         return self
 
@@ -406,8 +409,8 @@ class vasp_writeincar:
             incar.write("ADDGRID = .TRUE.      \n")   
             incar.write("#RWIGS  = 1.54 0.82    \n")     
             incar.write("LHYPERFINE = .FALSE.   \n")                      
-            incar.write("NPAR   = {}            \n".format(self.npar))          
-            incar.write("NEDOS   = 1201         \n") # NEDOS指定DOS被评估的网格点的数量
+            incar.write("NPAR    = {}            \n".format(self.npar))          
+            incar.write("NEDOS   = {}            \n".format(self.nedos)) # NEDOS指定DOS被评估的网格点的数量
             incar.write("LORBIT  = 11           \n") # 输出分波态密度信息
             incar.write("#EMIN   = -10          \n") # 此为DOS图的能量范围，根据能带的能量范围来决定min和max是多少。
             incar.write("#EMAX   =  10          \n") 

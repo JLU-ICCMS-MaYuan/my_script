@@ -307,12 +307,14 @@ class vasp_eletron:
         # 准备POSCAR
         self.eletron_inputpara.get_struct_info(
             self.eletron_inputpara.struct_type,
-            scf_path)
+            scf_path,
+            )
         self.eletron_inputpara.get_potcar(scf_path)
         # 准备计算电子自洽的INCAR
         self._vasp_writeincar.writeinput(mode="scf", incar_path=scf_path)
         # 为电子自洽均匀撒点准备KPOINTS
         self.eletron_inputpara.write_evenly_kpoints(
+            self.eletron_inputpara.cell_parameters,
             kspacing, 
             scf_path,
             )
@@ -358,6 +360,7 @@ class vasp_eletron:
         self._vasp_writeincar.writeinput(mode='eledos', incar_path=eledos_path)
         # 为电子自洽均匀撒点准备KPOINTS
         self.eletron_inputpara.write_evenly_kpoints(
+            self.eletron_inputpara.cell_parameters,
             kspacing, 
             kpoints_path=eledos_path,
             )

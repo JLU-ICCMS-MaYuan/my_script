@@ -121,6 +121,7 @@ parser.add_argument(
         "unstable.csv 存储着所有压稳结构高于convex hull的能量值\n"
         "for_origin_plot.csv 存储着所有的原始数据"
 )
+
 args = parser.parse_args()
 
 input_csv_path = args.input_csv_path
@@ -150,10 +151,6 @@ try:
         entry_id = row['Number']
         _entry = PDEntry(comp, enth)
         _entry.entry_id = entry_id
-        # if entry_id == 12647:
-        #     print(comp)
-        # print(entry_id, comp, enth)
-        # # input()
         ini_entries.append(_entry)
 except:
     # 该情况处理的文件：
@@ -169,10 +166,6 @@ except:
         entry_id = row['Number']
         _entry = PDEntry(comp, enth)
         _entry.entry_id = entry_id
-        # if entry_id == 12647:
-        #     print(comp)
-        # print(entry_id, comp, enth)
-        # input()
         ini_entries.append(_entry)
 
 
@@ -238,79 +231,6 @@ if show_pnd:
     plotter = PDPlotter(ini_pd, show_unstable=EnthalpyAboveHullValue*0.001, backend='plotly')
     plotter.show()
 
-print("\n")
-
-# 收集所有的稳定结构
-if collect_stable:
-    stable_structs = Path(input_csv_path).parent.joinpath("stable_structs")
-    if not stable_structs.exists():
-        stable_structs.mkdir()
-
-    # calypso结构预测后结构搜集
-    for ent in ini_pd.stable_entries:
-        print(f"look for the position of N0.{ent.entry_id} structure!")
-        for ana_out_dat in Path(input_csv_path).parent.rglob("Analysis_Output.dat"):
-            f = open(ana_out_dat).readlines()
-            for line in f:
-                patter = re.compile(r"\d+\s\(\s*%s\)" %ent.entry_id)
-                result = re.search(patter, line)
-                if result is not None:
-                    localnumber         = re.findall("\d+", result.group())[0]
-                    spacegroup_symmetry = re.search(r"\w+\(\d+\)", line).group()
-                    spacegroup_number   = re.search(r"\(.*\)", spacegroup_symmetry).group().strip("()")
-                    src_vaspfile = list(ana_out_dat.parent.rglob(f"UCell_{localnumber}_{spacegroup_number}.vasp"))[0]
-                    dst_vaspfile = stable_structs.joinpath(f"UCell_{ent.entry_id}_{localnumber}_{spacegroup_number}.vasp")
-                    shutil.copy(src_vaspfile, dst_vaspfile)
-                    print(src_vaspfile)
-                    break
-    # 自定义结构优化后结构搜集
-    for ent in ini_pd.stable_entries:
-        src_vaspfile = Path.cwd().joinpath(str(ent.entry_id), "POSCAR")
-        dst_vaspfile = stable_structs.joinpath(f"{ent.entry_id}_{ent.composition.formula.replace(' ', '')}_.vasp")
-        if src_vaspfile.exists():
-            shutil.copy(src_vaspfile, dst_vaspfile)
-            print(src_vaspfile)
-
-# 搜集所有亚稳的结构
-if collect_unstable:
-    unstable_structs = Path(input_csv_path).parent.joinpath("unstable_structs")
-    if not unstable_structs.exists():
-        unstable_structs.mkdir()
-    for entry in ini_entries:
-        unstable_dict = {}
-        energy_above_hull = ini_pd.get_e_above_hull(entry)*1000
-        form_energy = ini_pd.get_form_energy(entry)
-        if 0.0 < energy_above_hull <= 50.0:
-            print(entry.entry_id)
-            print(f"look for the position of N0.{entry.entry_id} structure!")
-            for ana_out_dat in Path(input_csv_path).parent.rglob("Analysis_Output.dat"):
-                f = open(ana_out_dat).readlines()
-                for line in f:
-                    patter = re.compile(r"\d+\s\(\s*%s\)" %entry.entry_id)
-                    result = re.search(patter, line)
-                    if result is not None:
-                        localnumber         = re.findall("\d+", result.group())[0]
-                        spacegroup_symmetry = re.search(r"\w+\(\d+\)", line).group()
-                        spacegroup_number   = re.search(r"\(.*\)", spacegroup_symmetry).group().strip("()")
-                        src_vaspfile = list(ana_out_dat.parent.rglob(f"UCell_{localnumber}_{spacegroup_number}.vasp"))[0]
-                        dst_vaspfile = unstable_structs.joinpath(f"UCell_{entry.entry_id}_{localnumber}_{spacegroup_number}.vasp")
-                        shutil.copy(src_vaspfile, dst_vaspfile)
-                        print(src_vaspfile)
-                        break
-
-    # 自定义结构优化后结构搜集
-    for ent in ini_entries:
-        unstable_dict = {}
-        energy_above_hull = ini_pd.get_e_above_hull(entry)*1000
-        form_energy = ini_pd.get_form_energy(entry)        
-        if 0.0 < energy_above_hull <= 50.0:
-            src_vaspfile = Path.cwd().joinpath(str(ent.entry_id), "POSCAR")
-            dst_vaspfile = unstable_structs.joinpath(f"{ent.entry_id}_{ent.composition.formula.replace(' ', '')}_.vasp")
-            if src_vaspfile.exists():
-                shutil.copy(src_vaspfile, dst_vaspfile)
-                print(src_vaspfile)
-
-
 if hand_plot_dat:
 
     for ele in hand_plot_dat:
@@ -339,7 +259,6 @@ if hand_plot_dat:
     total_pd = pd.concat((stable_pd, unstable_pd), axis=0)
     #total_pd = total_pd.drop(columns=['Number', 'formula']) # 删除列
     total_pd.to_csv("for_origin_plot.csv", index=False)
-
 
 if dst_entry_index:
     for dei in dst_entry_index:
