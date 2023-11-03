@@ -33,7 +33,7 @@ bs_data = bs_run.get_band_structure(
 
 
 # 能带图加上态密度
-# 原始的能带和态密度
+# 无投影的能带和态密度
 plot1 = BSDOSPlotter(bs_projection = None, dos_projection= None)
 plot1.get_plot(bs=bs_data,dos=dos_data)
 plt.savefig('1.band_dos.png',dpi=300)
@@ -106,12 +106,12 @@ dostotal.save_plot('9.dos总态密度.png', img_format=u'png')
 
 # 投影态密度到轨道
 dostotal=DosPlotter(stack=False, sigma=0.5)
-dostotal.add_dos('total dos', dos=dos_data)
+dostotal.add_dos('project spd orbits', dos=dos_data)
 dostotal.add_dos_dict(dos_data.get_spd_dos())
 dostotal.save_plot('10.dos投影态密度到轨道.png', img_format=u'png')
 
 # 投影态密度到元素
 dostotal=DosPlotter(stack=False, sigma=0.5)
-dostotal.add_dos('total dos', dos=dos_data)
+dostotal.add_dos('project element pdos', dos=dos_data)
 dostotal.add_dos_dict(dos_data.get_element_dos())
 dostotal.save_plot('11.dos投影态密度到元素.png', img_format=u'png')
