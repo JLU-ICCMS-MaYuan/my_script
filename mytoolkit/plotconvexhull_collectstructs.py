@@ -177,3 +177,7 @@ if collect_unstable:
                         print(src_vaspfile)
                         break
 
+usually_order="""I hope these orders will inspire you !!!
+plotconvexhull_collectstructs.py -i nnconvexhull.csv -ed Ce Sr H -ebh 0.1 10 -cu -cs
+"""
+print(usually_order)

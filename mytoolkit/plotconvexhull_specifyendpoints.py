@@ -24,6 +24,7 @@ from pymatgen.core.composition import Composition
 from pymatgen.core.periodic_table import Element
 
 
+
 parser = ArgumentParser(formatter_class=RawTextHelpFormatter)
 parser.add_argument(
     "-i",
@@ -97,11 +98,13 @@ parser.add_argument(
 )
 parser.add_argument(
     "-ebh",
-    type=int,
+    type=float,
     dest="EnthalpyAboveHullValue",
-    default=10,
+    default=[0, 10.0],
+    nargs="+",
     help="高于convex hull xxx emV 的能量的上限\n"
-        "在0 ~ EnthalpyAboveHullValue 这个范围内的亚稳的结构确定出来\n"
+        "在 ebh_lower_limit ~ ebh_higher_limit 这个范围内的亚稳的结构确定出来\n"
+        "所以说要输入两个值，第一个值是下陷，第二个值是上限。\n"
 )
 parser.add_argument(
     "-hand",
@@ -130,7 +133,8 @@ show_pnd = args.show_png
 collect_stable = args.collect_stable
 collect_unstable = args.collect_unstable
 hand_plot_dat = args.hand_plot_dat
-EnthalpyAboveHullValue = args.EnthalpyAboveHullValue
+ebh_lower_limit = args.EnthalpyAboveHullValue[0]
+ebh_higher_limit = args.EnthalpyAboveHullValue[1]
 endnotes = args.endnotes
 dst_entry_index = args.dst_entry_index
 
@@ -188,16 +192,25 @@ for entry in ini_pd.stable_entries:
     stable_dict = {}
     form_energy = ini_pd.get_form_energy(entry)
     stable_dict["Number"] = entry.entry_id
-    stable_dict["formula"] = entry.composition.formula
-    print(entry.entry_id, entry.composition.formula)
+    stable_dict["formula"] = entry.composition.formula.replace(' ', '')
     stable_dict["enthalpy"] = 0.0
     stable_list.append(stable_dict)
     stable_structs_amount += 1
 print(f"stable structures on the convex hull is {stable_structs_amount - len(ini_pd.el_refs)}\n")
+print("{:<10}  {:<10}  {:<10}".format("Number", "formula", "enthalpy(eV/atom)"))
+sorted_dict_list = sorted(stable_list, key=lambda d: d['formula'])
+for unstable_dict in sorted_dict_list:
+    print("{:<10}  {:<10}  {:<10.4f}".format(
+        unstable_dict["Number"],
+        unstable_dict["formula"], 
+        unstable_dict["enthalpy"],
+        ))
 stable_pd = pd.DataFrame(stable_list)
 stable_pd.to_csv("stable.csv", index=False)
 
-# 获得 高于convex hull  0~50mev 上亚稳结构的 csv 文件
+
+
+# 获得 高于convex hull 上亚稳结构的 csv 文件
 unstable_list = []
 unstable_structs_amount = 0
 for entry in ini_pd.unstable_entries:
@@ -205,30 +218,33 @@ for entry in ini_pd.unstable_entries:
     energy_above_hull = ini_pd.get_e_above_hull(entry)*1000
     # print(entry.composition.formula, energy_above_hull)
     form_energy = ini_pd.get_form_energy(entry)
-    if 0.0 < energy_above_hull <= EnthalpyAboveHullValue: # 这里取高于convex hull 能量在0~50个meV范围内的亚稳结构
-        print("stoichiometry: {:<10}  No.{:<10} is above convell hull {:<10} meV".format(
-            entry.name, 
-            entry.entry_id,
-            energy_above_hull,
-            ))
+    if ebh_lower_limit < energy_above_hull <= ebh_higher_limit: # 这里取高于convex hull 能量在0~50个meV范围内的亚稳结构
         unstable_dict["Number"]  = entry.entry_id
-        unstable_dict["formula"] = entry.composition.formula
+        unstable_dict["formula"] = entry.composition.formula.replace(' ', '')
         #!!!!!!!!!!!!!!!!!特别注意这里的单位是meV!!!!!!!!!!!!!!!!!!!!!!!
         unstable_dict["enthalpy"] = ini_pd.get_e_above_hull(entry) 
         unstable_list.append(unstable_dict)
         unstable_structs_amount += 1
-print(f"unstable structures above the convex hull 0-{EnthalpyAboveHullValue} meV is {unstable_structs_amount}\n")
+sorted_dict_list = sorted(unstable_list, key=lambda d: d['enthalpy'])
+print(f"unstable structures above the convex hull {ebh_lower_limit}-{ebh_higher_limit} meV is {unstable_structs_amount}\n")
+print("{:<10}  {:<10}  {:<10}".format("Number", "formula", "enthalpy(eV/atom)"))
+for unstable_dict in sorted_dict_list:
+    print("{:<10}  {:<10}  {:<10.4f}".format(
+        unstable_dict["Number"],
+        unstable_dict["formula"], 
+        unstable_dict["enthalpy"],
+        ))
 unstable_pd = pd.DataFrame(unstable_list)
 unstable_pd.to_csv("unstable.csv", index=False)
 
 
 
 if save_pnd:
-    plotter = PDPlotter(ini_pd, show_unstable=EnthalpyAboveHullValue*0.001, backend='matplotlib')
+    plotter = PDPlotter(ini_pd, show_unstable=ebh_higher_limit*0.001, backend='matplotlib')
     plotter.write_image('pd.png', image_format='png')
 
 if show_pnd:
-    plotter = PDPlotter(ini_pd, show_unstable=EnthalpyAboveHullValue*0.001, backend='plotly')
+    plotter = PDPlotter(ini_pd, show_unstable=ebh_higher_limit*0.001, backend='plotly')
     plotter.show()
 
 if hand_plot_dat:
@@ -331,3 +347,8 @@ if dst_entry_index:
         # #   }, 
         # #   -1.5216764351000007 这个值是形成焓)
 
+
+usually_order="""I hope these orders will inspire you !!!
+plotconvexhull_specifyendpoints.py -i nnconvexhull.csv -ed Ce Sr H -ebh 0.1 10 -dei -1 -2 -3
+"""
+print(usually_order)
