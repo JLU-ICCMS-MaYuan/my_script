@@ -68,11 +68,13 @@ parser.add_argument(
 )
 parser.add_argument(
     "-ebh",
-    type=int,
+    type=float,
     dest="EnthalpyAboveHullValue",
-    default=10,
+    default=[0, 10.0],
+    nargs="+",
     help="高于convex hull xxx emV 的能量的上限\n"
-        "在0 ~ EnthalpyAboveHullValue 这个范围内的亚稳的结构确定出来\n"
+        "在 ebh_lower_limit ~ ebh_higher_limit 这个范围内的亚稳的结构确定出来\n"
+        "所以说要输入两个值，第一个值是下陷，第二个值是上限。\n"
 )
 
 args = parser.parse_args()
@@ -80,7 +82,8 @@ args = parser.parse_args()
 input_csv_path = args.input_csv_path
 collect_stable = args.collect_stable
 collect_unstable = args.collect_unstable
-EnthalpyAboveHullValue = args.EnthalpyAboveHullValue
+ebh_lower_limit = args.EnthalpyAboveHullValue[0]
+ebh_higher_limit = args.EnthalpyAboveHullValue[1]
 endnotes = args.endnotes
 
 # 生成 凸包图对象
@@ -154,7 +157,7 @@ if collect_unstable:
         unstable_dict = {}
         energy_above_hull = ini_pd.get_e_above_hull(entry)*1000
         form_energy = ini_pd.get_form_energy(entry)
-        if 0.0 < energy_above_hull <= 50.0:
+        if ebh_lower_limit <= energy_above_hull <= ebh_higher_limit:
             print(entry.entry_id)
             print(f"look for the position of N0.{entry.entry_id} structure!")
             for ana_out_dat in Path(input_csv_path).parent.rglob("Analysis_Output.dat"):
@@ -166,7 +169,9 @@ if collect_unstable:
                         localnumber         = re.findall("\d+", result.group())[0]
                         spacegroup_symmetry = re.search(r"\w+\(\d+\)", line).group()
                         spacegroup_number   = re.search(r"\(.*\)", spacegroup_symmetry).group().strip("()")
-                        src_vaspfile = list(ana_out_dat.parent.rglob(f"UCell_{localnumber}_{spacegroup_number}.vasp"))[0]
+                        src_vaspfiles = list(ana_out_dat.parent.rglob(f"UCell_{localnumber}_{spacegroup_number}.vasp"))
+                        if len(src_vaspfiles) == 1:
+                            src_vaspfile = src_vaspfiles[0]
                         dst_vaspfile = unstable_structs.joinpath(f"UCell_{entry.entry_id}_{localnumber}_{spacegroup_number}.vasp")
                         shutil.copy(src_vaspfile, dst_vaspfile)
                         print(src_vaspfile)
