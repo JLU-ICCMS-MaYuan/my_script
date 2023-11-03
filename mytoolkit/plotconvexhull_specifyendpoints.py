@@ -52,7 +52,7 @@ parser.add_argument(
     "-dei",
     "--destination-entry-index",
     action="store",
-    default=-1,
+    default=[-1],
     nargs="+",
     dest="dst_entry_index",
     type=int,
