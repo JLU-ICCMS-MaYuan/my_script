@@ -154,7 +154,7 @@ class vasp_writesubmit:
             submit.write("cp INCAR_$i INCAR                    \n")
             submit.write("killall -9 vasp_std                  \n")
             submit.write("sleep 3                              \n")
-            submit.write("timeout 14400s mpirun -np {} {} > vasp.log_$i 2>&1\n".format(self.core, vaspbin_path))
+            submit.write("mpirun -np {} {} > vasp.log_$i 2>&1\n".format(self.core, vaspbin_path))
             submit.write("cp CONTCAR POSCAR                    \n")
             submit.write("done                                 \n")
         return jobname
@@ -168,7 +168,7 @@ class vasp_writesubmit:
             submit.write("cp INCAR_$i INCAR                    \n")
             submit.write("killall -9 vasp_std                  \n")
             submit.write("sleep 3                              \n")
-            submit.write("timeout 14400s mpirun -np {} {} > vasp.log_$i 2>&1\n".format(self.core, vaspbin_path))
+            submit.write("mpirun -np {} {} > vasp.log_$i 2>&1\n".format(self.core, vaspbin_path))
             submit.write("cp CONTCAR POSCAR                    \n")
             submit.write("done                                 \n")
         return jobname
