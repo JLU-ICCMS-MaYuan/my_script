@@ -820,9 +820,9 @@ batchrelax -m mode=rv1 core=28 ediff=1e-8 ediffg=-0.001 ismear=1 kspacing=0.18 e
 ```shell
 # 这里有两种设置KPOINTS的方法：
 # 方法一：根据kdensity='36 36 36'进行设置，命令如下：
-phono -m supercell='2 2 2' kdensity='36 36 36' mode=disp core=48 ismear=1 encut=800 ediff=1E-08 ediffg=-0.001 queue=lhy
+phono -m supercell='2 2 2' kdensity='36 36 36' mode=disp core=48 ismear=1 encut=800 ediff=1E-08 ediffg=-0.001 lreal=.FALSE. queue=lhy core=48
 # 方法二：根据kspacing=0.18进行设置，命令如下：
-phono -m supercell='2 2 2' kspacing=0.18 mode=disp core=48 ismear=1 encut=800 ediff=1E-08 ediffg=-0.001 queue=lhy
+phono -m supercell='2 2 2' kspacing=0.18 mode=disp core=48 ismear=1 encut=800 ediff=1E-08 ediffg=-0.001 lreal=.FALSE. queue=lhy core=48
 ```
 
 ###  <span style="color:yellow"> 密度泛函微扰DFPT法计算声子谱  </span>
@@ -831,9 +831,9 @@ phono -m supercell='2 2 2' kspacing=0.18 mode=disp core=48 ismear=1 encut=800 ed
 ```shell
 # 这里有两种设置KPOINTS的方法：
 # 方法一：根据kdensity='36 36 36'进行设置，命令如下：
-phono -m supercell='2 2 2' kdensity='36 36 36' mode=dfpt core=48 ismear=1 encut=800 ediff=1e-08 ediffg=-0.001 queue=lhy
+phono -m supercell='2 2 2' kdensity='36 36 36' mode=dfpt core=48 ismear=1 encut=800 ediff=1e-08 ediffg=-0.001 lreal=.FALSE. queue=lhy
 # 方法二：根据kspacing=0.18进行设置，命令如下：
-phono -m supercell='2 2 2' kspacing=0.18 mode=dfpt core=48 ismear=1 encut=800 ediff=1e-08 ediffg=-0.001 queue=lhy
+phono -m supercell='2 2 2' kspacing=0.18 mode=dfpt core=48 ismear=1 encut=800 ediff=1e-08 ediffg=-0.001 lreal=.FALSE. queue=lhy
 ```
 
 ###  <span style="color:yellow"> 有限位移法计算声子谱——数据处理band  </span>
@@ -907,28 +907,28 @@ LORBIT = 11   # 输出分波态密度信息
 
 ```shell
 # 只计算scf,  工作路径-w下一定包含eband, scf, eledos三个文件，即使单独算其中一个，也要在eletron目录下，不要进入scf目录计算。
-eletron -m mode=scf encut=800 ediff=1e-8 ediffg=-0.001 ismear=0 sigma=0.01 kspacing=0.18 queue=lhy core=48
+eletron -m mode=scf encut=800 ediff=1e-8 ediffg=-0.001 ismear=0 sigma=0.01 kspacing=0.18 lreal=.FALSE. queue=lhy core=48
 
 
 # 只计算能带,  工作路径-w下一定包含eband, scf, eledos三个文件，即使单独算其中一个，也要在eletron目录下，不要进入eband目录计算。在准备输入阶段，会先检查eletron目录中有没有scf/CHGCAR，如果没有就退出。
-eletron -m mode=eband  encut=800 ediff=1e-8 ediffg=-0.001 ismear=0 sigma=0.01 kspacing=0.18 queue=lhy core=48
+eletron -m mode=eband  encut=800 ediff=1e-8 ediffg=-0.001 ismear=0 sigma=0.01 kspacing=0.18 lreal=.FALSE. queue=lhy core=48
 
 
 # 只计算电子态密度,  工作路径-w下一定包含eband, scf, eledos三个文件，即使单独算其中一个，也要在eletron目录下，不要进入eledos目录计算。在准备输入阶段，会先检查eletron目录中有没有scf/CHGCAR，如果没有就退出。
 # 前面提到自洽的kspacing是电子态密度的一半，不需要你自己指定，只需要保持你设置的kspacing与scf的kspacing保持一致即可，程序自己会加倍kspacing。
-eletron -m mode=eledos  encut=800 ediff=1e-8 ediffg=-0.001 ismear=0 sigma=0.01 kspacing=0.18 queue=lhy core=48
+eletron -m mode=eledos  encut=800 ediff=1e-8 ediffg=-0.001 ismear=0 sigma=0.01 kspacing=0.18 lreal=.FALSE. queue=lhy core=48
 
 
 # 同时计算scf和eband
-eletron -m mode='scf eband'  encut=800 ediff=1e-8 ediffg=-0.001 ismear=0 sigma=0.01 kspacing=0.18 queue=lhy core=48
+eletron -m mode='scf eband'  encut=800 ediff=1e-8 ediffg=-0.001 ismear=0 sigma=0.01 kspacing=0.18 lreal=.FALSE. queue=lhy core=48
 
 
 # 同时计算scf和eledos。# 前面提到自洽的kspacing是电子态密度的一半，不需要你自己指定，只需要保持你设置的kspacing与scf的kspacing保持一致即可，程序自己会加倍kspacing。
-eletron -m mode='scf eledos' encut=800  ediff=1e-8 ediffg=-0.001 ismear=0 sigma=0.01 kspacing=0.18 queue=lhy core=48
+eletron -m mode='scf eledos' encut=800  ediff=1e-8 ediffg=-0.001 ismear=0 sigma=0.01 kspacing=0.18 lreal=.FALSE. queue=lhy core=48
 
 
 # 同时计算scf和eledos和eband。# 前面提到自洽的kspacing是电子态密度的一半，不需要你自己指定，只需要保持你设置的kspacing与scf的kspacing保持一致即可，程序自己会加倍kspacing。
-eletron -m mode='scf eledos eband' encut=800  ediff=1e-8 ediffg=-0.001 ismear=0 sigma=0.01 kspacing=0.18 queue=lhy core=48
+eletron -m mode='scf eledos eband' encut=800  ediff=1e-8 ediffg=-0.001 ismear=0 sigma=0.01 kspacing=0.18 lreal=.FALSE. queue=lhy core=48
 
 
 #获得投影到一维路径的高对称路径点
@@ -961,6 +961,23 @@ vasp_main.py -i CONTCAR -j bash data -m mode=hspp core=1
 1. 自洽的结构和能带、dos的结构不一致
 2. 自洽的INCAR的PREC和ENCUT 与 能带、dos的INCAR的PREC和ENCUT不一致
 ```
+
+```shell
+最近在计算有限位移的声子谱和自洽测encut收敛性时遇到一个错误
+
+警告: PSMAXN for non-local potential too small
+
+错误: REAL_OPTLAY: internal error (1)
+
+分析: 这可能是由于LREAL=.TRUE. 或者 LREAL=Auto导致.两个办法解决：
+    1. 降低ENCUT，可以保持LREAL参数不变让vasp收敛
+    2. ENCUT不变，关闭LREAL
+
+分析：出现这个这个错误的可能原因有：
+1. 自洽的结构和能带、dos的结构不一致
+2. 自洽的INCAR的PREC和ENCUT 与 能带、dos的INCAR的PREC和ENCUT不一致
+```
+
 
 
 
