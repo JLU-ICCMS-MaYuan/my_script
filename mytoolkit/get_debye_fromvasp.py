@@ -94,3 +94,4 @@ if __name__ == "__main__":
         freq_max_fit = None
     phonondos = get_phonodos(num_atoms)
     set_Debye_frequency(phonondos, num_atoms, freq_max_fit)
+    
