@@ -284,11 +284,11 @@ if dst_entry_index:
 
         decomp_path = ini_pd.get_decomp_and_e_above_hull(dst_entry)[0]
         decomp_eabovehull = ini_pd.get_decomp_and_e_above_hull(dst_entry)[1]
-        form_energy = ini_pd.get_form_energy(dst_entry)
+        form_energy = ini_pd.get_form_energy_per_atom(dst_entry)
         for key, value in decomp_path.items():
             print("{:<15} {:<20} {:<20}".format(key.entry_id, key.composition.reduced_formula, value))
-        print(f"e_above_hull={decomp_eabovehull}")
-        print(f"formed_enthalpy={form_energy}")
+        print("   e_above_hull = {:>10.6f} ev/atom".format(decomp_eabovehull))
+        print("formed_enthalpy = {:>10.6f} ev/atom".format(form_energy))
 
         # get_decomp_and_e_above_hull
         # 该方法用于获得某个化合物的分解路径和e_above_hull
