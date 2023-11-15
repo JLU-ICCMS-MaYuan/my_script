@@ -190,9 +190,14 @@ class vasp_eletron:
             eband_path = self.eband()
         if 'eledos' in self.eletron_inputpara.mode:
             # 准备输入文件
-            eledos_band = self.eledos(self.eletron_inputpara.kspacing/2)
+            eledos_path = self.eledos(self.eletron_inputpara.kspacing/2)
+        if 'cohp'   in self.eletron_inputpara.mode:
+            # 准备输入文件
+            cohp_path = self.cohp(self.eletron_inputpara.kspacing)
 
+        
         # 准备提交任务的脚本
+        ###########################同时进行计算的任务, 作业脚本放在work_path##############################
         # 同时进行scf, eledos, eband计算
         if  ('scf'         in self.eletron_inputpara.mode) and \
             ('eledos'      in self.eletron_inputpara.mode) and \
@@ -227,6 +232,27 @@ class vasp_eletron:
             _vasp_submitjob = vasp_submitjob.init_from_eletroninput(self.eletron_inputpara)
             if self.eletron_inputpara.queue is not None:
                 _vasp_submitjob.submit_mode1(jobname)
+        # 只进行eband, eledos计算
+        elif ('scf'    not in self.eletron_inputpara.mode) and \
+             ('eledos'     in self.eletron_inputpara.mode) and \
+             ('eband'      in self.eletron_inputpara.mode):
+            # 准备任务脚本
+            _vasp_writesubmit = vasp_writesubmit.init_from_eletron(self.eletron_inputpara)
+            jobname = _vasp_writesubmit.write_submit_scripts(
+                mode="eband-eledos")
+            chgcar_src = self.eletron_inputpara.work_path.joinpath("scf", "CHGCAR")
+            if not chgcar_src.exists():
+                print(f"The CHGCAR is not found in path \n{chgcar_src.absolute()}")
+                print("So The program will exit")
+                sys.exit(1)
+            # 提交任务
+            _vasp_submitjob = vasp_submitjob.init_from_eletroninput(self.eletron_inputpara)
+            if self.eletron_inputpara.queue is not None:
+                _vasp_submitjob.submit_mode1(jobname)
+        ###########################################################################
+        
+        
+        ##################单独进行计算的任务, 作业脚本放在work_path/sub_workpath##############################
         # 只进行scf计算
         elif ('scf'        in self.eletron_inputpara.mode) and \
              ('eledos' not in self.eletron_inputpara.mode) and \
@@ -269,7 +295,7 @@ class vasp_eletron:
             _vasp_writesubmit = vasp_writesubmit.init_from_eletron(self.eletron_inputpara)
             jobname = _vasp_writesubmit.write_submit_scripts(
                 mode="only-eledos",
-                submitjob_path=eledos_band)
+                submitjob_path=eledos_path)
             chgcar_src = self.eletron_inputpara.work_path.joinpath("scf", "CHGCAR")
             chgcar_dst = self.eletron_inputpara.work_path.joinpath("eledos", "CHGCAR")
             if not chgcar_src.exists():
@@ -281,24 +307,23 @@ class vasp_eletron:
             # 提交任务
             _vasp_submitjob = vasp_submitjob.init_from_eletroninput(self.eletron_inputpara)
             if self.eletron_inputpara.queue is not None:
-                _vasp_submitjob.submit_mode1(jobname, submit_path=eledos_band)
-        # 只进行eband, eledos计算
-        elif ('scf'    not in self.eletron_inputpara.mode) and \
-             ('eledos'     in self.eletron_inputpara.mode) and \
-             ('eband'      in self.eletron_inputpara.mode):
+                _vasp_submitjob.submit_mode1(jobname, submit_path=eledos_path)
+        # 只进行cohp计算
+        elif ('cohp'       in self.eletron_inputpara.mode):
             # 准备任务脚本
             _vasp_writesubmit = vasp_writesubmit.init_from_eletron(self.eletron_inputpara)
             jobname = _vasp_writesubmit.write_submit_scripts(
-                mode="eband-eledos")
-            chgcar_src = self.eletron_inputpara.work_path.joinpath("scf", "CHGCAR")
-            if not chgcar_src.exists():
-                print(f"The CHGCAR is not found in path \n{chgcar_src.absolute()}")
-                print("So The program will exit")
-                sys.exit(1)
+                mode="only-cohp",
+                submitjob_path=cohp_path
+                )
             # 提交任务
             _vasp_submitjob = vasp_submitjob.init_from_eletroninput(self.eletron_inputpara)
             if self.eletron_inputpara.queue is not None:
-                _vasp_submitjob.submit_mode1(jobname)
+                _vasp_submitjob.submit_mode1(
+                    jobname,
+                    submit_path=cohp_path
+                    )
+
 
     def scf(self, kspacing):  
         scf_path = self.eletron_inputpara.work_path.joinpath("scf")
@@ -366,26 +391,24 @@ class vasp_eletron:
             )
         return eledos_path
 
-    def elf(self, kspacing):
-        elf_path = self.eletron_inputpara.work_path.joinpath('elf')
-        if not elf_path.exists():
-            os.mkdir(elf_path)   
+    def cohp(self, kspacing):
+        cohp_path = self.eletron_inputpara.work_path.joinpath('cohp')
+        if not cohp_path.exists():
+            os.mkdir(cohp_path)  
         # 准备POSCAR
         self.eletron_inputpara.get_struct_info(
             self.eletron_inputpara.struct_type,
-            elf_path)    
-        self.eletron_inputpara.get_potcar(elf_path)
-        # 准备计算电子DOS的INCAR
-        self._vasp_writeincar.writeinput(mode='elf', incar_path=elf_path)
+            cohp_path)    
+        self.eletron_inputpara.get_potcar(cohp_path)
+        # 准备计算电子cohp的INCAR
+        self._vasp_writeincar.writeinput(mode='cohp', incar_path=cohp_path)
         # 为电子自洽均匀撒点准备KPOINTS
         self.eletron_inputpara.write_evenly_kpoints(
+            self.eletron_inputpara.cell_parameters,
             kspacing, 
-            kpoints_path=elf_path,
+            kpoints_path=cohp_path,
             )
-        return elf_path
-
-    def bader(self):
-        pass
+        return cohp_path
 
 
 class vasp_processdata(vasp_base):
@@ -429,7 +452,7 @@ class vasp_processdata(vasp_base):
             _mp = self._config['mp'].split()
             self.mp = list(map(int, _mp))
         else:
-            self.mp = [8,8,8]
+            self.mp = [20, 20, 20]
             print("NOTES: ------------------------------ ")
             print("    you didn't specify the mp='? ? ?', the program will set default mp=[8,8,8]")
 
@@ -445,16 +468,29 @@ class vasp_processdata(vasp_base):
             print("    Please confirm  disp-{001..%s} are all correctively computed !!!" %(disp_num))
             os.system("phonopy -f disp-{001..%s}/vasprun.xml" %(disp_num))
             os.chdir(cwd) 
-            path_name_list, path_coords = self.get_hspp(self.ase_type)
 
-            self.write_disp_band_conf(
-                self.work_path, 
-                self.species, 
-                self.supercell, 
-                path_name_list,
-                path_coords
-                )
-            
+
+            print("\nNote: --------------------------------")
+            vaspkitflag = input("If you have installed vaspkit and you want to use it, input: Yes\n")
+            if vaspkitflag:
+                cwd = os.getcwd()
+                os.chdir(self.work_path)
+                os.system('echo -e "3\n305" | vaspkit')
+                shutil.copy("KPATH.phonopy", "band.conf")
+                diminfo = "DIM={}".format(' '.join(list(map(str, self.supercell))))
+                os.system("sed -i '2s/.*/{}/' band.conf".format(diminfo))
+                os.system("sed -i '/FORCE_CONSTANTS = READ/d' band.conf")
+                os.chdir(cwd)
+            else: 
+                path_name_list, path_coords = self.get_hspp(self.ase_type)
+                self.write_disp_band_conf(
+                    self.work_path, 
+                    self.species, 
+                    self.supercell, 
+                    path_name_list,
+                    path_coords
+                    )
+                
             cwd = os.getcwd()
             os.chdir(self.work_path)
             # traditional method
@@ -475,9 +511,21 @@ class vasp_processdata(vasp_base):
             os.chdir(self.work_path)
             os.system("phonopy --fc vasprun.xml")
             os.chdir(cwd)
-            special_points, path_coords = self.get_hspp(self.ase_type)
-            
-            self.write_dfpt_band_conf(
+
+
+            print("\nNote: --------------------------------")
+            vaspkitflag = input("If you have installed vaspkit and you want to use it, input: Yes\n")
+            if vaspkitflag:
+                cwd = os.getcwd()
+                os.chdir(self.work_path)
+                os.system('echo -e "3\n305" | vaspkit')
+                shutil.copy("KPATH.phonopy", "band.conf")
+                diminfo = "DIM={}".format(' '.join(list(map(str, self.supercell))))
+                os.system("sed -i '2s/.*/{}/' band.conf".format(diminfo))
+                os.chdir(cwd)
+            else: 
+                special_points, path_coords = self.get_hspp(self.ase_type)
+                self.write_dfpt_band_conf(
                 self.work_path, 
                 self.species, 
                 self.supercell, 

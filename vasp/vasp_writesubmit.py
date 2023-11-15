@@ -96,8 +96,8 @@ class vasp_writesubmit:
         elif mode == 'dfpt':
             jobname = self.dfpt(submitjob_path)
             return jobname
-        elif mode in ['only-scf', "only-eband", 'only-eledos']:
-            jobname = self.only_scf_or_eband_or_eledos(submitjob_path)
+        elif mode in ['only-scf', "only-eband", 'only-eledos', 'only-cohp']:
+            jobname = self.only_onemode(submitjob_path)
             return jobname
         elif mode == "scf-eband-eledos":
             jobname = self.scf_eband_eledos(submitjob_path)
@@ -111,6 +111,7 @@ class vasp_writesubmit:
         elif mode == "eband-eledos":
             jobname = self.eband_eledos(submitjob_path)
             return jobname
+
     # submit job scripts
     def fopt(self, submit_dirpath):
         jobname = "fopt.sh"
@@ -193,8 +194,8 @@ class vasp_writesubmit:
             submit.write('mpirun -np {} {} > vasp.log 2>&1  \n'.format(self.core, vaspbin_path))   
         return jobname
 
-    def only_scf_or_eband_or_eledos(self, submit_dirpath):
-        jobname = "only_scf_or_eband_or_eledos.sh"
+    def only_onemode(self, submit_dirpath):
+        jobname = "only_onemode.sh"
         submit_script_filepath = os.path.join(submit_dirpath, jobname)
         with open(submit_script_filepath, "w") as submit:
             submit.writelines(self.jobtitle)

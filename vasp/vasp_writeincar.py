@@ -36,6 +36,8 @@ class vasp_writeincar:
             incar_dirpath = self.eband_incar(incar_path)
         if mode == 'eledos':
             incar_dirpath = self.eledos_incar(incar_path)
+        if mode == 'cohp':
+            incar_dirpath = self.cohp_incar(incar_path)
 
         if int(self.ispin)== 2:
             self.append_magnet(incar_dirpath)
@@ -415,6 +417,32 @@ class vasp_writeincar:
             incar.write("#EMIN   = -10          \n") # 此为DOS图的能量范围，根据能带的能量范围来决定min和max是多少。
             incar.write("#EMAX   =  10          \n") 
             incar.write("LCHARG  = .TRUE.       \n")                  
+        return incar_filepath
+
+    def cohp_incar(self, incar_dirpath):
+        incar_filepath = os.path.join(incar_dirpath, "INCAR")
+        with open(incar_filepath, "w") as incar:
+            incar.write("ISTART  = 0            \n") # if a WAVECAR file exists
+            incar.write("ICHARG  = 2            \n") # 从CHGCAR读取给定电荷密度的特征值(用于带结构图)或状态密度(DOS)。自洽CHGCAR文件必须事先通过一个跨越整个布里渊区的k点网格进行完全自洽计算来确定。
+            incar.write("ISYM    =-1            \n")
+            incar.write("ENCUT   = {}           \n".format(self.encut))          
+            incar.write("PREC    = Accurate     \n") 
+            incar.write("ISMEAR  = -5           \n")
+            incar.write("NELM    = 100          \n")                               
+            incar.write("NELMIN  = 2            \n")
+            incar.write("EDIFF   = {}           \n".format(self.ediff))
+            incar.write("IBRION  = -1           \n")
+            incar.write("ISIF    = 0            \n")
+            incar.write("NSW     = 0            \n")
+            incar.write("ISPIN   = 1            \n")
+            incar.write("LREAL   = .FALSE.      \n")
+            incar.write("NBANDS  = {}           \n".format(self.nbands))
+            incar.write("LWAVE   = .TRUE.      \n")                 
+            incar.write("NPAR    = {}            \n".format(self.npar))          
+            incar.write("NEDOS   = {}            \n".format(self.nedos)) # NEDOS指定DOS被评估的网格点的数量
+            incar.write("LORBIT  = 12           \n") # 输出分波态密度信息
+            incar.write("#EMIN   = -10          \n") # 此为DOS图的能量范围，根据能带的能量范围来决定min和max是多少。
+            incar.write("#EMAX   =  10          \n") 
         return incar_filepath
 
     def append_magnet(self, incar_dirpath):

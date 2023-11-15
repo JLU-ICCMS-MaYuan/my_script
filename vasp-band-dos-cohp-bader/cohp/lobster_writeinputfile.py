@@ -5,12 +5,12 @@ import sys
 from ase.io.pov import get_bondpairs
 from ase.io import read
 
-filename = sys.argv[1]
+poscar_file = sys.argv[1]
 COHPstartEnergy = sys.argv[2]
 COHPendEnergy = sys.argv[3]
 
 # 获取成键原子对
-atoms = read(filename)
+atoms = read(poscar_file)
 bondpairs_raw = get_bondpairs(atoms)
 bondpairs = []
 for bp in bondpairs_raw:
