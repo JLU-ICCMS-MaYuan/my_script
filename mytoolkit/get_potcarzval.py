@@ -58,7 +58,8 @@ for eleconfig, elename, zval in zip(eletron_configs, elements_names, zvalences):
     calculated_zval = 0
     zval_eleconfig = []
     for idx, elecfg in enumerate(eleconfig):
-        if calculated_zval < zval and not np.isclose(elecfg[-1], 0, rtol=1e-3):
+        # if calculated_zval < zval and not np.isclose(elecfg[-1], 0, rtol=1e-3):
+        if calculated_zval < zval:
             calculated_zval += elecfg[-1]
             zval_eleconfig.append(elecfg)
     zval_eleconfigs.append(zval_eleconfig)

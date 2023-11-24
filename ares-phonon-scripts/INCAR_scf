@@ -1,0 +1,17 @@
+ISTART   = 0      
+ICHARG   = 2      
+ENCUT    = 800     
+PREC     = Accurate
+ISMEAR   = 1     
+SIGMA    = 0.05     
+NELM     = 200     
+NELMIN   = 2      
+EDIFF    = 1e-8     
+EDIFFG   = -0.001     
+IBRION   = -1     
+NSW      = 0      
+KSPACING = 0.18     
+ALGO     = Normal 
+NBANDS   = 50
+LREAL    = .FALSE.  
+NPAR     = 4         

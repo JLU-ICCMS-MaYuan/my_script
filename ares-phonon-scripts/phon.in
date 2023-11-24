@@ -1,0 +1,50 @@
+#Task name
+TASKNAME= phonon
+#structure information file
+CELLFILE= POSCAR
+#whether use diagonal supercell
+Ldiag_sc = F
+#ELEMENT
+ELEMENTS=La Be H Th
+#Whether generate a supercell
+GENERATE_SUPERCELL= T
+#DFT software
+DFT_NAME = VASP
+#M-P method q-points numbers in three direction !!!!!!!!!!!!!!!!!!!!!!
+MP_QPOINTS = 4 4 4
+#output verbosity
+IPRINT=3
+
+#Whether calculate thermodynamic properties
+THERMODYNAMICS=.TRUE.
+#Temperature start, increase and number of increment
+TEMPERATURE=1000 10 10
+#Fine M-P qpoints
+FINE_MP_QPOINTS = 16 16 16
+#Phonon frequency start, end and increase
+PHONON_DOS=-1 60.0 0.1
+#Smearing width
+SMEAR_WIDTH=0.2
+
+#whether calculate phonon spectrun
+Lspectrum = .T.
+#Special q-points number
+PATH_QPOINTS_NUMBER=7
+#Number of q-points in path
+NPOINTS=50
+#Start q-point
+QI= 0.000000   0.000000   0.000000  # G   
+    0.000000   0.500000   0.000000  # X   
+    0.500000   0.500000   0.000000  # M   
+    0.000000   0.000000   0.000000  # G   
+    0.000000   0.000000   0.500000  # Z   
+    0.000000   0.500000   0.500000  # R   
+    0.500000   0.500000   0.500000  # A   
+#End q-point
+QI= 0.000000   0.500000   0.000000  # X   
+    0.500000   0.500000   0.000000  # M   
+    0.000000   0.000000   0.000000  # G   
+    0.000000   0.000000   0.500000  # Z   
+    0.000000   0.500000   0.500000  # R   
+    0.500000   0.500000   0.500000  # A   
+    0.000000   0.000000   0.500000  # Z 

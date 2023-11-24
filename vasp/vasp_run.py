@@ -309,7 +309,8 @@ class vasp_eletron:
             if self.eletron_inputpara.queue is not None:
                 _vasp_submitjob.submit_mode1(jobname, submit_path=eledos_path)
         # 只进行cohp计算
-        elif ('cohp'       in self.eletron_inputpara.mode):
+        
+        if   ('cohp'       in self.eletron_inputpara.mode):
             # 准备任务脚本
             _vasp_writesubmit = vasp_writesubmit.init_from_eletron(self.eletron_inputpara)
             jobname = _vasp_writesubmit.write_submit_scripts(
