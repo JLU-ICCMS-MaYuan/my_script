@@ -291,9 +291,15 @@ class qe_base:
             element_names= []
             for na, ele in zip(numatoms, elements): # extend() 函数用于在列表末尾一次性追加另一个序列中的多个值
                 element_names.extend([ele]*int(na))
+            
             # 建立元素列表elementlist与分数坐标的一一对应关系
+            fractional_sites = list(zip(element_names, coordnates))
+            # 按照self.species的元素顺序去写原子坐标，因为赝势的顺序就是self.species的顺序
+            # 这样就可以保证赝势的顺序和原子坐标的顺序一致！！！！
+            fractional_sites = sorted(key=lambda item: self.species.index(item[0]))
             fractional_sites = [
                 '{:<4}   {}'.format(ele, site.strip("\n")) for ele, site in zip(element_names, coordnates)]
+            
             return fractional_sites
         else:
             print("You didn't specify relax.out as inputfile")

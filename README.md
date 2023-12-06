@@ -21,6 +21,7 @@ qe, vasp, structuregenerator是三个独立的项目，互相不耦合。可以�
 
 
 # <div align="center"> <span style="color:red"> QE篇 </span> </div>
+
 ## 基本输入选项。一定要设置的部分：
 ```shell
 qe_main.py -i 输入文件路径 -w 工作目录 -p 压强 -j 运行方式
@@ -54,6 +55,7 @@ qe_main.py -i 输入文件路径 -w 工作目录 -p 压强 -j 运行方式
 ```shell
 relax -m mode=relax-vc kpoints_dense="20 20 20" conv_thr=1.0d-8 core=48 npool=4  queue=lhy
 ```
+
 ###  <span style="color:yellow"> 自洽
 #### 重要参数的说明
 1. mixing_beta = 0.3 一般用0.3，算的比较快
@@ -72,6 +74,7 @@ scf -m mode=scf kpoints_sparse='12 12 12' core=48 npool=4  queue=lhy
 ```shell
 qe_main.py -i relax.out -j bash scf -m mode=nscf kpoints_dense='32 32 32' core=2 queue=local
 ```
+
 ### <span style="color:yellow"> 声子计算
 #### 重要参数的说明
 1. alpha_mix(1)=0.3 一般用0.3， 算的比较快，值越大算的越慢。**所以我采用的默认参数alpha_mix(1)=0.3, 如果你自己需要高精度，自己调整**。
@@ -321,6 +324,7 @@ phono -m mode=q2r qpoints='6 6 6' core=1 npool=1 queue=local
 phono -m mode=phonodos core=1 npool=1 queue=local qpoints='8 8 8' ndos=500 
 ```
 
+
 ####  <span style="color:green"> 处理出投影到每种元素的phonodos，并且会输出一个文件phdos_proj2eles.csv用来绘制投影态密度
 ```shell
 phono -m mode=phonodosdata core=1 queue=local
@@ -508,7 +512,85 @@ grep DOS elph.inp_lambda.10
 
 **这两个文件中每一个展宽el_ph_sigma值对应的DOS和费米能级都一模一样。如果不一样的话，可能是你在算某一个q点时scffit.in和scf.in用的都是相同的degauss值与其它的不同导致。**
 
-处理电荷屏蔽常数为0.1和0.13,得到 $\lambda$ 和 $\omega_{log}$ 并且输出一个文件：w_alpha2f_lambda.csv 可以用来绘制alpha-lambda的函数图像
+####  <span style="color:green"> 3. 解读声子态密度计算后得到的a2F.dos*文件。我们以H3S的a2F.dos1为例说明文件的含义
+
+**H3S的原胞内有4个原子，所以其声子谱总共有12个振动模式。在a2F.dos1文件中除去第一列和第二列, 剩下的列数应该是12列，总共有14列。不信的话，你可以自己数一数。**
+
+**所以：如果你想看每种元素对谱函数a2F的贡献，可以按照scf.in中元素顺序，依次求和，就可以获得每种元素的a2F。**
+
+```shell
+ 
+ # Eliashberg function a2F (per both spin)
+ #  frequencies in Rydberg  
+ # DOS normalized to E in Rydberg: a2F_total, a2F(mode) 
+
+col1:频率      col2:总a2f    col3:H1       col4:H1        col5:H1       col6:H2        col7:H2        col8:H2       col9:H3       col10:H3       col11:H3       col12:S1       col13:S1       col14:S1
+# 单位:里德伯Ry      无单位(后面列的同样没有单位)   
+0.159727E-04    0.204760E-07    0.109697E-07    0.335915E-08    0.614710E-08    0.000000E+00    0.000000E+00    0.000000E+00    0.000000E+00    0.000000E+00    0.000000E+00    0.000000E+00    0.000000E+00    0.000000E+00
+0.479190E-04    0.552867E-06    0.296183E-06    0.907015E-07    0.165982E-06    0.000000E+00    0.000000E+00    0.000000E+00    0.000000E+00    0.000000E+00    0.000000E+00    0.000000E+00    0.000000E+00    0.000000E+00
+0.798652E-04    0.255958E-05    0.137122E-05    0.419918E-06    0.768447E-06    0.000000E+00    0.000000E+00    0.000000E+00    0.000000E+00    0.000000E+00    0.000000E+00    0.000000E+00    0.000000E+00    0.000000E+00
+0.111811E-03    0.702351E-05    0.376262E-05    0.115226E-05    0.210863E-05    0.000000E+00    0.000000E+00    0.000000E+00    0.000000E+00    0.000000E+00    0.000000E+00    0.000000E+00    0.000000E+00    0.000000E+00
+0.143758E-03    0.149275E-04    0.799694E-05    0.244898E-05    0.448162E-05    0.000000E+00    0.000000E+00    0.000000E+00    0.000000E+00    0.000000E+00    0.000000E+00    0.000000E+00    0.000000E+00    0.000000E+00
+......
+......
+
+```
+
+####  <span style="color:green"> 4. 解读alpha2F.dat 
+
+**还是以H3S为例说明。它是在计算lambda.in这一步时被处理出来的一个文件，如果你的动力学矩阵有虚频，那么这个文件的内容将全部是NaN.**
+
+```shell
+# col1: 频率，单位时THz
+# 之后的列都是各个展宽对于的总谱函数a2f. 展宽数以及展宽宽度取决于你的ph.in文件中参数设置
+ E(THz)     0.005     0.010     0.015     0.020     0.025     0.030     0.035     0.040     0.045     0.050                                                                          
+  0.0000  -0.00000  -0.00000  -0.00000  -0.00000  -0.00000  -0.00000  -0.00000  -0.00000  -0.00000  -0.00000
+  0.3166  -0.00001  -0.00001  -0.00002  -0.00002  -0.00002  -0.00002  -0.00002  -0.00002  -0.00002  -0.00002
+  0.6332  -0.00013  -0.00018  -0.00021  -0.00023  -0.00023  -0.00024  -0.00024  -0.00024  -0.00024  -0.00023
+  0.9497  -0.00056  -0.00070  -0.00079  -0.00083  -0.00085  -0.00086  -0.00086  -0.00085  -0.00085  -0.00084
+  1.2663   0.00020   0.00101   0.00135   0.00152   0.00162   0.00169   0.00172   0.00174   0.00174   0.00173
+  1.5829   0.00584   0.00864   0.01015   0.01087   0.01129   0.01151   0.01158   0.01156   0.01148   0.01138
+  1.8995   0.01644   0.01555   0.01631   0.01667   0.01675   0.01667   0.01648   0.01625   0.01600   0.01576
+  2.2161   0.02681   0.01982   0.01865   0.01814   0.01745   0.01671   0.01602   0.01541   0.01490   0.01448
+  2.5327   0.03587   0.03113   0.03035   0.03002   0.02910   0.02796   0.02690   0.02598   0.02521   0.02458
+  2.8492   0.03952   0.03993   0.03987   0.03954   0.03866   0.03768   0.03682   0.03612   0.03555   0.03515
+```
+
+
+**处理电荷屏蔽常数为0.1和0.13,得到 $\lambda$ 和 $\omega_{log}$ 并且输出一个文件：w_alpha2f_lambda.csv 可以用来绘制alpha-lambda的函数图像**
+
+####  <span style="color:green"> 4. 解读ALPHA2F.OUT 
+
+**ALPHA2F.OUT的第一列的单位是hartree，所以这里设计单位转化。有两种获得方法：**
+
+**第1种：通过a2F.dos*获得：**
+```shell
+# a2F.dos5里面频率的单位是Ry, 转化为hartree需要除以2
+file=a2F.dos5
+sed '1,5d' $file | sed '/lambda/d' | awk {print $1/2, $2} > ALPHA2F.OUT
+```
+
+**第2种：通过alpha2f.dat获得：**
+```shell
+# alpha2f.dat里面频率的单位是Thz, 转化为hartree需要除以6579.684
+# $6代表选择第6列也就是第5个展宽（因为第一列是频率）
+sed '1,1d' alpha2f.dat | awk '{print $1/6579.684, $6}' ALPHA2F.OUT
+```
+
+```shell
+# 第一列代表频率，单位是hartree
+# 第二列代表总谱函数a2f,
+9.306e-06 0.363609E-06
+2.82051e-05 0.983660E-05
+4.71043e-05 0.455576E-04
+6.60035e-05 0.125031E-03
+8.49025e-05 0.265761E-03
+0.000103801 0.485253E-03
+0.000122701 0.801010E-03
+0.0001416 0.123654E-02
+0.000160499 0.189306E-02
+0.000179399 0.302340E-02
+```
 
 ```shell
 # 根据真实费米面选择
@@ -524,6 +606,7 @@ sc -m mode=Tc core=1 npool=1 queue=local temperature_steps=100 a2fdos=True alpha
 # 当然如果你不满意程序给你选择的gaussid以及gauss, 你也可以自己指定
 qe_main.py -i relax.out -j bash sc -m mode=Tc core=1 npool=1 queue=local temperature_steps=100 a2fdos=True alpha2fdat=False broaden=0.5 smearing_method=1 gaussid=10 gauss=0.05
 ```
+
 
 ```shell
 # 指定最高频率
@@ -564,6 +647,7 @@ w_alpha2f_lambda.csv 中的第一列是频率，其单位是经过转化的$cm^{
 ####  <span style="color:green"> **Eliashberg方法计算Tc需要INPUT文件中只需设置两个参数**
 1. 前者是screen_constant，一般取0.10~0.13；
 2. 后者是temperature_steps，表示对ntemp个温度点自洽求解Eliashberg方程，得到带隙Δ关于温度T的曲线(该程序首先处理McMillan方程，得到超导临界温度tc作为参考值，然后在温度区间[tc/6, tc*3]中线性插入ntemp个温度点。ntemp一般取40~100即可，也可以更大，建议根据体系差异灵活调控)。
+
 ####  <span style="color:green"> **Eliashberg方法计算得到的ELIASHBERG_GAP_T.OUT文件就是能隙方程关于温度的关系，第一列是温度，第二列是能隙（能隙的单位是hartree, 所以如果你想要转化为meV，就需要: 第二列 * 27211.38602)**
 1 Hartree = 27.21138602 eV 
 
@@ -595,6 +679,7 @@ top_freq(最高声子频率)  deguass(展宽宽度取0.12)  smearing_method(展�
  elph_dir/elph.inp_lambda.9    
 screen_constant(库伦屏蔽常数0.1~0.13)
 ```
+
 ###  <span style="color:yellow"> 计算动力学矩阵元，获得高对称路径下的声子振动频率和声子线宽
 
 <span style="color:green"> **这一步会覆盖上一步计算声子态密度时产生的文件gam.lines 和 xxx.freq.qp 和 xxx.freq 三个文件。所以一定要确保计算完声子的态密度之后将声子态密度数据处理出来。**

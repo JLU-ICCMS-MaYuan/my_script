@@ -626,10 +626,11 @@ class qephono_inputpara(qe_inputpara):
             print("\nNote: --------------------")
             print(f"    Sorry, scffit.in doesn't exist !")
             sys.exit(1) 
-        shlorder = "sed -n '/ATOMIC_POSITIONS (crystal)/,/K_POINTS {automatic}/ {//!p}' " + f"{scffitin_path}"
-        elements_coords = os.popen(shlorder).readlines()
-        elements = [ele.split()[0] for ele in elements_coords]
-
+        shlorder = "sed -n '/ATOMIC_SPECIES/,/CELL_PARAMETERS {angstrom}/ {//!p}' " + f"{scffitin_path}"
+        elements_strings = os.popen(shlorder).readlines()
+        elements = [ele.split()[0] for ele in elements_strings]
+        input(elements_strings)
+        input(elements)
         phonondos = pd.read_table(
             phonon_dos_path,
             skiprows=1,  # skiprows=1：跳过文件的第一行，即不将其作为数据的一部分进行读取。
