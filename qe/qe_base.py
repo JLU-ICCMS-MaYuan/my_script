@@ -295,11 +295,11 @@ class qe_base:
             # 建立元素列表elementlist与分数坐标的一一对应关系
             fractional_sites = list(zip(element_names, coordnates))
             # 按照self.species的元素顺序去写原子坐标，因为赝势的顺序就是self.species的顺序
-            # 这样就可以保证赝势的顺序和原子坐标的顺序一致！！！！
-            fractional_sites = sorted(key=lambda item: self.species.index(item[0]))
+            # 这样就可以保证赝势的顺序pp_order和原子坐标的顺序一致！！！！
+            pp_order = [spe.name for spe in self.species]
+            fractional_sites = sorted(fractional_sites, key=lambda item: pp_order.index(item[0]))
             fractional_sites = [
-                '{:<4}   {}'.format(ele, site.strip("\n")) for ele, site in zip(element_names, coordnates)]
-            
+                '{:<4}   {}'.format(ele, site.strip("\n")) for ele, site in fractional_sites]
             return fractional_sites
         else:
             print("You didn't specify relax.out as inputfile")
