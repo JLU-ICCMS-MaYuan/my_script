@@ -540,6 +540,8 @@ col1:频率      col2:总a2f    col3:H1       col4:H1        col5:H1       col6:
 
 **还是以H3S为例说明。它是在计算lambda.in这一步时被处理出来的一个文件，如果你的动力学矩阵有虚频，那么这个文件的内容将全部是NaN.**
 
+w_alpha2f_lambda.csv 可以用来绘制alpha-lambda的函数图像，它是在使用sc模块计算Tc时通过处理alpha2F.dat获得的。因为alpha2F.dat有多个展宽对应的a2f，所以需要根据实际情况选择一个收敛的展宽值。
+
 ```shell
 # col1: 频率，单位时THz
 # 之后的列都是各个展宽对于的总谱函数a2f. 展宽数以及展宽宽度取决于你的ph.in文件中参数设置
@@ -556,8 +558,6 @@ col1:频率      col2:总a2f    col3:H1       col4:H1        col5:H1       col6:
   2.8492   0.03952   0.03993   0.03987   0.03954   0.03866   0.03768   0.03682   0.03612   0.03555   0.03515
 ```
 
-
-**处理电荷屏蔽常数为0.1和0.13,得到 $\lambda$ 和 $\omega_{log}$ 并且输出一个文件：w_alpha2f_lambda.csv 可以用来绘制alpha-lambda的函数图像**
 
 ####  <span style="color:green"> 4. 解读ALPHA2F.OUT 
 
@@ -592,6 +592,7 @@ sed '1,1d' alpha2f.dat | awk '{print $1/6579.684, $6}' ALPHA2F.OUT
 0.000179399 0.302340E-02
 ```
 
+**处理电荷屏蔽常数为0.1和0.13,得到 $\lambda$ 和 $\omega_{log}$ 并且输出一个文件**
 ```shell
 # 根据真实费米面选择
 sc -m mode=Tc core=1 npool=1 queue=local temperature_steps=100 a2fdos=True alpha2fdat=False broaden=0.5 smearing_method=1 nef=xxxxx

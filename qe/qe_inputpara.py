@@ -407,6 +407,20 @@ class qephono_inputpara(qe_inputpara):
             os.makedirs(elph_dir_path)
         
         for i in range(self.qirreduced):
+
+            src_split_in   = os.path.join(directory, str(i+1), "split_ph.in")
+            dst_split_in   = os.path.join(directory, "split_ph.in."+str(i+1))
+            src_split_out  = os.path.join(directory, str(i+1), "split_ph.out")
+            dst_split_out  = os.path.join(directory, "split_ph.out."+str(i+1))
+            if os.path.exists(src_split_in) and os.path.exists(src_split_out):
+                shutil.copy(src_split_in, dst_split_in)
+                print(f"split_ph.in copy finished \n {src_split_in}")
+                shutil.copy(src_split_out, dst_split_out)
+                print(f"split_ph.out copy finished \n {src_split_in}")
+            else:
+                print(f"In {str(i+1)}, split_ph.in or split_ph.out doesn't exist ! Exit the program!")
+                sys.exit(1)
+
             src_elph_NoNum = os.path.join(directory, str(i+1), "elph_dir", "elph.inp_lambda.1")
             src_elph_Num   = os.path.join(directory, str(i+1), "elph_dir", "elph.inp_lambda."+str(i+1))
             dst_elph = os.path.join(elph_dir_path, "elph.inp_lambda."+str(i+1))
@@ -434,7 +448,6 @@ class qephono_inputpara(qe_inputpara):
             dst_dyn    = os.path.join(directory, self.system_name+".dyn"+str(i+1))
             shutil.copy(src_dyn, dst_dyn)
             print(f"{self.system_name}.dyn copy finished {dst_dyn}")
-
 
 
             for j in range(51, 61):
@@ -621,16 +634,17 @@ class qephono_inputpara(qe_inputpara):
             sys.exit(1)
 
         # 获得元素的顺序 以及 每种元素的原子个数
+        print("\nNote: --------------------")
+        print("    Get the order of elements by the order of atomic coords in `scffit.in`")
+        print("    The order of elements in `***_phono.dos` is consistent with the order of `ATOMIC_SPECIES` in `scffit.in`")
+        print("    So, for guaranteeing the consistency of order,  the order of atomic coords in `scffit.in` has to be same as the order of `ATOMIC_SPECIES` in `scffit.in`")
         scffitin_path = self.work_path.joinpath("scffit.in")
         if not scffitin_path.exists():
-            print("\nNote: --------------------")
             print(f"    Sorry, scffit.in doesn't exist !")
             sys.exit(1) 
-        shlorder = "sed -n '/ATOMIC_SPECIES/,/CELL_PARAMETERS {angstrom}/ {//!p}' " + f"{scffitin_path}"
-        elements_strings = os.popen(shlorder).readlines()
-        elements = [ele.split()[0] for ele in elements_strings]
-        input(elements_strings)
-        input(elements)
+        shlorder = "sed -n '/ATOMIC_POSITIONS (crystal)/,/K_POINTS {automatic}/ {//!p}' " + f"{scffitin_path}"
+        elements_coords = os.popen(shlorder).readlines()
+        elements = [ele.split()[0] for ele in elements_coords]
         phonondos = pd.read_table(
             phonon_dos_path,
             skiprows=1,  # skiprows=1：跳过文件的第一行，即不将其作为数据的一部分进行读取。
