@@ -20,7 +20,8 @@ for root, dirs, files in os.walk("."):
             ourcar_path = system_name.joinpath("OUTCAR")
             # 抑制错误消息
             converge = os.popen(f'grep -s "FREE ENERGIE OF THE ION-ELECTRON SYSTEM" {ourcar_path}').read()
-            if converge:
+            kbstar   = os.popen(f'grep -s "in kB  \*"  {ourcar_path}').read()
+            if converge and not kbstar:
                 nelm = os.popen(f'grep -s "NELM   =" {ourcar_path} ' + " | cut -d ';' -f 1 | cut -d '=' -f 2 ").read()
                 iteration = os.popen(f'grep -s "Iteration" {ourcar_path} | wc -l').read() # 如果没有找到指定内容不输出错误结果。
                 try:

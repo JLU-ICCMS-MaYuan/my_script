@@ -12,6 +12,6 @@ print("\n")
 
 rcore = np.array(eval(sys.argv[1]))
 v = [4*np.power(r*0.529, 3)*np.pi/3.0 for r in rcore]
-volume = np.asarray(v).sum(axis=0)/len(rcore)
+volume = 1.3*np.asarray(v).sum(axis=0)/len(rcore)
 print("volume/atom=%.3f"%(volume))
 

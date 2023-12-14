@@ -150,6 +150,24 @@ vi random_matrix.f90
 #defineUNIFORM DISTRIB
 ```
 
+7. 报错 q-mesh breaks symmetry。这是因为读入结构精度的问题。目前qe_main.py读入结构的晶格矩阵和坐标的方式有多种，下面贴出源码一一解答：
+```python
+# 方式一: 如果`-i 输入结构文件`是relax.out， 那么就将relax.out中的坐标和晶格按照字符串读进来
+if self.input_file_path.name == "relax.out" and self.input_file_path.exists():
+    ...
+    ...
+# 方式二: 如果`-i 输入结构文件`是POSCAR, CONTCAR, *.vasp， 那么就将其中的坐标和晶格按照字符串读进来
+elif self.input_file_path.name == "POSCAR" or self.input_file_path.name == "CONTCAR" or ".vasp" in self.input_file_path.name:
+    ...
+    ...
+# 方式三: 如果`-i 输入结构文件`是除上述提到的文件名命名的结构文件，比如:scffit.out, scffit.in, scf.out, scf.in, ph.in, ph.out, 那么就用pymatgen的方式读入该输入文件
+else:
+    ...
+    ...
+```
+
+8. 报错：Attempting to use an MPI routine before initializing MPICH。当你在执行/work/home/may/software/qe-7.1/bin/lambda.x <lambda.in > lambda.out命令时，出现了上述错误，推测原因可能是你的某一个q点的电声耦合文件elph.inp_lambda.*的DOS和EF值和其它文件的不一样，所以lambda.in计算失败导致。  **需要你仔细检查是不是该q点计算时scffit.in的参数与其它q点的不一致导致。因为有时候我们在算某一个q点的时候scffit.in中的nbnd设置的不够大，导致该q点的计算不收敛，为了加速收敛，手动修改了其nbnd，导致算出来的该q点的DOS和EF与其它q点的有微小的不一致。**
+
 
 
 ####  <span style="color:green"> 不分q点计算声子

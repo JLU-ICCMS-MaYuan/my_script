@@ -42,7 +42,10 @@ virial tensors < 1meV/atom
 
 ### <span style="color:yellow">  训练模型命令：
 ```shell
+# deepkit的命令
 dp train input.json
+# deepgen的命令
+nohup dpgen run initVAY.json nn-machine.json > 1.log &
 ```
 
 ###  <span style="color:yellow"> 远程提交作业

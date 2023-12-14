@@ -150,6 +150,10 @@ grep "T= " OSZICAR | awk '{print $1 " " $3 " " }' > temperature_energy.dat
 
 # 如何计算RDF?
 
+## 网络帖子
+https://www.bilibili.com/read/cv27581963/?jump_opus=1
+
+
 ## MSD的物理意义
 
 ## RDF的计算方法
