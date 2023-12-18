@@ -1,4 +1,4 @@
-# Deep+结构预测
+# deepkit+结构预测
 
 ##  <span style="color:red">  0. 准备目录
 
@@ -44,8 +44,7 @@ virial tensors < 1meV/atom
 ```shell
 # deepkit的命令
 dp train input.json
-# deepgen的命令
-nohup dpgen run initVAY.json nn-machine.json > 1.log &
+log &
 ```
 
 ###  <span style="color:yellow"> 远程提交作业
