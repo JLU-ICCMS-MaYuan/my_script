@@ -274,20 +274,29 @@ class vasp_base:
 
         print(
             "please input the mode you want, just even input Number like 1 or 2\n",
-            "'1  all_points'\n",
-            "'2  main_points'\n",
-            "Nothing to input, directly press ENTER, the default is main_points\n"
+            "0:  all_points:\n",
+            "1:  first_group_points\n",
+            "2:  second_group_points\n",
+            "n:  n^Th_group_points\n",
+            "1 2: first_group_points and second_group_points"
+            "...."
+            "Nothing to input, directly press ENTER, the default is all_points\n"
             )
-        high_symmetry_type = input()
+        try:
+            high_symmetry_type = list(map(int, input().split())) #将输入的整数字符串按照空格划分成列表并分别转化为整数类型并再转化为列表
+        except:
+            print("what you input is not an integer number, So use the `0:  all_points`")
+            high_symmetry_type = [0]
 
-        if not high_symmetry_type:
-            high_symmetry_type = "2" # default
+        path_name_list = []
         if "," in pstring:
-            if high_symmetry_type == "1":
+            if 0 in high_symmetry_type:
                 path_name_list = list(chain.from_iterable(_plist))
                 print(f"the choosed high symmetry points path is \n {path_name_list}")
-            elif high_symmetry_type == "2":
-                path_name_list = max(_plist, key=len)
+            elif 0 not in high_symmetry_type:
+                # path_name_list = max(_plist, key=len)
+                for hst in high_symmetry_type:
+                    path_name_list.extend(_plist[hst-1])
                 print(f"the choosed high symmetry points path is \n {path_name_list}")
         else:
             path_name_list = [ pp for pp in pstring]
