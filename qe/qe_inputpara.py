@@ -170,8 +170,8 @@ class qe_inputpara(qe_base):
         pstring = lat.special_path
 
         # 获得高对称点路径
-        plist = [[ p for p in pp] for pp in pstring.split(",")]
-        print(f"the high symmetry points path is {plist}")
+        _plist  = [[ p for p in pp if not p.isdigit()] for pp in pstring.split(",")]
+        print(f"the high symmetry points path is {_plist}")
         print(
             "please input the mode you want, just even input Number like 1 or 2\n",
             "'1  all_points'\n",
@@ -183,10 +183,10 @@ class qe_inputpara(qe_base):
             high_symmetry_type = "2" # default
         if "," in pstring:
             if high_symmetry_type == "1":
-                path_name_list = list(chain.from_iterable(plist))
+                path_name_list = list(chain.from_iterable(_plist))
                 print(f"the choosed high symmetry points path is \n {path_name_list}")
             elif high_symmetry_type == "2":
-                path_name_list = max(plist, key=len)
+                path_name_list = max(_plist, key=len)
                 print(f"the choosed high symmetry points path is \n {path_name_list}")
         else:
             path_name_list = [ pp for pp in pstring]

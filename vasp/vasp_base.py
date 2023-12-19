@@ -265,10 +265,12 @@ class vasp_base:
         from itertools import chain
 
         ltype   = ase_type.cell.get_bravais_lattice()
+        print(f"lattice type: \n{ltype}")
         pstring = ltype.special_path
-        _plist  = [[ p for p in pp if not p.isdigit()] for pp in pstring.split(",")]
+        print(f"the high symmetry points path: \n{pstring}")
 
-        print(f"the high symmetry points path is {_plist}")
+        _plist  = [[ p for p in pp if not p.isdigit()] for pp in pstring.split(",")]
+        print(f"the high symmetry points path: \n{_plist}")
 
         print(
             "please input the mode you want, just even input Number like 1 or 2\n",
