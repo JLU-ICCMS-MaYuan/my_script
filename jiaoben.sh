@@ -1,0 +1,40 @@
+vasp_main.py -i CONTCAR -j slurm -p 100 relax -m mode=rv4 core=xxx ismear=0 sigma=0.01 ediff=1e-8 ediffg=-0.001 encut=900 kspacing=0.18 queue=lhy
+
+vasp_main.py -i CONTCAR -j slurm -p 100 -w 100 relax -m mode=rv4 core=xxx ismear=0 sigma=0.01 ediff=1e-8 ediffg=-0.001 encut=900 kspacing=0.18 queue=lhy
+
+vasp_main.py -i CONTCAR -j slurm -w 100-eletron  eletron -m mode='scf eledos eband' core=xxx encut=900 ediff=1e-8 ediffg=-0.001 kspacing=0.18 ismear=0 sigma=0.05  queue=lhy
+
+qe_main.py -i origin-CONTCAR -j slurm -p 100 prepare -m mode=preparescf ecutwfc=80 ecutrho=960 degauss=0.02 qpoints='l m n' core=xxx npool=4 queue=lhy
+
+qe_main.py -i CONTCAR -j slurm -p 100 -w qe/100-Tc  prepare -m mode=prepareall ecutwfc=80 ecutrho=960 qpoints='5 5 5'  degauss=0.02 core=xxx npool=4 queue=lhy
+
+qe_main.py -i CONTCAR -j slurm -p 100 -w qe/100-Tc  prepare -m mode=prepareall ecutwfc=80 ecutrho=960 qpoints='l m n'  degauss=0.02 core=xxx npool=4 queue=lhy
+
+qe_main.py -i CONTCAR -j slurm -p 100 prepare -m mode=prepare ecutwfc=80 ecutrho=960 qpoints='l m n'  degauss=0.02 core=xxx npool=4 queue=lhy
+
+qe_main.py -i CONTCAR -j slurm -p 100 scf -m mode=scffit ecutwfc=80 ecutrho=960 kpoints_dense='20 20 16'  degauss=0.02 core=xxx npool=4 queue=lhy
+
+qe_main.py -i CONTCAR -j slurm -p 100 scf -m mode=scf    ecutwfc=80 ecutrho=960 kpoints_sparse='10 10 8'  degauss=0.02 core=xxx npool=4 queue=lhy
+
+qe_main.py -i CONTCAR -j bash phono -m mode=nosplit dyn0_flag=True core=1 queue=lhy qpoints='l m n'
+
+qe_main.py -i CONTCAR -j slurm phono -m mode=split_assignQ degauss=0.02 ecutwfc=80 ecutrho=960  core=xxx npool=4
+
+qe_main.py -i CONTCAR -j bash phono -m mode=q2r core=1 queue=lhy
+
+qe_main.py -i CONTCAR -j bash phono -m mode=merge core=1
+
+qe_main.py -i CONTCAR -j bash phono -m mode=phonodos core=1 npool=1 queue=local qpoints='10 10 8' ndos=500
+
+qe_main.py -i CONTCAR -j bash phono -m mode=phonodosdata core=1 queue=local
+
+qe_main.py -i CONTCAR -j bash phono -m mode=matdyn qpoints='8 8 8' core=1 npool=1 queue=local qinserted=50
+
+qe_main.py -i CONTCAR -j bash phono -m mode=phonobanddata core=1
+
+qe_main.py -i CONTCAR -j bash sc -m mode=Tc core=1 npool=1 queue=local temperature_steps=100 a2fdos=True alpha2fdat=False broaden=0.5 smearing_method=1  gauss=0.035 gaussid=7
+
+
+for i in {1..18}; do cd $i; sbatch s5_PhAssignQ.sh; cd ..; done
+for i in {1..18}; do cd $i; echo $i; pl $i; cd ..; done
+for i in {1..18}; do cd $i; echo $i; ls elph_dir; cd ..; done
