@@ -51,7 +51,7 @@ structuregenerator/psolib/lib_so/*
 qe/eliashberg/eliashberg.x
 qe/eliashberg/modmain.mod
 qe/eliashberg/mpi.mod
-qe/eliashberg/modmain.mod
+qe/eliashberg/modphonon.mod
 qe/eliashberg/modmpi.mod
 structuregenerator/psolib/fortran_src/LegacyFingerPrint/.f2py_f2cmap
 structuregenerator/psolib/fortran_src/LegacyFingerPrint/src.macosx-10.9-x86_64-3.9/_f90LegacyFingerPrintmodule.c
