@@ -6,8 +6,6 @@ vasp_main.py -i CONTCAR -j slurm -w 100-eletron  eletron -m mode='scf eledos eba
 
 qe_main.py -i origin-CONTCAR -j slurm -p 100 prepare -m mode=preparescf ecutwfc=80 ecutrho=960 degauss=0.02 qpoints='l m n' core=xxx npool=4 queue=lhy
 
-qe_main.py -i CONTCAR -j slurm -p 100 -w qe/100-Tc  prepare -m mode=prepareall ecutwfc=80 ecutrho=960 qpoints='5 5 5'  degauss=0.02 core=xxx npool=4 queue=lhy
-
 qe_main.py -i CONTCAR -j slurm -p 100 -w qe/100-Tc  prepare -m mode=prepareall ecutwfc=80 ecutrho=960 qpoints='l m n'  degauss=0.02 core=xxx npool=4 queue=lhy
 
 qe_main.py -i CONTCAR -j slurm -p 100 prepare -m mode=prepare ecutwfc=80 ecutrho=960 qpoints='l m n'  degauss=0.02 core=xxx npool=4 queue=lhy
