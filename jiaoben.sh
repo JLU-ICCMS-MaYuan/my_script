@@ -4,7 +4,7 @@ vasp_main.py -i CONTCAR -j slurm -p 100 -w 100 relax -m mode=rv4 core=xxx ismear
 
 vasp_main.py -i CONTCAR -j slurm -w 100-eletron  eletron -m mode='scf eledos eband' core=xxx encut=900 ediff=1e-8 ediffg=-0.001 kspacing=0.18 ismear=0 sigma=0.05  queue=lhy
 
-qe_main.py -i origin-CONTCAR -j slurm -p 100 prepare -m mode=preparescf ecutwfc=80 ecutrho=960 degauss=0.02 qpoints='l m n' core=xxx npool=4 queue=lhy
+qe_main.py -i CONTCAR -j slurm -p 100 prepare -m mode=preparescf ecutwfc=80 ecutrho=960 degauss=0.02 qpoints='l m n' core=xxx npool=4 queue=lhy
 
 qe_main.py -i CONTCAR -j slurm -p 100 -w qe/100-Tc  prepare -m mode=prepareall ecutwfc=80 ecutrho=960 qpoints='l m n'  degauss=0.02 core=xxx npool=4 queue=lhy
 
