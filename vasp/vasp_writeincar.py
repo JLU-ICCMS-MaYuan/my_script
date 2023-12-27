@@ -225,7 +225,8 @@ class vasp_writeincar:
         incar_filepath = os.path.join(incar_dirpath, "INCAR_4")
         with open(incar_filepath, "w") as incar:
             incar.write("ISTART   = 0    \n")   
-            incar.write("ICHARG   = 2    \n")   
+            incar.write("ICHARG   = 2    \n")
+            incar.write("ISYM     = {}   \n".format(str(self.isym))) 
             incar.write("ENCUT    = {}   \n".format(str(self.encut)))        
             incar.write("PREC     = A    \n")
             incar.write("SYMPREC  = {}   \n".format(str(self.symprec)))
@@ -249,7 +250,8 @@ class vasp_writeincar:
         incar_filepath = os.path.join(incar_dirpath, "INCAR")
         with open(incar_filepath, "w") as incar:
             incar.write("ISTART   = 0    \n")   
-            incar.write("ICHARG   = 2    \n")   
+            incar.write("ICHARG   = 2    \n")  
+            incar.write("ISYM     = {}   \n".format(str(self.isym))) 
             incar.write("ENCUT    = {}   \n".format(str(self.encut)))        
             incar.write("PREC     = A    \n")
             incar.write("SYMPREC  = {}   \n".format(str(self.symprec)))
@@ -323,7 +325,8 @@ class vasp_writeincar:
         incar_filepath = os.path.join(incar_dirpath, "INCAR")
         with open(incar_filepath, "w") as incar:
             incar.write("ISTART   = 0      \n")   
-            incar.write("ICHARG   = 2      \n")   
+            incar.write("ICHARG   = 2      \n")  
+            incar.write("ISYM     = {}     \n".format(str(self.isym))) 
             incar.write("ENCUT    = {}     \n".format(self.encut))       
             incar.write("PREC     = Accurate\n")
             incar.write("ISMEAR   = {}     \n".format(self.ismear))
@@ -361,6 +364,7 @@ class vasp_writeincar:
         with open(incar_filepath, "w") as incar:
             incar.write("ISTART = 0            \n")
             incar.write("ICHARG = 11           \n")
+            incar.write("ISYM     = {}         \n".format(str(self.isym))) 
             incar.write("ENCUT  = {}           \n".format(self.encut))       
             incar.write("PREC   = Accurate     \n") 
             incar.write("NELM   = {}           \n".format(self.nelm))
@@ -379,7 +383,7 @@ class vasp_writeincar:
             incar.write("NBANDS = {}           \n".format(self.nbands))
             incar.write("LWAVE  = .FALSE.      \n")                 
             incar.write("LCHARG = .FALSE.      \n")           
-            incar.write("ADDGRID= .TRUE.      \n")   
+            incar.write("ADDGRID= .TRUE.       \n")   
             incar.write("#RWIGS = 1.54 0.82    \n")     
             incar.write("LHYPERFINE = .FALSE.  \n")                      
             incar.write("NPAR   = {}           \n".format(self.npar))          
@@ -391,6 +395,7 @@ class vasp_writeincar:
         with open(incar_filepath, "w") as incar:
             incar.write("ISTART  = 1            \n") # if a WAVECAR file exists
             incar.write("ICHARG  = 11           \n") # 从CHGCAR读取给定电荷密度的特征值(用于带结构图)或状态密度(DOS)。自洽CHGCAR文件必须事先通过一个跨越整个布里渊区的k点网格进行完全自洽计算来确定。
+            incar.write("ISYM    = {}           \n".format(str(self.isym))) 
             incar.write("ENCUT   = {}           \n".format(self.encut))           
             incar.write("PREC    = Accurate     \n") 
             incar.write("ISMEAR  = -5      # For DOS\n")
@@ -408,11 +413,11 @@ class vasp_writeincar:
             incar.write("LREAL   = {}           \n".format(self.lreal))
             incar.write("NBANDS  = {}           \n".format(self.nbands))
             incar.write("LWAVE   = .FALSE.      \n")                 
-            incar.write("ADDGRID = .TRUE.      \n")   
+            incar.write("ADDGRID = .TRUE.       \n")   
             incar.write("#RWIGS  = 1.54 0.82    \n")     
             incar.write("LHYPERFINE = .FALSE.   \n")                      
-            incar.write("NPAR    = {}            \n".format(self.npar))          
-            incar.write("NEDOS   = {}            \n".format(self.nedos)) # NEDOS指定DOS被评估的网格点的数量
+            incar.write("NPAR    = {}           \n".format(self.npar))          
+            incar.write("NEDOS   = {}           \n".format(self.nedos)) # NEDOS指定DOS被评估的网格点的数量
             incar.write("LORBIT  = 11           \n") # 输出分波态密度信息
             incar.write("#EMIN   = -10          \n") # 此为DOS图的能量范围，根据能带的能量范围来决定min和max是多少。
             incar.write("#EMAX   =  10          \n") 

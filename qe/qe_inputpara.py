@@ -226,8 +226,10 @@ class qe_inputpara(qe_base):
         total_dist = 0
         for idx in range(1, len(path_name_coords)):
             current_name   = path_name_coords[idx][0]
-            current_coords = np.dot(self.reciprocal_plattice, path_name_coords[idx][1])
-            last_coords    = np.dot(self.reciprocal_plattice, path_name_coords[idx-1][1])
+            # current_coords = np.dot(self.reciprocal_plattice, path_name_coords[idx][1])
+            # last_coords    = np.dot(self.reciprocal_plattice, path_name_coords[idx-1][1])
+            current_coords = np.dot(path_name_coords[idx][1],   self.reciprocal_plattice)
+            last_coords    = np.dot(path_name_coords[idx-1][1], self.reciprocal_plattice)
             dist = np.linalg.norm(current_coords-last_coords, 2)
             total_dist += dist
             projected_path_name_coords.append([current_name, total_dist])
