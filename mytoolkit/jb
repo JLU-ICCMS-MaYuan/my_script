@@ -12,11 +12,9 @@ qe_main.py -i CONTCAR -j slurm -p 100 prepare -m mode=preparescf ecutwfc=80 ecut
 
 qe_main.py -i CONTCAR -j slurm -p 100 -w qe/100-Tc  prepare -m mode=prepareall ecutwfc=80 ecutrho=960 qpoints='l m n'  degauss=0.02 core=xxx npool=4 queue=lhy
 
-qe_main.py -i CONTCAR -j slurm -p 100 prepare -m mode=prepare ecutwfc=80 ecutrho=960 qpoints='l m n'  degauss=0.02 core=xxx npool=4 queue=lhy
-
 qe_main.py -i CONTCAR -j slurm -p 100 scf -m mode=scffit ecutwfc=80 ecutrho=960 kpoints_dense='20 20 16'  degauss=0.02 core=xxx npool=4 queue=lhy
 
-qe_main.py -i CONTCAR -j slurm -p 100 scf -m mode=scf    ecutwfc=80 ecutrho=960 kpoints_sparse='10 10 8'  degauss=0.02 core=xxx npool=4 queue=lhy
+qe_main.py -i CONTCAR -j slurm -p 100 scf -m mode=scf ecutwfc=80 ecutrho=960 kpoints_sparse='10 10 8'  degauss=0.02 core=xxx npool=4 queue=lhy
 
 qe_main.py -i CONTCAR -j bash phono -m mode=nosplit dyn0_flag=True core=1 queue=lhy qpoints='l m n'
 
