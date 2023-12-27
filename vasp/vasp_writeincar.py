@@ -159,7 +159,8 @@ class vasp_writeincar:
         incar_filepath = os.path.join(incar_dirpath, "INCAR_1")
         with open(incar_filepath, "w") as incar:
             incar.write("ISTART   = 0    \n")   
-            incar.write("ICHARG   = 2    \n")   
+            incar.write("ICHARG   = 2    \n")
+            incar.write("ISYM     = {}   \n".format(str(self.isym))) 
             incar.write("ENCUT    = 350  \n")
             incar.write("PREC     = LOW  \n") 
             incar.write("NCORE    = 4    \n")         
@@ -181,7 +182,8 @@ class vasp_writeincar:
         incar_filepath = os.path.join(incar_dirpath, "INCAR_2")
         with open(incar_filepath, "w") as incar:
             incar.write("ISTART   = 0    \n")   
-            incar.write("ICHARG   = 2    \n")   
+            incar.write("ICHARG   = 2    \n")  
+            incar.write("ISYM     = {}   \n".format(str(self.isym))) 
             incar.write("ENCUT    = 400  \n")        
             incar.write("PREC     = Normal\n") 
             incar.write("NCORE    = 4    \n")         
@@ -203,7 +205,8 @@ class vasp_writeincar:
         incar_filepath = os.path.join(incar_dirpath, "INCAR_3")
         with open(incar_filepath, "w") as incar:
             incar.write("ISTART   = 0    \n")   
-            incar.write("ICHARG   = 2    \n")   
+            incar.write("ICHARG   = 2    \n")
+            incar.write("ISYM     = {}   \n".format(str(self.isym))) 
             incar.write("ENCUT    = 500  \n")        
             incar.write("PREC     = A    \n")
             incar.write("NCORE    = 4    \n")         
