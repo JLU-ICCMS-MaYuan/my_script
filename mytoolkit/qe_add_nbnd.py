@@ -22,8 +22,8 @@ with open("scf.in", 'r') as f3:
     lines3 = f3.readlines()
 
 if add_or_not(lines2) and add_or_not(lines3):
-    lines2.insert(10, " nbnd={},\n".format(nbnd))
-    lines3.insert(10, " nbnd={},\n".format(nbnd))
+    lines2.insert(11, " nbnd={},\n".format(nbnd))
+    lines3.insert(11, " nbnd={},\n".format(nbnd))
     with open("scffit.in", 'w') as f22:
         f22.writelines(lines2)
     with open("scf.in", 'w') as f33:
