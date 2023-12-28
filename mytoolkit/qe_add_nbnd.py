@@ -1,0 +1,32 @@
+#!/usr/bin/env python3
+
+import sys
+
+nbnd = sys.argv[1]
+
+def add_or_not(lines):
+    '''
+    True  表示 需要添加
+    False 表示 不需要添加
+    '''
+    for line in lines:
+        if 'nbnd' in line:
+            return False
+    else:
+        return True
+
+
+with open("scffit.in", 'r') as f2:
+    lines2 = f2.readlines()
+with open("scf.in", 'r') as f3:
+    lines3 = f3.readlines()
+
+if add_or_not(lines2) and add_or_not(lines3):
+    lines2.insert(10, " nbnd={},\n".format(nbnd))
+    lines3.insert(10, " nbnd={},\n".format(nbnd))
+    with open("scffit.in", 'w') as f22:
+        f22.writelines(lines2)
+    with open("scf.in", 'w') as f33:
+        f33.writelines(lines3)
+else:
+    print("You don't need to add `nbnd` it has existed")
