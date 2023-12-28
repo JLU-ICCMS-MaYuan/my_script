@@ -1,0 +1,30 @@
+  crystal axis:  
+  ( 0.5000 0.0000-0.6667)  
+  ( 0.2301 0.8586 0.0000)  
+  ( 0.5000 0.0000 0.6667)  
+
+  reciprocal axis:  
+  ( 1.0000-0.2679-0.7500)  
+  ( 0.0000 1.1647 0.0000)  
+  ( 1.0000-0.2679 0.7500)  
+
+  Omega (in a^3 units) =   0.572400425264291     
+
+
+   4  symmetry operations
+
+  1  0  0    0  0 -1   -1  0  0    0  0  1
+  0  1  0    0 -1  0    0 -1  0    0  1  0
+  0  0  1   -1  0  0    0  0 -1    1  0  0
+
+
+  k(  1)=(  0  0  0 ) --- weight=  1 |folds in point #  0
+  k(  2)=(  1  0  0 ) --- weight=  4 |folds in point #  0
+  k(  4)=(  0  1  0 ) --- weight=  2 |folds in point #  0
+  k(  5)=(  1  1  0 ) --- weight=  4 |folds in point #  0
+  k(  6)=(  2  1  0 ) --- weight=  4 |folds in point #  0
+  k( 11)=(  1  0  1 ) --- weight=  2 |folds in point #  0
+  k( 12)=(  2  0  1 ) --- weight=  2 |folds in point #  0
+  k( 14)=(  1  1  1 ) --- weight=  2 |folds in point #  0
+  k( 15)=(  2  1  1 ) --- weight=  4 |folds in point #  0
+  k( 17)=(  1  2  1 ) --- weight=  2 |folds in point #  0
