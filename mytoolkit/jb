@@ -35,8 +35,8 @@ qe_main.py -i CONTCAR -j bash phono -m mode=phonobanddata core=1
 qe_main.py -i CONTCAR -j bash sc -m mode=Tc core=1 npool=1 queue=local temperature_steps=100 a2fdos=True alpha2fdat=False broaden=0.5 smearing_method=1  gauss=0.035 gaussid=7
 
 
-for i in {1..18}; do cd $i; sbatch s5_PhAssignQ.sh; cd ..; done
-for i in {1..18}; do cd $i; echo $i; pl $i; cd ..; done
-for i in {1..18}; do cd $i; echo $i; ls elph_dir; cd ..; done
+for i in {1..18}; do cd \$i; sbatch s5_PhAssignQ.sh; cd ..; done
+for i in {1..18}; do cd \$i; echo \$i; pl \$i; cd ..; done
+for i in {1..18}; do cd \$i; echo \$i; ls elph_dir; cd ..; done
 
 "
