@@ -312,7 +312,9 @@ class qe_superconduct:
             print("\n")
 
     def backupfile(self, mu):
-        files = ['lambda.in', 'lambda.out', 'alpha2F.dat', 'INPUT', 'ALPHA2F.OUT', 'ELIASHBERG.OUT', 'ELIASHBERG_IA.OUT', 'ELIASHBERG_GAP_T.OUT']
+        files = ['lambda.in', 'lambda.out', 'alpha2F.dat', 'INPUT', 'ALPHA2F.OUT', 
+                 'ELIASHBERG.OUT', 'ELIASHBERG_IA.OUT', 'ELIASHBERG_GAP_T.OUT',
+                 'ELIASHBERG_GAP_RA.OUT', 'ELIASHBERG_Z_RA.OUT']
         for file in files:
             if self.sc_inputpara.work_path.joinpath(file):
                 shutil.copy(
