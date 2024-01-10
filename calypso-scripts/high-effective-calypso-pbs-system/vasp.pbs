@@ -1,0 +1,53 @@
+#!/bin/sh                   
+#PBS -N    mayqe                                    
+#PBS -q    batch
+#PBS -l    nodes=1:ppn=28               
+#PBS -j    oe                                      
+#PBS -V  
+
+
+export PATH=/public/home/mayuan/software/qhull/bin:${PATH}
+startTime=`date +%Y%m%d-%H:%M:%S`
+startTime_s=`date +%s`
+
+source /public/home/mayuan/intel/oneapi/setvars.sh
+
+cd $PBS_O_WORKDIR
+
+rm vasp.log_*
+cp ../badopt.py .
+nohup  ./badopt.py &> badopt.log &
+for(( i=1; i<=4; i++ ));
+do
+        cp INCAR_$i INCAR
+        cp CONTCAR POSCAR
+        if [[ "$i" == "4" ]]
+        then
+          cp ../sym.py .
+          sg=`./sym.py`
+        fi
+        if [[ "$sg" == "1" ]]
+        then
+          break
+        fi
+        if [[ "$i" == "4" ]]
+        then
+          cp ../sym_split.py .
+          nohup ./sym_split.py &> sym.log &
+        fi
+#        nohup  ../badopt.py &> badopt.log &
+        killall -9 vasp_std
+        mpirun -np 28 /public/home/mayuan/software/vasp.6.1.0/bin/vasp_std  > vasp.log_$i
+#        killall -9 badopt.py sym_split.py     
+done
+killall -9 sym_split.py badopt.py
+rm -rf CHG* WAVECAR
+
+endTime=`date +%Y%m%d-%H:%M:%S`
+endTime_s=`date +%s`
+
+sumTime=$[ $endTime_s - $startTime_s ]
+
+echo "$startTime ---> $endTime" "Total:$sumTime seconds" >> OUTCAR
+killall -9 sym_split.py
+killall -9 badopt.py
