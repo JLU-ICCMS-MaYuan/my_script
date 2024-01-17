@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import os
 import sys
 
@@ -5,13 +6,19 @@ from pymatgen.analysis.phase_diagram import PDEntry, PhaseDiagram, PDPlotter
 from pymatgen.core.composition import Composition
 from pymatgen.core.periodic_table import Element
 
+print("You can use it by:")
+print("    python convert.py Ce Sr H 4 2 1")
+x, y, z = sys.argv[1:4]
+a, b, c = sys.argv[4:]
+a, b, c = float(a), float(b), float(c)
+
 os.system("cp extended_convex_hull extended_convex_hull.dat")
-os.system("sed '1,6d' extended_convex_hull.dat")
-x, y, z = sys.argv[1:]
+os.system("sed -i '1,6d' extended_convex_hull.dat")
 
 with open("extended_convex_hull.dat", 'r') as f:
     lines = f.readlines()
 
+print("\n\n------------Atom as a endpoint for stable phase-----------")
 with open("stable.dat", 'w') as ff:
     ff.write("{:<10} {:<4} {:<4} {:<4} {:<10}\n".format("formula", x, y, z, "enthalpy(eV/atom)"))
     print("{:<10} {:<4} {:<4} {:<4} {:<10}".format("formula", x, y, z, "enthalpy(eV/atom)"))
@@ -39,6 +46,7 @@ with open("stable.dat", 'w') as ff:
             ff.write("{:<10} {:<4} {:<4} {:<4}   {:<10.8f}\n".format(comp.formula.replace(" ", ""), x_atoms, y_atoms, z_atoms, fitness))
             print("{:<10} {:<4} {:<4} {:<4}   {:<10.8f}".format(comp.formula.replace(" ", ""), x_atoms, y_atoms, z_atoms, fitness))
 
+print("\n\n------------Atom as a endpoint for unstable phase-----------")
 with open("unstable.dat", 'w') as ff:
     ff.write("{:<10} {:<4} {:<4} {:<4} {:<10}\n".format("formula", x, y, z, "enthalpy(eV/atom)"))
     print("{:<10} {:<4} {:<4} {:<4} {:<10}".format("formula", x, y, z, "enthalpy(eV/atom)"))
@@ -67,6 +75,9 @@ with open("unstable.dat", 'w') as ff:
             print("{:<10} {:<4} {:<4} {:<4}   {:<10.8f}".format(comp.formula.replace(" ", ""), x_atoms, y_atoms, z_atoms, fitness))
 
 
+
+
+print("\n\n------------Block as a endpoint for stable phase-----------")
 with open("stable_by_block.dat", 'w') as ff:
     ff.write("{:<10} {:<4} {:<4} {:<4} {:<10}\n".format("formula", x, y, z, "enthalpy(eV/atom)"))
     print("{:<10} {:<4} {:<4} {:<4} {:<10}".format("formula", x, y, z, "enthalpy(eV/atom)"))
@@ -90,15 +101,16 @@ with open("stable_by_block.dat", 'w') as ff:
 
             try:
                 z_atoms = comp.to_data_dict['unit_cell_composition'][z]
-                z_block = z_atoms - 4*x_block - 2*y_block
+                z_block = z_atoms - a*x_block - b*y_block
                 if z_block < 0:
-                    break
+                    continue
             except:
                 z_block = 0
                 
             ff.write("{:<10} {:<4} {:<4} {:<4}   {:<10.8f}\n".format(comp.formula.replace(" ", ""), x_block, y_block, z_block, fitness))
             print("{:<10} {:<4} {:<4} {:<4}   {:<10.8f}".format(comp.formula.replace(" ", ""), x_block, y_block, z_block, fitness))
 
+print("\n\n------------Block as a endpoint for unstable phase-----------")
 with open("unstable_by_block.dat", 'w') as ff:
     ff.write("{:<10} {:<4} {:<4} {:<4} {:<10}\n".format("formula", x, y, z, "enthalpy(eV/atom)"))
     print("{:<10} {:<4} {:<4} {:<4} {:<10}".format("formula", x, y, z, "enthalpy(eV/atom)"))
@@ -122,9 +134,9 @@ with open("unstable_by_block.dat", 'w') as ff:
 
             try:
                 z_atoms = comp.to_data_dict['unit_cell_composition'][z]
-                z_block = z_atoms - 4*x_block - 2*y_block
+                z_block = z_atoms - a*x_block - b*y_block
                 if z_block < 0:
-                    break
+                    continue
             except:
                 z_block = 0
                 

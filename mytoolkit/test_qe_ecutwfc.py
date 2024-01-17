@@ -119,8 +119,8 @@ if __name__ == "__main__":
     print("    测试的ecutwfc值分别是: 40  50  60  70  80  90")
     print("    测试的ecutrho值分别是: 480 600 720 840 960 10800")
     print("    该脚本不提供自动提任务的命令: 你可以用以下命令提供命令:")
-    print("        for i in 40 50 60 70 80 90; do cd $i; qsub submit.sh;   cd ..; done")
-    print("        for i in 40 50 60 70 80 90; do cd $i; sbatch submit.sh; cd ..; done")
+    print("        for i in 40 50 60 65 70 75 80 85 90 95 100 105 110; do cd $i; qsub submit.sh;   cd ..; done")
+    print("        for i in 40 50 60 65 70 75 80 85 90 95 100 105 110; do cd $i; sbatch submit.sh; cd ..; done")
 
     print("Note: --------------------")
     print("    创建测试VASP的ENCUT输入文件目录以及准备vasp的输入文件")
