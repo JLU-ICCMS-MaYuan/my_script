@@ -107,7 +107,7 @@ program main
   ! number of Matsubara frequencies
     nwf=nint(wfmax/(2.d0*t0))
     if (nwf.gt.maxwf) nwf=maxwf
-    nwfcl=nint(wrms/(2.d0*t0))
+    nwfcl=nint(20.d0*wrms/(2.d0*t0))
     if (nwfcl.gt.nwf) nwfcl=nwf
     if (nwfcl.lt.1) nwfcl=1
     write(62,'("Number of Matsubara frequencies")')
