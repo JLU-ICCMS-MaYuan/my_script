@@ -92,25 +92,36 @@ mpirun -n 64 /public/software/apps/vasp/intelmpi/5.4.4/bin/vasp_std > vasp.log 2
     with open(submit_path, "w") as jobfile:
         jobfile.write(jobsystem)
 
-def get_energy_per_atom(outcar_path):
-    """计算并返回每原子的焓值, 单位是eV"""
+def get_info_per_atom(outcar_path):
+
     try:
-        dE = float(os.popen(f'grep -s "free  energy   TOTEN" {outcar_path}' + " | tail -n 1 | awk '{print $ 5}'").read().strip('\n'))
-        begin_id = os.popen(f'grep -n "position of ions in cartesian coordinates" {outcar_path}').read().split(":")[0]
-        N = 0; row_id=int(begin_id)
-        while True:
-            row_id = row_id+1
-            content  = os.popen(f"sed -n '{row_id}p' {outcar_path}").read().strip().split()
-            if len(content) == 3:
-                N += 1
-            else:
-                break
-        dE_per_atom = dE/N
-        return dE_per_atom
+        natoms = int(os.popen("grep 'NIONS' %s |awk '{print $12}'"%(outcar_path)).read())
     except:
-        print("Try to get DeltaH from {} failed So let dE_per_atoms = 1000000000000.0!".format(outcar_path))   
-        dE_per_atom = 1000000000000.0
-        return dE_per_atom
+        natoms = None
+
+    try:
+        energy = float(os.popen(f'grep -s "energy  without entropy" {outcar_path}' + " | awk '{print $4}'").read().strip('\n'))
+    except:
+        energy = None
+
+    try:
+        force = np.array(list(map(float, os.popen("grep -A%d 'TOTAL-FORCE' %s |tail -n %d|awk '{print $4,$5,$6}'"%(natoms+1,outcar_path,natoms)).read().split())))
+    except:
+        force = None
+
+    try:
+        virial = np.array(list(map(float, os.popen("grep -A20 '\-STRESS' %s |grep Total|awk '{print $2,$3,$4,$5,$6,$7}'"%(outcar_path)).read().split())))
+    except:
+        virial = None
+  
+    if (natoms is not None) and (energy is not None) and (force is not None) and (virial is not None):
+        dE_per_atom = np.array(energy)/natoms
+        virial_per_atom = np.array(virial)/natoms
+    else:
+        dE_per_atom = 10000000000000000
+        force = 10000000000000000 
+        virial_per_atom = 10000000000000000
+    return dE_per_atom, force, virial_per_atom
 
 
 
@@ -128,7 +139,7 @@ if __name__ == "__main__":
 
     print("Note: --------------------")
     print("    创建测试VASP的ENCUT输入文件目录以及准备vasp的输入文件")
-    encuts = [400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000, 1050, 1100, 1150, 1200, 1250, 1300, 1350, 1400, 1450, 1500]
+    encuts = [400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000, 1050, 1100, 1150,]# 1200, 1250, 1300, 1350, 1400, 1450, 1500]
     potcar_path = os.path.abspath("POTCAR")
     poscar_path = os.path.abspath("POSCAR")
     incar_path  = os.path.abspath("INCAR")
@@ -142,13 +153,12 @@ if __name__ == "__main__":
         write_submit(jobsystem, test_path)
 
     print("    尝试获得每原子的焓值 dE(meV/atom)")
-    encut_dE = []
+    encut_dE_dF_dV = []
     for encut in encuts:
         outcar_path = os.path.join(str(encut), "OUTCAR")
-        dE_per_atom = get_energy_per_atom(outcar_path)
-        encut_dE.append([encut, dE_per_atom])
+        dE_per_atom, force, virial_per_atom = get_info_per_atom(outcar_path)
+        encut_dE_dF_dV.append([encut, dE_per_atom, force, virial_per_atom])
 
-    encut_dE = np.array(encut_dE)
 
     # 方式一：通过相邻两个encut的能量的差判断收敛性
     # Ediff = np.diff(encut_dE, axis=0)[:,-1]
@@ -157,18 +167,16 @@ if __name__ == "__main__":
     # encut_dE_Hdiff = np.hstack((encut_dE, Ediff))
 
     # 方式二：所有encut的能量减去最高encut的能量判断收敛性
-    Ediff = encut_dE[:, 1] - encut_dE[-1, -1]
-    Ediff = Ediff[:, np.newaxis]
-    encut_dE_Hdiff = np.hstack((encut_dE, Ediff))
-    
-    if len(encut_dE_Hdiff) == 23:
-        print("{:<12},{:<14},{:<14}".format("ENCUT", "dE(eV/atom)", "diff(meV/atom)"))
-        with open("encut_dE.csv", 'w') as f:
-            f.write("{:<12},{:<14},{:<14}\n".format("ENCUT", "dE(eV/atom)", "diff(meV/atom)"))
-            for encut, dE_per_atom, Hdiff in encut_dE_Hdiff:
-                f.write("{:<12.3f},{:<14.8f},{:<14.8f}\n".format(encut, dE_per_atom, Hdiff*1000))
-                print("{:<12.3f},{:<14.8f},{:<14.8f}".format(encut, dE_per_atom, Hdiff*1000))
-        print("All OUTCARs are OK, encut_dE.csv has been wroten in current position")
-    else:
-        print("If all OUTCARs are OK, encut_dE.csv will be wroten in current position")
+    with open("encut_dE.csv", 'w') as f:
+        f.write("{:<12},{:<14},{:<14},{:<14}\n".format("encut", "Ediff(meV/atom)", "Fdiff(meV/A)", "Vdiff(meV/atom)"))
+        print("{:<12},{:<14},{:<14},{:<14}".format("encut", "Ediff(meV/atom)", "Fdiff(meV/A)", "Vdiff(meV/atom)"))
+        for idx, eefv in enumerate(encut_dE_dF_dV):
+            kmeshes = eefv[0] 
+            delta_E = eefv[1] - encut_dE_dF_dV[-1][1]
+            delta_F = eefv[2] - encut_dE_dF_dV[-1][2]
+            delta_V = eefv[3] - encut_dE_dF_dV[-1][3]
+            f.write("{:<12.3f},{:<14.8f},{:<14.8f},{:<14.8f}\n".format(kmeshes, delta_E*1000, np.nanmax(delta_F)*1000,np.nanmax(delta_V)*1000))
+            print("{:<12.3f},{:<14.8f},{:<14.8f},{:<14.8f}".format(kmeshes, delta_E*1000, np.nanmax(delta_F)*1000, np.nanmax(delta_V)*1000))
+        else:
+            print("If all OUTCARs are OK, encut_dE.csv will be wroten in current position")
 

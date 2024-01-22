@@ -92,24 +92,36 @@ mpirun -n 64 /public/software/apps/vasp/intelmpi/5.4.4/bin/vasp_std > vasp.log 2
     with open(submit_path, "w") as jobfile:
         jobfile.write(jobsystem)
 
-def get_energy_per_atom(outcar_path):
+def get_info_per_atom(outcar_path):
+
     try:
-        dE = float(os.popen(f'grep -s "free  energy   TOTEN" {outcar_path}' + " | tail -n 1 | awk '{print $ 5}'").read().strip('\n'))
-        begin_id = os.popen(f'grep -n "position of ions in cartesian coordinates" {outcar_path}').read().split(":")[0]
-        N = 0; row_id=int(begin_id)
-        while True:
-            row_id = row_id+1
-            content  = os.popen(f"sed -n '{row_id}p' {outcar_path}").read().strip().split()
-            if len(content) == 3:
-                N += 1
-            else:
-                break
-        dE_per_atom = dE/N
-        return dE_per_atom
+        natoms = int(os.popen("grep 'NIONS' %s |awk '{print $12}'"%(outcar_path)).read())
     except:
-        print("Try to get DeltaH from {} failed So let dE_per_atoms = 1000000000000.0!".format(outcar_path))   
-        dE_per_atom = 1000000000000.0
-        return dE_per_atom
+        natoms = None
+
+    try:
+        energy = float(os.popen(f'grep -s "energy  without entropy" {outcar_path}' + " | awk '{print $4}'").read().strip('\n'))
+    except:
+        energy = None
+
+    try:
+        force = np.array(list(map(float, os.popen("grep -A%d 'TOTAL-FORCE' %s |tail -n %d|awk '{print $4,$5,$6}'"%(natoms+1,outcar_path,natoms)).read().split())))
+    except:
+        force = None
+
+    try:
+        virial = np.array(list(map(float, os.popen("grep -A20 '\-STRESS' %s |grep Total|awk '{print $2,$3,$4,$5,$6,$7}'"%(outcar_path)).read().split())))
+    except:
+        virial = None
+  
+    if (natoms is not None) and (energy is not None) and (force is not None) and (virial is not None):
+        dE_per_atom = np.array(energy)/natoms
+        virial_per_atom = np.array(virial)/natoms
+    else:
+        dE_per_atom = 10000000000000000
+        force = 10000000000000000 
+        virial_per_atom = 10000000000000000
+    return dE_per_atom, force, virial_per_atom
 
 
 
@@ -122,12 +134,12 @@ if __name__ == "__main__":
     print("    你需要在当前目录下准备好: POSCAR, POTCAR, INCAR")
     print("    测试的KSPACING值分别是: 0.3, 0.2, 0.18, 0.15, 0.12")
     print("    该脚本不提供自动提任务的命令: 你可以用以下命令提供命令:")
-    print("        for i in 0.4 0.3 0.25 0.2 0.19 0.18 0.17 0.16 0.15 0.14 0.13 0.12; do cd $i; qsub submit.sh;   cd ..; done")
-    print("        for i in 0.4 0.3 0.25 0.2 0.19 0.18 0.17 0.16 0.15 0.14 0.13 0.12; do cd $i; sbatch submit.sh; cd ..; done")
+    print("        for i in 0.4 0.3 0.25 0.2 0.19 0.18 0.17 0.16 0.15 0.14 0.13 0.12 0.11 0.1 0.09 0.08; do cd $i; qsub submit.sh;   cd ..; done")
+    print("        for i in 0.4 0.3 0.25 0.2 0.19 0.18 0.17 0.16 0.15 0.14 0.13 0.12 0.11 0.1 0.09 0.08; do cd $i; sbatch submit.sh; cd ..; done")
 
     print("Note: --------------------")
     print("    创建测试VASP的KSPACING输入文件目录以及准备vasp的输入文件")
-    kspacings = [0.4, 0.3, 0.25, 0.2, 0.19, 0.18, 0.17, 0.16, 0.15, 0.14, 0.13, 0.12]
+    kspacings = [0.4, 0.3, 0.25, 0.2, 0.19, 0.18, 0.17, 0.16, 0.15, 0.14, 0.13, 0.12, 0.11, 0.1, 0.09, 0.08]
     potcar_path = os.path.abspath("POTCAR")
     poscar_path = os.path.abspath("POSCAR")
     incar_path  = os.path.abspath("INCAR")
@@ -143,13 +155,12 @@ if __name__ == "__main__":
         write_submit(jobsystem, test_path)
 
     print("    尝试获得每原子的焓值 dE(meV/atom)")
-    kspacing_dE = []
+    kspacing_dE_dF_dV = []
     for kspacing in kspacings:
         outcar_path = os.path.join(str(kspacing), "OUTCAR")
-        dE_per_atom = get_energy_per_atom(outcar_path)
-        kspacing_dE.append([kspacing, dE_per_atom])
+        dE_per_atom, force, virial_per_atom = get_info_per_atom(outcar_path)
+        kspacing_dE_dF_dV.append([kspacing, dE_per_atom, force, virial_per_atom])
 
-    kspacing_dE = np.array(kspacing_dE)
 
     # 方式一：通过相邻两个kspacing的能量的差判断收敛性
     # Ediff = np.diff(kspacing_dE, axis=0)[:,-1]
@@ -158,18 +169,16 @@ if __name__ == "__main__":
     # kspacing_dE_Hdiff = np.hstack((kspacing_dE, Ediff))
 
     # 方式二：所有kpoints的能量减去最密kspacing的能量判断收敛性
-    Ediff = kspacing_dE[:, 1] - kspacing_dE[-1, -1]
-    Ediff = Ediff[:, np.newaxis]
-    kspacing_dE_Hdiff = np.hstack((kspacing_dE, Ediff))
 
-    if len(kspacing_dE_Hdiff) == 12:
-        print("{:<12},{:<14},{:<14}".format("kspacing", "dE(eV/atom)", "diff(meV/atom)"))
-        with open("kspacing_dE.csv", 'w') as f:
-            f.write("{:<12},{:<14},{:<14}\n".format("kspacing", "dE(eV/atom)", "diff(meV/atom)"))
-            for kspacing, dE_per_atom, Hdiff in kspacing_dE_Hdiff:
-                f.write("{:<12.3f},{:<14.8f},{:<14.8f}\n".format(kspacing, dE_per_atom, Hdiff*1000))
-                print("{:<12.3f},{:<14.8f},{:<14.8f}".format(kspacing, dE_per_atom, Hdiff*1000))
-        print("All OUTCARs are OK, kspacing_dE.csv has been wroten in current position")
-    else:
-        print("If all OUTCARs are OK, kspacing_dE.csv will be wroten in current position")
-
+    with open("kspacing_dE.csv", 'w') as f:
+        f.write("{:<12},{:<14},{:<14},{:<14}\n".format("kspacing", "Ediff(meV/atom)", "Fdiff(meV/A)", "Vdiff(meV/atom)"))
+        print("{:<12},{:<14},{:<14},{:<14}".format("kspacing", "Ediff(meV/atom)", "Fdiff(meV/A)", "Vdiff(meV/atom)"))
+        for idx, kefv in enumerate(kspacing_dE_dF_dV):
+            kmeshes = kefv[0] 
+            delta_E = kefv[1] - kspacing_dE_dF_dV[-1][1]
+            delta_F = kefv[2] - kspacing_dE_dF_dV[-1][2]
+            delta_V = kefv[3] - kspacing_dE_dF_dV[-1][3]
+            f.write("{:<12.3f},{:<14.8f},{:<14.8f},{:<14.8f}\n".format(kmeshes, delta_E*1000, np.nanmax(delta_F)*1000,np.nanmax(delta_V)*1000))
+            print("{:<12.3f},{:<14.8f},{:<14.8f},{:<14.8f}".format(kmeshes, delta_E*1000, np.nanmax(delta_F)*1000, np.nanmax(delta_V)*1000))
+        else:
+            print("If all OUTCARs are OK, kspacing_dE.csv will be wroten in current position")
