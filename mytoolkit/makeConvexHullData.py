@@ -63,14 +63,14 @@ if __name__ == "__main__":
     print("{},{},{}".format("Number","formula","enthalpy"), file=convexhull_file)
     for dirs in directories:
         work_path = Path(dirs).joinpath(str(press))
-        ourcar_path = work_path.joinpath("OUTCAR")
+        outcar_path = work_path.joinpath("OUTCAR")
         poscar_path = work_path.joinpath("POSCAR")
-        if ourcar_path.exists() and poscar_path.exists():
+        if outcar_path.exists() and poscar_path.exists():
             idx = work_path.parent.name.split(".")[0]
             # 抑制错误消息
-            res = os.popen(f'grep -s "reached required accuracy - stopping structural energy minimisation" {ourcar_path}').read() # 如果没有找到指定内容不输出错误结果。
+            res = os.popen(f'grep -s "reached required accuracy - stopping structural energy minimisation" {outcar_path}').read() # 如果没有找到指定内容不输出错误结果。
             if res:
-                formula, dH_peratom = get_convexhull_info(poscar_path , ourcar_path)
+                formula, dH_peratom = get_convexhull_info(outcar_path , outcar_path)
                 print("{},{},{}".format(idx, formula, dH_peratom), file=convexhull_file)
             else:
                 fail_d.append(work_path.__str__())
