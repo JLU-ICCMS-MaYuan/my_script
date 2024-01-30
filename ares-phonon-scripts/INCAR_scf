@@ -14,3 +14,6 @@ KSPACING = 0.18
 ALGO     = Normal 
 LREAL    = .FALSE.  
 NPAR     = 4         
+
+LWAVE     = F
+LCHARG    = F

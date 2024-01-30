@@ -468,11 +468,31 @@ eletron -m mode=eleproperties core=48 npool=4 queue=local kinserted=200 nbnd=500
 
 ###  <span style="color:yellow"> 计算超导
 
-<span style="color:green"> **在使用lambda.x处理数据时，一定要注意两件事情**
+<span style="color:green"> **在使用lambda.x处理数据时，一定要注意3件事情**
 
-<span style="color:green"> 1. **如果elph_dir目录中有一个文件elph.inp_lambda.`number`文件中的频率是负值，那么就会导致lambda.out中无法处理处lambda和wlog.**
+<span style="color:green"> 1. 如果出现下面的错误，那么就需要修改lambda.f90的代码， nmodex改大一点
+```shell
+    wrong # or too many modes
+```
 
-<span style="color:green"> 2. **如果分q点计算时，每一个q点目录中的scffit.in和scf.in用的都是相同的degauss值并且split_ph.in中的el_ph_sigma和el_ph_nsigma都相同，那么在每一个q点的elph.inp_lambda.`number`文件中都会有相同个数的DOS值并且DOS的值也都相同，这一点(即：DOS的值也都相同）至关重要.** 不然的话就会在lambda.out文件中报出一下错误：
+```shell
+#position: qe-7.1/PHonon/PH/lambda.f90
+program elph
+ 
+  ! read files 'filelph' produced by phonon (one for each q-point)
+  ! sum over q-points to produce the electron-phonon coefficients:
+  ! lambda (the one of BCS superconductivity) and alpha^2*F(omega)
+  ! T_c using Allen-Dynes formula
+ 
+  implicit none
+  #integer, parameter:: npk=200, nsigx=50, nmodex=100, nex=200
+  integer, parameter:: npk=200, nsigx=50, nmodex=600, nex=200
+```
+
+
+<span style="color:green"> 2. **如果elph_dir目录中有一个文件elph.inp_lambda.`number`文件中的频率是负值，那么就会导致lambda.out中无法处理处lambda和wlog.**
+
+<span style="color:green"> 3. **如果分q点计算时，每一个q点目录中的scffit.in和scf.in用的都是相同的degauss值并且split_ph.in中的el_ph_sigma和el_ph_nsigma都相同，那么在每一个q点的elph.inp_lambda.`number`文件中都会有相同个数的DOS值并且DOS的值也都相同，这一点(即：DOS的值也都相同）至关重要.** 不然的话就会在lambda.out文件中报出一下错误：
 
 ```shell
  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
