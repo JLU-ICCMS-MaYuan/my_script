@@ -1,0 +1,83 @@
+{
+    "model": {
+        "_use_srtab":  "../../../ZBL/ZBL-Tab",
+        "_smin_alpha":   0.1,
+        "_sw_rmin":      0.58,
+        "_sw_rmax":      0.68,
+        "descriptor": {
+            "precision":"float64",
+            "type": "se_e2_a",
+            "sel": [
+                100,
+                100,
+                100
+            ],
+            "rcut_smth": 2.0,
+            "rcut": 6.0,
+            "neuron": [
+                25,
+                50,
+                100
+            ],
+            "resnet_dt": false,
+            "axis_neuron": 12,
+            "type_one_side": true,
+            "seed": 612327,
+            "_activation_function": "tanh"
+        },
+        "fitting_net": {
+            "precision":"float64",
+            "neuron": [
+                240,
+                240,
+                240
+            ],
+            "resnet_dt": true,
+            "seed": 612327
+        },
+        "type_map": [
+            "Ce",
+            "Sc",
+            "H"
+        ]
+    },
+    "learning_rate": {
+        "type": "exp",
+        "start_lr": 0.001,
+        "decay_steps": 5000
+    },
+    "loss": {
+        "start_pref_e": 0.02,
+        "limit_pref_e": 1,
+        "start_pref_f": 1000,
+        "limit_pref_f": 1,
+        "start_pref_v": 0,
+        "limit_pref_v": 0
+    },
+    "training": {
+        "tensorboard": true,
+        "tensorboard_log_dir": "log",
+        "tensorboard_freq": 1000,
+        "seed": 612327,
+        "disp_file": "lcurve.out",
+        "disp_freq": 2000,
+        "numb_test": 4,
+        "save_freq": 2000,
+        "save_ckpt": "model.ckpt",
+        "disp_training": true,
+        "time_training": true,
+        "profiling": false,
+        "profiling_file": "timeline.json",
+        "_set_prefix": "set",
+        "training_data": {
+            "systems": "../dp-rawdata/",
+            "batch_size": "auto"
+        },
+        "validation_data": {
+            "systems": "../dp-rawdata/",
+            "numb_btch": 1,
+            "batch_size": "auto"
+        },
+        "numb_steps": 1000000
+    }
+}
