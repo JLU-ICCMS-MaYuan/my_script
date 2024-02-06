@@ -84,3 +84,8 @@ for i in ./SUPERCELL.*/DIS.*; do cp INCAR POTCAR jiaoben.sh $i; done
 for i in ./SUPERCELL.*; do for j in $i/DIS.*; do cp $i/KPOINTS $j; done ; done
 """)
 
+# 准备log文件
+os.system(rf"""
+cd ./wq-{a}{b}{c};
+ls -d SUPERCELL.*/DIS.* > log
+""")
