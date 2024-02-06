@@ -1,0 +1,81 @@
+#! /public/home/acvm651ob1/intel/oneapi/intelpython/latest/bin/python
+import os
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+
+
+def get_k_datapoints():
+    # 声子data
+    data = np.loadtxt('FREQ.MODE', skiprows=1, comments='#')
+    print(data.shape)
+    data=data[:,3:]
+    data = pd.DataFrame(data, columns=[f'y{i}' if i != 0 else 'x1' for i in range(data.shape[1])])
+    data = data.astype(float)
+    data.loc[len(data) + 1] = np.nan
+    return data
+# k路径label和坐标
+def get_k_x_axis_name():
+    with open('phon.in','r') as f:
+        lines=[i.strip() for i in f.readlines()]
+        a=lines.index('#Start q-point')
+        b=lines.index('#End q-point')
+        k_path=lines[a+1:b]
+        k_path.append(lines[b+(b-a)-1])
+        k_path = [i.split()[-5:] for i in k_path]
+        pth_data = pd.DataFrame(columns=['x','y','z','labels'])
+        for i in range(len(k_path)):
+            temp_name=k_path[i][-1].replace('#','')
+            pth_data.loc[i,'labels']=temp_name
+            pth_data.loc[i,'x'] = float(k_path[i][0])
+            pth_data.loc[i,'y'] = float(k_path[i][1])
+            pth_data.loc[i,'z'] = float(k_path[i][2])
+    with open('FREQ.MODE','r') as f:
+        lines=[i.strip() for i in f.readlines()]
+        blank=[i for i in range(len(lines)) if len(lines[i])==0]
+        k_x = [lines[i-1].split()[3] for i in blank]
+    pth_data.loc[0,'dx']=float(0.0)
+    for i in range(len(k_x)):
+        pth_data.loc[i+1,'dx']=float(k_x[i])
+    print('q点路径坐标写入QLABELS.csv中')
+    pth_data.to_csv('QLABELS.csv',index=False)
+    return list(pth_data['labels'].values),list(pth_data['dx'].values)
+
+def plot_good_phonon_band(cm=False):
+
+    k_name, k_coord = get_k_x_axis_name()
+    data = get_k_datapoints()
+
+    k_name = [i if i != 'GAMMA' else 'Γ' for i in k_name]
+    k_coord = [round(i, 2) for i in k_coord]
+    print('k_name',k_name)
+    print('k_coord',k_coord)
+    fig = plt.figure(dpi=300, figsize=(10, 8))
+    y_label='THz'
+    """声子能带"""
+    if cm:
+        print('纵坐标为cm-1 (cm=True)')
+        for i in range(1, data.shape[1]):
+            plt.plot(data['x1'], data.iloc[:, i]*33.35641, color='red')
+        y_label='$cm^{-1}$'
+    else:
+        for i in range(1, data.shape[1]):
+            plt.plot(data['x1'], data.iloc[:, i], color='red')
+    """高对称点直线设置"""
+    for i in range(len(k_coord)):
+        plt.axvline(k_coord[i], ymin=0, ymax=1, alpha=0.5, linestyle='--', linewidth=1, color='k')
+    plt.axhline(0, 0, 1, alpha=0.5, linestyle='--', linewidth=1, color='k')
+    """高对称点K点字体属性设置"""
+    plt.xticks(k_coord, k_name, fontdict={'fontsize': 23, 'family': 'Times New Roman', 'weight': 'bold'})
+    """刻度值设置"""
+    plt.tick_params(axis='y', labelcolor='k', labelsize=15, )
+
+    plt.ylabel(f'Frequency ({y_label})', fontdict={'fontsize': 23, 'family': 'Times New Roman', 'weight': 'bold'})
+    plt.xlim((k_coord[0], k_coord[-1]))
+    plt.savefig('HD-phonon-band.png')
+
+os.system("""sed -i '10s/=T/=F/' phon.in""")
+print('phon后处理中... > phon.log ')
+os.system("""phon>>phon.log && wait""")
+plot_good_phonon_band(cm=True)
+
