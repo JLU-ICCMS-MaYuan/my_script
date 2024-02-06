@@ -1,4 +1,4 @@
-#! /public/home/acvm651ob1/intel/oneapi/intelpython/latest/bin/python
+#!/usr/bin/env python3
 import os
 import numpy as np
 import matplotlib.pyplot as plt
