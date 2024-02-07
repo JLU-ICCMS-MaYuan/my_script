@@ -3,16 +3,16 @@ import os
 import sys
 
 # 获取声子计算的INCAR
-incar_pho_pth=sys.argv[1]
+incar_pho_pth=xxx
 
 # 获取提交任务的脚本
-subjiaoben_pth=sys.argv[2]
+subjiaoben_pth=xxx
 
 # 获取声子输入文件
-phon_pth=sys.argv[3]
+phon_pth=xxx
 
 # 获取扩胞数
-dim=sys.argv[4]
+dim=sys.argv[1]
 if len(dim.split())==3:
     a, b, c = dim.split()
 else:
