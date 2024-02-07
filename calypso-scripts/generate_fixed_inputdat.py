@@ -86,10 +86,11 @@ if __name__ == "__main__":
     
     # 对分析出的每一种化学式建立相应的目录并生成相应的input.dat文件
     serials = 0
+    calypso_paths = []
     for NumberOfAtom, Volume in zip(NumberOfAtoms, Volumes):
         serials += 1
 
-        # 准备目录名并且创建目录，例如：1.fixed_La1Ce3H20
+        # 准备目录名并且创建目录，并将目录名写入fixed_comp.name文件中，例如：1.fixed_La1Ce3H20
         dirname = ''
         for name, num in zip(NameOfAtoms, NumberOfAtom):
             dirname += name+str(num)
@@ -97,7 +98,7 @@ if __name__ == "__main__":
         calypso_path = os.path.join(os.path.curdir, dirname)
         if not os.path.exists(calypso_path):
             os.mkdir(calypso_path)
-
+        calypso_paths.append(calypso_path)
         # 获得修改后的input.dat文件 并将其 写入相应的目录中
         new_inputfile = gen_one_inputdat(
             inputdatfile,
@@ -116,3 +117,6 @@ if __name__ == "__main__":
         os.system(f"cp POTCAR    {calypso_path}")
         os.system(f"cp INCAR_*   {calypso_path}")
         os.system(f"cp calypso.x {calypso_path}")
+
+    with open("fixed_comp.name", 'w') as f:
+        f.writelines(calypso_paths)
