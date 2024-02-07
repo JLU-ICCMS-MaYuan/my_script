@@ -98,7 +98,7 @@ if __name__ == "__main__":
         calypso_path = os.path.join(os.path.curdir, dirname)
         if not os.path.exists(calypso_path):
             os.mkdir(calypso_path)
-        calypso_paths.append(calypso_path)
+        calypso_paths.append(os.path.basename(calypso_path)+'\n')
         # 获得修改后的input.dat文件 并将其 写入相应的目录中
         new_inputfile = gen_one_inputdat(
             inputdatfile,
