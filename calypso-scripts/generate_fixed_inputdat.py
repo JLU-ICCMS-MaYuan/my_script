@@ -8,7 +8,7 @@ from math import pi, pow
 
 def get_volume(rcore:list[float], num:list[int]) -> float:
     v = [4*pow(r*0.529, 3)*pi*n/3 for r, n in zip(rcore, num)]
-    return sum(v)
+    return sum(v)*1.5
 
 def get_distance(Atomicradii:list[float]) -> list[list[float], list[float], list[float]]:
     rcore   = [r * 0.529 * 0.7 for r in Atomicradii]
@@ -117,6 +117,11 @@ if __name__ == "__main__":
         os.system(f"cp POTCAR    {calypso_path}")
         os.system(f"cp INCAR_*   {calypso_path}")
         os.system(f"cp calypso.x {calypso_path}")
+        os.system(f"cp all.pb    {calypso_path}")
+        os.system(f"cp calypso_check_outcar.py  {calypso_path}")
+        os.system(f"cp calypso_run_opt.py       {calypso_path}")
+        os.system(f"cp caly.slurm               {calypso_path}")
+        os.system(f"cp submit.sh  {calypso_path}")
 
     with open("fixed_comp.name", 'w') as f:
         f.writelines(calypso_paths)
