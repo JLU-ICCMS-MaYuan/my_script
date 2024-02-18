@@ -5,13 +5,13 @@ CELLFILE= POSCAR
 #whether use diagonal supercell
 Ldiag_sc = F
 #ELEMENT
-ELEMENTS=La Be H Th
+ELEMENTS=
 #Whether generate a supercell
 GENERATE_SUPERCELL= T
 #DFT software
 DFT_NAME = VASP
 #M-P method q-points numbers in three direction !!!!!!!!!!!!!!!!!!!!!!
-MP_QPOINTS = 4 4 4
+MP_QPOINTS =
 #output verbosity
 IPRINT=3
 
@@ -29,22 +29,6 @@ SMEAR_WIDTH=0.2
 #whether calculate phonon spectrun
 Lspectrum = .T.
 #Special q-points number
-PATH_QPOINTS_NUMBER=7
+PATH_QPOINTS_NUMBER=
 #Number of q-points in path
 NPOINTS=50
-#Start q-point
-QI= 0.000000   0.000000   0.000000  # G   
-    0.000000   0.500000   0.000000  # X   
-    0.500000   0.500000   0.000000  # M   
-    0.000000   0.000000   0.000000  # G   
-    0.000000   0.000000   0.500000  # Z   
-    0.000000   0.500000   0.500000  # R   
-    0.500000   0.500000   0.500000  # A   
-#End q-point
-QI= 0.000000   0.500000   0.000000  # X   
-    0.500000   0.500000   0.000000  # M   
-    0.000000   0.000000   0.000000  # G   
-    0.000000   0.000000   0.500000  # Z   
-    0.000000   0.500000   0.500000  # R   
-    0.500000   0.500000   0.500000  # A   
-    0.000000   0.000000   0.500000  # Z 

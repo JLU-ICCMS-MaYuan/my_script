@@ -3,13 +3,13 @@ import os
 import sys
 
 # 获取声子计算的INCAR
-incar_pho_pth=xxx
+incar_pho_pth="INCAR_scf"
 
 # 获取提交任务的脚本
-subjiaoben_pth=xxx
+subjiaoben_pth="run.sh"
 
 # 获取声子输入文件
-phon_pth=xxx
+phon_pth="phon.in"
 
 # 获取扩胞数
 dim=sys.argv[1]
@@ -33,7 +33,7 @@ os.system(rf"""mkdir wq-{a}{b}{c};
 cp CONTCAR wq-{a}{b}{c}/POSCAR;
 cp POTCAR wq-{a}{b}{c}; 
 cp {incar_pho_pth} wq-{a}{b}{c}/INCAR;
-cp {subjiaoben_pth} wq-{a}{b}{c}/jiaoben.sh;
+cp {subjiaoben_pth} wq-{a}{b}{c}/run.sh;
 cp {phon_pth} wq-{a}{b}{c};
 cd ./wq-{a}{b}{c};
 echo -e '3\n303\n' | vaspkit
@@ -74,13 +74,14 @@ wait;
 
 os.system(rf"""
 cd ./wq-{a}{b}{c};
+for i in ./SUPERCELL.*; do cd $i/DIS.1 && echo -e '1\n102\n2\n{k_spacing}\n' | vaspkit; cp KPOINTS .. && cd -; done
 for i in ./SUPERCELL.*; do cd $i/DIS.1 && echo -e '1\n102\n2\n{eles}\n{k_spacing}\n' | vaspkit; cp KPOINTS .. && cd -; done
 """)
 
 # 计算文件分发
 os.system(rf"""
 cd ./wq-{a}{b}{c};
-for i in ./SUPERCELL.*/DIS.*; do cp INCAR POTCAR jiaoben.sh $i; done
+for i in ./SUPERCELL.*/DIS.*; do cp INCAR POTCAR run.sh $i; done
 for i in ./SUPERCELL.*; do for j in $i/DIS.*; do cp $i/KPOINTS $j; done ; done
 """)
 
