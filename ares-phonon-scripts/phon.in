@@ -7,7 +7,7 @@ Ldiag_sc = F
 #ELEMENT
 ELEMENTS=
 #Whether generate a supercell
-GENERATE_SUPERCELL= T
+GENERATE_SUPERCELL=T
 #DFT software
 DFT_NAME = VASP
 #M-P method q-points numbers in three direction !!!!!!!!!!!!!!!!!!!!!!

@@ -2,14 +2,20 @@
 import os
 import sys
 
+info="""You need to prepare following files at current path:
+POSCAR
+POTCAR
+"""
+print(info)
+
 # 获取声子计算的INCAR
-incar_pho_pth="INCAR_scf"
+incar_pho_pth="/work/home/may/code/my_script/ares-phonon-scripts/INCAR"
 
 # 获取提交任务的脚本
-subjiaoben_pth="run.sh"
+subjiaoben_pth="/work/home/may/code/my_script/ares-phonon-scripts/center-slurm/run.sh"
 
 # 获取声子输入文件
-phon_pth="phon.in"
+phon_pth="/work/home/may/code/my_script/ares-phonon-scripts/phon.in"
 
 # 获取扩胞数
 dim=sys.argv[1]

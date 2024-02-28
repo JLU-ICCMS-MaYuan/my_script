@@ -11,7 +11,7 @@ from ase.io import read
 
 def get_dH(outcar_path):
     try:
-        dH = os.popen(f"grep enthalpy {outcar_path} " + " | tail -n 1 | awk '{print $ 5}'").read().strip('\n')
+        dH = os.popen(f"grep -a enthalpy {outcar_path} " + " | tail -n 1 | awk '{print $ 5}'").read().strip('\n')
         if not dH:
             dH = 100000000000000.0
         else:
@@ -70,7 +70,7 @@ if __name__ == "__main__":
             # 抑制错误消息
             res = os.popen(f'grep -s "reached required accuracy - stopping structural energy minimisation" {outcar_path}').read() # 如果没有找到指定内容不输出错误结果。
             if res:
-                formula, dH_peratom = get_convexhull_info(outcar_path , outcar_path)
+                formula, dH_peratom = get_convexhull_info(poscar_path , outcar_path)
                 print("{},{},{}".format(idx, formula, dH_peratom), file=convexhull_file)
             else:
                 fail_d.append(work_path.__str__())
