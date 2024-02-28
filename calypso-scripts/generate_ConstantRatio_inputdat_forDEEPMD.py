@@ -71,6 +71,10 @@ def gen_one_inputdat(
 
 if __name__ == "__main__":
 
+    info = "Reference command:\npython generate_inputdat.py 'Ce 58 2.55 1 2' 'Sc 21 2.5 1 2' 'H 1 1.1 20 30'"
+    print(info)
+    print("Ce: AtomicName, 58: AtomicNumber, 2.55: AtomicRadius, 1:min range, 4: max range")
+
     # 读取当前目录下的input.dat文件
     with open('input.dat') as f:
         inputdatfile = f.readlines()
