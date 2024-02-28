@@ -481,6 +481,8 @@ class vasp_processdata(vasp_base):
                 diminfo = "DIM={}".format(' '.join(list(map(str, self.supercell))))
                 os.system("sed -i '2s/.*/{}/' band.conf".format(diminfo))
                 os.system("sed -i '/FORCE_CONSTANTS = READ/d' band.conf")
+                mpinfo = "MP={}".format(' '.join(list(map(str, self.mp))))
+                os.system("sed -i '6s/.*/{}/' band.conf".format(mpinfo))
                 os.chdir(cwd)
             else: 
                 path_name_list, path_coords = self.get_hspp(self.ase_type)
