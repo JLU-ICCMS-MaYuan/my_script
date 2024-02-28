@@ -750,6 +750,11 @@ class vasp_processdata(vasp_base):
             f.write("ATOM_NAME={}            \n".format(' '.join(__species)))
             f.write("DIM={}                  \n".format(' '.join(__supercell)))
             f.write("MP ={}                  \n".format(' '.join(__mp)))
+            f.write("TPROP=T                 \n")
+            f.write("TMIN=100                \n")
+            f.write("TMAX=3000               \n")
+            f.write("TSTEP=100               \n")
+                  
     
     # 创建mesh.conf  目的为了获得 total dos  
     def write_dfpt_mesh_conf(
@@ -769,6 +774,10 @@ class vasp_processdata(vasp_base):
             f.write("DIM={}                  \n".format(' '.join(__supercell)))
             f.write("MP ={}                  \n".format(' '.join(__mp)))
             f.write("FORCE_CONSTANTS = READ  \n")
+            f.write("TPROP=T                 \n")
+            f.write("TMIN=100                \n")
+            f.write("TMAX=3000               \n")
+            f.write("TSTEP=100               \n")
     
     # 创建pdos.conf  目的为了获得 pdos 
     def write_disp_phdos_conf(

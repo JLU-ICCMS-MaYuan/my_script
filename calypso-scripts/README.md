@@ -14,7 +14,7 @@
 ```shell
   _______  _______  _              _______  _______  _______ 
  (  ____ \(  ___  )( \   |\     /|(  ____ )(  ____ \(  ___  )
- | (    \/| (   ) || (   ( \   / )| (    )|| (    \/| (   ) |
+ | (    \/| (   ) || (   ( \   / )| (    )|| (    \/| (   ) |/20
  | |      | (___) || |    \ (_) / | (____)|| (_____ | |   | |
  | |      |  ___  || |     \   /  |  _____)(_____  )| |   | |
  | |      | (   ) || |      ) (   | (            ) || |   | |
@@ -48,3 +48,29 @@ NumberOfFormula = 1 4 改成 NumberOfFormula = 1 1
 
 如果你想做变胞的结构预测，比如做2倍胞的结构预测就用：NumberOfFormula = 2 2 
 ```
+
+
+## 4. 定组分结构预测报错
+
+```shell
+(cage) [may@ln01 init]$ /work/home/may/workplace/5.calypso/35.Ce-Sc-H/3.calypso-acnn/calypso.x.acnn_customized 
+forrtl: severe (24): end-of-file during read, unit -5, file Internal List-Directed Read
+Image              PC                Routine            Line        Source             
+calypso.x.acnn_cu  0000000001540ABA  Unknown               Unknown  Unknown
+calypso.x.acnn_cu  00000000015400E4  Unknown               Unknown  Unknown
+calypso.x.acnn_cu  00000000004124C2  readfile_                 776  ReadFile.F90
+calypso.x.acnn_cu  00000000008DF18A  inirun_                    27  IniRun.F90
+calypso.x.acnn_cu  00000000008E257C  MAIN__                     45  Main.F90
+calypso.x.acnn_cu  0000000000402ABD  Unknown               Unknown  Unknown
+calypso.x.acnn_cu  00000000015BE8A0  Unknown               Unknown  Unknown
+calypso.x.acnn_cu  000000000040299E  Unknown               Unknown  Unknown
+
+```
+
+
+```shell
+# 这个开关非常坑，如果做变组分预测，没有设置得话会报错，
+如果做定组分预测设置了得话，会报错。所以做定组分结构预测一定删掉这一行
+VSCEnergy= 0 0 
+```
+
