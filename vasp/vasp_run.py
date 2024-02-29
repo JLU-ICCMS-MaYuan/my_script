@@ -476,7 +476,7 @@ class vasp_processdata(vasp_base):
             if vaspkitflag:
                 cwd = os.getcwd()
                 os.chdir(self.work_path)
-                os.system('echo -e "3\n305" | vaspkit')
+                os.system('echo -e "3\n305\n3" | vaspkit')
                 shutil.copy("KPATH.phonopy", "band.conf")
                 diminfo = "DIM={}".format(' '.join(list(map(str, self.supercell))))
                 os.system("sed -i '2s/.*/{}/' band.conf".format(diminfo))
