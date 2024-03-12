@@ -965,7 +965,7 @@ class qesc_inputpara(qephono_inputpara):
             self.alpha2fdat = False
             print("    The omegas-alpha2F values will be getted from a2F.dos{}".format("xxx"))
             print("    The shell order used is:")
-            print("    sed '1,5d' a2F.dos%s | sed '/lambda/d' | awk '{print $1/2, $2}' ALPHA2F.OUT"%("xxx"))
+            print("    sed '1,5d' a2F.dos%s | sed '/lambda/d' | awk '{print $1/2, $2}' > ALPHA2F.OUT"%("xxx"))
         elif hasattr(self, "alpha2fdat") and eval(self.alpha2fdat) == True:
             self.a2fdos = False
             self.alpha2fdat = True
@@ -979,7 +979,7 @@ class qesc_inputpara(qephono_inputpara):
             print("    The omegas-alpha2F values willbe getted from a2F.dos")
             print("    Because alpha2f.dat usually get something wrong")
             print("    The shell order used is:")
-            print("    sed '1,5d' a2F.dos%s | sed '/lambda/d' | awk '{print $1/2, $2}' ALPHA2F.OUT"%("xxx"))
+            print("    sed '1,5d' a2F.dos%s | sed '/lambda/d' | awk '{print $1/2, $2}' > ALPHA2F.OUT"%("xxx"))
 
 
     def getTc_by_eliashberg(self):
