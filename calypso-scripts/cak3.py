@@ -1,4 +1,3 @@
-#!/opt/mamba/bin/python
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
@@ -16,18 +15,20 @@
 # Version 2018.10.19 add split vsc struct.dat --split
 #
 # Author : Zhenyu Wang <wzy@calypso.cn>
-# Version 2022.07.01 update to python3 version with spglib-v1.16.0
-# Version 2022.10.12 update to python3 version with spglib-v2.0.1
+# Version 2022.07.01 update to python3 version with new spglib-v1.16.0
 #
 # Copyright CALYPSO Develop Group
 
+from email.policy import default
 import os
 import math
 import sys
 import time
 import glob
 
+from configparser import ConfigParser
 from optparse import OptionParser
+
 try:
     import spglib as spg
 except:
@@ -112,6 +113,7 @@ def readinput():
             CL = False
     except:
         CL = False
+
     try:
         lsur = indata['lsurface'][0]
         if lsur.upper() == 'T':
@@ -153,6 +155,7 @@ def readinput():
             BG = False
     except:
         BG = False
+
     try:
         xrd = indata['lxrd'][0]
         if xrd.upper() == 'T':
@@ -179,6 +182,58 @@ def readinput():
 
     return (SystemName, NameOfAtoms, Npop, Mol, Hard, VSC, VSCE, D2, CL, HM, LSUR, BG, XRD, TS, num_neb)
 
+def readmyini(input_ini):
+
+    if not os.path.exists(input_ini):
+        raise FileExistsError
+
+    indata = {}
+    config_inputini      = ConfigParser()
+    config_inputini.read(input_ini)
+
+    if "specifywps" in config_inputini.sections():
+        for key, value in config_inputini.items("specifywps"):
+            try:
+                indata[key] = eval(value)
+            except (NameError, SyntaxError):
+                print("there is no {}".format(key))
+    if "substitution" in config_inputini.sections():
+        for key, value in config_inputini.items("substitution"):
+            try:
+                indata[key] = eval(value)
+            except (NameError, SyntaxError):
+                print("there is no {}".format(key))
+    if "pso" in config_inputini.sections():
+        for key, value in config_inputini.items("pso"):
+            try:
+                indata[key] = eval(value)
+            except (NameError, SyntaxError):
+                print("there is no {}".format(key))
+    if "splitwps" in config_inputini.sections():
+        for key, value in config_inputini.items("splitwps"):
+            try:
+                indata[key] = eval(value)
+            except (NameError, SyntaxError):
+                print("there is no {}".format(key))
+            
+    SystemName  = "mypso"
+    nameofatoms = indata['nameofatoms']
+    Npop        = indata['popsize']
+    Mol  = False
+    Hard = False
+    VSC  = False
+    VSCE = [0]
+    D2   = False
+    CL   = False
+    HM   = False
+    LSUR = False
+    BG   = False
+    XRD  = False
+    TS   = False
+    num_neb = False
+    specifywps = True
+    return (SystemName, nameofatoms, Npop, Mol, Hard, VSC, VSCE, D2, CL, HM, LSUR, BG, XRD, TS, num_neb, specifywps)
+
 def parseStruct_old():
     """docstring for parseStruct"""
     try:
@@ -195,6 +250,7 @@ def parseStruct_old():
 
     ldate = len(date)
     structData = []
+    gtype = 'PSO'
     for i in range(ldate):
         if 'nstruct' in date[i]:
             hardness = 0.
@@ -202,8 +258,6 @@ def parseStruct_old():
             bandgap = 100.
             xrddiff=610612509.
             nstruct = int(date[i].split('=')[1].strip())
-            # print 'ns', nstruct
-            gtype = 1
             for j in range(i+1, ldate):
                 if 'GenType' in date[j]:
                     gtype = date[j].split(':')[1].strip()
@@ -225,7 +279,6 @@ def parseStruct_old():
                                 if math.isnan(polar): polar = 0.
                             except:
                                 polar = 0.
-                        #if 'diff_gap' in date[k]:
                         if 'DiffGap' in date[k]:
                             try:
                                 bandgap = float(date[k].split('=')[1])
@@ -243,7 +296,6 @@ def parseStruct_old():
                         if 'Ele_Num' in date[k]:
                             typt = list(map(int, date[k].split('=')[1].split()))
                             natom = sum(typt)
-                            #print typt,natom
                         if 'lat_matrix' in date[k]:
                             # print  date[k+1 : k+4]
                             lat = np.array([item.split() for item in date[k+1 : k+4]], float)
@@ -258,10 +310,13 @@ def parseStruct_old():
             # print '#', nstruct, gtype, energy, typt
             # print lat
             # print pos
+
     return structData
 
 def parseStruct():
-    """docstring for parseStruct"""
+    """
+    read the `struct.dat` file
+    """
     try:
         f = open('struct.dat')
     except:
@@ -284,7 +339,7 @@ def parseStruct():
             polar = 0.
             bandgap = 100.
             xrddiff=610612509.
-            nstruct = int(date[i].split('=')[1].strip())
+            nstruct = int(date[i].split('=')[1].strip()) # abtain the 
             # print 'ns', nstruct
             gtype = 1
             # for j in range(i+1, ldate):
@@ -342,9 +397,10 @@ def parseStruct():
                         elif 'Atomic' in line:
                             pos = np.array([item.split() for item in date[k+1 : k+1+natom]], float)
                             k = k + natom
-                        elif 'nstruct' in line or k +3 > ldate :
+                        elif 'nstruct' in line or k + 3 > ldate :
                             i = k
                             lcurr = False
+                            
 
             structData.append( [energy, hardness, nstruct, gtype, (lat, pos, typt, natom), polar, bandgap, xrddiff] )
             # print 'i', i, ldate
@@ -353,69 +409,8 @@ def parseStruct():
             # print '#', nstruct, gtype, energy, typt
             # print lat
             # print pos
+    
     return structData
-
-def SplitVSCStruct():
-    try:
-        f = open('struct.dat')
-    except:
-        print("Error: no struct.dat")
-        exit(0)
-    date = []
-    try:
-        for line in f:
-            date.append(line)
-    except:
-        f.close()
-
-    ldate = len(date)
-    structData = []
-    AllData= {}
-    i = 0
-    ldate = len(date)
-    while True:
-        fstr = ''
-        if 'nstruct' in date[i]:
-            nstruct = int(date[i].split('=')[1].strip())
-            j = i + 1
-            lcurr = True
-            while lcurr :
-                fstr  += date[j]
-                j = j + 1
-                if 'Ele_Num' in date[j] :
-                    typt = list(map(int, date[j].split('=')[1].split()))
-                    typt = gcdnum(typt)
-                    fus = '_'.join(map(str, typt))
-                elif 'nstruct' in date[j] or j +3 > ldate :
-                    if fus in AllData :
-                        fstr = '            nstruct= ' + str(len(AllData[fus]) + 1)  + '\n'+ fstr
-                        AllData[fus].append(fstr)
-                    else :
-                        fstr = '            nstruct= 1' + '\n' + fstr
-                        AllData[fus] = [fstr]
-                    i = j
-                    lcurr = False
-
-            if i +10 > ldate - 1  :
-                break
-
-    if fus in AllData :
-        fstr = '            nstruct= ' + str(len(AllData[fus]) + 1)  + '\n'+ fstr
-        AllData[fus].append(fstr)
-    else :
-        fstr = '            nstruct= 1' + '\n' + fstr
-        AllData[fus] = [fstr]
-    for fus in AllData :
-        # print fus
-        # print AllData[fus][2]
-        fdir = 'data_' + fus + '/'
-        os.system('mkdir -p ' + fdir)
-        outf = fdir + 'struct.dat'
-        with open(outf, 'w')  as fw :
-            for line in AllData[fus] :
-                fw.write(line)
-
-    return 
 
 def parseTS():
     """docstring for parseStruct"""
@@ -476,7 +471,7 @@ def parseIni():
     except:
         f.close()
 
-    ldate = len(date)
+    ldate = len(date) # the length of the `struct.dat`
     structData = []
     for i in range(ldate):
         if 'nstruct' in date[i]:
@@ -554,20 +549,23 @@ def parseOpt(optf='opt', hm=False):
             else:
                 enthalpy = float(fline[num].split()[0])
                 enth.append(enthalpy)
-            natom = sum(map(int, fline[num+6].split()))
-            #
+            # natom = sum(map(int, fline[num+6].split()))
+            natom = sum(map(int, fline[num+7].split()))
             strutmp = fline[num+1 : num+natom+8]
             lat = []
             for i in range(2, 5):
                 lat.append(list(map(float, strutmp[i].split())))
             lat = np.array(lat, float)
-            typt = list(map(int, strutmp[5].split()))
+            # typt = list(map(int, strutmp[5].split()))
+            typt = list(map(int, strutmp[6].split()))
             pos = []
-            for item in strutmp[7:]:
+            # for item in strutmp[7:]:
+            for item in strutmp[8:]:
                 pos.append(list(map(float, item.split()[:3])))
             pos = np.array(pos, float)
             stru.append( [enthalpy, hardness, nstruct, gtype, (lat, pos, typt, natom), polar, bandgap, xrddiff] )
-            num = num + natom + 8
+            # num = num + natom + 8
+            num = num + natom + 9
 
     return stru
 
@@ -700,7 +698,7 @@ def write_cif(pdir, cell, no, sgdata, wori, wprim):
     tt = time.localtime()
     ttt = str(tt[0])+'-'+str(tt[1])+'-'+str(tt[2])+'\n'
     l = cell[0].copy()
-    p = cell[1].copy()
+    p = cell[1]
     typt = cell[2][:]
     sg = sgdata[0]
     sgsymbol = sgdata[1]
@@ -794,7 +792,7 @@ def write_vasp(pdir, cell, no, sgdata, wori, wprim):
     global name_ele
 
     l = cell[0].copy()
-    p = cell[1].copy()
+    p = cell[1]
     typt = cell[2][:]
     sg = sgdata[0]
     sgsymbol = sgdata[1]
@@ -824,7 +822,7 @@ def write_vasp(pdir, cell, no, sgdata, wori, wprim):
     f.write('\n')
     f.write('Direct\n')
     for item in p:
-        f.write("%8.5f %8.5f %8.5f\n" % tuple(item))
+        f.write("%8.5f %8.5f %8.5f\n" % tuple(item[0:3]))
     f.close()
 
 def findsym(cell, prec, is_refine, is_prim):
@@ -836,13 +834,9 @@ def findsym(cell, prec, is_refine, is_prim):
     ]
     '''
 
-    aprec = -1
-
-    # sl = cell[0].T.copy()
     sl = cell[0].copy()
     sp = cell[1].copy()
     stypt = cell[2][:]
-    num_atoms = cell[3]
 
     snumbers = []
     for i in range(len(stypt)):
@@ -851,53 +845,42 @@ def findsym(cell, prec, is_refine, is_prim):
 
     l = sl[:]
     p = sp[:]
-    typt = stypt[:]
     numbers = snumbers[:]
-
-    spacegroup_info = spg.get_spacegroup((l, p, numbers), prec, aprec)
-    if spacegroup_info is None:
+    # Fd-3m (227)
+    space_group = spg.get_spacegroup((l, p, numbers), prec)
+    if space_group is None:
         num_spg = 0
         symbol_spg = 'NULL'
     else:
-        num_spg = spacegroup_info.split()[1].strip('(').strip(')')
-        symbol_spg = spacegroup_info.split()[0]
+        num_spg = space_group.split()[1].strip('(').strip(')')
+        symbol_spg = space_group.split()[0]
 
     if is_refine:
-        # pp = np.zeros((num_atoms*4, 3), float)
-        # numn = np.array([0]*(num_atoms*4), int)
-
-        # for i in range(0, num_atoms):
-        #     pp[i] = p[i]
-        #     numn[i] = numbers[i]
+        # refine_lat: 3*3 numpy array
+        # refine_pos: number_of_atom*3 numpy array
+        # refine_numbers: 1D numpy array, atomic number, H2O -> [1,1,8]
         if num_spg is not None:
-            refine_info = spg.refine_cell((l, p, numbers), prec, aprec)
+            refine_info = spg.refine_cell((l, p, numbers), prec)
             if refine_info is not None:
-                ll, pp, numn = refine_info 
+                refine_lat, refine_pos, refine_numbers = refine_info 
             else:
-                ll, pp, numn = (l, p, numbers)
+                refine_lat, refine_pos, refine_numbers = (l, p, numbers)
         else:
-            ll, pp, numn = (l, p, numbers)
+            refine_lat, refine_pos, refine_numbers = (l, p, numbers)
 
-        num_atoms_brv = len(numn)
-
-        refine_lat = ll
-        refine_pos = []
-        refine_numbers = []
         refine_typt = []
+        num_atoms_brv = len(refine_numbers)
 
-
-        for inums in set(numbers):
+        for inums in set(refine_numbers): #[1,2,3] [1,2,2,3,3,3]
             itypt = 0
             for i in range(num_atoms_brv):
-                if inums == numn[i]:
-                    refine_pos.append(pp[i])
-                    refine_numbers.append(numn[i])
+                if inums == refine_numbers[i]:
                     itypt += 1
             refine_typt.append(itypt)
 
-        refine_lat = np.array(refine_lat, float)
-        refine_pos = np.array(refine_pos, float)
-        refine_numbers = np.array(refine_numbers, int)
+        #print(refine_typt)    
+        #sys.exit()
+
     else:
         refine_lat = None
         refine_pos = None
@@ -906,32 +889,28 @@ def findsym(cell, prec, is_refine, is_prim):
         refine_numbers = None
 
     if is_prim and refine_lat is not None:
-        _p_l = refine_lat.copy()
-        _p_p = refine_pos.copy()
-        _p_typt = refine_typt[:]
-        _p_numbers = refine_numbers[:]
+        p_l = refine_lat.copy()
+        p_p = refine_pos.copy()
+        p_numbers = refine_numbers[:]
         if num_spg is not None:
-            prim_info = spg.find_primitive((_p_l, _p_p, _p_numbers), 1e-5, -1)
+            prim_info = spg.find_primitive((p_l, p_p, p_numbers), 1e-5)
             if prim_info is not None:
                 p_l, p_p, p_numbers = prim_info
             else:
-                p_l, p_p, p_numbers = (_p_l, _p_p, _p_numbers)
+                p_l, p_p, p_numbers = (p_l, p_p, p_numbers)
         else:
-            p_l, p_p, p_numbers = (_p_l, _p_p, _p_numbers)
+            p_l, p_p, p_numbers = (p_l, p_p, p_numbers)
         num_atom_prim = len(p_numbers)
+
         if num_atom_prim > 0:
             prim_lat = p_l.copy()
             prim_positions = p_p[:]
             prim_numbers = p_numbers[:]
-            # prim_positions = []
-            # prim_numbers = []
             prim_typt = []
             for inums in set(prim_numbers):
                 itypt = 0
                 for i in range(num_atom_prim):
                     if inums == prim_numbers[i]:
-                        # prim_positions.append(p_p[i])
-                        # prim_numbers.append(p_numbers[i])
                         itypt += 1
                 prim_typt.append(itypt)
         else:
@@ -958,7 +937,7 @@ def plot(struct, npop):
     mod = t % npop
 
     Genth = []
-    for i in range(int(nge)):
+    for i in range(nge):
         Genth.append(enth[i*npop : (i+1)*npop])
     if mod != 0:
         Genth.append(enth[nge*npop:])
@@ -998,18 +977,13 @@ def plot(struct, npop):
 
     return 0
 
+
 def Zoutput(structure, options, num_proce, prec_pool, is_refine, is_prim, hard, fdir, d2, cl, norefine, hm, bg, xrd, lsur):
     global name_ele
     global prec
 
     OutputData = []
-    # for i in range(num_proce):
-    spg_old = 0
-    ene_old = 610612509
-    ip = 1
-    for i in range(len(structure)):
-        if ip > num_proce  :
-            break
+    for i in range(num_proce):
         # print i
         outputdata = []
         outputdata.append(structure[i][0]) # 0 enthalpy
@@ -1029,26 +1003,19 @@ def Zoutput(structure, options, num_proce, prec_pool, is_refine, is_prim, hard, 
                     os.system('mkdir -p ' + pdir)
                 if abs(structure[i][0] - 610612509.) > 0.1:
                     (spgdata, recell, primcell) = findsym(structure[i][4], prec, is_refine, is_prim)
-                    if spgdata[0] == spg_old and abs(outputdata[0]-ene_old) < options.rme :
-                        recell = None
-                        break
-                        
                 else:
                     spgdata = (0, 'NULL')
                     recell = None
-                    break
 
                 outputdata.append(spgdata)
                 if options.is_wcif and recell is not None:
-                    write_cif(pdir, recell, ip, spgdata, False, False)
+                    write_cif(pdir, recell, i+1, spgdata, False, False)
                     if options.is_prim and primcell[0] is not None:
                         write_cif(pdir, primcell, i+1, spgdata, False, True)
                 if options.is_wvasp and recell is not None:
-                    write_vasp(pdir, recell, ip, spgdata, False, False)
+                    write_vasp(pdir, recell, i+1, spgdata, False, False)
                     if options.is_prim and primcell[0] is not None:
-                        write_vasp(pdir, primcell, ip, spgdata, False, True)
-            if not recell :
-                continue
+                        write_vasp(pdir, primcell, i+1, spgdata, False, True)
 
         if norefine:
             options.is_origin = True
@@ -1060,24 +1027,21 @@ def Zoutput(structure, options, num_proce, prec_pool, is_refine, is_prim, hard, 
                 os.system('mkdir -p ' + pdir)
             if options.is_xyz:
                 try:
-                    write_xyz(pdir, structure[i][4], ip, spgdata, True, False)
+                    write_xyz(pdir, structure[i][4], i+1, spgdata, True, False)
                 except:
                     pass
             if options.is_wcif:
                 try:
-                    write_cif(pdir, structure[i][4], ip, spgdata, True, False)
+                    write_cif(pdir, structure[i][4], i+1, spgdata, True, False)
                 except:
                     pass
             if options.is_wvasp:
                 try:
-                    write_vasp(pdir, structure[i][4], ip, spgdata, True, False)
+                    write_vasp(pdir, structure[i][4], i+1, spgdata, True, False)
                 except:
                     pass
 
 
-        ip += 1
-        spg_old = spgdata[0]
-        ene_old = outputdata[0]
         OutputData.append(outputdata)
 
 
@@ -1111,6 +1075,8 @@ def Zoutput(structure, options, num_proce, prec_pool, is_refine, is_prim, hard, 
                 fw.write("%4d (%4d)  %10s%12s" % (i+1, OutputData[i][1], OutputData[i][2], 'NULL'))
             else:
                 fw.write("%4d (%4d)  %12s" % (i+1, OutputData[i][1], 'NULL'))
+                # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                # fw.write("%4d (%4d)  %12s" % (i+1, OutputData[i][1], '610612509'))
         if hard:
             fw.write("%12.5f" % (OutputData[i][3] * -1))
         if hm:
@@ -1209,32 +1175,22 @@ def vsckit_old(structure, vsce, name_ele, options, prec_pool, is_refine, is_prim
     Bstruct = sorted(structure, key = lambda x: float(x[4][2][0])/float(sum(x[4][2][:])))
     #TYPT = [x[4][2] for x in Bstruct]
     TYPT = [float(x[4][2][0])/float(sum(x[4][2][:])) for x in Bstruct]
-    TYPT2 = [float(x[4][2][1])/float(sum(x[4][2][:])) for x in Bstruct]
-    print('TYPT', TYPT, len(TYPT))
-    print('TYPT2', TYPT2, len(TYPT2))
+    #print 'TYPT', TYPT, len(TYPT)
     x = TYPT[0]
     Typt = []
     Typt.append(x)
-    x2 = TYPT2[0]
-    Typt2 = []
-    Typt2.append(x2)
-    for item, item2 in zip(TYPT, TYPT2):
-        if abs(item - x) > 1e-4 and abs(item2 - x2) > 1e-4 :
+    for item in TYPT:
+        if abs(item - x) > 1e-4:
             x = item
             Typt.append(x)
-            x2 = item2
-            Typt2.append(x2)
-    print(Typt, len(Typt))
-    print(Typt2, len(Typt))
-    sys.exit(0)
+    # print Typt, len(Typt)
+    #sys.exit(0)
     BStruct = []
-    for item, item2 in zip(Typt, Typt2):
+    for item in Typt:
         bst = []
         for x in Bstruct:
-            if abs( float(x[4][2][0])/float(sum(x[4][2][:])) - item ) < 1e-4 and \
-                    abs( float(x[4][2][1])/float(sum(x[4][2][:])) - item2 ) < 1e-4:
-                # print x[4][2][:]
-                # print float(x[4][2][0])/float(sum(x[4][2][:])), item
+            if abs( float(x[4][2][0])/float(sum(x[4][2][:])) - item ) < 1e-4:
+                #print float(x[4][2][0])/float(sum(x[4][2][:])), item
                 #print float(x[4][2][0])/float(sum(x[4][2][:]))-item
                 bst.append(x)
         BStruct.append(bst)
@@ -1275,7 +1231,6 @@ def vsckit_old(structure, vsce, name_ele, options, prec_pool, is_refine, is_prim
             Ydata.append(SBS[0][-1])
         # print Ydata
         vdir = '%.4f' % Typt[i]
-        vdir2 = '%.4f' % Typt2[i]
         xt = 'x'
         # for j in range(len(Typt[i])):
         #     vdir += name_ele[j] + str(Typt[i][j])
@@ -1293,7 +1248,7 @@ def vsckit_old(structure, vsce, name_ele, options, prec_pool, is_refine, is_prim
                 num_proce = options.num_proce
             else :
                 num_proce = len(SBS)
-        fdir = 'dir_' + vdir + '_' + vdir2 + '/'
+        fdir = 'dir_' + vdir + '/'
         os.system('mkdir -p ' + fdir)
         lsur='F'
         Zoutput(SBS, options, num_proce, prec_pool, is_refine, is_prim, hard, fdir, False, cl, norefine, hm, bg, xrd, lsur)
@@ -1334,23 +1289,21 @@ def vsckit_old(structure, vsce, name_ele, options, prec_pool, is_refine, is_prim
         plt.show()
 
 def vsckit(structure, vsce, name_ele, options, prec_pool, is_refine, is_prim, hard, cl, norefine, hm, bg, xrd):
-    import itertools
+
     import pandas as pd
 
     os.system('rm -rf dir_* > /dev/null 2> /dev/null')
     Bstruct = structure
-    #structure
-    #Bstruct = sorted(structure, key = lambda x : x[4][2]) # sorted with typt
-    #Bstruct = sorted(structure, key = lambda x: float(x[4][2][0])/float(sum(x[4][2][:])))
-    # Bstruct = sorted(structure, key = lambda x: (float(x[4][2][0])/float(sum(x[4][2][:])),float(x[4][2][0])/float(sum(x[4][2][:]))))
+     
     TYPT = [x[4][2][:] for x in Bstruct]
     ENTH = [x[0] for x in Bstruct]
     StruNum = [x[2] for x in Bstruct]
+
     tmp_list = []
     for one in TYPT :
         if one not in tmp_list :
             tmp_list.append(one)
-    # print len(tmp_list)
+
     typt_list = []
     for one in tmp_list :
         one = gcdnum(one)
@@ -1396,12 +1349,12 @@ def vsckit(structure, vsce, name_ele, options, prec_pool, is_refine, is_prim, ha
             else :
                 num_proce = len(SBS)
         fdir = 'dir_' + key + '/'
-        print(fdir, len(SBS))
+        print( fdir, len(SBS))
         os.system('mkdir -p ' + fdir)
         lsur='F'
         Zoutput(SBS, options, num_proce, prec_pool, is_refine, is_prim, hard, fdir, False, cl, norefine, hm, bg, xrd, lsur)
 
-    # convexhull.csv
+    # convexhull.dat
     kformula = []
     kenth = []
     knum = []
@@ -1417,12 +1370,14 @@ def vsckit(structure, vsce, name_ele, options, prec_pool, is_refine, is_prim, ha
     df = pd.DataFrame({'Number':knum,'formula':kformula,'enthalpy':kenth,})
     df.to_csv('convexhull.csv',index=False)
 
+
 def gcdnum(xl):
     m = min(xl)
     for i in range(m,1,-1):
         if not any([x%i for x in xl]):
             return [x/i for x in xl]
     return xl
+
 
 def run():
     global name_ele
@@ -1448,8 +1403,6 @@ def run():
                          is_dft = False,
                          is_nosym = False,
                          is_ini = False,
-                         plotch = False,
-                         plotevo = False,
                          num_proce = 50,
                          prec = 0.1,
                          mprec = None,
@@ -1458,9 +1411,8 @@ def run():
                          minp = einfinty,
                          maxp = pinfinty,
                          mine = einfinty,
-                         is_vsc_split = False, 
-                         rme = 0.001, 
                          maxe = pinfinty )
+    parser.add_option("-i", dest="input_ini", action="store", default=None)
     parser.add_option("-a", dest="is_all", action="store_true")
     parser.add_option("--cif", dest="is_wcif", action="store_true")
     parser.add_option("--pos", "--vasp", dest="is_wvasp", action="store_true")
@@ -1485,10 +1437,6 @@ def run():
     parser.add_option("--dft", dest="is_dft",  action="store_true")
     parser.add_option("--ini", dest="is_ini", action="store_true")
     parser.add_option("--ts", dest="is_ts", action="store_true")
-    parser.add_option("--split", dest="is_vsc_split", action="store_true")
-    parser.add_option("--rme","--remove-energy",dest="rme", type="float")
-    parser.add_option("--plotch","--plot_convexhull",dest="plotch", action="store_true")
-    parser.add_option("--plotevo","--plot_evo",dest="plotevo", action="store_true")
 
 
     parser.add_option("-v", "--version", dest="is_v", action="store_true")
@@ -1496,158 +1444,14 @@ def run():
     (options, args) = parser.parse_args()
 
     if options.is_v:
-        print("Version: 2016.10.10")
+        print("Version: 2022.5")
         exit(0)
 
-    if options.is_vsc_split :
-        SplitVSCStruct()
-        exit(0)
+    if options.input_ini is None:
+        (sysname, name_ele, npop, mol, hard, vsc, vsce, d2, cl, hm, lsur, bg, xrd, ts, num_neb) = readinput()
+    else:
+        (sysname, name_ele, npop, mol, hard, vsc, vsce, d2, cl, hm, lsur, bg, xrd, ts, num_neb, specifywps) = readmyini(options.input_ini)
 
-
-    (sysname, name_ele, npop, mol, hard, vsc, vsce, d2, cl, hm, lsur, bg, xrd, ts, num_neb) = readinput()
-
-    if options.plotch:
-        from pymatgen.analysis.phase_diagram import PDEntry, PhaseDiagram, PDPlotter
-        from pymatgen.core.composition import Composition
-        import pandas as pd
-        
-        ini_entries = []
-        convexhull_data = pd.read_csv('./convexhull.csv', header=0, sep=r',')
-        
-        for idx, row in convexhull_data.iterrows():
-            #if row['form_energy'] <= 0.02:
-            comp = Composition(row['formula'])
-            num_atoms = comp.num_atoms
-            enth_per_atom = row['enthalpy']
-            enth = enth_per_atom * num_atoms
-            entry_id = row['Number']
-            _entry = PDEntry(comp, enth)
-            _entry.entry_id = entry_id
-            # _entry.spg = row['spg']
-            # _entry.p = row['P']
-            # _entry.nsw = row['NSW']
-            # _entry.epa = enth_per_atom
-            ini_entries.append(_entry)              
-
-        for i in range(len(name_ele)):
-            comp = name_ele[i]
-            enth = vsce[i]
-            entry_id = name_ele[i]
-            _entry = PDEntry(comp, enth)
-            _entry.entry_id = entry_id
-            ini_entries.append(_entry)              
-            
-        ini_pd = PhaseDiagram(ini_entries)
-        plotter = PDPlotter(ini_pd, show_unstable=0.050, backend='plotly')
-        plotter.get_plot().write_image('convexhull.png')     
-        
-        
-        e_above_hull = []
-        form_energy = []
-        names = []
-        nsws = []
-        formulas = []
-        enths = []
-        spgs = []
-        ps = []
-        threshold_start = 0.00
-        #threshold = 0.05
-        
-        for entry in ini_entries:
-            ebh = ini_pd.get_e_above_hull(entry, )
-            fme = ini_pd.get_form_energy_per_atom(entry)
-            name = entry.entry_id
-            # spg = entry.spg
-            # p = entry.p
-            formula = entry.composition.formula.replace(".", "")
-            #if threshold_start <= ebh <= threshold:
-            e_above_hull.append(ebh)
-            form_energy.append(fme)
-            names.append(name)
-            formulas.append(''.join(  (''.join(str(formula))).split()  ))
-            # spgs.append(spg)
-            # ps.append(p)
-            # enths.append(enth)
-        
-        
-        df = pd.DataFrame(
-            {
-                'formula':formulas,
-                'e_above_hull':e_above_hull,
-                # 'spg':spgs,
-                # 'p':ps,
-                'form_energy':form_energy,
-                'name':names,
-                }
-            )
-        df.to_csv('./e_above_hull_50meV.csv', index=False, sep=' ')
-        sys.exit()
-
-    if options.plotevo:
-        import matplotlib.pyplot as plt
-        import scienceplots
-        
-        plt.style.use(['science', 'ieee'])
-        
-        
-        # data
-        pso_sor_list = glob.glob('./pso_sor_*')
-        x = []
-        yy = []
-        y = [np.loadtxt('pso_sor_%d'%(t)).tolist() for t in range(1, len(pso_sor_list)+1)]
-        for evo_num, ene_list in enumerate(y):
-            for ene in ene_list:
-                yy.append(ene)
-                x.append(evo_num+1)
-
-        temp = list(set(yy))
-        temp.sort()
-        max_y = temp[-1] if temp[-1] < 1000 else temp[-2]
-        min_y = temp[0] if temp[0] > -1000 else temp[1]
-
-        # colormap
-        cm = plt.cm.get_cmap('rainbow')
-        
-        # fig, ax
-        fig, ax = plt.subplots(figsize=(10, 4))
-        
-        # ax.scatter(x, yy, c=yy, cmap=cm, vmin=2.3, vmax=2.6, s=5)
-        sc = ax.scatter(x, yy, c=yy, cmap=cm, vmin=min_y, vmax=max_y, s=10)
-        
-        # beauty
-        ax.set_xlabel('Structure Evolution Step', fontsize=25, )
-        ax.set_ylabel('Energy (eV/atom)', fontsize=25, )
-        # ax.set_xticks([0, 10, 20, 30, 40, 50],)
-        # ax.set_yticks([-3.6, -3.5, -3.4, -3.3, -3.2],)
-
-        # ax.tick_params(width=5, labelsize=10)
-        ax.set_ylim((min_y, max_y))
-        
-        plt.tick_params(labelsize=20)
-        
-        # colorbar
-        cbar = fig.colorbar(sc)
-        # cbar.set_ticks(ticks=[-3.6, -3.5, -3.4, -3.3, -3.2])
-        # cbar.ax.tick_params(labelsize=20)
-        cbar.ax.minorticks_off()
-        cbar.outline.set_visible(False)
-        
-        
-        # spines width
-        width = 2
-        ca = plt.gca()
-        
-        ca.spines['bottom'].set_linewidth(width)
-        ca.spines['left'].set_linewidth(width)
-        ca.spines['top'].set_linewidth(width)
-        ca.spines['right'].set_linewidth(width)
-        
-        plt.tight_layout()
-        
-        fig.savefig('evo.png', dpi=350)
-        sys.exit()
-
-    # struct = parseStruct()
     if options.is_ini:
         struct = parseIni()
     elif lsur:
@@ -1659,8 +1463,10 @@ def run():
     elif options.is_popt:
         struct = parseOpt('opt', hm)
     else:
+        # when you use the order `cak3.py --vasp`, the program enter here !!! 
         if os.path.exists('struct.dat'):
             try:
+                # read the `struct.dat` file
                 struct = parseStruct()
             except:
                 struct = parseOpt('opt', hm)
@@ -1718,11 +1524,7 @@ def run():
     if options.is_plot:
         plot(struct, npop)
 
-    for item in structure :
-        if item[0] > options.maxe or item[0] < options.mine:
-            item[0] = 610612509
-
-    if vsc:
+    if vsc or specifywps:
         vsckit(structure, vsce, name_ele, options, prec_pool, is_refine, is_prim, hard, cl, norefine, hm, bg, xrd)
     elif ts:
         structure.sort(key=lambda x:x[0])
@@ -1743,10 +1545,7 @@ def run():
         Zoutput(structure, options, num_proce, prec_pool, is_refine, is_prim, hard, fdir, d2, cl, norefine, hm, bg, xrd, lsur)
 
 
-
 if __name__ == '__main__':
     run()
-    # print gcdnum([4, 4, 32])
-    # print gcdnum([4, 6])
 
 
