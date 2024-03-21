@@ -68,3 +68,24 @@ magus search -m
 ```shell
 source activate /work/home/may/miniconda3/envs/magus
 ```
+### 8. 记得检查输出的文件中的Distance Dict参数对应的原子间距离
+```shell
+grep "Distance Dict"  tem.log
+```
+### 9. volume_ratio在magus中的含义是：In our program, volume-ratio of each structure is calculated by cell_volume / SUM(atom_ball_volume). 在定组分中命名为volume_ratio，在变组分中命名为volRatio
+
+### 10.magus生成结构： 
+```
+# 读取输入文件生成10个结构
+magus generate -i input.yaml -n 10
+
+# 处理结果
+magus summary gen.traj
+
+# 保存结构
+magus summary gen.traj -s -o poscars
+```
+### 11.magus的卸载
+```shell
+pip uninstall magus-kit
+```
