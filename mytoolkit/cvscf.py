@@ -26,16 +26,20 @@ for root, dirs, files in os.walk("."):
                 iteration = os.popen(f'grep -s "Iteration" {ourcar_path} | wc -l').read() # 如果没有找到指定内容不输出错误结果。
                 try:
                     if int(iteration) < int(nelm):
-                        success_d.append(system_name.__str__())
+                        # success_d.append(system_name.__str__())
+                        success_d.append(os.path.abspath(system_name))
                     else:
-                        fail_d.append(system_name.__str__())
+                        # fail_d.append(system_name.__str__())
+                        fail_d.append(os.path.abspath(system_name))
                 except:
-                    fail_d.append(system_name.__str__())
+                    # fail_d.append(system_name.__str__())
+                    fail_d.append(os.path.abspath(system_name))
             else:
-                fail_d.append(system_name.__str__())
-
+                # fail_d.append(system_name.__str__())
+                fail_d.append(os.path.abspath(system_name))
         else:
-            none_d.append(system_name.__str__())
+            # none_d.append(system_name.__str__())
+            none_d.append(os.path.abspath(system_name))
 
 
 # def custom_sort(item):
