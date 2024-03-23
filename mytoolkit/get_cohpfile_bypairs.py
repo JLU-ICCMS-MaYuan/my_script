@@ -13,6 +13,10 @@ python get_pairs.py [COHPstartEnergy] [COHPendEnergy] [element1] [element2] [low
 指定其实计算的能量COHPstartEnergy和终止计算的能量COHPendEnergy
 指定两种元素element1和element2, 两种元素可以相同, 效果是求两种元素在单胞内所有原子间距离
 指定原子间距离，获得指定距离下原子对。
+
+获得指定COHPCAR.lobster中的费米面位置(第一列), COHP值(第二列), ICOHP值(第三列).
+awk '$1 == "0.00000" {print $1, $2, $3}' COHPCAR.lobster
+
 """
 print(info)
 

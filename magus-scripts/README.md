@@ -74,7 +74,7 @@ grep "Distance Dict"  tem.log
 ```
 ### 9. volume_ratio在magus中的含义是：In our program, volume-ratio of each structure is calculated by cell_volume / SUM(atom_ball_volume). 在定组分中命名为volume_ratio，在变组分中命名为volRatio
 
-### 10.magus生成结构： 
+### 10. magus生成结构： 
 ```
 # 读取输入文件生成10个结构
 magus generate -i input.yaml -n 10
@@ -89,3 +89,5 @@ magus summary gen.traj -s -o poscars
 ```shell
 pip uninstall magus-kit
 ```
+
+### 12. 千万记得修改magus的input.yaml中的min_n_atoms和max_n_atoms
