@@ -16,6 +16,7 @@ import os
 import re
 import shutil
 from pathlib import Path
+from pprint import pprint
 from argparse import ArgumentParser, RawTextHelpFormatter
 
 import pandas as pd
@@ -46,6 +47,18 @@ parser.add_argument(
     dest="endnotes",
     nargs="+",
     help="如果使用该参数, 需要用户指定某几个化合物作为端点值"
+)
+parser.add_argument(
+    "-dei",
+    "--destination-entry-index",
+    action="store",
+    default=[-1],
+    nargs="+",
+    dest="dst_entry_index",
+    type=int,
+    help="该参数用于输出指定entry的分解路径, 使用者需要事先了解相应化合物的entry编号\n"
+        "一般情况看nnconvexhull.csv文件中目标化合物在第几行就可以, 例如:\n"
+        "对于最后一行的化合物可以用-1来代表最后一个entry\n"
 )
 parser.add_argument(
     "-save",
@@ -84,11 +97,13 @@ parser.add_argument(
 )
 parser.add_argument(
     "-ebh",
-    type=int,
+    type=float,
     dest="EnthalpyAboveHullValue",
-    default=10,
+    default=[0, 10.0],
+    nargs="+",
     help="高于convex hull xxx emV 的能量的上限\n"
-        "在0 ~ EnthalpyAboveHullValue 这个范围内的亚稳的结构确定出来\n"
+        "在 ebh_lower_limit ~ ebh_higher_limit 这个范围内的亚稳的结构确定出来\n"
+        "所以说要输入两个值，第一个值是下陷，第二个值是上限。\n"
 )
 parser.add_argument(
     "-hand",
@@ -108,6 +123,7 @@ parser.add_argument(
         "unstable.csv 存储着所有压稳结构高于convex hull的能量值\n"
         "for_origin_plot.csv 存储着所有的原始数据"
 )
+
 args = parser.parse_args()
 
 input_csv_path = args.input_csv_path
@@ -116,8 +132,10 @@ show_pnd = args.show_png
 collect_stable = args.collect_stable
 collect_unstable = args.collect_unstable
 hand_plot_dat = args.hand_plot_dat
-EnthalpyAboveHullValue = args.EnthalpyAboveHullValue
+ebh_lower_limit = args.EnthalpyAboveHullValue[0]
+ebh_higher_limit = args.EnthalpyAboveHullValue[1]
 endnotes = args.endnotes
+dst_entry_index = args.dst_entry_index
 # 生成 凸包图对象
 # convexhull_data = pd.read_csv(input_csv_path, header=0, sep=',') #  header表示第一行为标题行
 print("读入文件中的能量和化学式 (注意：能量必须是化学式的能量，不是每原子的能量) ")
@@ -133,12 +151,8 @@ try:
         num_at = comp.num_atoms
         enth = row['enthalpy']*num_at
         entry_id = row['Number']
-        _entry = PDEntry(composition=comp, energy=enth)#, name=str(row['Number']))
-        _entry.entry_id = entry_id
-        # if entry_id == 12647:
-        #     print(comp)
-        # print(entry_id, comp, enth)
-        # input()
+        _entry = PDEntry(comp, enth, attribute={"entry_id":entry_id})
+        #print(_entry.attribute['entry_id'])
         ini_entries.append(_entry)
 except:
     # 该情况处理的文件：
@@ -152,12 +166,8 @@ except:
         num_at = comp.num_atoms
         enth = row['enthalpy']*num_at
         entry_id = row['Number']
-        _entry = PDEntry(composition=comp, energy=enth)#, name=str(row['Number']))
-        _entry.entry_id = entry_id
-        # if entry_id == 12647:
-        #     print(comp)
-        # print(entry_id, comp, enth)
-        # input()
+        _entry = PDEntry(comp, enth, attribute={"entry_id":entry_id})
+        #print(_entry.attribute['entry_id'])
         ini_entries.append(_entry)
 
 
@@ -170,10 +180,13 @@ ini_pd = CompoundPhaseDiagram(
     )
     
 # 输出参考单质或化合物
-print(f" reference material {ini_pd.el_refs}\n")
+print(ini_pd.terminal_compositions)
+for re in ini_pd.el_refs:
+    print(re.symbol)
+print(f"reference endnotes\n")
 
 
-# # 获得新的变换坐标后的entry
+# 获得新的变换坐标后的entry
 # trans_entries = []
 # for entry in ini_entries:
 #     new_entries, sp_mapping = TransformedPDEntry(entry, sp_mapping)(entries=entry, terminal_compositions=terminal_comps)
@@ -183,43 +196,59 @@ print(f" reference material {ini_pd.el_refs}\n")
 # 获得 落在convex hull 上稳定结构的 csv 文件
 stable_list = []
 stable_structs_amount = 0
-print("Stable")
 for entry in ini_pd.stable_entries:
     stable_dict = {}
-    form_energy = ini_pd.get_form_energy_per_atom(entry)
-    # stable_dict["Number"] = entry.entry_id
-    stable_dict["formula"] = entry.composition.formula
-    # print(entry.entry_id, entry.composition.formula)
-    # print(entry.composition.formula)
+    form_energy = ini_pd.get_form_energy(entry)
+    stable_dict["Number"] = entry.attribute['entry_id']
+    stable_dict["dummyformula"] = entry.composition.formula.replace(' ', '')
+    stable_dict["formula"] = entry.name
     stable_dict["enthalpy"] = 0.0
     stable_list.append(stable_dict)
     stable_structs_amount += 1
-    print(entry.name)
 print(f"stable structures on the convex hull is {stable_structs_amount - len(ini_pd.el_refs)}\n")
-# stable_pd = pd.DataFrame(stable_list)
-# stable_pd.to_csv("stable.csv", index=False)
+print("{:<10}  {:<10}  {:<20}   {:<10}".format("Number", "formula", "dummyformula", "enthalpy(eV/atom)"))
+sorted_dict_list = sorted(stable_list, key=lambda d: d['formula'])
+for unstable_dict in sorted_dict_list:
+    print("{:<10}  {:<10}  {:<20}  {:<10.4f}".format(
+        unstable_dict["Number"],
+        unstable_dict["formula"], 
+        unstable_dict["dummyformula"], 
+        unstable_dict["enthalpy"],
+        ))
+stable_pd = pd.DataFrame(stable_list)
+stable_pd.to_csv("stable.csv", index=False)
 
 
-# 获得 高于convex hull  0~50mev 上亚稳结构的 csv 文件
+# 获得 高于convex hull 上亚稳结构的 csv 文件
 unstable_list = []
 unstable_structs_amount = 0
-print("Meta-Stable")
 for entry in ini_pd.unstable_entries:
     unstable_dict = {}
     energy_above_hull = ini_pd.get_e_above_hull(entry)*1000
-    form_energy = ini_pd.get_form_energy_per_atom(entry)
-    # print(entry.composition.formula, energy_above_hull)
-    if 0.0 < energy_above_hull <= EnthalpyAboveHullValue: # 这里取高于convex hull 能量在0~50个meV范围内的亚稳结构
+    form_energy = ini_pd.get_form_energy(entry)
+    if ebh_lower_limit < energy_above_hull <= ebh_higher_limit: # 这里取高于convex hull 能量在0~50个meV范围内的亚稳结构
+        unstable_dict["Number"]  = entry.attribute['entry_id']
+        unstable_dict["dummyformula"] = entry.composition.formula.replace(' ', '')
+        unstable_dict["formula"] = entry.name
+        #!!!!!!!!!!!!!!!!!特别注意这里的单位是meV!!!!!!!!!!!!!!!!!!!!!!!
+        unstable_dict["enthalpy"] = ini_pd.get_e_above_hull(entry) 
         unstable_list.append(unstable_dict)
         unstable_structs_amount += 1
-        print(entry.name, energy_above_hull)
-print(f"unstable structures above the convex hull 0-{EnthalpyAboveHullValue} meV is {unstable_structs_amount}\n")
-# unstable_pd = pd.DataFrame(unstable_list)
-# unstable_pd.to_csv("unstable.csv", index=False)
-
+sorted_dict_list = sorted(unstable_list, key=lambda d: d['enthalpy'])
+print(f"unstable structures above the convex hull {ebh_lower_limit}-{ebh_higher_limit} meV is {unstable_structs_amount}\n")
+print("{:<10}  {:<10}  {:<20}  {:<10}".format("Number", "formula", "dummyformula", "enthalpy(eV/atom)"))
+for unstable_dict in sorted_dict_list:
+    print("{:<10}  {:<10}  {:<20}  {:<10.4f}".format(
+        unstable_dict["Number"],
+        unstable_dict["formula"], 
+        unstable_dict["dummyformula"], 
+        unstable_dict["enthalpy"],
+        ))
+unstable_pd = pd.DataFrame(unstable_list)
+unstable_pd.to_csv("unstable.csv", index=False)
 
 
 if save_pnd:
-    plotter = PDPlotter(ini_pd, show_unstable=EnthalpyAboveHullValue*0.001, backend='matplotlib')
+    plotter = PDPlotter(ini_pd, show_unstable=ebh_higher_limit*0.001, backend='matplotlib')
     plotter.write_image('pd_cpd.png', image_format='png')
 
