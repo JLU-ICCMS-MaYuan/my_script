@@ -2,6 +2,8 @@
 import os
 import sys
 
+import pandas as pd
+
 from pymatgen.analysis.phase_diagram import PDEntry, PhaseDiagram, PDPlotter
 from pymatgen.core.composition import Composition
 from pymatgen.core.periodic_table import Element
@@ -13,22 +15,20 @@ x, y, z = sys.argv[1:4]
 a, b, c = sys.argv[4:]
 a, b, c = float(a), float(b), float(c)
 
-os.system("cp extended_convex_hull extended_convex_hull.dat")
-os.system("sed -i '1,6d' extended_convex_hull.dat")
-
-with open("extended_convex_hull.dat", 'r') as f:
-    lines = f.readlines()
+df = pd.read_table("extended_convex_hull", sep='\s+')
 
 print("\n\n------------Atom as a endpoint for stable phase-----------")
 with open("stable_by_atoms.dat", 'w') as ff:
     ff.write("{:<10} {:<4} {:<4} {:<4} {:<10}\n".format("formula", x, y, z, "enthalpy(eV/atom)"))
     print("{:<10} {:<4} {:<4} {:<4} {:<10}".format("formula", x, y, z, "enthalpy(eV/atom)"))
-    for line in lines:
-        #print(x+line.split()[2] + y+line.split()[3] + z+line.split()[4])
-        formula = x+line.split()[2] + y+line.split()[3] + z+line.split()[4]
-        fitness = float(line.split()[8])
+    for index, row in df.iterrows():
+        formula = row['formula']
         comp = Composition(formula)
-        if fitness == 0 and len(comp.element_composition)==3:
+        ehull = row['ehull']
+        x_atoms = comp[x]
+        y_atoms = comp[y]
+        z_atoms = comp[z]
+        if ehull == 0 and len(comp)==3:
             try:
                 x_atoms = comp.to_data_dict['unit_cell_composition'][x]
             except:
@@ -44,19 +44,21 @@ with open("stable_by_atoms.dat", 'w') as ff:
             except:
                 z_atoms = 0
 
-            ff.write("{:<10} {:<4} {:<4} {:<4}   {:<10.8f}\n".format(comp.formula.replace(" ", ""), x_atoms, y_atoms, z_atoms, fitness))
-            print("{:<10} {:<4} {:<4} {:<4}   {:<10.8f}".format(comp.formula.replace(" ", ""), x_atoms, y_atoms, z_atoms, fitness))
+            ff.write("{:<10} {:<4} {:<4} {:<4}   {:<10.8f}\n".format(comp.formula.replace(" ", ""), x_atoms, y_atoms, z_atoms, ehull))
+            print("{:<10} {:<4} {:<4} {:<4}   {:<10.8f}".format(comp.formula.replace(" ", ""), x_atoms, y_atoms, z_atoms, ehull))
 
 print("\n\n------------Atom as a endpoint for unstable phase-----------")
 with open("unstable_by_atoms.dat", 'w') as ff:
     ff.write("{:<10} {:<4} {:<4} {:<4} {:<10}\n".format("formula", x, y, z, "enthalpy(eV/atom)"))
     print("{:<10} {:<4} {:<4} {:<4} {:<10}".format("formula", x, y, z, "enthalpy(eV/atom)"))
-    for line in lines:
-        #print(x+line.split()[2] + y+line.split()[3] + z+line.split()[4])
-        formula = x+line.split()[2] + y+line.split()[3] + z+line.split()[4]
-        fitness = float(line.split()[8])
+    for index, row in df.iterrows():
+        formula = row['formula']
         comp = Composition(formula)
-        if fitness > 0 and len(comp.element_composition)==3:
+        ehull = row['ehull']
+        x_atoms = comp[x]
+        y_atoms = comp[y]
+        z_atoms = comp[z]
+        if ehull > 0 and len(comp)==3:
             try:
                 x_atoms = comp.to_data_dict['unit_cell_composition'][x]
             except:
@@ -72,8 +74,8 @@ with open("unstable_by_atoms.dat", 'w') as ff:
             except:
                 z_atoms = 0
                 
-            ff.write("{:<10} {:<4} {:<4} {:<4}   {:<10.8f}\n".format(comp.formula.replace(" ", ""), x_atoms, y_atoms, z_atoms, fitness))
-            print("{:<10} {:<4} {:<4} {:<4}   {:<10.8f}".format(comp.formula.replace(" ", ""), x_atoms, y_atoms, z_atoms, fitness))
+            ff.write("{:<10} {:<4} {:<4} {:<4}   {:<10.8f}\n".format(comp.formula.replace(" ", ""), x_atoms, y_atoms, z_atoms, ehull))
+            print("{:<10} {:<4} {:<4} {:<4}   {:<10.8f}".format(comp.formula.replace(" ", ""), x_atoms, y_atoms, z_atoms, ehull))
 
 
 
@@ -82,12 +84,14 @@ print("\n\n------------Block as a endpoint for stable phase-----------")
 with open("stable_by_block.dat", 'w') as ff:
     ff.write("{:<10} {:<4} {:<4} {:<4} {:<10}\n".format("formula", x, y, z, "enthalpy(eV/atom)"))
     print("{:<10} {:<4} {:<4} {:<4} {:<10}".format("formula", x, y, z, "enthalpy(eV/atom)"))
-    for line in lines:
-        #print(x+line.split()[2] + y+line.split()[3] + z+line.split()[4])
-        formula = x+line.split()[2] + y+line.split()[3] + z+line.split()[4]
-        fitness = float(line.split()[8])
+    for index, row in df.iterrows():
+        formula = row['formula']
         comp = Composition(formula)
-        if fitness == 0 and len(comp.element_composition)==3:
+        ehull = row['ehull']
+        x_atoms = comp[x]
+        y_atoms = comp[y]
+        z_atoms = comp[z]
+        if ehull == 0 and len(comp)==3:
             try:
                 x_atoms = comp.to_data_dict['unit_cell_composition'][x]
                 x_block = x_atoms
@@ -108,19 +112,21 @@ with open("stable_by_block.dat", 'w') as ff:
             except:
                 z_block = 0
                 
-            ff.write("{:<10} {:<4} {:<4} {:<4}   {:<10.8f}\n".format(comp.formula.replace(" ", ""), x_block, y_block, z_block, fitness))
-            print("{:<10} {:<4} {:<4} {:<4}   {:<10.8f}".format(comp.formula.replace(" ", ""), x_block, y_block, z_block, fitness))
+            ff.write("{:<10} {:<4} {:<4} {:<4}   {:<10.8f}\n".format(comp.formula.replace(" ", ""), x_block, y_block, z_block, ehull))
+            print("{:<10} {:<4} {:<4} {:<4}   {:<10.8f}".format(comp.formula.replace(" ", ""), x_block, y_block, z_block, ehull))
 
 print("\n\n------------Block as a endpoint for unstable phase-----------")
 with open("unstable_by_block.dat", 'w') as ff:
     ff.write("{:<10} {:<4} {:<4} {:<4} {:<10}\n".format("formula", x, y, z, "enthalpy(eV/atom)"))
     print("{:<10} {:<4} {:<4} {:<4} {:<10}".format("formula", x, y, z, "enthalpy(eV/atom)"))
-    for line in lines:
-        #print(x+line.split()[2] + y+line.split()[3] + z+line.split()[4])
-        formula = x+line.split()[2] + y+line.split()[3] + z+line.split()[4]
-        fitness = float(line.split()[8])
+    for index, row in df.iterrows():
+        formula = row['formula']
         comp = Composition(formula)
-        if fitness > 0 and len(comp.element_composition)==3:
+        ehull = row['ehull']
+        x_atoms = comp[x]
+        y_atoms = comp[y]
+        z_atoms = comp[z]
+        if ehull > 0 and len(comp)==3:
             try:
                 x_atoms = comp.to_data_dict['unit_cell_composition'][x]
                 x_block = x_atoms
@@ -141,8 +147,8 @@ with open("unstable_by_block.dat", 'w') as ff:
             except:
                 z_block = 0
                 
-            ff.write("{:<10} {:<4} {:<4} {:<4}   {:<10.8f}\n".format(comp.formula.replace(" ", ""), x_block, y_block, z_block, fitness))
-            print("{:<10} {:<4} {:<4} {:<4}   {:<10.8f}".format(comp.formula.replace(" ", ""), x_block, y_block, z_block, fitness))
+            ff.write("{:<10} {:<4} {:<4} {:<4}   {:<10.8f}\n".format(comp.formula.replace(" ", ""), x_block, y_block, z_block, ehull))
+            print("{:<10} {:<4} {:<4} {:<4}   {:<10.8f}".format(comp.formula.replace(" ", ""), x_block, y_block, z_block, ehull))
 
 
 
