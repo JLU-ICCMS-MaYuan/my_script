@@ -345,10 +345,10 @@ class vasp_base:
     def read_hspp(self, hsppfile_path):
         with open(hsppfile_path, "r") as f:
             lines = f.readlines()
-
-        hspplist         = [line.strip() for line in lines[4:] if line != "\n"]
-        path_name_coords = [hspplist[i] for i in range(0, len(hspplist), 2)] + [hspplist[-1]]
-        print(path_name_coords)
+        
+        hspplist         = [line.strip() for line in lines[4:] if line != "\n"] # 只读取第四行开始的内容
+        path_name_coords = [hspplist[i] for i in range(0, len(hspplist), 2)] + [hspplist[-1]] # 每隔一个高对称点读取一次，并且附加最后一个高对称点
+        #print(path_name_coords[0].split()[:-1])
         projected_path_name_coords = [[path_name_coords[0].split()[-1], list(map(float, path_name_coords[0].split()[:-1]))[0]]]
         total_dist = 0
         for idx in range(1, len(path_name_coords)):
@@ -385,8 +385,8 @@ class vasp_base:
                 kp.write("Line-Mode\n")
                 kp.write("Reciprocal\n")
                 for two_names, two_coords in zip(pair_two_names, pair_two_coords):
-                    kp.write("{:<10.8f} {:<10.8f} {:<10.8f} ! ${}$\n".format(two_coords[0][0],two_coords[0][1],two_coords[0][2], two_names[0]))
-                    kp.write("{:<10.8f} {:<10.8f} {:<10.8f} ! ${}$\n".format(two_coords[1][0],two_coords[1][1],two_coords[1][2], two_names[1]))
+                    kp.write("{:<10.8f} {:<10.8f} {:<10.8f}  ${}$\n".format(two_coords[0][0],two_coords[0][1],two_coords[0][2], two_names[0]))
+                    kp.write("{:<10.8f} {:<10.8f} {:<10.8f}  ${}$\n".format(two_coords[1][0],two_coords[1][1],two_coords[1][2], two_names[1]))
                     kp.write("\n")
 
 class vaspbatch_base(vasp_base):
