@@ -16,7 +16,7 @@ none_d = []
         # ourcar_path = system_name.joinpath("OUTCAR")
 for root, dirs, files in os.walk("."):
         system_name = Path(root)
-        if "OUTCAR" in files:
+        if "OUTCAR" in files :
             ourcar_path = system_name.joinpath("OUTCAR")
             # 抑制错误消息
             res = os.popen(f'grep -s "reached required accuracy - stopping structural energy minimisation" {ourcar_path}').read() # 如果没有找到指定内容不输出错误结果。
@@ -26,8 +26,8 @@ for root, dirs, files in os.walk("."):
             else:
             #    fail_d.append(system_name.__str__())
                 fail_d.append(os.path.abspath(system_name))
-        else:
-        #    none_d.append(system_name.__str__())
+        elif "INCAR" in files or "POTCAR" in files or "POSCAR" in files:
+            # none_d.append(system_name.__str__())
             none_d.append(os.path.abspath(system_name))
 
 
