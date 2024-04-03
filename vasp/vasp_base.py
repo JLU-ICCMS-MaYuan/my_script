@@ -346,6 +346,7 @@ class vasp_base:
         with open(hsppfile_path, "r") as f:
             lines = f.readlines()
         
+
         hspplist         = [line.strip() for line in lines[4:] if line != "\n"] # 只读取第四行开始的内容
         path_name_coords = [hspplist[i] for i in range(0, len(hspplist), 2)] + [hspplist[-1]] # 每隔一个高对称点读取一次，并且附加最后一个高对称点
         #print(path_name_coords[0].split()[:-1])
