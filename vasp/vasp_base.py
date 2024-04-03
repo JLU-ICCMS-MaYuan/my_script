@@ -343,20 +343,44 @@ class vasp_base:
         return path_name_list, path_coords
 
     def read_hspp(self, hsppfile_path):
+        
+        print(self.cell_parameters)
+        print("The reciprocal lattice")
+        for vector in self.reciprocal_plattice:
+            print("{:<6.3f} {:<6.3f} {:<6.3f} ".format(vector[0], vector[1], vector[2]))
+
         with open(hsppfile_path, "r") as f:
             lines = f.readlines()
-        
 
         hspplist         = [line.strip() for line in lines[4:] if line != "\n"] # 只读取第四行开始的内容
         path_name_coords = [hspplist[i] for i in range(0, len(hspplist), 2)] + [hspplist[-1]] # 每隔一个高对称点读取一次，并且附加最后一个高对称点
-        #print(path_name_coords[0].split()[:-1])
+
+        print("Print path coords and names")
+        for idx in range(0, len(path_name_coords)):
+            print(path_name_coords[idx])
+        
         projected_path_name_coords = [[path_name_coords[0].split()[-1], list(map(float, path_name_coords[0].split()[:-1]))[0]]]
         total_dist = 0
         for idx in range(1, len(path_name_coords)):
             current_name   = path_name_coords[idx].split()[-1]
-            current_coords = np.dot(self.reciprocal_plattice, list(map(float, path_name_coords[idx].split()[:-1])))
-            last_coords    = np.dot(self.reciprocal_plattice, list(map(float, path_name_coords[idx-1].split()[:-1])))
-            dist = np.linalg.norm(current_coords-last_coords, 2)
+            # why self.reciprocal_plattice.T, transpored operation is used ?
+            # self.reciprocal_plattice = [[b1x, b1y, b1z],
+            #                             [b2x, b2y, b2z],
+            #                             [b3x, b3y, b3z]]
+            # fraction_coords = [x,y,x]
+            # the matrix multimlying way by human is:
+            # [x, y, z] * [[b1x, b1y, b1z], = [x*b1x+y*b2x+z*b3x, x*b1y+y*b2y+z*b3y, x*b1z+y*b2z+z*b3z]
+            #              [b2x, b2y, b2z],
+            #              [b3x, b3y, b3z]]
+            # the matrix multimlying way by numpy is:
+            # [x, y, z] * [[b1x, b1y, b1z], = [x*b1x+y*b1y+z*b1z, x*b2x+y*b2y+z*b2z, x*b3x+y*b3y+z*b3z]
+            #              [b2x, b2y, b2z],
+            #              [b3x, b3y, b3z]]
+            current_fraction_coords  = list(map(float, path_name_coords[idx].split()[:-1]))
+            current_cartesian_coords = np.dot(self.reciprocal_plattice.T, current_fraction_coords)
+            last_fraction_coords     = list(map(float, path_name_coords[idx-1].split()[:-1]))
+            last_cartesian_coords    = np.dot(self.reciprocal_plattice.T, last_fraction_coords)
+            dist = np.linalg.norm(current_cartesian_coords-last_cartesian_coords, 2)
             total_dist += dist
             projected_path_name_coords.append([current_name, total_dist])
         string_names = '  '.join(coord[0] for coord in projected_path_name_coords)
