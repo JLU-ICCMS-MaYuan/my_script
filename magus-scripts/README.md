@@ -68,6 +68,24 @@ magus search -m
 ```shell
 source activate /work/home/may/miniconda3/envs/magus
 ```
+这是因为:如果你的magus是在主节点上运行, 那么有一部分MPT的程序要在主节点上运行. 需要激活环境. 具体来说是这一段代码要在主节点运行:
+```python
+# magus-master/magus/calculators/mtp.py
+246     def calc_grade(self):
+247         # must have: pot.mtp, train.cfg
+248         log.info('\tstep 01: calculate grade')
+249         exeCmd = f"{self.mtp_runner} -n 1 {self.mtp_exe} calc-grade pot.mtp train.cfg train.cfg "\
+250                  "temp.cfg --als-filename=A-state.als"
+251         #exeCmd = f"mlp calc-grade pot.mtp train.cfg train.cfg "\
+252         #         "temp.cfg --als-filename=A-state.als"
+253         exitcode = subprocess.call(exeCmd, shell=True)
+254         if exitcode != 0:
+255             raise RuntimeError('MTP exited with exit code: %d.  ' % exitcode)
+# 翻译过来就是运行:
+mpirun -n 1 mlp calc-grade pot.mtp train.cfg train.cfg temp.cfg --als-filename=A-state.als
+
+```
+
 ### 8. 记得检查输出的文件中的Distance Dict参数对应的原子间距离
 ```shell
 grep "Distance Dict"  tem.log
@@ -91,3 +109,12 @@ pip uninstall magus-kit
 ```
 
 ### 12. 千万记得修改magus的input.yaml中的min_n_atoms和max_n_atoms
+
+### 13. formula_pool 这个参数非常重要，它控制了产生结构的配比，如果你不主动删除它，它是不会更新的。
+所以它还有一种奇特的用法：你可以手动指定formula_pool中的内容以保证只产生你需要的配比。
+
+
+### 14. 在用summary模式时，可以手动添加信息，例如额外添加体积信息：
+```shell
+magus summary  gen.traj -a volume
+```

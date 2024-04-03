@@ -384,7 +384,7 @@ class vasp_writeincar:
             incar.write("INIWAV = 1            \n")            
             incar.write("LREAL  = {}           \n".format(self.lreal))
             incar.write("NBANDS = {}           \n".format(self.nbands))
-            incar.write("LWAVE  = .FALSE.      \n")                 
+            incar.write("LWAVE  = .TRUE.      \n")                 
             incar.write("LCHARG = .FALSE.      \n")           
             incar.write("ADDGRID= .TRUE.       \n")   
             incar.write("#RWIGS = 1.54 0.82    \n")     
