@@ -1,8 +1,0 @@
-forrtl: severe (24): end-of-file during read, unit 5, file /proc/44593/fd/0
-Image              PC                Routine            Line        Source             
-matdyn.x           000000000054171E  Unknown               Unknown  Unknown
-matdyn.x           0000000000572625  Unknown               Unknown  Unknown
-matdyn.x           00000000004073B5  MAIN__                    442  matdyn.f90
-matdyn.x           0000000000404F9E  Unknown               Unknown  Unknown
-libc-2.17.so       00002B4151347445  __libc_start_main     Unknown  Unknown
-matdyn.x           0000000000404EA9  Unknown               Unknown  Unknown
