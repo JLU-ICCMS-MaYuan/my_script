@@ -40,11 +40,11 @@ for e in eles:
     s_orb, p_orb, d_orb, f_orb, tot = plus_spdf(e)
     
     # 将每个元素的 spdf 轨道和 tot 轨道添加到结果 DataFrame 中
-    result_df[f'{e}_s'] = s_orb
-    result_df[f'{e}_p'] = p_orb
-    result_df[f'{e}_d'] = d_orb
-    result_df[f'{e}_f'] = f_orb
-    result_df[f'{e}_tot'] = tot
+    result_df[f'{e}_s'] = s_orb/vol
+    result_df[f'{e}_p'] = p_orb/vol
+    result_df[f'{e}_d'] = d_orb/vol
+    result_df[f'{e}_f'] = f_orb/vol
+    result_df[f'{e}_tot'] = tot/vol
 
 # 将结果写入文件
 result_df.to_csv('spdf_tot_result.csv', index=False)
