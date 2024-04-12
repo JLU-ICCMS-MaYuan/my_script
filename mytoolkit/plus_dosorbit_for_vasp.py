@@ -31,7 +31,7 @@ sample_element = eles[0]
 sample_df = pd.read_table(f"PDOS_{sample_element}.dat", sep='\s+')
 energy = sample_df['#Energy']
 # 创建一个空 DataFrame 用于存储结果，并添加 'Energy' 列
-result_df = pd.DataFrame({'#Energy': energy})
+result_df = pd.DataFrame({'Energy(eV)': energy})
 
 
 # 遍历元素
@@ -44,12 +44,12 @@ for e in eles:
     result_df[f'{e}_p'] = p_orb/vol
     result_df[f'{e}_d'] = d_orb/vol
     result_df[f'{e}_f'] = f_orb/vol
-    result_df[f'{e}_tot'] = tot/vol
+    result_df[f'{e}'] = tot/vol
 
 # 将结果写入文件
 result_df.to_csv('spdf_tot_result.csv', index=False)
 
-nearest_to_zero_index = result_df['#Energy'].abs().idxmin()
+nearest_to_zero_index = result_df['Energy(eV)'].abs().idxmin()
 # 获取最接近0的行的上下5行索引范围
 start_index = max(0, nearest_to_zero_index - 3)
 end_index = min(len(result_df), nearest_to_zero_index + 3)
