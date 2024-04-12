@@ -118,3 +118,22 @@ pip uninstall magus-kit
 ```shell
 magus summary  gen.traj -a volume
 ```
+
+### 15. 修改了代码中计算grade的部分，不使用mpirun计算，直接使用穿行计算  (calculators/mtp.py的249行)
+
+### 16. 修改了代码中slurm提交VASP任务后检查任务是否完成的部分，删了一行alldone=False. (parallel/queuemanage.py的274行)
+
+### 17. 种子文件制作：创建一个叫做Seeds的文件，然后在其中起名POSCARS_m, 代表在第m代读入种子文件。
+
+### 18. pot.mtp 是机器学习的初始势函数，这个势函数不能乱选，如果你之前没有训练好的势能，那么就用mlip给的未训练的势函数， 他们存放在这里：
+```shell
+
+cd mlip-2-master/untrained_mtps
+ls
+02.mtp      04.mtp      06.mtp      08.mtp      10.mtp      12.mtp      14.mtp      16.mtp      18.mtp      20.mtp      22.mtp      24.mtp      26.mtp      28.mtp      readme.txt
+# 数字代表势函数的level，level越高精度和消耗越高，一般单质给16，化合物给18-20
+cp ~/code/mlip-2/untrained_mtps/20.mtp inputFold/MTP/pot.mtp 
+# 将某一个拷贝为inputFold/MTP/pot.mtp即可
+
+# 然后依照input.yaml中的mindist，修改inputFold/MTP/pot.mtp中的min_dist和species_count即可，species_count代表元素个数，min_dist是最小的合理距离。
+```
