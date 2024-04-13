@@ -48,22 +48,25 @@ for root, dirs, files in os.walk("."):
 
 def custom_sort(item):
     parts = item.split("/")
-    try:
-        return (parts[:-1], eval(parts[-1]))
-    except:
-        return (parts[:-1], parts[-1])
+    return (parts[:-1], eval(parts[-1]))
 
 print("\nscf-none")
 for line in none_d:
     print(line)
 
 print("\nscf-succeeded")
-success_d = sorted(success_d, key=custom_sort)
+try: 
+    success_d = sorted(success_d, key=custom_sort)
+except:
+    success_d = success_d
 for line in success_d:
     print(line)
 
 print("\nscf-failed")
-fail_d = sorted(fail_d, key=custom_sort)
+try: 
+    fail_d = sorted(fail_d, key=custom_sort)
+except:
+    fail_d = fail_d
 for line in fail_d:
     print(line)
 
