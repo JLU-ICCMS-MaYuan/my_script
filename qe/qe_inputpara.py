@@ -39,9 +39,9 @@ class qe_inputpara(qe_base):
         if not hasattr(self, "mode"):
             raise AttributeError("there is no attribution of mode")
 
-        if not hasattr(self, "core"):
+        if not hasattr(self, "execmd"):
             print("\nNote: --------------------")
-            print("    You didn't specify `core=xxx`. The program just prepare uspp for you in pp-directory, and it will exit!!!")
+            print("    You must specify execute command, such as 'mpirun -np 48', 'bash', 'srun', 'srun --mpi=pmi2'")
             sys.exit(1)
 
         if not hasattr(self, "npool"):

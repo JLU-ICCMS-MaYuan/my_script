@@ -19,14 +19,14 @@ class qe_submitjob:
         work_path: Path,
         submit_job_system: str,
         mode: str, 
-        core: int,
+        execmd: str,
         **kwargs
         ):
 
         self.work_path = work_path
         self.submit_job_system  = submit_job_system
         self.mode = mode
-        self.core = core
+        self.execmd = execmd
 
         for key, value in kwargs.items():
             setattr(self, key, value)
@@ -48,7 +48,7 @@ class qe_submitjob:
             work_path=other_class.work_path,
             submit_job_system=other_class.submit_job_system,
             mode=other_class.mode,
-            core=other_class.core,
+            execmd=other_class.execmd,
         )
 
         return self
@@ -60,7 +60,7 @@ class qe_submitjob:
             work_path=other_class.work_path,
             submit_job_system=other_class.submit_job_system,
             mode=other_class.mode,
-            core=other_class.core,
+            execmd=other_class.execmd,
             )
 
         return self
@@ -75,7 +75,7 @@ class qe_submitjob:
             dyn0_flag=other_class.dyn0_flag,
             system_name=other_class.system_name,
             qirreduced=other_class.qirreduced,
-            core=other_class.core,
+            execmd=other_class.execmd,
         )
 
         return self 
@@ -87,7 +87,7 @@ class qe_submitjob:
             work_path=other_class.work_path,
             submit_job_system=other_class.submit_job_system,
             mode=other_class.mode,
-            core=other_class.core,
+            execmd=other_class.execmd,
         )
 
         return self 
@@ -99,7 +99,7 @@ class qe_submitjob:
             work_path=other_class.work_path,
             submit_job_system=other_class.submit_job_system,
             mode=other_class.mode,
-            core=other_class.core,
+            execmd=other_class.execmd,
         )
 
         return self 
