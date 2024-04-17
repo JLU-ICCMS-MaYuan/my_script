@@ -17,82 +17,76 @@ subjiaoben_pth="/work/home/may/code/my_script/ares-phonon-scripts/center-slurm/r
 # 获取声子输入文件
 phon_pth="/work/home/may/code/my_script/ares-phonon-scripts/phon.in"
 
-# 获取扩胞数
-dim=sys.argv[1]
-if len(dim.split())==3:
-    a, b, c = dim.split()
-else:
-    a, b, c = 1, 1, 1
-print('dim=',a,b,c)
-
-# 获取kpoints
 k_spacing=0.03
 
 # 获取元素
 with open('POSCAR','r') as f:
-    l=[i.strip() for i in f.readlines()]
-    eles = ' '.join(l[5].split())
-    f.close()
-
+ l=[i.strip() for i in f.readlines()]
+ eles = ' '.join(l[5].split())
+ f.close()
+# 获取扩胞数
+inp=sys.argv
+if len(inp)==1:
+ a=1
+ b=1
+ c=1
+else:
+ a=inp[1][0]
+ b=inp[1][1]
+ c=inp[1][2]
+print('dim=',a,b,c)
 # 准备计算文件
-os.system(rf"""mkdir wq-{a}{b}{c};
-cp CONTCAR wq-{a}{b}{c}/POSCAR;
-cp POTCAR wq-{a}{b}{c}; 
-cp {incar_pho_pth} wq-{a}{b}{c}/INCAR;
-cp {subjiaoben_pth} wq-{a}{b}{c}/run.sh;
-cp {phon_pth} wq-{a}{b}{c};
-cd ./wq-{a}{b}{c};
+os.system(rf"""mkdir newq-{a}{b}{c};
+cp CONTCAR newq-{a}{b}{c}/POSCAR;
+cp POTCAR newq-{a}{b}{c}; 
+cp {incar_pho_pth} newq-{a}{b}{c}/INCAR;
+cp {subjiaoben_pth} newq-{a}{b}{c}/jiaoben.sh;
+cp {phon_pth} newq-{a}{b}{c};
+cd ./newq-{a}{b}{c};
 echo -e '3\n303\n' | vaspkit
 """)
-
 # 产生k路径
-with open(rf'./wq-{a}{b}{c}/KPATH.in','r') as f:
-    lines=[i.strip() for i in f.readlines()]
-    path=lines[4:]
-    path=[i for i in path if len(i) != 0]
-    path_ini=path[::2]
-    ll=len(path_ini)
-    path_fin=path[1::2]
-    path_ini =[' '.join(i.split()[:-1])+'  # '+i.split()[-1] for i in path_ini]
-    path_fin =[' '.join(i.split()[:-1])+'  # '+i.split()[-1] for i in path_fin]
-    path_ini = '\n     '.join(path_ini)
-    path_fin = '\n     '.join(path_fin)
-    path_ini = '#Start q-point\nQI = ' + path_ini
-    path_fin = '#End q-point\nQF = ' + path_fin 
+with open(rf'./newq-{a}{b}{c}/KPATH.in','r') as f:
+ lines=[i.strip() for i in f.readlines()]
+ path=lines[4:]
+ path=[i for i in path if len(i) != 0]
+ path_ini=path[::2]
+ ll=len(path_ini)
+ path_fin=path[1::2]
+ path_ini =[' '.join(i.split()[:-1])+'  # '+i.split()[-1] for i in path_ini]
+ path_fin =[' '.join(i.split()[:-1])+'  # '+i.split()[-1] for i in path_fin]
+ path_ini = '\n     '.join(path_ini)
+ path_fin = '\n     '.join(path_fin)
+ path_ini = '#Start q-point\nQI = ' + path_ini
+ path_fin = '#End q-point\nQF = ' + path_fin 
 
 # 写phon.in
 os.system(rf"""
-cd ./wq-{a}{b}{c};
+cd ./newq-{a}{b}{c};
 sed -i '8s/=/={eles}/' phon.in;
 sed -i '14s/=/= {a} {b} {c}/' phon.in;
 sed -i '32s/=/= {ll}/' phon.in;
 """)
-with open(rf'wq-{a}{b}{c}/phon.in','a') as f:
+with open(rf'newq-{a}{b}{c}/phon.in','a') as f:
  print(path_ini,file=f)
  print(path_fin,file=f)
 
 # 准备kpoints
 os.system(rf"""
-cd ./wq-{a}{b}{c};
+cd ./newq-{a}{b}{c};
 phon;
 wait;
 """)
 
 os.system(rf"""
-cd ./wq-{a}{b}{c};
+cd ./newq-{a}{b}{c};
 for i in ./SUPERCELL.*; do cd $i/DIS.1 && echo -e '1\n102\n2\n{k_spacing}\n' | vaspkit; cp KPOINTS .. && cd -; done
-for i in ./SUPERCELL.*; do cd $i/DIS.1 && echo -e '1\n102\n2\n{eles}\n{k_spacing}\n' | vaspkit; cp KPOINTS .. && cd -; done
 """)
 
 # 计算文件分发
 os.system(rf"""
-cd ./wq-{a}{b}{c};
-for i in ./SUPERCELL.*/DIS.*; do cp INCAR POTCAR run.sh $i; done
+cd ./newq-{a}{b}{c};
+for i in ./SUPERCELL.*/DIS.*; do cp INCAR POTCAR jiaoben.sh $i; done
 for i in ./SUPERCELL.*; do for j in $i/DIS.*; do cp $i/KPOINTS $j; done ; done
-""")
-
-# 准备log文件
-os.system(rf"""
-cd ./wq-{a}{b}{c};
-ls -d SUPERCELL.*/DIS.* > log
+for i in ./SUPERCELL.*/DIS.*; do echo $i >> log ; done
 """)
