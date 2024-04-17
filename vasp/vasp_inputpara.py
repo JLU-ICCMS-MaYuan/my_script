@@ -94,9 +94,9 @@ class vasp_inputpara(vasp_base):
             self.queue = None
             print("    You didn't specify queue, so the program will not submit the job in any way")
 
-        if not hasattr(self, "core"):
+        if not hasattr(self, "execmd"):
             print("Error: ----------------------")
-            print("    You must specify the number of core, such as 'core=48'")
+            print("    You must specify execute command, such as 'mpirun -np 48', 'bash', 'srun', 'srun --mpi=pmi2'")
             print("-----------------------------")
             sys.exit(1)
 

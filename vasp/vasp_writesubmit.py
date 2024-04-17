@@ -12,14 +12,14 @@ class vasp_writesubmit:
         submit_job_system: str, 
         mode: str,
         queue: str,
-        core: int,
+        execmd: str,
         **kwargs,
         ):
         self.work_path = work_path
         self.submit_job_system = submit_job_system
         self.mode = mode
         self.queue = queue
-        self.core = core
+        self.execmd = execmd
         for key, value in kwargs.items():
             setattr(self, key, value)
 
@@ -40,7 +40,7 @@ class vasp_writesubmit:
             submit_job_system=other_class.submit_job_system,
             mode=other_class.mode,
             queue=other_class.queue,
-            core=other_class.core,
+            execmd=other_class.execmd,
         )
     
         return self
@@ -53,7 +53,7 @@ class vasp_writesubmit:
             submit_job_system=other_class.submit_job_system,
             mode=other_class.mode,
             queue=other_class.queue,
-            core=other_class.core,
+            execmd=other_class.execmd,
         )
     
         return self
@@ -66,7 +66,7 @@ class vasp_writesubmit:
             submit_job_system=other_class.submit_job_system,
             mode=other_class.mode,
             queue=other_class.queue,
-            core=other_class.core,
+            execmd=other_class.execmd,
         )
         
         return self
@@ -124,7 +124,7 @@ class vasp_writesubmit:
             submit.write('        echo "run fine vasp opt-$num"         \n')                                      
             submit.write('        killall -9 vasp_std                                \n')                                                                         
             submit.write('        sleep 3                                            \n')                                                                         
-            submit.write('        timeout 14400s mpirun -n {} {} > vasp.log 2>&1    \n'.format(self.core, vaspbin_path))                                                                         
+            submit.write('        timeout 14400s {} {} > vasp.log 2>&1               \n'.format(self.execmd, vaspbin_path))                                                                         
             submit.write('        cp -f CONTCAR CONTCAR-fine &&  cp -f CONTCAR POSCAR\n')                                                            
             submit.write("        rows=`sed -n '/F\=/p' OSZICAR | wc -l`             \n")                                               
             submit.write('        echo "rows-$rows"                                  \n')                           
@@ -143,7 +143,7 @@ class vasp_writesubmit:
         submit_script_filepath = os.path.join(submit_dirpath, jobname)
         with open(submit_script_filepath, "w") as submit:
             submit.writelines(self.jobtitle)
-            submit.write('mpirun -n {} {} > vasp.log 2>&1    \n'.format(self.core, vaspbin_path))                                                                         
+            submit.write('{} {} > vasp.log 2>&1               \n'.format(self.execmd, vaspbin_path))                                                                         
         return jobname
 
     def threeopt(self, submit_dirpath):
@@ -155,7 +155,7 @@ class vasp_writesubmit:
             submit.write("cp INCAR_$i INCAR                    \n")
             submit.write("killall -9 vasp_std                  \n")
             submit.write("sleep 3                              \n")
-            submit.write("mpirun -np {} {} > vasp.log_$i 2>&1\n".format(self.core, vaspbin_path))
+            submit.write("{} {} > vasp.log_$i 2>&1             \n".format(self.execmd, vaspbin_path))
             submit.write("cp CONTCAR POSCAR                    \n")
             submit.write("done                                 \n")
         return jobname
@@ -169,7 +169,7 @@ class vasp_writesubmit:
             submit.write("cp INCAR_$i INCAR                    \n")
             submit.write("killall -9 vasp_std                  \n")
             submit.write("sleep 3                              \n")
-            submit.write("mpirun -np {} {} > vasp.log_$i 2>&1\n".format(self.core, vaspbin_path))
+            submit.write("{} {} > vasp.log_$i 2>&1             \n".format(self.execmd, vaspbin_path))
             submit.write("cp CONTCAR POSCAR                    \n")
             submit.write("done                                 \n")
         return jobname
@@ -181,7 +181,7 @@ class vasp_writesubmit:
             submit.writelines(self.jobtitle)
             submit.write('echo "run fine DFPT"                \n')
             submit.write('cp -f SPOSCAR POSCAR                \n')
-            submit.write('mpirun -np {} {} > vasp.log 2>&1    \n'.format(self.core, vaspbin_path))                        
+            submit.write('{} {} > vasp.log 2>&1               \n'.format(self.execmd, vaspbin_path))                        
         return jobname
 
     def disp(self, submit_dirpath):
@@ -191,7 +191,7 @@ class vasp_writesubmit:
         with open(submit_script_filepath, "w") as submit:
             submit.writelines(self.jobtitle)
             submit.write('echo "run Displacement" && pwd      \n')
-            submit.write('mpirun -np {} {} > vasp.log 2>&1  \n'.format(self.core, vaspbin_path))   
+            submit.write('{} {} > vasp.log 2>&1               \n'.format(self.execmd, vaspbin_path))   
         return jobname
 
     def only_onemode(self, submit_dirpath):
@@ -199,7 +199,7 @@ class vasp_writesubmit:
         submit_script_filepath = os.path.join(submit_dirpath, jobname)
         with open(submit_script_filepath, "w") as submit:
             submit.writelines(self.jobtitle)
-            submit.write('mpirun -n {} {} > vasp.log 2>&1    \n'.format(self.core, vaspbin_path))                                                                         
+            submit.write('{} {} > vasp.log 2>&1               \n'.format(self.execmd, vaspbin_path))                                                                         
         return jobname
     
     def scf_eband_eledos(self, submit_dirpath):
@@ -208,13 +208,13 @@ class vasp_writesubmit:
         with open(submit_script_filepath, "w") as submit:
             submit.writelines(self.jobtitle)
             submit.write("cd scf\n")
-            submit.write('mpirun -n {} {} > vasp.log 2>&1    \n'.format(self.core, vaspbin_path))                                                                         
+            submit.write('{} {} > vasp.log 2>&1               \n'.format(self.execmd, vaspbin_path))                                                                         
             submit.write("cd ../eband\n")
             submit.write("cp ../scf/CHGCAR .\n")
-            submit.write('mpirun -n {} {} > vasp.log 2>&1    \n'.format(self.core, vaspbin_path))                                                                         
+            submit.write('{} {} > vasp.log 2>&1               \n'.format(self.execmd, vaspbin_path))                                                                         
             submit.write("cd ../eledos\n")
             submit.write("cp ../scf/CHGCAR .\n")
-            submit.write('mpirun -n {} {} > vasp.log 2>&1    \n'.format(self.core, vaspbin_path))                                                                         
+            submit.write('{} {} > vasp.log 2>&1               \n'.format(self.execmd, vaspbin_path))                                                                         
         return jobname
     
     def scf_eband(self, submit_dirpath):
@@ -223,10 +223,10 @@ class vasp_writesubmit:
         with open(submit_script_filepath, "w") as submit:
             submit.writelines(self.jobtitle)
             submit.write("cd scf\n")
-            submit.write('mpirun -n {} {} > vasp.log 2>&1    \n'.format(self.core, vaspbin_path))  
+            submit.write('{} {} > vasp.log 2>&1               \n'.format(self.execmd, vaspbin_path))  
             submit.write("cd ../eband\n")
             submit.write("cp ../scf/CHGCAR .\n")
-            submit.write('mpirun -n {} {} > vasp.log 2>&1    \n'.format(self.core, vaspbin_path))       
+            submit.write('{} {} > vasp.log 2>&1               \n'.format(self.execmd, vaspbin_path))       
         return jobname
     
     def scf_eledos(self, submit_dirpath):
@@ -235,10 +235,10 @@ class vasp_writesubmit:
         with open(submit_script_filepath, "w") as submit:
             submit.writelines(self.jobtitle)
             submit.write("cd scf\n")
-            submit.write('mpirun -n {} {} > vasp.log 2>&1    \n'.format(self.core, vaspbin_path))  
+            submit.write('{} {} > vasp.log 2>&1               \n'.format(self.execmd, vaspbin_path))  
             submit.write("cd ../eledos\n")
             submit.write("cp ../scf/CHGCAR .\n")
-            submit.write('mpirun -n {} {} > vasp.log 2>&1    \n'.format(self.core, vaspbin_path))       
+            submit.write('{} {} > vasp.log 2>&1               \n'.format(self.execmd, vaspbin_path))       
         return jobname
     
     def eband_eledos(self, submit_dirpath):
@@ -248,8 +248,8 @@ class vasp_writesubmit:
             submit.writelines(self.jobtitle)
             submit.write("cd eband\n")
             submit.write("cp ../scf/CHGCAR .\n")
-            submit.write('mpirun -n {} {} > vasp.log 2>&1    \n'.format(self.core, vaspbin_path))  
+            submit.write('{} {} > vasp.log 2>&1               \n'.format(self.execmd, vaspbin_path))  
             submit.write("cd ../eledos\n")
             submit.write("cp ../scf/CHGCAR .\n")
-            submit.write('mpirun -n {} {} > vasp.log 2>&1    \n'.format(self.core, vaspbin_path))       
+            submit.write('{} {} > vasp.log 2>&1               \n'.format(self.execmd, vaspbin_path))       
         return jobname
