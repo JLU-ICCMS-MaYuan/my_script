@@ -132,14 +132,19 @@ if __name__ == "__main__":
     # jobsystem = "coshare_slurm"
     print("Note: --------------------")
     print("    你需要在当前目录下准备好: POSCAR, POTCAR, INCAR")
-    print("    测试的KSPACING值分别是: 0.3, 0.2, 0.18, 0.15, 0.12")
-    print("    该脚本不提供自动提任务的命令: 你可以用以下命令提供命令:")
-    print("        for i in 0.4 0.3 0.25 0.2 0.19 0.18 0.17 0.16 0.15 0.14 0.13 0.12 0.11 0.1 0.09 0.08; do cd $i; qsub submit.sh;   cd ..; done")
-    print("        for i in 0.4 0.3 0.25 0.2 0.19 0.18 0.17 0.16 0.15 0.14 0.13 0.12 0.11 0.1 0.09 0.08; do cd $i; sbatch submit.sh; cd ..; done")
-
     print("Note: --------------------")
-    print("    创建测试VASP的KSPACING输入文件目录以及准备vasp的输入文件")
-    kspacings = [0.4, 0.3, 0.25, 0.2, 0.19, 0.18, 0.17, 0.16, 0.15, 0.14, 0.13, 0.12, 0.11, 0.1, 0.09, 0.08]
+    start, stop, step = sys.argv[1:]
+    print("    python test_vasp_kspacing.py 0.2 1.2 0.2")
+    print("    python test_vasp_kspacing.py 1.0 0.0 -0.2")
+    print("    以上两种都是产生0.2到1.0， 间隔为0.2的kspacing")
+    kspacings = list(np.round(np.arange(eval(start), eval(stop), eval(step)), decimals=2))
+#    except:
+#        print("你设置的有问题，采用一下的k点密度")
+#        kresolutions = [0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.19, 0.18, 0.17, 0.16, 0.15, 0.14, 0.13, 0.12, 0.1, 0.05]
+    print("Note: --------------------")
+    print("    该脚本不提供自动提任务的命令: 你可以用以下命令提供命令:")
+    print("        for i in {}; do cd $i; qsub submit.sh;   cd ..; done".format(' '.join(list(map(str, kspacings)))))
+    print("        for i in {}; do cd $i; sbatch submit.sh; cd ..; done".format(' '.join(list(map(str, kspacings)))))
     potcar_path = os.path.abspath("POTCAR")
     poscar_path = os.path.abspath("POSCAR")
     incar_path  = os.path.abspath("INCAR")
@@ -160,7 +165,7 @@ if __name__ == "__main__":
         outcar_path = os.path.join(str(kspacing), "OUTCAR")
         dE_per_atom, force, virial_per_atom = get_info_per_atom(outcar_path)
         kspacing_dE_dF_dV.append([kspacing, dE_per_atom, force, virial_per_atom])
-
+    kspacing_dE_dF_dV = sorted(kspacing_dE_dF_dV, key=lambda x: x[0],  reverse=True)
 
     # 方式一：通过相邻两个kspacing的能量的差判断收敛性
     # Ediff = np.diff(kspacing_dE, axis=0)[:,-1]

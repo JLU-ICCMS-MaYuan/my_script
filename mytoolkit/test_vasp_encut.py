@@ -134,12 +134,19 @@ if __name__ == "__main__":
     print("    你需要在当前目录下准备好: POSCAR, POTCAR, INCAR")
     print("    测试的ENCUT值分别是: 400, 500, 600, 700, 800, 900, 1000  1100 1200 1300 1400")
     print("    该脚本不提供自动提任务的命令: 你可以用以下命令提供命令:")
-    print("        for i in 400 450 500 550 600 650 700 750 800 850 900 950 1000 1050 1100 1150 1200 1250 1300 1350 1400 1450 1500; do cd $i; qsub submit.sh;   cd ..; done")
-    print("        for i in 400 450 500 550 600 650 700 750 800 850 900 950 1000 1050 1100 1150 1200 1250 1300 1350 1400 1450 1500; do cd $i; sbatch submit.sh; cd ..; done")
+
+    print("Note: --------------------")
+    start, stop, step = sys.argv[1:]
+    print("    python test_vasp_encut.py 400 1100 10")
+    print("    python test_vasp_encut.py 1000 300 -10")
+    print("    以上两种都是产生40到100， 间隔为10的截断能")
+    encuts = list(np.round(np.arange(eval(start), eval(stop), eval(step)), decimals=2))
 
     print("Note: --------------------")
     print("    创建测试VASP的ENCUT输入文件目录以及准备vasp的输入文件")
-    encuts = [400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000, 1050, 1100, 1150,]# 1200, 1250, 1300, 1350, 1400, 1450, 1500]
+    print("    该脚本不提供自动提任务的命令: 你可以用以下命令提供命令:")
+    print("        for i in {}; do cd $i; qsub submit.sh;   cd ..; done".format(' '.join(list(map(str, encuts)))))
+    print("        for i in {}; do cd $i; sbatch submit.sh; cd ..; done".format(' '.join(list(map(str, encuts)))))
     potcar_path = os.path.abspath("POTCAR")
     poscar_path = os.path.abspath("POSCAR")
     incar_path  = os.path.abspath("INCAR")
@@ -158,6 +165,7 @@ if __name__ == "__main__":
         outcar_path = os.path.join(str(encut), "OUTCAR")
         dE_per_atom, force, virial_per_atom = get_info_per_atom(outcar_path)
         encut_dE_dF_dV.append([encut, dE_per_atom, force, virial_per_atom])
+    encut_dE_dF_dV = sorted(encut_dE_dF_dV, key=lambda x: x[0])
 
 
     # 方式一：通过相邻两个encut的能量的差判断收敛性

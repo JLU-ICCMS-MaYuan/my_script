@@ -1,10 +1,10 @@
 ## 流程大纲
 
 ### dyn文件改名: 222q网格计算出来的4个dyn文件分别改名为
-mv CeSc2H24.dyn1 dyn_pop0_1
-mv CeSc2H24.dyn2 dyn_pop0_2
-mv CeSc2H24.dyn3 dyn_pop0_3
-mv CeSc2H24.dyn4 dyn_pop0_4
+mv Ce1Sc2H24.dyn1 dyn_pop0_1
+mv Ce1Sc2H24.dyn2 dyn_pop0_2
+mv Ce1Sc2H24.dyn3 dyn_pop0_3
+mv Ce1Sc2H24.dyn4 dyn_pop0_4
 dyn_pop0_1 代表第0代的第1个动力学矩阵，第0代也就是初始代
 
 ### 1_CreatEns.py生成随机结构

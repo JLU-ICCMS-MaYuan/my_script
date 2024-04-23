@@ -174,8 +174,6 @@ if __name__ == "__main__":
 
     print("Note: --------------------")
     print("    你需要在当前目录下准备好: scf, pp(pp目录中放好赝势)")
-    print("    测试的ecutwfc值分别是: 40  50  60  70  80  90")
-    print("    测试的ecutrho值分别是: 480 600 720 840 960 10800")
 
     print("Note: --------------------")
     print("    创建测试VASP的ENCUT输入文件目录以及准备vasp的输入文件")
