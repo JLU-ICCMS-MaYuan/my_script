@@ -405,6 +405,9 @@ class qe_writeinput:
             qe.write(" outdir='./tmp',                 \n")
             qe.write(" forc_conv_thr = {},             \n".format(self.forc_conv_thr))
             qe.write(" etot_conv_thr = {},             \n".format(self.etot_conv_thr))
+            qe.write(" tstress=.true.,                 \n")
+            qe.write(" tprnfor=.true.,                 \n")
+
             qe.write("/\n")
 
             qe.write("&SYSTEM\n")
@@ -464,6 +467,8 @@ class qe_writeinput:
             qe.write(" outdir='./tmp',                 \n")
             qe.write(" forc_conv_thr = {},             \n".format(self.forc_conv_thr))
             qe.write(" etot_conv_thr = {},             \n".format(self.etot_conv_thr))
+            qe.write(" tstress=.true.,                 \n")
+            qe.write(" tprnfor=.true.,                 \n")
             qe.write("/\n")
 
             qe.write("&SYSTEM\n")
