@@ -12,7 +12,8 @@ class config:
 
         config["vasp_workflow_type"] = self.args.vasp_workflow
         for other_arg in self.args.more_args:
-            arg_name, value = other_arg.split("=")
+            # arg_name, value = other_arg.split("=")
+            arg_name, value = other_arg.split("=", 1) # 代表只在第一个等号出现的位置劈裂字符串
             config[arg_name] = value
     
         return config
