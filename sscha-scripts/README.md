@@ -1,26 +1,50 @@
-## 流程大纲
+# 流程大纲
 
-### dyn文件改名: 222q网格计算出来的4个dyn文件分别改名为
+## 1. 根据第j代的动力学矩阵, 产生随机结构, 生成随机结构自洽计算的输入文件, 生成提交任务的脚本, 提交任务, 检查每个随机结构自洽计算的结果, 回收自洽计算的结果, 结构弛豫并生成第j+1代动力学矩阵
+
+### 1.1 dyn文件改名: 222q网格计算出来的4个dyn文件分别改名为
 mv Ce1Sc2H24.dyn1 dyn_pop0_1
 mv Ce1Sc2H24.dyn2 dyn_pop0_2
 mv Ce1Sc2H24.dyn3 dyn_pop0_3
 mv Ce1Sc2H24.dyn4 dyn_pop0_4
 dyn_pop0_1 代表第0代的第1个动力学矩阵，第0代也就是初始代
 
-### 1_CreatEns.py生成随机结构
+### 1.2 1_CreatEns.py生成随机结构
 1_CreatEns.py是生成自洽文件的模板，具体到不同的体系，8_ReStart.sh会相应的生成R1_CreatEns.py, 通过运行R1_CreatEns.py生成随机结构。
 
 R1_CreatEns.py将生成的随机结构存放在data_ensemble_manual中，分别是scf_population1_1.dat, ..., scf_population1_100.dat。
 scf_population1_1.dat 代表第1代随机结构的第1个随机结构。总共有100个随机结构，随机结构的总数是由8_ReStart.sh中ENS_NUM控制的。
 
-### 2_CreatQEInput.py生成qe自洽输入文件
-2_CreatQEInput.py是生成qe自洽输入文件的模板，具体到不同的体系，8_ReStart.sh会相应的生成R2_CreatQEInput.py，通过运行R2_CreatQEInput.py生成全部随机结构qe自洽输入文件。
+注意修改1_CreatEns.py中的以下参数:
+```python
+# nqirr = 2 代表计算2个不可约动力学矩阵
+dyn = CC.Phonons.Phonons("DYNPOP", nqirr = 2) 
+```
 
+### 1.3 2_CreatQEInput.py生成qe自洽输入文件
+2_CreatQEInput.py是生成qe自洽输入文件的模板，具体到不同的体系，8_ReStart.sh会相应的生成R2_CreatQEInput.py，通过运行R2_CreatQEInput.py生成全部随机结构qe自洽输入文件。
+注意修改2_CreatQEInput.py中的以下参数:
+```python
+...
+    pseudo_dir = "/lustre/home/h240012/work/SSCHA/0_phon/pp" # 注意修改赝势路径
+...
+    ecutwfc = 80 # 注意修改截断能
+    degauss = 0.02 # 注意修改degauss展宽
+    nat = 216 # 不一样的q网格对应了不一样的超胞大小和原子数
+    ntyp = 3  # 不一样的体系对应了不一样的元素组分
+...
+    Ce     140.116     Ce.paw.z_12.atompaw.wentzcovitch.v1.2.upf # 注意修改赝势名称
+    Sc     44.955912   Sc.pbe-spn-kjpaw_psl.1.0.0.UPF  # 注意修改赝势名称
+    H      1.00794     H.pbe-kjpaw_psl.1.0.0.UPF  # 注意修改赝势名称
+...
+2 2 4 0 0 0 # 注意修改k网格
+...
+```
 R2_CreatQEInput.py获取data_ensemble_manual中全部的随结构scf_population1_*.dat, 然后在run_calculation中放置全部随机结构qe自洽输入文件。espresso_run_1.pwi, ..., espresso_run_100.pwi
 
 注意事项：espresso_run_*.pwi 是qe的自洽输入文件，其中的 kpoints 需要测试，最大误差为0.1Ry，每个自洽用时最长为20min， 即：不需要保证k网格是收敛的参数，只要保证在0.1Ry能量误差的精度范围内用时尽可能少即可。kpoints 参数的修改不需要手动进各个 espresso_run_*.pwi 文件修改，只需要在 2_CreatQEInput.py 中修改，它会自动同步生成 R2_CreatQEInput.py. 
 
-### 3_Creat_Sub.py生成提交任务的脚本
+### 1.4 3_Creat_Sub.py生成提交任务的脚本
 这里是需要使用者修改参数的部分，针对你使用的机器和环境，进行修改。具体就是：header变量的内容和29行qe运行命令
 
 如果需要计算总共100个qe的自洽，您想用20个任务，每个任务5个自洽完成，那么您直接更改3_Creat_Sub.py中的这两个值就可以。
@@ -30,30 +54,58 @@ n_pw=5
 ```
 他会帮您自动生成提交任务的脚本
 
-### 4_SubAllJobs.sh 提交运算 全部随机结构的自洽.
+### 1.5 4_SubAllJobs.sh 提交运算 全部随机结构的自洽.
 
 这里是需要使用者修改参数的部分, 具体来说：修改相应作业脚本的提交命令
 
-### 5_CheckFinish.py检查计算情况
+### 1.2到1.5的操作都可以用过脚本8_ReStart.sh完成
+
+### 1.6 5_CheckFinish.py检查自洽计算情况
 
 在等待计算的过程中可以用5_CheckFinish.py检查计算情况，有多少算完的，有多少还没算的。如果全部交上去的计算任务算完，但是有部分报错或出问题，可以用5B_SubUnfinish.py重新提交。
 
-### 6. 检查计算的结果是否合理
+### 1.7 6_ParseOutput.py 第j代的自洽计算完成, 收集run_calculation中第j代的所有随机结构自洽计算出的能量和受力, 以sscha可以读取的格式存储在data_ensemble_manual中
 
-#### 6.1 检查应力应变是否合理
-在0_Relax.py中, 我们设置了将结构最终优化到指定压强，检查OUT*.dat中的STRESS，可以查看结构的晶格的受到的应力是否在指定压强附近
+
+### 1.8 0_Relax.py 结构弛豫, 获得第j+1代的动力学矩阵 dyn_popj+1_1, dyn_popj+1_2, dyn_popj+1_3, ......
+注意修改0_Relax.py的以下参数
+```python
+...
+dyn = CC.Phonons.Phonons("dyn_pop11_", nqirr = 4) # "dyn_pop11_"是第j-1代的动力学矩阵 nqirr=4 动力学矩阵的个数
+...
+ensemble.load("data_ensemble_manual", population = 12, N = 1000) # population = 12是第j代的编号, 也就是通过弛豫会获得动力学矩阵dyn_pop12_*, N = 1000 是第j代总共有1000个结构的能量和受力要读取 (例如这里的j=12)
+
+```
+
+### 1.9 7_SubRelax.sh 提交结构弛豫任务
+
+### 1.6到1.9的操作都可以用过脚本9_ReEnd.sh完成
+
+```shell
+# 这些文件都没有用, 可以删掉
+rm dyn_start_population*_*  dyn_end_population*_*
+```
+
+### 1.10 检查动力学矩阵的受力和应力是否合理
+
+#### 1.10.1 检查应力应变是否合理
+在0_Relax.py中, 我们设置了将结构最终优化到指定压强，检查OUT*.dat中的STRESS，可以查看结构的晶格的受到的应力是否在指定压强附近, stress是否稳定在指定压强附近, 目前来看非常重要, 直接决定着最终计算出来的声子谱是否稳定. 
 ```shell
 grep -a3  "STRESS TENSOR" OUT*.dat
 ```
 
-#### 6.2 检查原子受力是否趋于收敛
+#### 1.10.2 检查原子受力是否趋于收敛
 检查OUT*.dat中的FC，可以查看结构中原子的受力是否趋于收敛
 ```shell
 grep FC OUT*.dat
 # 如果这一代收敛的不够好，我们就进行下一代, 一直到FC gradient modulus < 0.0001
 ```
 
-#### 6.3 扩大每一代需要自洽的结构数
+
+
+### 1.11 至此完成了第j代动力学矩阵的迭代!!!下面介绍一些特殊情况的处理
+
+#### 1.11.1 在已经完成计算的第j代, 扩大第j+1代需要自洽的结构数
 当我们发现FC不再降低时，就需要扩大每一代需要自洽的结构数，此时要改以下 4个文件中的参数
 ```shell
 # 8_ReStart.sh 中的 ENS_NUM=200
@@ -64,10 +116,96 @@ grep FC OUT*.dat
 一般经验是:前5代, 100个结构算, 第6,7,8代, 200个结构算, 第9,10代, 500个结构算, 第11代1000个结构算.
 更一般的经验是: 当FC不再下降时,就需要扩大每一代需要自洽的结构数, 一直到FC gradient modulus < 0.0001
 
-### 7. 当原子受力达到目标精度后(0.0001), 开始计算三阶HESSIAN矩阵
+#### 1.11.2 在已经计算完成的 第j代 中添加更多自洽结构, 将第j代的新的随机结构的自洽能量和受力 与 第j代的旧的随机结构自洽的能量和受力结合起来, 去进行结构弛豫, 生成第j+1代的dyn动力学矩阵.
+1.11.2 的这种做法比 1.11.1 的做法更加复杂, 但是好处在于计算量比较小. 仅适用于第j代已经达到了收敛, 但是算出来三阶hessian矩阵有点虚频, 你想看看增加随机结构数之后, 第j代的随机结构导出的hessian矩阵的虚频的频率有没有进一步减小. 
 
-#### 7.1 修改计算脚本1_CalHess.py, 有以下x个参数需要修改
+##### 1.11.2.1 save.py将第j代旧的随机结构保存出来, 保存到popj_1000目录中(例如: 这里是pop12_1000)
 ```python
+# Load the original ensemble (first population with 1000 configurations)
+dyn = CC.Phonons.Phonons("dyn_pop11_", nqirr = 4)
+
+ens = sscha.Ensemble.Ensemble(dyn, 0, dyn.GetSupercell())
+
+# 这里i=12, 指明要加载的代数 population=12 , 指明这一代旧随机结构数 N=1000
+ens.load("data_ensemble_manual", population = 12, N=1000) 
+
+# 这里i=12, save_bin指明将第12代的结构以***.npy的形式保存, 数据保存到pop12_1000, 指明要保存的代数 population_id = 12
+ens.save_bin("pop12_1000", population_id = 12) 
+```
+
+##### 1.11.2.2 新建一个目录2_AddTo2K(例如: 这里新目录的含义是将这一代的随机数从1K扩展到2K), 将ens.save_bin(..., ...)保存出来的目录(例如:这里要对第12代扩展随机结构数: pop12_1000), 拷贝到2_AddTo2K中. 
+```shell
+ls 
+# 0_phon  1_100Relax
+
+mkdir 2_AddTo2K; ls
+# 0_phon  1_100Relax  2_AddTo2K
+```
+
+##### 1.11.2.3 将第j-1代的动力学矩阵(例如: dyn_pop11_{1..4})拷贝过来, 在此基础上, 通过脚本8_ReStart.sh执行步骤1.1~1.5
+特别注意8_ReStart.sh中的以下几个参数:
+```shell
+START_POP=11 # 读取第j-1代的动力学矩阵.  我们用第j-1代的动力学矩阵产生更多的随机结构, 最终通过计算, 获得第j代的动力学矩阵
+ENS_NUM=1000 # 这里是结构数
+```
+
+#### 1.11.2.4 执行9_ReEnd.sh, 因为9_ReEnd.sh可以生成R6_ParseOutput.py, 通过R6_ParseOutput.py将第j代新生成的qe格式的随机结构的能量和受力, 转化为sscha识别的能量和受力, 将结果保存在data_ensemble_manual中. 
+注意这里要修改9_ReEnd.sh中的以下参数
+
+
+##### 2.1.2.5 merg.py 合并第j代新计算出的随机结构自洽的能量和受力(存储在data_ensemble_manual中) 和 旧的随机结构的能量和受力(存储在pop12_1000), 合并好的总的随机结构的能量和受力存储在pop12_2000中.
+```python
+# Load the original ensemble (first population with 1000 configurations)
+dyn = CC.Phonons.Phonons("dyn_pop11_", nqirr = 4) 
+
+ens = sscha.Ensemble.Ensemble(dyn, 0, dyn.GetSupercell())
+
+# 载入保存在pop12_1000目录下的第j代的随机结构的能量和受力(例如: 这里j=12), population_id = 12 是因为在pop12_1000目录中动力学矩阵被save.py中的ens.save_bin("pop12_1000", population_id = 12) 保存为 dyn_gen_pop12_1  dyn_gen_pop12_2  dyn_gen_pop12_3  dyn_gen_pop12_4
+ens.load_bin("pop12_1000", population_id=12) 
+# ens.load_bin("pop12_1000", population_id=1)  
+# 如果你看到population_id=1, 是因为在pop12_1000目录中动力学矩阵被save.py中ens.save_bin("pop12_1000", population_id = 1) 的保存为 dyn_gen_pop1_1  dyn_gen_pop1_2  dyn_gen_pop1_3  dyn_gen_pop1_4
+
+new_ensemble = sscha.Ensemble.Ensemble(dyn, 0, dyn.GetSupercell())
+
+# 加载第j代新算出来的随机结构的能量和受力, 他们都保存在popj_1000中, 这里加载的方式不用load_bin, 是因为能量和受力被保存为*.dat的格式, 不是*.npy的格式. (例如, 这里的j=12), population = j指定加载第j代新增加的随机结构, N=1000指定结构数. 
+new_ensemble.load("data_ensemble_manual", population = 12, N=1000)
+
+
+# Merge the two ensembles
+ens.merge(new_ensemble)
+
+# Now ens contains the two ensembles. You can save it or directly use it for a SSCHA ncalculation
+ens.save_bin("pop12_2000", population_id = 12)
+```
+
+
+##### 2.1.2.6 用 Relax_Add.py 和 R7_SubRelax.sh 计算结构弛豫, 即: 利用合并好的随机结构的能量和受力, 进行结构弛豫获得第j+1代的动力学矩阵.
+注意修改Relax.py文件中以下参数:
+```python
+ensemble.load_bin("pop12_2000", population_id = 12) # 指明要加载的随机结构存放的目录.
+relax = sscha.Relax.SSCHA(
+    minim, ase_calculator = None,
+    N_configs = 1000,  # 修改为2000, 2000是合并后的总的结构数
+    max_pop = 1,
+    save_ensemble = True,
+    cluster = None,
+    )
+IO_freq.SetupSaving("12_freqs") 
+```
+
+```shell
+# 将sbatch R7_SubRelax.sh注释了, 因为弛豫计算脚本Relax.py要修改后, 手动提交该计算任务
+sbatch R7_SubRelax.sh
+```
+
+
+## 2. 使用受力收敛的动力学矩阵去计算三阶HESSIAN矩阵
+
+### 2.1. 当原子受力达到目标精度后(0.0001), 开始计算三阶HESSIAN矩阵
+
+#### 2.1.1 修改计算脚本 1_CalHess.py, 有以下 10 个参数需要修改
+```python
+DATA_DIR="data_ensemble_manual" # 从该目录中获得动力学矩阵和能量受力, 有时候这个参数要修改为popj_N, j代表代数, N代表该代总计随机结构数(例如: pop12_2000代表从第12代的随机结构的能量受力搞出V3_Hessian.dyn)
 N_RANDOM = 1000 # 动力学矩阵达到收敛的那一代使用的总随机结构的数量
 DYN_PREFIX =  'dyn_pop11_' # 达到收敛的那一代动力学矩阵的前一代动力学矩阵
 FINAL_DYN =   'dyn_pop12_' # 达到收敛的那一代动力学矩阵
@@ -75,15 +213,17 @@ SAVE_PREFIX = 'V3_Hessian.dyn' # 计算出的Hessian矩阵的结果
 NQIRR = 4 # 总的动力学矩阵的数量
 Tg = 0 # 温度
 T =  0 # 温度
-POPULATION = 12 # 达到收敛的那一代动力学矩阵的编号, 方便从DATA_DIR="data_ensemble_manual"中读取那一代动力学矩阵计算出的受力和能量
+POPULATION = 12 # 达到收敛的那一代动力学矩阵的编号, 程序从DATA_DIR="data_ensemble_manual"中读取那一代动力学矩阵计算出的受力和能量
+ens.load(DATA_DIR, population = POPULATION , N=N_RANDOM ) # 注意这里load函数加载的文件格式是.dat, 如果DATA_DIR目录中存放的文件格式是.npy, 
+#ens.load_bin(DATA_DIR, population_id = POPULATION), 特别的load_bin函数没有 N=N_RANDOM 这个参数.
 ```
 
-#### 7.2 将1_CalHess.py提交到节点运行, 可能需要你根据自己使用的集群修改提交作业的脚本
+#### 2.1.2 将1_CalHess.py提交到节点运行, 可能需要你根据自己使用的集群修改提交作业的脚本
 ```shell
 sbatch SUB_HESS.sh
 ```
 
-#### 7.3 把任务提交上去之后可能爆出这样一个问题:  
+#### 2.1.3 把任务提交上去之后可能爆出这样一个问题:  
 ```shell
 ImportError: /home/h240012/soft/miniconda3/envs/sscha/lib/python3.10/site-packages/mpi4py/MPI.cpython-310-x86_64-linux-gnu.so: undefined symbol: MPI_Aint_add
 ```
@@ -92,7 +232,7 @@ ImportError: /home/h240012/soft/miniconda3/envs/sscha/lib/python3.10/site-packag
 conda install mpi4py
 ```
 
-#### 7.4 把任务提交上去之后还可能爆出这样一个问题:  
+#### 2.1.4 把任务提交上去之后还可能爆出这样一个问题:  
 ```shell
 ...
 sscha/lib/pvthon3,10/site-packages/spglib/spglib.py
@@ -104,6 +244,14 @@ TypeError: float() argument must be a string or a real number, not 'Atom'
 pip install spglib==1.16.5
 ```
 
-#### 7.5 任务计算完之后, OUT.dat中最后一行会显示DONE, 此时表明三阶HESSIAN计算完成.
+#### 2.1.5 任务计算完之后, OUT.dat中最后一行会显示DONE, 此时表明三阶HESSIAN计算完成.
+可以通过以下命令查看三阶HESSIAN矩阵是否有虚频. 如果虚频太大的话, 就需要继续增加第j代的随机结构数, 尝试通过增加随机结构数, 从而提升能量和受力的精度, 降低虚频. 可能出现几种情况:
 
-### 8.  
+(1). 虚频越来越小, 并且收敛的速度, 趋势都可观, 说明该方法有效
+(2). 虚频越来越大, 说明该结构本身就不稳定
+(3). 虚频越来越小, 但是收敛的很慢, 可以尝试减小q网格, 减小不可约动力学矩阵的数量, 从而减小自洽计算的超胞, 提升收敛性.
+
+
+
+## 3. 计算两组动力学矩阵, 一组稀疏的, 一组稠密的, 然后用这两组动力学矩阵和V3_Hessian.dyn*插值获得最终的非谐的动力学矩阵
+

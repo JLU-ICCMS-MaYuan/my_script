@@ -406,7 +406,7 @@ class vasp_base:
             pair_two_coords = [[path_coords[i], path_coords[i+1]] for i in range(len(path_coords)-1)]
             with open(kpoints_filepath, "w") as kp:
                 kp.write("KPATH\n")
-                kp.write("200\n")
+                kp.write("100\n")
                 kp.write("Line-Mode\n")
                 kp.write("Reciprocal\n")
                 for two_names, two_coords in zip(pair_two_names, pair_two_coords):

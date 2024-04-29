@@ -302,7 +302,7 @@ def get_atomic_character(new_pgops:dict[str:SymmOp], struct:Structure)-> dict[st
 
 if __name__ == "__main__":
 
-    struct = Structure.from_file("../test/POSCAR")
+    struct = Structure.from_file("../test/POSCAR_CaH6")
     spg = SpacegroupAnalyzer(struct)
     pgops = spg.get_point_group_operations()
     new_pgops = classify_ops(pgops)
