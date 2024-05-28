@@ -1,5 +1,6 @@
 from collections import defaultdict
-from typing import List
+from typing import List, Sequence
+from pprint import pprint
 
 import numpy as np
 from numpy import array
@@ -105,20 +106,20 @@ def kill_duplicated_clesses(clesses:List[List[np.ndarray]]) -> List[List[np.ndar
                 new_clesses.append(cl)
     return new_clesses
 
-def find_cless_ops(cless:List[np.ndarray])-> List[np.ndarray]:
+def find_cless_ops(cless:List[np.ndarray], spgops:List[SymmOp])-> List[np.ndarray]:
     """
     在一组对称操作中查找与给定类中的矩阵相匹配的操作。
 
     Args:
         cless: 给定类，包含多个矩阵的列表。
-        pgops: 包含多个对称操作的列表，每个操作都是一个矩阵。
+        spgops: 包含多个对称操作的列表，每个操作都是一个矩阵。
 
     Returns:
         匹配的对称操作列表opslist: List[SymmOp]。
     """
     opslist = []
     for rot in cless:
-        for op in pgops:
+        for op in spgops:
             if np.allclose(op.rotation_matrix, rot):
                 opslist.append(op)
                 break
@@ -217,20 +218,20 @@ def get_cless_name(cless:List[SymmOp], lattice: np.ndarray)-> str:
     
     return name
 
-def classify_ops(pgops:List[SymmOp], lattice: np.ndarray) -> dict[str:List[SymmOp]]:
+def classify_ops(spgops:List[SymmOp], lattice: np.ndarray) -> dict[str:List[SymmOp]]:
     """
     对称操作按照共轭类分类函数。
 
     Args:
-        pgops: 包含多个对称操作的列表。
+        spgops: 包含多个对称操作的列表。
 
     Returns:
         按照共轭类分类后的对称操作字典，键是类的名称，值是包含多个对称操作的列表。
     """
     clesseslist: List[array] = []
-    for idx, op in enumerate(pgops):
+    for idx, op in enumerate(spgops):
         # print(op.as_xyz_str())
-        bm = [np.dot(np.dot(np.linalg.inv(x.rotation_matrix), op.rotation_matrix), x.rotation_matrix) for x in pgops]
+        bm = [np.dot(np.dot(np.linalg.inv(x.rotation_matrix), op.rotation_matrix), x.rotation_matrix) for x in spgops]
         # print(bm)
         cless = kill_duplicated_element(bm) # 删除重复的矩阵，得到一个共轭类
         # print(cless)
@@ -243,7 +244,7 @@ def classify_ops(pgops:List[SymmOp], lattice: np.ndarray) -> dict[str:List[SymmO
     # print((len(clesseslist)))
     clessesdict = defaultdict(list)
     for idx, cless in enumerate(clesseslist):
-        ops:List[SymmOp] = find_cless_ops(cless)
+        ops:List[SymmOp] = find_cless_ops(cless, spgops=spgops)
         clessname:str = get_cless_name(ops, lattice)
         clessesdict[f'{clessname}'] = ops
 
@@ -291,7 +292,11 @@ def get_atoms_mapping(op:SymmOp, struct:Structure)-> dict[int:int]:
     rotation = op.rotation_matrix
     mapping = {}
     for idx1, site1 in enumerate(struct):
-        # newcoords = op.operate(site1.frac_coords)
+        
+        # 方式一
+        newcoords = op.operate(site1.frac_coords)
+        newsite = PeriodicSite(species=site1.species, coords=newcoords, to_unit_cell=True, lattice=struct.lattice, coords_are_cartesian=False)
+        # print(site1.frac_coords, newsite.frac_coords)
         # s = np.array(([
         #     [1, -np.sin(np.pi/6), 0],
         #     [0,  np.cos(np.pi/6), 0],
@@ -302,20 +307,26 @@ def get_atoms_mapping(op:SymmOp, struct:Structure)-> dict[int:int]:
         # new_rotation_matrix = np.dot(np.dot(s, op.rotation_matrix), s_1)
          # pprint(op.rotation_matrix)
         # pprint(new_rotation_matrix)
-        rotxyz = Lattice.T.dot(rotation).dot(np.linalg.inv(Lattice).T) 
-        # newcoords = np.dot(rotxyz, site1.frac_coords)
-        newcoords = np.dot(rotxyz, site1.frac_coords)
-        print(site1.frac_coords, newcoords)
-        newsite = PeriodicSite(species=site1.species, coords=newcoords, to_unit_cell=True, lattice=struct.lattice)
-        for idx2, site2 in enumerate(struct):
-            if np.allclose(newsite.coords, site2.coords, rtol=1e-3):  # pymatgen 源代码检查了元素是否相等，坐标是否相等，性质是否相等 self.species == other.species and np.allclose(self.coords, other.coords, atol=Site.position_atol) and self.properties == other.properties
-                # print("{} {}-> {} {}".format(idx1, site1.frac_coords, idx2, newsite.frac_coords))
-                # print("{} {}-> {} {}".format(idx1, site1, idx2, newsite))
-                mapping[idx1] = idx2
-    return mapping
+        
+        # 方式二
+        # rotxyz = Lattice.T.dot(rotation).dot(np.linalg.inv(Lattice).T) 
+        # newcoords = np.dot(rotxyz, site1.coords)
+        # newsite = PeriodicSite(species=site1.species, coords=newcoords, to_unit_cell=True, lattice=struct.lattice, coords_are_cartesian=True)
+        # print(site1.frac_coords, newsite.frac_coords)
 
-# for name in ['identity_1', 'rotation180_3', 'rotation180_6', 'rotation120_8', 'rotation90_6', 'inversion_1', 'rotoinversion180_3', 'rotoinversion180_6', 'rotoinversion120_8', 'rotoinversion90_6']:
-#     print(get_atoms_mapping(new_pgops[name][0], struct=struct))
+        for idx2, site2 in enumerate(struct):
+            # print("判断 new-{} {} 是否与 {} {} 等价".format(idx1, newsite.frac_coords, idx2, site2.frac_coords))
+            # print("{} {}-> {} {}".format(idx1, site1, idx2, newsite))
+            # input()
+            # print(np.allclose(newsite.frac_coords, site2.frac_coords, rtol=1e-3))
+            if np.allclose(newsite.frac_coords, site2.frac_coords, rtol=1e-3):  # pymatgen 源代码检查了元素是否相等，坐标是否相等，性质是否相等 self.species == other.species and np.allclose(self.coords, other.coords, atol=Site.position_atol) and self.properties == other.properties
+                mapping[idx1] = idx2
+                break
+        else:
+            print("没有找到经过对称操作 {} 作用后，与{} {}等价的原子".format(op, idx1, site1.frac_coords))
+        # print(mapping)
+    # print(mapping)
+    return mapping
 
 def get_conjugate_character(ops:List[SymmOp], struct:Structure)-> int:
     """
@@ -328,7 +339,6 @@ def get_conjugate_character(ops:List[SymmOp], struct:Structure)-> int:
     Returns:
         共轭类的特征标
     """
-    from pprint import pprint
     trcs = []
     # print(ops)
     for op in ops:
@@ -343,16 +353,13 @@ def get_conjugate_character(ops:List[SymmOp], struct:Structure)-> int:
         return trc, A
     else:
         raise ValueError("The value of traces in the same conjugate class is different")
-  
-# for name in ['identity_1', 'rotation180_3', 'rotation180_6', 'rotation120_8', 'rotation90_6', 'inversion_1', 'rotoinversion180_3', 'rotoinversion180_6', 'rotoinversion120_8', 'rotoinversion90_6']:
-#     print(get_conjugate_character(new_pgops[name], struct=struct))
 
-def get_atomic_character(new_pgops:dict[str:SymmOp], struct:Structure)-> dict[str:int]: 
+def get_atomic_character(new_spgops:dict[str:SymmOp], struct:Structure)-> tuple[dict[str:int], List[List[int]]]: 
     """
     获取原子的特征标
 
     Args:
-        new_pgops: 包含所有分好共轭类的字典，键是共轭类的名称，值是相应的对称操作列表。
+        new_spgops: 包含所有分好共轭类的字典，键是共轭类的名称，值是相应的对称操作列表。
         struct: 结构。
 
     Returns:
@@ -360,73 +367,54 @@ def get_atomic_character(new_pgops:dict[str:SymmOp], struct:Structure)-> dict[st
     """
     atomic_charater = {}
     atomic_mapmatrix= {}
-    for name, ops in new_pgops.items():
-        print(name)
+    for name, ops in new_spgops.items():
+        # print(name)
         trc, matrix = get_conjugate_character(ops, struct)
-        input()
+        # print(trc, matrix)
+        # input()
         atomic_charater[name] = trc
         atomic_mapmatrix[name] = matrix
-    return atomic_charater, atomic_mapmatrix
+    return (atomic_charater, atomic_mapmatrix)
 
-
-
-if __name__ == "__main__":
-
-    from pprint import pprint
-
-    struct = Structure.from_file("../test/POSCAR_YH9")
+if __name__ == '__main__':
+    struct = Structure.from_file('../test/POSCAR_CaH6')
+    partial_struct = Structure.from_file("../test/POSCAR_CaH6_partical")
+    # spgops = spg.get_space_group_operations()
     spg = SpacegroupAnalyzer(struct)
-    pgops = spg.get_point_group_operations()
-    lattice = struct.lattice.matrix
+    spgops = spg.get_point_group_operations()
+    new_spgops = classify_ops(spgops, partial_struct.lattice)
+    conjugate_charater, atomic_mapmatrix = get_atomic_character(new_spgops, partial_struct)
 
-    names = ['0.0_axis__0.0_0.0_1.0',
-            '60.0_axis__0.0_0.0_1.0', 
-            '120.0_axis__0.0_0.0_1.0', 
-            '180.0_axis__0.0_0.0_1.0', 
-            '180.0_axis__0.5_-0.87_0.0', 
-            '180.0_axis__0.87_-0.5_0.0', 
-            '0.0_inversion_axis__0.0_0.0_1.0', 
-            '420.0_inversion_axis__0.0_0.0_1.0', 
-            '480.0_inversion_axis__0.0_0.0_1.0',  
-            '180.0_inversion_axis__0.0_0.0_1.0', 
-            '180.0_inversion_axis__-0.5_0.87_0.0',
-            '180.0_inversion_axis__-0.87_0.5_0.0']
-    
-    new_pgops = classify_ops(pgops, lattice)
-    for idx, name in enumerate(names):
-        print(idx, name)
-        ops = new_pgops[name]
-        for op in ops:
-            print(get_operation_type(lattice, op.rotation_matrix))
-    conjugate_charater, atomic_mapmatrix = get_atomic_character(new_pgops, struct)
-    pprint(conjugate_charater)
+    # names = ['identity_1','rotation90_6', 'rotation180_3', 'rotation120_8', 'rotation180_6',  'inversion_1', 'rotoinversion90_6', 'rotoinversion180_3',  'rotoinversion120_8', 'rotoinversion180_6', ]
+    names = [
+        '0.0_axis__0.0_0.99_0.13',
+        '90.0_axis__0.0_0.0_1.0',
+        '180.0_axis__0.0_0.0_1.0',
+        '120.0_axis__0.58_0.58_0.58',
+        '180.0_axis__-0.71_0.71_0.0',
+        '0.0_inversion_axis__0.0_0.99_-0.13',
+        '450.0_inversion_axis__0.0_0.0_1.0',
+        '180.0_inversion_axis__0.0_0.0_1.0',
+        '-120.0_inversion_axis__-0.58_-0.58_-0.58',
+        '180.0_inversion_axis__0.71_-0.71_-0.0',
+                ]
+    mult  = np.array([1,6,3,8,6, 1,6,3,8,6])
+    red_reps = np.array([conjugate_charater[name] for name in names])
 
-
-    for name in names:
-        print(name)
-        # pprint(atomic_mapmatrix[name])
-        pprint(conjugate_charater[name])
-    red_reps = np.array([conjugate_charater[name] for name in names])-2
-    print(red_reps)
-    mult  = np.array([len(new_pgops[name]) for name in names])
-    # print(mult)
 
     irred_repss={
-        'A1g' : [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-        'A1u' : [1,	 1,	 1,	 1,	 1,	 1,	-1,	-1,	-1,	-1,	-1,	-1,],
-        'A2g' : [1,	 1,	 1,	 1,	-1,	-1,	 1,	 1,	 1,	 1,	-1,	-1,],
-        'A2u' : [1,	 1,	 1,	 1,	-1,	-1,	-1,	-1,	-1,	-1,	 1,	 1,],
-        'B1g' : [1,	-1,	 1,	-1,	 1,	-1,	 1,	-1,	 1,	-1,	 1,	-1,],
-        'B1u' : [1,	-1,	 1,	-1,	 1,	-1,	-1,	 1,	-1,	 1,	-1,	 1,],
-        'B2g' : [1,	-1,	 1,	-1,	-1,	 1,	 1,	-1,	 1,	-1,	-1,	 1,],
-        'B2u' : [1,	-1,	 1,	-1,	-1,	 1,	-1,	 1,	-1,	 1,	 1,	-1,],	
-        'E2u' : [2,	-1,	-1,	 2,	 0,	 0,	-2,	 1,	 1,	-2,	 0,	 0,],
-        'E2g' : [2,	-1,	-1,	 2,	 0,	 0,	 2,	-1,	-1,	 2,	 0,	 0,],
-        'E1u' : [2,	 1,	-1,	-2,	 0,	 0,	-2,	-1,	 1,	 2,	 0,	 0,],
-        'E1g' : [2,	 1,	-1,	-2,	 0,	 0,	 2,	 1,	-1,	-2,	 0,	 0,],
+        'A1g' : np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1]),
+        'A1u' : np.array([1, 1, 1, 1, 1,-1,-1,-1,-1,-1]),
+        'A2g' : np.array([1,-1, 1, 1,-1, 1,-1, 1, 1,-1]),
+        'A2u' : np.array([1,-1, 1, 1,-1,-1, 1,-1,-1, 1]),
+        'Eg'  : np.array([2, 0, 2,-1, 0, 2, 0, 2,-1, 0]),
+        'Eu'  : np.array([2, 0, 2,-1, 0,-2, 0,-2, 1, 0]),
+        'T2u' : np.array([3,-1,-1, 0, 1,-3, 1, 1, 0,-1]),
+        'T2g' : np.array([3,-1,-1, 0, 1, 3,-1,-1, 0, 1]),
+        'T1u' : np.array([3, 1,-1, 0,-1,-3,-1, 1, 0, 1]),
+        'T1g' : np.array([3, 1,-1, 0,-1, 3, 1,-1, 0,-1]),
         }
-
     for irred_reps_name, irred_reps_character in irred_repss.items():
-        x=np.sum(np.array(mult)*np.array(irred_reps_character)*(np.array(red_reps)))/np.sum(mult)
+        x=np.sum(mult*irred_reps_character*(np.array(red_reps)))/np.sum(mult)
         if x != 0:
             print(irred_reps_name)

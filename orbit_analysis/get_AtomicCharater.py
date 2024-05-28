@@ -1,5 +1,6 @@
 from collections import defaultdict
-from typing import List
+from typing import List, Sequence
+from pprint import pprint
 
 import numpy as np
 from numpy import array
@@ -105,26 +106,26 @@ def kill_duplicated_clesses(clesses:List[List[np.ndarray]]) -> List[List[np.ndar
                 new_clesses.append(cl)
     return new_clesses
 
-def find_cless_ops(cless:List[np.ndarray])-> List[np.ndarray]:
+def find_cless_ops(cless:List[np.ndarray], spgops:List[SymmOp])-> List[np.ndarray]:
     """
     在一组对称操作中查找与给定类中的矩阵相匹配的操作。
 
     Args:
         cless: 给定类，包含多个矩阵的列表。
-        pgops: 包含多个对称操作的列表，每个操作都是一个矩阵。
+        spgops: 包含多个对称操作的列表，每个操作都是一个矩阵。
 
     Returns:
-        匹配的对称操作列表tmplist: List[SymmOp]。
+        匹配的对称操作列表opslist: List[SymmOp]。
     """
-    tmplist = []
+    opslist = []
     for rot in cless:
-        for op in pgops:
+        for op in spgops:
             if np.allclose(op.rotation_matrix, rot):
-                tmplist.append(op)
+                opslist.append(op)
                 break
-    return tmplist
+    return opslist
 
-def get_rot_name(rot:np.ndarray)-> str:
+def get_rot_name(rot:np.ndarray)-> str: ### 这个函数废除了，不用了!!!, get_operation_type代替了它的功能
     """
     根据旋转矩阵推断对称操作的类型。
 
@@ -152,10 +153,52 @@ def get_rot_name(rot:np.ndarray)-> str:
             typename = "inversion"
         else:
             typename = "rotoinversion"+str(int(theta))
-
     return typename
 
-def get_cless_name(cless:List[SymmOp])-> str:
+def get_operation_type(Lattice, rotation):
+    """
+    Calculates the rotation axis and angle of the symmetry and if it 
+    preserves handedness or not. 计算对称的旋转轴和角度，以及它是否保留手性。
+
+    Returns
+    -------
+    tuple
+        The first element is an array describing the rotation axis. The 
+        second element describes the rotation angle. The third element is a 
+        boolean, `True` if the symmetry preserves handedness 
+        (determinant -1).
+    """
+    rotxyz = Lattice.T.dot(rotation).dot(np.linalg.inv(Lattice).T) #这里是为什么？？？？似乎是将旋转矩阵从晶格坐标转化为直角坐标
+    # print ("rotation in real space:\n",rotxyz)
+    E, V = np.linalg.eig(rotxyz)
+    if not np.isclose(abs(E), 1).all():
+        raise RuntimeError(
+            "some eigenvalues of the rotation are not unitary")
+            # 旋转的一些特征值是不酉的, 即, S·S-1 != E
+    if E.prod() < 0:
+        inversion = True
+        E *= -1
+    else:
+        inversion = False
+    idx = np.argsort(E.real)
+    E = E[idx]
+    V = V[:, idx]
+    axis = V[:, 2].real
+    if np.isclose(E[:2], 1).all():
+        angle = 0
+    elif np.isclose(E[:2], -1).all():
+        angle = np.pi
+    else:
+        angle = np.angle(E[0])
+        v = V[:, 0]
+        s = np.real(np.linalg.det([v, v.conj(), axis]) / 1.j)
+        if np.isclose(s, -1):
+            angle = 2 * np.pi - angle
+        elif not np.isclose(s, 1):
+            raise RuntimeError("the sign of rotation should be +-1")
+    return (axis, angle, inversion)
+
+def get_cless_name(cless:List[SymmOp], lattice: np.ndarray)-> str:
     """
     根据一组共轭的对称操作推断类的共轭类名称。
 
@@ -165,30 +208,30 @@ def get_cless_name(cless:List[SymmOp])-> str:
     Returns:
         共轭类的类型名称。
     """
-    namelist = []
-    for op in cless:
-        name = get_rot_name(op.rotation_matrix)
-        namelist.append(name)
-    
-    if len(set(namelist)) == 1:
-        return namelist[0]+ "_" + str(len(namelist))
+    axis, angle, inversion = get_operation_type(struct.lattice.matrix, cless[0].rotation_matrix)
+    axis_string  = list(map(str, np.round(axis, decimals=2)))
+    angle_degree = str(np.round(np.degrees(angle), decimals=0))
+    if inversion:
+        name = angle_degree + '_' + "inversion" + '_axis__' + '_'.join(axis_string)
     else:
-        raise ValueError("Error: namelist={}".format(namelist))
+        name = angle_degree + '_axis__' + '_'.join(axis_string)
+    
+    return name
 
-def classify_ops(pgops:List[SymmOp]) -> dict[str:List[SymmOp]]:
+def classify_ops(spgops:List[SymmOp], lattice: np.ndarray) -> dict[str:List[SymmOp]]:
     """
     对称操作按照共轭类分类函数。
 
     Args:
-        pgops: 包含多个对称操作的列表。
+        spgops: 包含多个对称操作的列表。
 
     Returns:
         按照共轭类分类后的对称操作字典，键是类的名称，值是包含多个对称操作的列表。
     """
     clesseslist: List[array] = []
-    for idx, op in enumerate(pgops):
+    for idx, op in enumerate(spgops):
         # print(op.as_xyz_str())
-        bm = [np.dot(np.dot(np.linalg.inv(x.rotation_matrix), op.rotation_matrix), x.rotation_matrix) for x in pgops]
+        bm = [np.dot(np.dot(np.linalg.inv(x.rotation_matrix), op.rotation_matrix), x.rotation_matrix) for x in spgops]
         # print(bm)
         cless = kill_duplicated_element(bm) # 删除重复的矩阵，得到一个共轭类
         # print(cless)
@@ -198,17 +241,21 @@ def classify_ops(pgops:List[SymmOp]) -> dict[str:List[SymmOp]]:
         clesseslist.append(cless) # 将类添加到类列表中
 
     clesseslist = kill_duplicated_clesses(clesseslist) # 删除重复的共轭类，得到一个共轭类
-
+    # print((len(clesseslist)))
     clessesdict = defaultdict(list)
     for idx, cless in enumerate(clesseslist):
-        tmp:List[SymmOp] = find_cless_ops(cless)
-        clessname:str = get_cless_name(tmp)
-        clessesdict[f'{clessname}'] = tmp
+        ops:List[SymmOp] = find_cless_ops(cless, spgops=spgops)
+        clessname:str = get_cless_name(ops, lattice)
+        clessesdict[f'{clessname}'] = ops
 
     clessesdict:dict[List[SymmOp]] = dict(clessesdict)
+
+    # if len(clesseslist) != len(clessesdict):
+    #     raise ValueError('The size of clesseslist {} != the size of clessesdict {}'.format(len(clesseslist), len(clessesdict)))
+
     return clessesdict
 
-def generate_mapping_matrix(mapping)-> List[List[int]]:
+def generate_mapping_matrix(mapping:dict[int:int], size:int)-> List[List[int]]:
     """
     通过给定的映射关系生成矩阵 A
 
@@ -219,16 +266,14 @@ def generate_mapping_matrix(mapping)-> List[List[int]]:
         矩阵 A
     """
     # 确定矩阵 A 的大小
-    size = len(mapping)
     A = [[0] * size for _ in range(size)]
-
+    # print(A)
     # 遍历映射关系，填充矩阵 A
     for idx, key in enumerate(mapping):
         value = mapping[key]
         A[idx][value] = 1
     # print(mapping)
     return A
-
 
 def get_atoms_mapping(op:SymmOp, struct:Structure)-> dict[int:int]:
     """
@@ -243,19 +288,46 @@ def get_atoms_mapping(op:SymmOp, struct:Structure)-> dict[int:int]:
     """
     from pymatgen.core.sites import PeriodicSite
     
+    Lattice = struct.lattice.matrix
+    rotation = op.rotation_matrix
     mapping = {}
     for idx1, site1 in enumerate(struct):
+        
+        # 方式一
         newcoords = op.operate(site1.frac_coords)
-        newsite = PeriodicSite(species=site1.species, coords=newcoords, to_unit_cell=True, lattice=struct.lattice)
+        newsite = PeriodicSite(species=site1.species, coords=newcoords, to_unit_cell=True, lattice=struct.lattice, coords_are_cartesian=False)
+        # print(site1.frac_coords, newsite.frac_coords)
+        # s = np.array(([
+        #     [1, -np.sin(np.pi/6), 0],
+        #     [0,  np.cos(np.pi/6), 0],
+        #     [0,  0,  1],
+        # ]))
+        # s_1 = np.linalg.inv(s)
+        # new_rotation_matrix = np.dot(np.dot(s_1, op.rotation_matrix), s)
+        # new_rotation_matrix = np.dot(np.dot(s, op.rotation_matrix), s_1)
+         # pprint(op.rotation_matrix)
+        # pprint(new_rotation_matrix)
+        
+        # 方式二
+        # rotxyz = Lattice.T.dot(rotation).dot(np.linalg.inv(Lattice).T) 
+        # newcoords = np.dot(rotxyz, site1.coords)
+        # newsite = PeriodicSite(species=site1.species, coords=newcoords, to_unit_cell=True, lattice=struct.lattice, coords_are_cartesian=True)
+        # print(site1.frac_coords, newsite.frac_coords)
+
         for idx2, site2 in enumerate(struct):
-            if np.allclose(newsite.coords, site2.coords, rtol=1e-3):  # pymatgen 源代码检查了元素是否相等，坐标是否相等，性质是否相等 self.species == other.species and np.allclose(self.coords, other.coords, atol=Site.position_atol) and self.properties == other.properties
-                # print("{} {}-> {} {}".format(idx1, site1.frac_coords, idx2, newsite.frac_coords))
-                # print("{} {}-> {} {}".format(idx1, site1, idx2, newsite))
+            # print("判断 new-{} {} 是否与 {} {} 等价".format(idx1, newsite.frac_coords, idx2, site2.frac_coords))
+            # print("{} {}-> {} {}".format(idx1, site1, idx2, newsite))
+            # input()
+            # print(np.allclose(newsite.frac_coords, site2.frac_coords, rtol=1e-3))
+            if np.allclose(newsite.frac_coords, site2.frac_coords, rtol=1e-3):  # pymatgen 源代码检查了元素是否相等，坐标是否相等，性质是否相等 self.species == other.species and np.allclose(self.coords, other.coords, atol=Site.position_atol) and self.properties == other.properties
                 mapping[idx1] = idx2
+                break
+        else:
+            print("没有找到经过对称操作 {} 作用后，与{} {}等价的原子".format(op, idx1, site1.frac_coords))
+        # print(mapping)
+    # print(mapping)
     return mapping
 
-# for name in ['identity_1', 'rotation180_3', 'rotation180_6', 'rotation120_8', 'rotation90_6', 'inversion_1', 'rotoinversion180_3', 'rotoinversion180_6', 'rotoinversion120_8', 'rotoinversion90_6']:
-#     print(get_atoms_mapping(new_pgops[name][0], struct=struct))
 
 def get_conjugate_character(ops:List[SymmOp], struct:Structure)-> int:
     """
@@ -269,24 +341,27 @@ def get_conjugate_character(ops:List[SymmOp], struct:Structure)-> int:
         共轭类的特征标
     """
     trcs = []
+    # print(ops)
     for op in ops:
+        # print(op)
         mapping = get_atoms_mapping(op, struct)
-        A = generate_mapping_matrix(mapping)
+        # pprint(mapping)
+        A = generate_mapping_matrix(mapping, size=len(struct))
         trc = np.trace(A)
         trcs.append(trc)
-
+        # pprint(A)
     if len(set(trcs)) == 1:
         return trc, A
+    else:
+        raise ValueError("The value of traces in the same conjugate class is different")
+  
 
-# for name in ['identity_1', 'rotation180_3', 'rotation180_6', 'rotation120_8', 'rotation90_6', 'inversion_1', 'rotoinversion180_3', 'rotoinversion180_6', 'rotoinversion120_8', 'rotoinversion90_6']:
-#     print(get_conjugate_character(new_pgops[name], struct=struct))
-
-def get_atomic_character(new_pgops:dict[str:SymmOp], struct:Structure)-> dict[str:int]: 
+def get_atomic_character(new_spgops:dict[str:SymmOp], struct:Structure)-> tuple[dict[str:int], List[List[int]]]: 
     """
     获取原子的特征标
 
     Args:
-        new_pgops: 包含所有分好共轭类的字典，键是共轭类的名称，值是相应的对称操作列表。
+        new_spgops: 包含所有分好共轭类的字典，键是共轭类的名称，值是相应的对称操作列表。
         struct: 结构。
 
     Returns:
@@ -294,11 +369,14 @@ def get_atomic_character(new_pgops:dict[str:SymmOp], struct:Structure)-> dict[st
     """
     atomic_charater = {}
     atomic_mapmatrix= {}
-    for name, ops in new_pgops.items():
+    for name, ops in new_spgops.items():
+        # print(name)
         trc, matrix = get_conjugate_character(ops, struct)
+        # print(trc, matrix)
+        # input()
         atomic_charater[name] = trc
         atomic_mapmatrix[name] = matrix
-    return atomic_charater, atomic_mapmatrix
+    return (atomic_charater, atomic_mapmatrix)
 
 
 
@@ -306,53 +384,53 @@ if __name__ == "__main__":
 
     from pprint import pprint
 
-    struct = Structure.from_file("../test/POSCAR_LaH10")
+    struct = Structure.from_file("../test/POSCAR_YH9")
+    partial_struct = Structure.from_file("../test/POSCAR_YH9_partical")
     spg = SpacegroupAnalyzer(struct)
-    pgops = spg.get_point_group_operations()
-    new_pgops = classify_ops(pgops)
-    conjugate_charater, atomic_mapmatrix = get_atomic_character(new_pgops, struct)
-    # print(conjugate_charater)
+    print("Number={} Spacegroup_Symbol={} Pointgroup_Symbol={}".format(spg.get_space_group_number(), spg.get_space_group_symbol(), spg.get_point_group_symbol()))
+    # spgops = spg.get_point_group_operations()
+    spgops = spg.get_space_group_operations()
+    lattice = struct.lattice.matrix
 
-    names = ['identity_1','rotation90_6', 'rotation180_3', 'rotation120_8', 'rotation180_6',  'inversion_1', 'rotoinversion90_6', 'rotoinversion180_3',  'rotoinversion120_8', 'rotoinversion180_6']
-    for name in names:
-        print(name)
-        pprint(atomic_mapmatrix[name])
-        pprint(conjugate_charater[name])
-    red_reps = np.array([conjugate_charater[name] for name in names])-1
+    names = ['0.0_axis__0.0_0.0_1.0',
+            '60.0_axis__0.0_0.0_1.0', 
+            '120.0_axis__0.0_0.0_1.0', 
+            '180.0_axis__0.0_0.0_1.0', 
+            '180.0_axis__0.5_-0.87_0.0', 
+            '180.0_axis__0.87_-0.5_0.0', 
+            '0.0_inversion_axis__0.0_0.0_1.0', 
+            '420.0_inversion_axis__0.0_0.0_1.0', 
+            '480.0_inversion_axis__0.0_0.0_1.0',  
+            '180.0_inversion_axis__0.0_0.0_1.0', 
+            '180.0_inversion_axis__-0.5_0.87_0.0',
+            '180.0_inversion_axis__-0.87_0.5_0.0']
+    
+    new_spgops = classify_ops(spgops, lattice)
+    
+    conjugate_charater, atomic_mapmatrix = get_atomic_character(new_spgops, partial_struct)
+    # pprint(conjugate_charater)
+
+    red_reps = np.array([conjugate_charater[name] for name in names])
     print(red_reps)
-    mult  = np.array([int(name.split('_')[-1]) for name in names])
-    # print(mult)
+    mult  = np.array([len(new_spgops[name]) for name in names])
+    print(mult)
 
     irred_repss={
-        'A1g' : [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-        'A1u' : [1, 1, 1, 1, 1,-1,-1,-1,-1,-1],
-        'A2g' : [1,-1, 1, 1,-1, 1,-1, 1, 1,-1],
-        'A2u' : [1,-1, 1, 1,-1,-1, 1,-1,-1, 1],
-        'Eg'  : [2, 0, 2,-1, 0, 2, 0, 2,-1, 0],
-        'Eu'  : [2, 0, 2,-1, 0,-2, 0,-2, 1, 0],
-        'T2u' : [3,-1,-1, 0, 1,-3, 1, 1, 0,-1],
-        'T2g' : [3,-1,-1, 0, 1, 3,-1,-1, 0, 1],
-        'T1u' : [3, 1,-1, 0,-1,-3,-1, 1, 0, 1],
-        'T1g' : [3, 1,-1, 0,-1, 3, 1,-1, 0,-1],
+        'A1g' : np.array([1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,]),
+        'A1u' : np.array([1,  1,  1,  1,  1,  1, -1, -1, -1, -1, -1, -1,]),
+        'A2g' : np.array([1,  1,  1,  1, -1, -1,  1,  1,  1,  1, -1, -1,]),
+        'A2u' : np.array([1,  1,  1,  1, -1, -1, -1, -1, -1, -1,  1,  1,]),
+        'B1g' : np.array([1, -1,  1, -1,  1, -1,  1, -1,  1, -1,  1, -1,]),
+        'B1u' : np.array([1, -1,  1, -1,  1, -1, -1,  1, -1,  1, -1,  1,]),
+        'B2g' : np.array([1, -1,  1, -1, -1,  1,  1, -1,  1, -1, -1,  1,]),
+        'B2u' : np.array([1, -1,  1, -1, -1,  1, -1,  1, -1,  1,  1, -1,]),
+        'E2u' : np.array([2, -1, -1,  2,  0,  0, -2,  1,  1, -2,  0,  0,]),
+        'E2g' : np.array([2, -1, -1,  2,  0,  0,  2, -1, -1,  2,  0,  0,]),
+        'E1u' : np.array([2,  1, -1, -2,  0,  0, -2, -1,  1,  2,  0,  0,]),
+        'E1g' : np.array([2,  1, -1, -2,  0,  0,  2,  1, -1, -2,  0,  0,]),
         }
 
     for irred_reps_name, irred_reps_character in irred_repss.items():
-        x=np.sum(np.array(mult)*np.array(irred_reps_character)*(np.array(red_reps)))/np.sum(mult)
+        x=np.sum(mult*irred_reps_character*red_reps)/np.sum(mult)
         if x != 0:
             print(irred_reps_name)
-    # from pymatgen.core.structure import Molecule
-    # from pymatgen.symmetry.analyzer import PointGroupAnalyzer
-
-    # water_coords = [(0.0, 0.0, 0.0), (0.757, 0.586, 0.0), (-0.757, 0.586, 0.0)]
-    # water_species = ["H", "H", "O"]
-
-    # # 创建水分子对象
-    # water_molecule = Molecule(water_species, water_coords)
-    # pg = PointGroupAnalyzer(water_molecule, matrix_tolerance=0.001)
-    # pgops = pg.get_symmetry_operations()
-    # print(pgops)
-    # print(pg.get_pointgroup())
-    # new_pgops:dict[List[SymmOp]] = classify_ops(pgops)
-    # print(new_pgops.keys())
-
-    # conjugate_charater = get_atomic_character(new_pgops, water_molecule)

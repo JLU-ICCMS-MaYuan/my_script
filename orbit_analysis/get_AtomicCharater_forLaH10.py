@@ -274,8 +274,9 @@ def get_conjugate_character(ops:List[SymmOp], struct:Structure)-> int:
         A = generate_mapping_matrix(mapping)
         trc = np.trace(A)
         trcs.append(trc)
+
     if len(set(trcs)) == 1:
-        return trc
+        return trc, A
 
 # for name in ['identity_1', 'rotation180_3', 'rotation180_6', 'rotation120_8', 'rotation90_6', 'inversion_1', 'rotoinversion180_3', 'rotoinversion180_6', 'rotoinversion120_8', 'rotoinversion90_6']:
 #     print(get_conjugate_character(new_pgops[name], struct=struct))
@@ -291,25 +292,35 @@ def get_atomic_character(new_pgops:dict[str:SymmOp], struct:Structure)-> dict[st
     Returns:
         包含原子特征的字典，键是操作类的名称，值是对应的特征值。
     """
-    
     atomic_charater = {}
+    atomic_mapmatrix= {}
     for name, ops in new_pgops.items():
-        trc = get_conjugate_character(ops, struct)
+        trc, matrix = get_conjugate_character(ops, struct)
         atomic_charater[name] = trc
-    return atomic_charater
+        atomic_mapmatrix[name] = matrix
+    return atomic_charater, atomic_mapmatrix
 
 
 
 if __name__ == "__main__":
 
-    struct = Structure.from_file("../test/POSCAR_CaH6")
+    from pprint import pprint
+
+    struct = Structure.from_file("../test/POSCAR_LaH10")
     spg = SpacegroupAnalyzer(struct)
-    pgops = spg.get_point_group_operations()
+    # pgops = spg.get_point_group_operations()
+    pgops = spg.get_space_group_operations()
+    print("Number={} Spacegroup_Symbol={} Pointgroup_Symbol={}".format(spg.get_space_group_number(), spg.get_space_group_symbol(), spg.get_point_group_symbol()))
+
     new_pgops = classify_ops(pgops)
-    conjugate_charater = get_atomic_character(new_pgops, struct)
+    conjugate_charater, atomic_mapmatrix = get_atomic_character(new_pgops, struct)
     # print(conjugate_charater)
 
-    names = ['identity_1','rotation90_6', 'rotation180_3', 'rotation120_8', 'rotation180_6',  'inversion_1', 'rotoinversion90_6', 'rotoinversion180_3',  'rotoinversion120_8', 'rotoinversion180_6', ]
+    names = ['identity_1','rotation90_6', 'rotation180_3', 'rotation120_8', 'rotation180_6',  'inversion_1', 'rotoinversion90_6', 'rotoinversion180_3',  'rotoinversion120_8', 'rotoinversion180_6']
+    for name in names:
+        print(name)
+        # pprint(atomic_mapmatrix[name])
+        pprint(conjugate_charater[name])
     red_reps = np.array([conjugate_charater[name] for name in names])-1
     print(red_reps)
     mult  = np.array([int(name.split('_')[-1]) for name in names])

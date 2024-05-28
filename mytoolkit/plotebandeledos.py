@@ -55,7 +55,8 @@ plt.show()
 # 原始的能带
 bsplot=BSPlotter(bs=bs_data)
 bsplot.get_plot()
-bsplot.save_plot("4.band.png", img_format='png')
+# bsplot.save_plot("4.band.png", img_format='png')
+bsplot.save_plot("4.band.png")
 
 # 将能带投影到元素
 bsplotproj=BSPlotterProjected(bs=bs_data)
