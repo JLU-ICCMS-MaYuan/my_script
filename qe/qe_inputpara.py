@@ -222,7 +222,8 @@ class qe_inputpara(qe_base):
 
         print("Print projected high symmetry path")
         print("倒格子的单位是 2pi/alat")
-        projected_path_name_coords = [[path_name_coords[0][0], path_name_coords[0][1][0]]]
+        #projected_path_name_coords = [[path_name_coords[0][0], path_name_coords[0][1][0]]]
+        projected_path_name_coords = [[path_name_coords[0][0], 0]]
         total_dist = 0
         for idx in range(1, len(path_name_coords)):
             current_name   = path_name_coords[idx][0]
@@ -615,7 +616,7 @@ class qephono_inputpara(qe_inputpara):
         path_name_coords = []
         for line in lines[slash_line_number+1:]:
             coords = list(map(float, line.split()[0:3]))
-            name = line.split('!')[-1]
+            name = line.split('!')[-1].strip('\n')
             path_name_coords.append([name, coords])
 
         # 获得倒格子
@@ -633,7 +634,8 @@ class qephono_inputpara(qe_inputpara):
         
         print("Print projected high symmetry path")
         print("倒格子的单位是 2pi/alat")
-        projected_path_name_coords = [[path_name_coords[0][0], path_name_coords[0][1][0]]]
+        #projected_path_name_coords = [[path_name_coords[0][0], path_name_coords[0][1][0]]]
+        projected_path_name_coords = [[path_name_coords[0][0], 0]]
         total_dist = 0
         for idx in range(1, len(path_name_coords)):
             current_name   = path_name_coords[idx][0]

@@ -325,7 +325,8 @@ class vasp_base:
         print("Print projected high symmetry path")
         print("倒格子的单位是: 2pi/埃")
         path_name_coords = list(zip(path_name_list, path_coords))
-        projected_path_name_coords = [[path_name_coords[0][0], path_name_coords[0][1][0]]]
+        #projected_path_name_coords = [[path_name_coords[0][0], path_name_coords[0][1][0]]]
+        projected_path_name_coords = [[path_name_coords[0][0], 0]]
         total_dist = 0
         for idx in range(1, len(path_name_coords)):
             current_name   = path_name_coords[idx][0]
@@ -352,14 +353,15 @@ class vasp_base:
         with open(hsppfile_path, "r") as f:
             lines = f.readlines()
 
-        hspplist         = [line.strip() for line in lines[4:] if line != "\n"] # 只读取第四行开始的内容
+        hspplist         = [line.strip() for line in lines[4:] if line.strip()] # 只读取第四行开始的内容
         path_name_coords = [hspplist[i] for i in range(0, len(hspplist), 2)] + [hspplist[-1]] # 每隔一个高对称点读取一次，并且附加最后一个高对称点
 
         print("Print path coords and names")
         for idx in range(0, len(path_name_coords)):
             print(path_name_coords[idx])
         
-        projected_path_name_coords = [[path_name_coords[0].split()[-1], list(map(float, path_name_coords[0].split()[:-1]))[0]]]
+        #projected_path_name_coords = [[path_name_coords[0].split()[-1], list(map(float, path_name_coords[0].split()[:-1]))[0]]]
+        projected_path_name_coords = [[path_name_coords[0].split()[-1], 0]]
         total_dist = 0
         for idx in range(1, len(path_name_coords)):
             current_name   = path_name_coords[idx].split()[-1]

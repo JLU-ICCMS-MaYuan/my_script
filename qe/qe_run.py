@@ -120,7 +120,11 @@ class qe_phono:
             self.phono_inputpara.get_gibbs_from_phtdos()
             self.phono_inputpara.get_gibbs_from_freq()
         elif self.phono_inputpara.mode == "hspp":
+            print("\nNote: --------------------")
+            print("    Get hspp from matdyn")
             self.phono_inputpara.read_hspp_in_matdyn()
+            print("\nNote: --------------------")
+            print("    Get hspp from ASE package")
             self.phono_inputpara.get_hspp()
         else:
             # init the input
