@@ -345,7 +345,6 @@ class vasp_base:
 
     def read_hspp(self, hsppfile_path):
         
-        print(self.cell_parameters)
         print("The reciprocal lattice")
         for vector in self.reciprocal_plattice:
             print("{:<6.3f} {:<6.3f} {:<6.3f} ".format(vector[0], vector[1], vector[2]))

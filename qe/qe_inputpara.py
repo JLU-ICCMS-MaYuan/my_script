@@ -714,9 +714,9 @@ class qephono_inputpara(qe_inputpara):
         if not scffitin_path.exists():
             print(f"    Sorry, scffit.in doesn't exist !")
             sys.exit(1) 
-        shlorder = "sed -n '/ATOMIC_POSITIONS (crystal)/,/K_POINTS {automatic}/ {//!p}' " + f"{scffitin_path}"
+        shlorder = "sed -n '/ATOMIC_POSITIONS/,/K_POINTS/ {//!p}' " + f"{scffitin_path}"        
         elements_coords = os.popen(shlorder).readlines()
-        elements = [ele.split()[0] for ele in elements_coords]
+        elements = [ele.split()[0] for ele in elements_coords if ele.strip()] # ele.strip() 作用是去掉 ATOMIC_POSITIONS 和 K_POINTS 之间的空行
         phonondos = pd.read_table(
             phonon_dos_path,
             skiprows=1,  # skiprows=1：跳过文件的第一行，即不将其作为数据的一部分进行读取。
