@@ -14,7 +14,8 @@ try:
     spgaly = SpacegroupAnalyzer(struct, symprec = symprec)
     symbol = spgaly.get_space_group_symbol()
     spgnum = spgaly.get_space_group_number()
-    print("{:<10.6f} {:<10} {:<10}".format(symprec, symbol, spgnum))
+    print("{:<10} {:<10} {:<10}".format("symprec", "symbol", "spgnum"))
+    print("{:<10.9f} {:<10} {:<10}".format(symprec, symbol, spgnum))
 except:
     print("You input structures only, so the default values will be used")
     print("    filename is POSCAR, symprec is 1e-3")
