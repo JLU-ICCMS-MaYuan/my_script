@@ -23,7 +23,7 @@ scripts_names = [
     ]
 
 
-with open('~/.myenvs', 'w') as f:
+with open(Path('~/.myenvs').expanduser(), 'w') as f:
     for dirname in scripts_names:
         abs_path = Path(dirname).absolute()
         f.write(f'export PATH="{abs_path}:$PATH"\n')
