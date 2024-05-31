@@ -17,8 +17,8 @@ except:
     symprec  = 1e-3
 
 struct = Structure.from_file(filename)
-print("{} {} {}".format("symprec", "symbol", "spgnum"))
-for symprec in [0.1, 0.01, 0.001, 0.0001, 0.00001]:
+print("{:<10} {:<10} {:<10}".format("symprec", "symbol", "spgnum"))
+for symprec in [0.1, 0.01, 0.001, 0.0001, 0.00001, 0.000001]:
     spgaly = SpacegroupAnalyzer(struct, symprec = symprec)
     symbol = spgaly.get_space_group_symbol()
     spgnum = spgaly.get_space_group_number()
