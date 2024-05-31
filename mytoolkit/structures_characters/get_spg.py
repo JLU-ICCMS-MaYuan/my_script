@@ -10,16 +10,19 @@ try:
     print("    get_spg.py CONTCAR 1e-5")
     filename = sys.argv[1]
     symprec  = float(sys.argv[2])
-except:
-    print("You input nothing, so the default values will be used")
-    print("    filename is POSCAR, symprec is 1e-3")
-    filename = "POSCAR"
-    symprec  = 1e-3
-
-struct = Structure.from_file(filename)
-print("{:<10} {:<10} {:<10}".format("symprec", "symbol", "spgnum"))
-for symprec in [0.1, 0.01, 0.001, 0.0001, 0.00001, 0.000001]:
+    struct = Structure.from_file(filename)
     spgaly = SpacegroupAnalyzer(struct, symprec = symprec)
     symbol = spgaly.get_space_group_symbol()
     spgnum = spgaly.get_space_group_number()
     print("{:<10.6f} {:<10} {:<10}".format(symprec, symbol, spgnum))
+except:
+    print("You input structures only, so the default values will be used")
+    print("    filename is POSCAR, symprec is 1e-3")
+    filename = sys.argv[1]
+    struct = Structure.from_file(filename)
+    print("{:<10} {:<10} {:<10}".format("symprec", "symbol", "spgnum"))
+    for symprec in [0.1, 0.01, 0.001, 0.0001, 0.00001, 0.000001]:
+        spgaly = SpacegroupAnalyzer(struct, symprec = symprec)
+        symbol = spgaly.get_space_group_symbol()
+        spgnum = spgaly.get_space_group_number()
+        print("{:<10.6f} {:<10} {:<10}".format(symprec, symbol, spgnum))
