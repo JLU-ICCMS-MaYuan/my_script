@@ -14,6 +14,8 @@ try:
     spgaly = SpacegroupAnalyzer(struct, symprec = symprec)
     symbol = spgaly.get_space_group_symbol()
     spgnum = spgaly.get_space_group_number()
+    spgaly.get_conventional_standard_structure("BPOSCAR")
+    spgaly.get_primitive_standard_structure("PPOSCAR")
     print("{:<10} {:<10} {:<10}".format("symprec", "symbol", "spgnum"))
     print("{:<10.9f} {:<10} {:<10}".format(symprec, symbol, spgnum))
 except:

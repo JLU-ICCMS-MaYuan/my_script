@@ -59,6 +59,10 @@ n_pw=5
 这里是需要使用者修改参数的部分, 具体来说：修改相应作业脚本的提交命令
 
 ### 1.2到1.5的操作都可以用过脚本8_ReStart.sh完成
+```shell
+START_POP=0 #计算第0代的动力学矩阵
+ENS_NUM=100 #产生100个随机结构并自洽
+```
 
 ### 1.6 5_CheckFinish.py检查自洽计算情况
 
@@ -75,12 +79,17 @@ dyn = CC.Phonons.Phonons("dyn_pop11_", nqirr = 4) # "dyn_pop11_"是第j-1代的�
 ...
 ensemble.load("data_ensemble_manual", population = 12, N = 1000) # population = 12是第j代的编号, 也就是通过弛豫会获得动力学矩阵dyn_pop12_*, N = 1000 是第j代总共有1000个结构的能量和受力要读取 (例如这里的j=12)
 
+relax.vc_relax(target_press =150, static_bulk_modulus = 300, ensemble_loc = "data_ensemble_manual",restart_from_ens = True,start_pop = ENDPOP) # 注意修改target_press为你指定优化的压强
 ```
 
 ### 1.9 7_SubRelax.sh 提交结构弛豫任务
 
 ### 1.6到1.9的操作都可以用过脚本9_ReEnd.sh完成
-
+```shell
+START_POP=0 #读取第0代的动力学矩阵
+ENS_NUM=100 #收集100个随机结构并自洽
+# 结合第0代的动力学矩阵 和 100个随机结构的受力和能量 迭代出第1代动力学矩阵
+```
 ```shell
 # 这些文件都没有用, 可以删掉
 rm dyn_start_population*_*  dyn_end_population*_*

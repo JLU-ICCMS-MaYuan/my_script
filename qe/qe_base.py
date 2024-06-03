@@ -250,7 +250,7 @@ class qe_base:
                     # 将里面的\n剔除
                     cell_parameters = [cell.strip("\n") for cell in cell_parameters]
             return cell_parameters
-        elif self.input_file_path.name == "POSCAR" or self.input_file_path.name == "CONTCAR" or ".vasp" in self.input_file_path.name:
+        elif self.input_file_path.name == "POSCAR" or "CONTCAR" in self.input_file_path.name or ".vasp" in self.input_file_path.name:
             sed_order = "sed -n '3,5p' " + f" {self.input_file_path.absolute()} "
             content = os.popen(sed_order).readlines()
             cell_parameters = [cell.strip("\n") for cell in content]
@@ -274,7 +274,7 @@ class qe_base:
                     # 将里面的\n剔除
                     fractional_sites = [coords.strip("\n") for coords in fractional_sites]
             return fractional_sites
-        elif self.input_file_path.name == "POSCAR" or self.input_file_path.name == "CONTCAR" or ".vasp" in self.input_file_path.name:
+        elif self.input_file_path.name == "POSCAR" or "CONTCAR" in self.input_file_path.name or ".vasp" in self.input_file_path.name:
             sed_order1 = "sed -n '6p' " + f" {self.input_file_path.absolute()} "
             elements   = os.popen(sed_order1).read().strip('\n').split()
             sed_order2 = "sed -n '7p' " + f" {self.input_file_path.absolute()} "
