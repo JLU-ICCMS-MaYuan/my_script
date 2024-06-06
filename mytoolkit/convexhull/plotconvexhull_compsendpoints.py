@@ -257,13 +257,13 @@ if dst_entry_index:
     for dei in dst_entry_index:
         dei = int(dei)
         dst_entry = ini_pd.entries[dei]
-        print(f"\n------------dst_entry[{dei}]={dst_entry}-{dst_entry.composition.reduced_formula}------------")
-
+        print(f"\n------------dst_entry[{-1}]={dst_entry.original_entry.composition.reduced_formula}------------")
+    
         decomp_path = ini_pd.get_decomp_and_e_above_hull(dst_entry)[0]
         decomp_eabovehull = ini_pd.get_decomp_and_e_above_hull(dst_entry)[1]
         form_energy = ini_pd.get_form_energy_per_atom(dst_entry)
+        print("{:<15} {:<15} {:<20} {:<20} {:<20}".format('formula_trans', 'formula', 'energy_per_atom', 'energy', 'ratio'))
         for key, value in decomp_path.items():
-            print("{:<15} {:<20} {:<20}".format(key.entry_id, key.composition.reduced_formula, value))
+            print("{:<15} {:<15} {:<20} {:<20} {:<20}".format(key.composition.reduced_formula, key.original_entry.composition.reduced_formula, key.energy_per_atom, key.energy, value))
         print("   e_above_hull = {:>10.6f} ev/atom".format(decomp_eabovehull))
         print("formed_enthalpy = {:>10.6f} ev/atom".format(form_energy))
-
