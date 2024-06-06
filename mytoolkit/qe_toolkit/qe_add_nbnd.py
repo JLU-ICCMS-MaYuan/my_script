@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import sys
-
+import os
 nbnd = sys.argv[1]
 
 def add_or_not(lines):
@@ -22,11 +22,7 @@ with open("scf.in", 'r') as f3:
     lines3 = f3.readlines()
 
 if add_or_not(lines2) and add_or_not(lines3):
-    lines2.insert(11, " nbnd={},\n".format(nbnd))
-    lines3.insert(11, " nbnd={},\n".format(nbnd))
-    with open("scffit.in", 'w') as f22:
-        f22.writelines(lines2)
-    with open("scf.in", 'w') as f33:
-        f33.writelines(lines3)
+    os.system(f"sed -i '/&SYSTEM/a  nbnd={nbnd}' scffit.in ")
+    os.system(f"sed -i '/&SYSTEM/a  nbnd={nbnd}' scf.in ")
 else:
     print("You don't need to add `nbnd` it has existed")
