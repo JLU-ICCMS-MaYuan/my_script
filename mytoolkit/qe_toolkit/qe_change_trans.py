@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import re
 
 # 文件路径
