@@ -24,5 +24,6 @@ with open("scf.in", 'r') as f3:
 if add_or_not(lines2) and add_or_not(lines3):
     os.system(f"sed -i '/&SYSTEM/a  nbnd={nbnd},' scffit.in ")
     os.system(f"sed -i '/&SYSTEM/a  nbnd={nbnd},' scf.in ")
+    print("added!")
 else:
     print("You don't need to add `nbnd` it has existed")

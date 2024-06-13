@@ -1,3 +1,10 @@
+# 经验贴
+```shell
+https://github.com/tamaswells/XDATCAR_toolkit/tree/master
+https://docs.mdanalysis.org/stable/index.html
+
+```
+
 
 # 1. 获得内能
 ```shell

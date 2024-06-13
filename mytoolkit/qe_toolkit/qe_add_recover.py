@@ -19,5 +19,6 @@ if add_or_not(lines1):
     lines1.insert(-1, "  recover=.true.,\n")
     with open("split_ph.in", 'w') as f2:
         f2.writelines(lines1)
+    print("Added!")
 else:
     print("You don't need to add `recover=.true.,` it has existed")

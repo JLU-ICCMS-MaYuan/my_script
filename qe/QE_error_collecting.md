@@ -114,7 +114,12 @@ else:
 原因: 当使用112核并行时, 就会在tmp/_ph0/La1Ce1Y1Th1Be4H32.q_2/*wfc*中产生112个波函数文件. 当使用40核并行时, 就会在tmp/_ph0/La1Ce1Y1Th1Be4H32.q_2/*wfc*中产生40个波函数文件. QE在读取波函数文件时，会把全部的波函数文件都读进来, 所以用40核并行时会读入40个核计算过的wfc和112核计算的wfc.
 
 解决方法：把tmp目录下所有的wfc都删除了
+```shell
 
+find ./ -name "La1Ce1Y1Th1Be4H32.save" | xargs rm -fr
+find ./ -type f \( -name "*wfc*" -o -name "*dwf*"  -o -name "*prd*" -o -name "*bar*"  -o -name "*recover*"   -o -name "*mixd*"  \) | xargs rm -rf
+
+```
 
 ### <span style="color:green"> 8. 报错 电声耦合因为内存原因停止。此时动力学矩阵计算已经完成。如何完成后续计算。  </span> </div>
 

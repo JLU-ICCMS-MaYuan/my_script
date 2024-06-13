@@ -24,5 +24,6 @@ if add_or_not(lines2):
     lines2.insert(-1, "  last_irr={},\n".format(last_irr))    
     with open("split_ph.in", 'w') as f22:
         f22.writelines(lines2)
+    print("Added!")
 else:
     print("You don't need to add `start_irr` and `last_irr` it has existed")
