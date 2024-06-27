@@ -116,7 +116,7 @@ else:
 解决方法：把tmp目录下所有的wfc都删除了
 ```shell
 
-find ./ -name "La1Ce1Y1Th1Be4H32.save" | xargs rm -fr
+find ./ -name "La1Ce1Th2Be4H32.save" | xargs rm -fr
 find ./ -type f \( -name "*wfc*" -o -name "*dwf*"  -o -name "*prd*" -o -name "*bar*"  -o -name "*recover*"   -o -name "*mixd*"  \) | xargs rm -rf
 
 ```
@@ -146,3 +146,11 @@ tmp/_ph0/La1Ce1Th2Be4H32.phsave/patterns.1.xml
 ```
 
 最后重新计算scffit.in 和 scf.in 和 split_ph.in
+
+
+### <span style="color:green"> 9. 报错  kpoint  30 sternheimer_kernel: root not converged, thresh <        NaN
+
+
+### <span style="color:green"> 10. 报错 read_file_new: Wavefunctions not in collected format?!?   read_file: Wavefunctions in collected format not available
+
+有时候我们在自洽结束后，进行电声耦合计算时，会有这样的报错。

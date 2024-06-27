@@ -22,6 +22,8 @@ qe_main.py -i CONTCAR -j bash phono -m mode=nosplit dyn0_flag=True execmd='' que
 
 qe_main.py -i CONTCAR -j slurm phono -m mode=split_assignQ degauss=0.05 ecutwfc=80 ecutrho=960  execmd='mpirun -np 48' npool=4
 
+qe_main.py -i CONTCAR -j slurm phono -m mode=split_dyn0    degauss=0.05 ecutwfc=80 ecutrho=960  execmd='mpirun -np 48' npool=4
+
 qe_main.py -i CONTCAR -j bash phono -m mode=q2r execmd='' queue=lhy
 
 qe_main.py -i CONTCAR -j bash phono -m mode=merge execmd=''
