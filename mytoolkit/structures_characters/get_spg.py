@@ -4,6 +4,7 @@ import sys
 
 from pymatgen.core.structure import Structure
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
+from pymatgen.io.vasp import Poscar
 
 try:
     print("Please input filename and symprec, for example:")
@@ -14,8 +15,10 @@ try:
     spgaly = SpacegroupAnalyzer(struct, symprec = symprec)
     symbol = spgaly.get_space_group_symbol()
     spgnum = spgaly.get_space_group_number()
-    spgaly.get_conventional_standard_structure("BPOSCAR")
-    spgaly.get_primitive_standard_structure("PPOSCAR")
+    conv_cell = spgaly.get_conventional_standard_structure()
+    prim_cell = spgaly.get_primitive_standard_structure()
+    Poscar(prim_cell).write_file("PPOSCAR")
+    Poscar(conv_cell).write_file("BPOSCAR")
     print("{:<10} {:<10} {:<10}".format("symprec", "symbol", "spgnum"))
     print("{:<10.9f} {:<10} {:<10}".format(symprec, symbol, spgnum))
 except:

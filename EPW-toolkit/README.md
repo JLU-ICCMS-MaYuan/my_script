@@ -1,0 +1,203 @@
+# EPW使用教程
+
+## EPW计算超导流程
+
+### 1.自洽计算
+```shell
+mpirun -np N $QEBIN/pw.x -npool N < scf.in > scf.out
+```
+
+### 2.声子计算
+```shell
+mpirun -np N $QEBIN/ph.x  -npool N < ph.in > ph.out
+```
+
+### 3.准备EPW计算的文件
+```shell
+python pp.py
+```
+
+### 4.重新自洽计算
+```shell
+mpirun -np N $QEBIN/pw.x -npool N < scf.in > scf.out
+```
+
+### 5.非自洽计算
+```shell
+mpirun -np N $QEBIN/pw.x -npool N < nscf.in > nscf.out
+```
+
+### 6. EPW计算
+```shell
+mpirun -np N $EPWBIN/epw.x -npool N < epw.in > epw.out
+```
+#### 6.1 计算超导时相关的epw.in参数设置
+
+```shell
+&inputepw
+  prefix      = 'MgB2',
+  amass(1)    = 24.305,
+  amass(2)    = 10.811
+  outdir      = './'
+
+  ep_coupling = .true.  # 计算电声耦合
+  elph        = .true.  # 计算电声耦合系数
+  epbwrite    = .true.  # 粗糙布洛赫表示的电声耦合矩阵元和相关的数据（比如动力学矩阵）写入磁盘，存储为prefix.epb
+  epbread     = .false. # 粗糙布洛赫表示的电声耦合矩阵元和相关的数据从prefix.epb文件中读取
+
+  epwwrite = .true.     # 粗糙瓦尼尔表示的电声耦合矩阵元和相关的数据（比如动力学矩阵）写入磁盘，存储为epwdata.fmt和XX.epmatwpX
+  epwread  = .false.    # 粗糙瓦尼尔表示的电声耦合矩阵元和相关的数据从epwdata.fmt和XX.epmatwpX中读取。这个开关一般用于续算，
+                        # 要设置epwread = .true., 需要同时设置 kmaps = .true., 这是因为设置epwread = .true.时, kmaps相关信息不会重新计算产生，必须读取，所以必须设置kmaps = .true.。并且确保事先已经设置好 epwwrite = .true.
+                        # kmaps = .true. 用于从 prefix.kmap and prefix.kgmap 中读取k+q->k的散射情况。
+
+  etf_mem     =  1      # etf_mem = 1 所有致密的Bloch-space的电声耦合矩阵元都存在内存中 faster, IO更慢但是要求更少的内存
+                        # etf_mem = 2 在mode上对致密网格插补部分做了一个附加回路。通过设置“nmodes”可以进一步降低内存需求。
+                        # etf_mem = 3 多用于输运性质计算
+
+  nbndsub     =  5,     # 要使用的wannier函数的数量。
+
+  wannierize  = .true.  # 使用W90库调用计算万尼尔函数，并将旋转矩阵写入文件filukk文件。如果为False，旋转矩阵信息不自动产生，从filukk文件中读取。
+  num_iter    = 500     # 为了最小化而传递给Wannier90的迭代次数
+  dis_froz_max= 8.8     # Wannier90的冻结状态
+  proj(1)     = 'B:pz'               # 在万尼90计算中使用的初始投影，比较简单的方法是：proj(1) = 'random'
+  proj(2)     = 'f=0.5,1.0,0.5:s'
+  proj(3)     = 'f=0.0,0.5,0.5:s'
+  proj(4)     = 'f=0.5,0.5,0.5:s'
+
+  iverbosity  = 2 # 2 = 罗嗦的输出针对超导部分
+                  # 3 = 罗嗦的输出针对电声耦合部分
+
+  eps_acustic = 2.0    # 在进行电声耦合计算和a2f计算时的声子频率的下边界，单位时cm-1
+  ephwrite    = .true. # 如果设置了Eliasberg = .true.，那么设置 ephwrite = .true.
+                       # ephwrite = .true. 会产生4个文件，这4个文件都需要在求解 Eliashberg equations 计算超导温度时被用到
+                       # ‘ephmatXX’  (XX: pool dependent files) files with e-ph matrix elements within the Fermi window (fsthick) on fine k and q meshes on the disk
+                       # ‘freq’ file contains the phonon frequencies
+                       # ‘egnv’ file contains the eigenvalues within the Fermi window
+                       # ‘ikmap’ file contains the index of the k-point on the irreducible grid within the Fermi window.
+                       
+
+  fsthick     = 0.4       # 考虑自能δ函数的费米表面窗口宽度，单位是eV。缩小这个值可以减少自能量计算中包含的带数量。
+  degaussw    = 0.10      # Smearing in the energy-conserving delta functions in [eV]，默认0.025
+  nsmear      = 1         # 用于计算声子自能的不同smearings。
+  delta_smear = 0.04      # 声子自能计算时每一次额外的smearing的改变量，单位时eV
+
+  degaussq     = 0.5      # 对q的所有电声耦合求和时的Smearing，起始值是0.5 ，单位是meV
+  delta_qsmear = 0.05     # 每次额外qsmearing的能量变化为0.05 meV 
+  # 这两个参数在 preifx.a2f 中最后几行的有详细写到，可以对应着检查。
+  # preifx.a2f中第2-11列是smearing=0.5, 0.55,...., 0.95的a2f， 
+  # preifx.a2f中第12-21列是smearing=0.5, 0.55,...., 0.95的2*a2f/w的积分
+
+  nqstep       = 500      # 用于计算a2f的步数
+
+  eliashberg  = .true.    # 启动超导计算的相关开关
+
+  laniso = .true.         # 在虚轴上求解各向异性 Eliashberg equations，ephmat, .freq, .egnv, .ikmap 文件都必须提取准备好，它们由 ephwrite =.true.产生
+  limag = .true.          # 在虚轴上求解 Eliashberg equations
+  lpade = .true.          # 用 Padé 近似法将虚轴Eliashberg方程延续到实轴。这个开关要搭配 limag =.true.一起用
+
+  conv_thr_iaxis = 1.0d-4 # 虚轴Eliashberg方程迭代解的收敛阈值。
+
+  wscut = 1.0      # 单位eV，在求解Elisashberg 方程时的频率上限，必须搭配limag = .true.使用。如果设置了nswi为不为0的值，wscut被忽略。
+
+  nstemp   = 1     # 用于超导、传输、惯性等的温度点 数目。
+                   # 如果nstemp为空，或者等于temps(:)中的条目数，则使用temps(:)中提供的温度。
+                   # 如果nstemp>2并且temps(:)中只给出两个温度，则生成一个均匀间隔的温度网格，点之间的步长由(temps(2) - temps(1)) / (nstemp-1)给出。这个网格包含nstemp点。
+                   # nstemp不能大于50。
+  temps    = 15.00 # 用于超导、输运、惯性等的温度值，以开尔文为单位。
+                   # 如果没有提供temp，则temps=300和nstemp =1。
+                   # 如果提供两个温度，其中temps(1)<temps(2)和nstemp >2，则将temps转换为具有nstemp点的等间距网格。 其中temps(1)和temps(2)分别为最小值和最大值，在这种情况下，点的间隔根据(temps(2) - temps(1)) / (nstemp-1)设置。
+                   #    例如 nstemp = 5 
+                   #         temps = 300 500
+                   # 其它设置情况中，temps将被视为一个列表，直接使用给定的温度[temps = 17 20 30]。以这种方式提供的温度不能超过50个温度点。
+  nsiter   = 500   # 求解实轴或虚轴Eliashberg方程时自洽循环的迭代次数。
+
+  muc     = 0.16   # 有效库仑势在Eliashberg方程中的应用。
+
+  dvscf_dir   = '../phonons/save'
+  
+  nk1         = 6 # 粗电子网格的尺寸，对应于outdir中的nscf的计算和wfs。
+  nk2         = 6
+  nk3         = 6
+
+  nq1         = 6 # 粗声子网格的尺寸，对应于nqs列表。
+  nq2         = 6
+  nq3         = 6
+
+  mp_mesh_k = .true. # 如果.true.，设置在irr. wedge中设置精细的电子网，否则整个BZ中使用均匀网格
+
+  nkf1 = 20 # 如果filkf没有给出，则使用nkf指定的精细电子网格
+  nkf2 = 20
+  nkf3 = 20
+
+  nqf1 = 20 # 如果filqf没有给出，则使用nqf1指定的精细声子网格
+  nqf2 = 20
+  nqf3 = 20
+ /
+```
+
+## 输出文件的说明
+
+### prefix.a2f
+```shell
+ w[meV] a2f and integrated 2*a2f/w for   10 smearing values
+   # 频率      0.5展宽a2f       0.55展宽a2f                0.95展宽a2f      0.55展宽2*a2f/w积分值    0.90展宽2*a2f/w积分值  0.95展宽2*a2f/w积分值
+   0.2220954   0.0000000        0.0000000    ..........    0.0000000        0.0000000     ........     0.0000000             0.0000000   
+   0.4441908   0.0000000        0.0000000    ..........    0.0000000        0.0000000     ........     0.0000000             0.0000000  
+   0.6662862   0.0000000        0.0000000    ..........    0.0000000        0.0000000     ........     0.0000000             0.0000000  
+   ....
+   ....
+  110.8256080  0.0000000        0.0000000    ..........    0.0000000        0.0000000     .........    0.8100505             0.8100711
+  111.0477034  0.0000000        0.0000000    ..........    0.0000000        0.0000000     .........    0.8100505             0.8100711
+ Integrated el-ph coupling
+  #            0.8099266   0.8099382   0.8099509   0.8099647   0.8099796   0.8099956   0.8100128   0.8100311   0.8100505   0.8100711
+ Phonon smearing (meV)
+  #            0.5000000   0.5500000   0.6000000   0.6500000   0.7000000   0.7500000   0.8000000   0.8500000   0.9000000   0.9500000
+Electron smearing (eV)   0.1000000
+Fermi window (eV)   0.4000000
+Summed el-ph coupling    0.8098717
+
+```
+
+### prefix.imag_aniso_XX
+```shell
+   #        w [eV]         Enk-Ef [eV]            znorm(w)       delta(w) [eV]           nznorm(w)
+   #      频率              K-S本征态          准粒子重整化          超导能隙        正常态的准粒子重整化
+    4.0608226305E-03    3.4713453311E-01    2.6773968092E+00    1.2423286333E-02    2.7824857836E+00
+    4.0608226305E-03    3.4713466020E-01    2.6770752113E+00    1.2425568574E-02    2.7822774330E+00
+    4.0608226305E-03   -1.8081323365E-01    1.5270752836E+00    2.9489459883E-03    1.5372999634E+00
+    4.0608226305E-03    3.1137803949E-01    1.4372251813E+00    2.0242356203E-03    1.4455655124E+00
+    4.0608226305E-03    3.5558684908E-01    2.6787011483E+00    1.2431313953E-02    2.7832553614E+00
+    4.0608226305E-03    3.5558697618E-01    2.6782842340E+00    1.2433582157E-02    2.7828838557E+00
+    4.0608226305E-03   -2.8508947876E-01    2.3777963007E+00    1.1155461384E-02    2.4547922278E+00
+    4.0608226305E-03    3.6912900928E-02    2.4017656120E+00    1.1310260322E-02    2.4863893037E+00
+    ..............
+    ..............
+```
+
+### prefix.pade_aniso_XX
+
+该文件包含与MgB2中类似的信息。imag_aniso_XX，但超导间隙沿实轴，通过Pade近似得到。如果输入文件中的iverbosity=2，则写入该文件
+
+```shell
+    #        w [eV]         Enk-Ef [eV]        Re[znorm(w)]        Im[znorm(w)]   Re[delta(w)] [eV]   Im[delta(w)] [eV]
+    2.2209540681E-04    3.4713453311E-01    2.6810423978E+00    1.6483256084E-05    1.2451399443E-02   -7.7264781883E-08
+    4.4419081363E-04    3.4713453311E-01    2.6810720931E+00    3.2907646420E-05    1.2451667085E-02   -1.5418170907E-07
+    6.6628622044E-04    3.4713453311E-01    2.6811215982E+00    4.9214380887E-05    1.2452113164E-02   -2.3040340743E-07
+    8.8838162725E-04    3.4713453311E-01    2.6811909325E+00    6.5344821163E-05    1.2452737694E-02   -3.0558346696E-07
+    1.1104770341E-03    3.4713453311E-01    2.6812801236E+00    8.1240557953E-05    1.2453540692E-02   -3.7937693122E-07
+
+```
+
+### prefix.imag_aniso_gap0_XX
+该文件包含各向异性超导隙的分布Δnk(ω=0) (eV)，由虚轴计算得到。
+
+
+
+## 注意事项以及细节要求：
+在使用EPW计算时，因为目前的版本还不支持平面波plancewaves G并行，所以必须设置并行核数等于并行k点数，即-np和-npool必须一致：
+```shell
+mpirun -np N $QEBIN/pw.x   -npool N < scf.in > scf.out
+mpirun -np N $QEBIN/pw.x   -npool N < nscf.in > nscf.out
+mpirun -np N $QEBIN/ph.x   -npool N < ph.in > ph.out
+mpirun -np N $EPWBIN/epw.x -npool N < epw.in > epw.out
+```
