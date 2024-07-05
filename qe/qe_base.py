@@ -89,7 +89,7 @@ class qe_base:
         spa = SpacegroupAnalyzer(struct)
         bstruct = spa.get_conventional_standard_structure()
         pstruct = spa.get_primitive_standard_structure()
-        Poscar(pstruct).write_file(output_poscar.joinpath("PPOSCAR"))
+        # Poscar(pstruct).write_file(output_poscar.joinpath("PPOSCAR"))
         # 备份原始结构
         print("Note: -------------------- ")
         print(f"    finish back up origin inputed structure file into workpath:\n         {self.work_path}")
@@ -100,21 +100,21 @@ class qe_base:
 
         # 处理PPOSCAR的pymatgen对象
         # 获得元素名称 和 每种元素的原子个数
-        self.composition        = pstruct.composition.get_el_amt_dict()
-        self.species            = pstruct.composition.elements
+        self.composition        = struct.composition.get_el_amt_dict()
+        self.species            = struct.composition.elements
         # 获得体系的 化学配比
-        self.system_name        = pstruct.composition.formula.replace(" ", "")
+        self.system_name        = struct.composition.formula.replace(" ", "")
         # 获得元素种类的个数
         self.species_quantity   = len(self.composition)
         # 获得每种元素的相对原子质量
         self.all_atoms_quantity = int(sum(self.composition.values()))
         # 获得晶格矩阵
-        self.cell_parameters = self.get_cell(pstruct) 
+        self.cell_parameters    = self.get_cell(struct) 
         # 获得原子分数坐标
-        self.fractional_sites = self.get_coords(pstruct)
+        self.fractional_sites   = self.get_coords(struct)
         # 获得倒格矢
         # 注意，这是用于固体物理的标准倒数晶格，因数为2π
-        self.reciprocal_plattice = self.get_reciprocal_lattice()
+        self.reciprocal_plattice= self.get_reciprocal_lattice()
         # self.reciprocal_plattice = pstruct.lattice.reciprocal_lattice
         # self.reciprocal_blattice = bstruct.lattice.reciprocal_lattice
         # 返回晶体倒数晶格，即没有2π的因子。
