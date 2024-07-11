@@ -98,6 +98,7 @@ class vasp_writeincar:
             lreal=other_class.lreal,
             mode=other_class.mode,
             kspacing=other_class.kspacing,
+            symprec=other_class.symprec,
 
             # consider magnetism
             isym=other_class.isym,
@@ -281,6 +282,7 @@ class vasp_writeincar:
             incar.write("ICHARG   = 2    \n")   
             incar.write("ENCUT    = {}   \n".format(str(self.encut)))        
             incar.write("PREC     = A    \n")
+            incar.write("SYMPREC  = {}   \n".format(str(self.symprec)))
             incar.write("ISMEAR   = {}   \n".format(str(self.ismear)))   
             incar.write("SIGMA    = {}   \n".format(str(self.sigma)))   
             incar.write("NELM     = {}   \n".format(str(self.nelm)))   
@@ -305,6 +307,7 @@ class vasp_writeincar:
             incar.write("ICHARG   = 2      \n")   
             incar.write("ENCUT    = {}     \n".format(str(self.encut)))        
             incar.write("PREC     = A      \n")
+            incar.write("SYMPREC  = {}   \n".format(str(self.symprec)))
             incar.write("ISMEAR   = {}     \n".format(str(self.ismear)))   
             incar.write("SIGMA    = {}     \n".format(str(self.sigma)))   
             incar.write("NELM     = {}     \n".format(str(self.nelm)))   
