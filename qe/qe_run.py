@@ -225,9 +225,13 @@ class qe_eletron:
         scffit_out_path = self.eletron_inputpara.work_path.joinpath("scffit.out")
         if scffit_out_path.exists():
             ef_scffit = float(os.popen(f'grep "Fermi energy" {scffit_out_path}').read().split()[4])
+        else:
+            ef_scffit = None 
         scf_out_path = self.eletron_inputpara.work_path.joinpath("scf.out")
         if scf_out_path.exists():
             ef_scf = float(os.popen(f'grep "Fermi energy" {scf_out_path}').read().split()[4])
+        else:
+            ef_scf = None
         return ef_scffit, ef_scf
 
 
