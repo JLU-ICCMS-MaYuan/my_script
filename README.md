@@ -301,7 +301,7 @@ scf -m mode=nscf core=48 npool=4 queue=local kpoints_dense='16 16 16'
 
 ####  <span style="color:green">**处理eletdos和elepdos数据获得可以origin绘图的数据**</span>
 ```shell
-eletron -m mode=elepdosdata core=1 npool=1 queue=local kpoints_dense='8 8 8' 
+eletron -m mode=elepdos core=1 npool=1 queue=local kpoints_dense='8 8 8' 
 ```
 
 
