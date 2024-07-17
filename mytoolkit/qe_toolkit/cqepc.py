@@ -23,7 +23,7 @@ def imag_freq(freq):
     else:
         return False
 
-print('{:<20} {:<20} {:<20}'.format('q_number', 'dyn', 'elph'))
+print('{:<20} {:<20} {:<20} {:<20}'.format('q_number', 'dyn', 'elph', 'Representation'))
 current_path = os.getcwd()
 situations = []
 for q in range(begin_num, end_num+1):
@@ -35,18 +35,21 @@ for q in range(begin_num, end_num+1):
             elph_situ = 'empty'
         else:
             elph_situ = 'done'
+
+    irres_info=''
     if not dyn_done(str(q)):
         dyn_situ = 'inexistence/empty'
+        irres_info= os.popen('grep "Representation #" ' +str(q)+ '/split_ph.out | tail -n 1' ).read().strip()
     else:
         freq = os.popen('grep freq  '+ str(q)+'/'+f'*dyn{str(q)}').readlines()
         if imag_freq(freq):
             dyn_situ = 'imaginary'
         else:
             dyn_situ = 'done'
-    print('{:<20} {:<20} {:<20}'.format(q, dyn_situ, elph_situ))
-    situations.append([q, dyn_situ, elph_situ])
+    print('{:<20} {:<20} {:<20} {:<}'.format(q, dyn_situ, elph_situ, irres_info))
+    situations.append([q, dyn_situ, elph_situ, irres_info])
 
 with open('cqepc.log', 'w') as f:
-    f.write('{:<20} {:<20} {:<20}\n'.format('q_number', 'dyn', 'elph'))
-    for q, dyn_situ, elph_situ in situations:
-        f.write('{:<20} {:<20} {:<20}\n'.format(q, dyn_situ, elph_situ))
+    f.write('{:<20} {:<20} {:<20} {:<20}\n'.format('q_number', 'dyn', 'elph', 'Representation'))
+    for q, dyn_situ, elph_situ, irres_info in situations:
+        f.write('{:<20} {:<20} {:<20} {:<}\n'.format(q, dyn_situ, elph_situ, irres_info))
