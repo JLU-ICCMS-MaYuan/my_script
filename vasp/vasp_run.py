@@ -566,7 +566,6 @@ class vasp_processdata(vasp_base):
             print("WARNING: ----------------------------- ")
             raise ValueError("    you have to specify the supercell=[?,?,?]. If you didn't specify it, maybe somthing wrong will occur !")
 
-
         if self.mode == "dispphdos": 
             # 获得total_dos.dat
             self.write_disp_mesh_conf(
@@ -574,6 +573,9 @@ class vasp_processdata(vasp_base):
                 self.species, 
                 self.supercell, 
                 self.mp,
+                self.tmin,
+                self.tmax,   
+                self.tstep,
             )
             cwd = os.getcwd()
             os.chdir(self.work_path)
@@ -588,6 +590,7 @@ class vasp_processdata(vasp_base):
                 self.supercell, 
                 self.mp,
                 self.pdos,
+                
             )
             cwd = os.getcwd()
             os.chdir(self.work_path)
@@ -601,6 +604,9 @@ class vasp_processdata(vasp_base):
                 self.species, 
                 self.supercell, 
                 self.mp,
+                self.tmin,
+                self.tmax,   
+                self.tstep,
             )
             cwd = os.getcwd()
             os.chdir(self.work_path)
@@ -751,13 +757,16 @@ class vasp_processdata(vasp_base):
             path_coords = list(chain.from_iterable(path_coords)); path_coords=list(map(str, path_coords))
             f.write("BAND={}                 \n".format(' '.join(path_coords)))
     
-    # 创建mesh.conf  目的为了获得 total dos 
+    # 创建mesh.conf  目的为了获得 thermal_properties.yaml
     def write_disp_mesh_conf(
         self,
         mesh_conf_dirpath, 
         species, 
         supercell,
         mp,
+        tmin,
+        tmax,
+        tstep,
         ): 
 
         __species = [spe.name for spe in species]
@@ -769,18 +778,20 @@ class vasp_processdata(vasp_base):
             f.write("DIM={}                  \n".format(' '.join(__supercell)))
             f.write("MP ={}                  \n".format(' '.join(__mp)))
             f.write("TPROP=T                 \n")
-            f.write("TMIN=100                \n")
-            f.write("TMAX=3000               \n")
-            f.write("TSTEP=100               \n")
+            f.write("TMIN={}                 \n".format(tmin))
+            f.write("TMAX={}                 \n".format(tmax))
+            f.write("TSTEP={}                \n".format(tstep))
                   
-    
-    # 创建mesh.conf  目的为了获得 total dos  
+    # 创建mesh.conf  目的为了获得 thermal_properties.yaml
     def write_dfpt_mesh_conf(
         self,
         mesh_conf_dirpath, 
         species, 
         supercell,
         mp,
+        tmin,
+        tmax,
+        tstep,
         ): 
 
         __species = [spe.name for spe in species]
@@ -793,9 +804,9 @@ class vasp_processdata(vasp_base):
             f.write("MP ={}                  \n".format(' '.join(__mp)))
             f.write("FORCE_CONSTANTS = READ  \n")
             f.write("TPROP=T                 \n")
-            f.write("TMIN=100                \n")
-            f.write("TMAX=3000               \n")
-            f.write("TSTEP=100               \n")
+            f.write("TMIN={}                 \n".format(tmin))
+            f.write("TMAX={}                 \n".format(tmax))
+            f.write("TSTEP={}                \n".format(tstep)))
     
     # 创建pdos.conf  目的为了获得 pdos 
     def write_disp_phdos_conf(
