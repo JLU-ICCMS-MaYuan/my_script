@@ -551,7 +551,14 @@ class vasp_processdata(vasp_base):
         else:
             self.pdos = "AUTO"
 
-            
+        if "mp" in self._config:
+            _mp = self._config['mp'].split()
+            self.mp = list(map(int, _mp))
+        else:
+            self.mp = [20, 20, 20]
+            print("NOTES: ------------------------------ ")
+            print("    you didn't specify the mp='? ? ?', the program will set default mp=[8,8,8]")
+
         if "supercell" in self._config:
             _supercell = self._config['supercell'].split()
             self.supercell = list(map(int, _supercell))
