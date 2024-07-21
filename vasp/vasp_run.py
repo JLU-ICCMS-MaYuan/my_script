@@ -566,6 +566,21 @@ class vasp_processdata(vasp_base):
             print("WARNING: ----------------------------- ")
             raise ValueError("    you have to specify the supercell=[?,?,?]. If you didn't specify it, maybe somthing wrong will occur !")
 
+        if "tmin" in self._config:
+            self.tmin =  self._config['tmin']
+        else:
+            self.tmin = 0
+
+        if "tmax" in self._config:
+            self.tmax =  self._config['tmax']
+        else:
+            self.tmax = 5000
+
+        if "tstep" in self._config:
+            self.tstep =  self._config['tstep']
+        else:
+            self.tstep = 100
+
         if self.mode == "dispphdos": 
             # 获得total_dos.dat
             self.write_disp_mesh_conf(
