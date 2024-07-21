@@ -551,6 +551,15 @@ class vasp_processdata(vasp_base):
         else:
             self.pdos = "AUTO"
 
+            
+        if "supercell" in self._config:
+            _supercell = self._config['supercell'].split()
+            self.supercell = list(map(int, _supercell))
+        else:
+            print("WARNING: ----------------------------- ")
+            raise ValueError("    you have to specify the supercell=[?,?,?]. If you didn't specify it, maybe somthing wrong will occur !")
+
+
         if self.mode == "dispphdos": 
             # 获得total_dos.dat
             self.write_disp_mesh_conf(

@@ -1,0 +1,20 @@
+#!/bin/bash
+  
+name=$1
+
+# 如果name是空的，获取当前绝对路径并赋值给name
+if [ -z "$name" ]; then # -z：检查字符串的长度是否为零。如果字符串的长度为零，则返回真 (true)>。
+    name=$(pwd)
+fi
+
+# 运行并显示当前正在运行的任务
+echo "running"
+squeue -u h240012 -h --format '%A    %t    %R    %M    %Z' | grep " R " | grep "$name"
+
+# 显示当前正在等待的任务
+echo "waiting"
+squeue -u h240012 -h --format '%A    %t    %R    %M    %Z' | grep " PD " | grep "$name"
+
+# 显示提交的总任务数
+echo -n '提交总任务数:'
+squeue | grep h240012 | grep "$name" | wc -l
