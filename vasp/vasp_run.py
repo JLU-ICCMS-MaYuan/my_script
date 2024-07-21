@@ -806,7 +806,7 @@ class vasp_processdata(vasp_base):
             f.write("TPROP=T                 \n")
             f.write("TMIN={}                 \n".format(tmin))
             f.write("TMAX={}                 \n".format(tmax))
-            f.write("TSTEP={}                \n".format(tstep)))
+            f.write("TSTEP={}                \n".format(tstep))
     
     # 创建pdos.conf  目的为了获得 pdos 
     def write_disp_phdos_conf(
