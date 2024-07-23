@@ -2,11 +2,11 @@
 
 echo "
 
-vasp_main.py -i CONTCAR -j slurm -p 100 relax -m mode=rv4 execmd='mpirun -np 48' ismear=0 sigma=0.01 ediff=1e-8 ediffg=-0.001 encut=900 kspacing=0.188 queue=lhy
+vasp_main.py -i CONTCAR -j slurm -p PRESS relax -m mode=rv4 execmd='mpirun -np 48' ismear=0 sigma=0.01 ediff=1e-8 ediffg=-0.001 encut=900 kspacing=0.188 queue=lhy
 
-vasp_main.py -i CONTCAR -j slurm -p 100 -w 100 relax -m mode=rv4 execmd='mpirun -np 48' ismear=0 sigma=0.01 ediff=1e-8 ediffg=-0.001 encut=900 kspacing=0.188 queue=lhy
+vasp_main.py -i CONTCAR -j slurm -p PRESS -w 100 relax -m mode=rv4 execmd='mpirun -np 48' ismear=0 sigma=0.01 ediff=1e-8 ediffg=-0.001 encut=900 kspacing=0.188 queue=lhy
 
-vasp_main.py -i CONTCAR -j slurm -w 100-eletron  eletron -m mode='scf eledos eband' execmd='mpirun -np 48' encut=900 ediff=1e-8 ediffg=-0.001 kspacing=0.188 ismear=0 sigma=0.05  queue=lhy
+vasp_main.py -i CONTCAR -j slurm -w 100-eletron  eletron -m mode='scf eledos eband' execmd='mpirun -np 48' encut=900 ediff=1e-8 ediffg=-0.001 kspacing=0.188 ismear=0 sigma=0.02  queue=lhy
 
 vasp_main.py -i CONTCAR -j slurm -w d111 phono -m supercell='1 1 1' kspacing=0.18 mode=disp execmd=48 ismear=1 encut=800 ediff=1E-08 ediffg=-0.001 lreal=.FALSE. queue=lhy execmd='mpirun -np 48'
 
@@ -14,19 +14,21 @@ vasp_main.py -i POSCAR -j bash data -m mode=dispphdos supercell='2 2 2' tmin=0 t
 
 vasp_main.py -i POSCAR -j bash data -m mode=dispband supercell='2 2 2'
 
-qe_main.py -i CONTCAR -j slurm -p 100 prepare -m mode=preparescf ecutwfc=80 ecutrho=960 degauss=0.05 qpoints='l m n' execmd='mpirun -np 48' npool=4 queue=lhy
+relax -m mode=relax-vc kpoints_dense="l m n" conv_thr=1.0d-8 execmd='mpirun -np 48' ecutwfc=80 ecutrho=960 degauss=0.02 npool=4 queue=lhy
 
-qe_main.py -i CONTCAR -j slurm -p 100 prepare -m mode=prepareall ecutwfc=80 ecutrho=960 qpoints='l m n'  degauss=0.05 execmd='mpirun -np 48' npool=4 queue=lhy
+qe_main.py -i CONTCAR -j slurm -p PRESS prepare -m mode=preparescf ecutwfc=80 ecutrho=960 degauss=0.02 qpoints='l m n' execmd='mpirun -np 48' npool=4 queue=lhy
 
-qe_main.py -i CONTCAR -j slurm -p 100 scf -m mode=scffit ecutwfc=80 ecutrho=960 kpoints_dense='20 20 16'  degauss=0.05 execmd='mpirun -np 48' npool=4 queue=lhy
+qe_main.py -i CONTCAR -j slurm -p PRESS prepare -m mode=prepareall ecutwfc=80 ecutrho=960 qpoints='l m n'  degauss=0.02 execmd='mpirun -np 48' npool=4 queue=lhy
 
-qe_main.py -i CONTCAR -j slurm -p 100 scf -m mode=scf ecutwfc=80 ecutrho=960 kpoints_sparse='10 10 8'  degauss=0.05 execmd='mpirun -np 48' npool=4 queue=lhy
+qe_main.py -i CONTCAR -j slurm -p PRESS scf -m mode=scffit ecutwfc=80 ecutrho=960 kpoints_dense='20 20 16'  degauss=0.02 execmd='mpirun -np 48' npool=4 queue=lhy
+
+qe_main.py -i CONTCAR -j slurm -p PRESS scf -m mode=scf ecutwfc=80 ecutrho=960 kpoints_sparse='10 10 8'  degauss=0.02 execmd='mpirun -np 48' npool=4 queue=lhy
 
 qe_main.py -i CONTCAR -j bash phono -m mode=nosplit dyn0_flag=True execmd='' queue=lhy qpoints='l m n'
 
-qe_main.py -i CONTCAR -j slurm phono -m mode=split_assignQ degauss=0.05 ecutwfc=80 ecutrho=960  execmd='mpirun -np 48' npool=4
+qe_main.py -i CONTCAR -j slurm phono -m mode=split_assignQ degauss=0.02 ecutwfc=80 ecutrho=960  execmd='mpirun -np 48' npool=4
 
-qe_main.py -i CONTCAR -j slurm phono -m mode=split_dyn0    degauss=0.05 ecutwfc=80 ecutrho=960  execmd='mpirun -np 48' npool=4
+qe_main.py -i CONTCAR -j slurm phono -m mode=split_dyn0    degauss=0.02 ecutwfc=80 ecutrho=960  execmd='mpirun -np 48' npool=4
 
 qe_main.py -i CONTCAR -j bash phono -m mode=q2r execmd='' queue=lhy
 
