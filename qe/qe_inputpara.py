@@ -463,7 +463,7 @@ class qephono_inputpara(qe_inputpara):
             print(f"{self.system_name}.dyn copy finished {dst_dyn}")
 
 
-            for j in range(51, 61):
+            for j in range(51, 51+int(self.el_ph_nsigma)):
                 src_a2Fq2r_NoNum = os.path.join(directory, str(i+1), "elph_dir", "a2Fq2r."+str(j)+".1")
                 src_a2Fq2r_Num   = os.path.join(directory, str(i+1), "elph_dir", "a2Fq2r."+str(j)+"."+str(i+1))
                 dst_a2Fq2r = os.path.join(elph_dir_path, "a2Fq2r."+str(j)+"."+str(i+1))
