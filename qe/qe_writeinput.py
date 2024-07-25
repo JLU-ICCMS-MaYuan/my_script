@@ -672,7 +672,7 @@ class qe_writeinput:
             qe.write("  zasr = 'simple',          \n")                         
             qe.write("  fildyn = '{}.dyn'         \n".format(self.system_name))                               
             qe.write("  flfrc = '{}.fc',          \n".format(self.system_name))  
-            qe.write("  el_ph_nsigma = '{}',      \n".format(self.el_ph_nsigma))                          
+            qe.write("  el_ph_nsigma={},          \n".format(str(self.el_ph_nsigma)))
             qe.write("/                           \n")        
         return inputfilename
 
