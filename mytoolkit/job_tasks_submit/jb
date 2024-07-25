@@ -32,9 +32,9 @@ qe_main.py -i CONTCAR -j slurm phono -m mode=split_dyn0    degauss=0.02 ecutwfc=
 
 qe_main.py -i CONTCAR -j bash phono -m mode=q2r execmd='' el_ph_nsigma=10 queue=lhy
 
-qe_main.py -i CONTCAR -j bash phono -m mode=merge execmd=''
+qe_main.py -i CONTCAR -j bash phono -m mode=merge el_ph_nsigma=10 execmd=''
 
-qe_main.py -i CONTCAR -j bash phono -m mode=phonodos execmd='mpirun -np 2' npool=1 queue=local qpoints='10 10 8' ndos=500
+qe_main.py -i CONTCAR -j bash phono -m mode=phonodos execmd='mpirun -np 2' npool=1 queue=local qpoints='10 10 8' ndos=500 el_ph_nsigma=10
 
 qe_main.py -i CONTCAR -j bash phono -m mode=phonodosdata execmd='' queue=local
 qe_main.py -i CONTCAR -j bash phono -m mode=gibbsvb execmd='' queue=local

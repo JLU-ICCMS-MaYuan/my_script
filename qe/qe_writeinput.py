@@ -810,7 +810,7 @@ class qe_writeinput:
             for i, species_name in enumerate(self.composition.keys()):
                 element      = Element(species_name)
                 species_mass = str(element.atomic_mass).strip("amu")
-                qe.write("   amass({})={},                                 \n".format(i+1, species_mass))                                    
+                qe.write("   amass({})={},                               \n".format(i+1, species_mass))                                    
             qe.write("   flfrc = '{}.fc',                                \n".format(self.system_name))                                                                                    
             qe.write("   flfrq = '{}.freq',                              \n".format(self.system_name))                                         
             qe.write("   la2F = .true.,                                  \n")                                
@@ -818,6 +818,7 @@ class qe_writeinput:
             qe.write("   fldos = '{}.dos',                               \n".format(self.system_name+"_phono"))                                       
             qe.write("   nk1={}, nk2={}, nk3={},                         \n".format(self.qpoints[0], self.qpoints[1], self.qpoints[2]))  # 计算态密度时要用更密的q点网格，这需设置nk1, nk2, nk3                                      
             qe.write("   ndos={},                                        \n".format(self.ndos))  # 态密度的能量刻度上的点的数目                       
+            qe.write("   el_ph_nsigma={},                                \n".format(self.el_ph_nsigma))
             qe.write("/                                                  \n")                                                                
         return inputfilename
 
