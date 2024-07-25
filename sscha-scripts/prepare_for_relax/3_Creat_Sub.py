@@ -1,10 +1,11 @@
 from numpy import *
 import numpy as np
 
+import sys
 import os
 
-n_sub = 100
-n_pw=10
+n_sub=int(sys.argv[1])
+n_pw=int(sys.argv[2])
 #all_scf_files = [os.path.join("run_calculation", f) for f in os.listdir("run_calculation") if f.startswith("espresso_run_")]
 header="""#!/bin/sh 
 #------ slurm option --------#

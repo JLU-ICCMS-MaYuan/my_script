@@ -1,5 +1,5 @@
-START_POP=11 #计算第0代的动力学矩阵
-ENS_NUM=1000
+START_POP=5
+ENS_NUM=50
 
 
 
@@ -22,9 +22,11 @@ sleep 5
 
 python R2_CreatQEInput.py
 sleep 5
-python 3_Creat_Sub.py
+#                    nsub, npw, and nsub*npw=ENS_NUM
+python 3_Creat_Sub.py 10 5
 sleep 5
-. 4_SubAllJobs.sh
+#                 nsub
+. 4_SubAllJobs.sh 10
 #
 #
 #

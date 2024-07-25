@@ -84,6 +84,17 @@ ensemble.load("data_ensemble_manual", population = 12, N = 1000) # population = 
 relax.vc_relax(target_press =150, static_bulk_modulus = 300, ensemble_loc = "data_ensemble_manual",restart_from_ens = True,start_pop = ENDPOP) # 注意修改target_press为你指定优化的压强
 ```
 
+这里注意区分relax.vc_relax与relax.relax
+```python
+relax.relax(get_stress = True) # save the stress to compute the pressure
+
+relax.vc_relax(target_press=PRESS, fix_volume = True) # Fixing the volume improves the convergence of the variable cell algorithm. If fix_volume=true (default False) the volume is fixed, therefore only the cell shape is relaxed.
+
+relax.vc_relax(target_press=PRESS) # By default it is 0 (ambient pressure)
+
+```
+
+
 ### 1.9 7_SubRelax.sh 提交结构弛豫任务
 
 ### 1.6到1.9的操作都可以用过脚本9_ReEnd.sh完成
