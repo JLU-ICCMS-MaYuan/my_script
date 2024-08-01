@@ -411,6 +411,12 @@ class vasp_eletron:
             )
         return cohp_path
 
+class vasp_md:
+
+    def __init__(self, args: ArgumentParser):
+        # read input para
+        _config = config(args).read_config()
+
 
 class vasp_processdata(vasp_base):
 

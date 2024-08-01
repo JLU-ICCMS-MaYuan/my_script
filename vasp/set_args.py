@@ -138,6 +138,19 @@ def set_more_args(parser: ArgumentParser):
     )
     parser_phono.set_defaults(vasp_workflow=vasp_phono) 
 
+    # 计算MD
+    parser_md = subparsers.add_parser("md", formatter_class=RawTextHelpFormatter)
+    parser_md.add_argument(
+        '-m',
+        '--more-argments-about-md',
+        type=str,
+        dest='more_args',
+        nargs='+',
+        help="输入更多关于分子动力学计算的参数\n"
+            "POTIM 决定分子动力学的步长, 默认是POTIM=0.5"
+    )
+    parser_md.set_defaults(vasp_workflow=vasp_phono)
+
     # 批量结构弛豫
     parser_batch_relax = subparsers.add_parser("batchrelax", formatter_class=RawTextHelpFormatter)
     parser_batch_relax.add_argument(

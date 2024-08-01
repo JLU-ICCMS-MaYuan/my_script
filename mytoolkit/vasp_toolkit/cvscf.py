@@ -19,11 +19,12 @@ for root, dirs, files in os.walk("."):
         if "OUTCAR" in files:
             ourcar_path = system_name.joinpath("OUTCAR")
             # 抑制错误消息
-            converge = os.popen(f'grep -s "FREE ENERGIE OF THE ION-ELECTRON SYSTEM" {ourcar_path}').read()
-            kbstar   = os.popen(f'grep -s "in kB  \*"  {ourcar_path}').read()
-            if converge and not kbstar:
-                nelm = os.popen(f'grep -s "NELM   =" {ourcar_path} ' + " | cut -d ';' -f 1 | cut -d '=' -f 2 ").read()
-                iteration = os.popen(f'grep -s "Iteration" {ourcar_path} | wc -l').read() # 如果没有找到指定内容不输出错误结果。
+            converge1 = os.popen(f'grep -s -a "FREE ENERGIE OF THE ION-ELECTRON SYSTEM" {ourcar_path}').read()
+            converge2 = os.popen(f'grep -s -a "General timing and accounting informations for this job" {ourcar_path}').read()
+            kbstar   = os.popen(f'grep -s -a "in kB  \*"  {ourcar_path}').read()
+            if converge1 and converge2 and not kbstar:
+                nelm = os.popen(f'grep -s -a "NELM   =" {ourcar_path} ' + " | cut -d ';' -f 1 | cut -d '=' -f 2 ").read()
+                iteration = os.popen(f'grep -s -a "Iteration" {ourcar_path} | wc -l').read() # 如果没有找到指定内容不输出错误结果。
                 try:
                     if int(iteration) < int(nelm):
                         # success_d.append(system_name.__str__())
@@ -69,8 +70,3 @@ except:
     fail_d = fail_d
 for line in fail_d:
     print(line)
-
-
-
-
-

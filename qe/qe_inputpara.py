@@ -472,7 +472,7 @@ class qephono_inputpara(qe_inputpara):
                 elif  os.path.exists(src_a2Fq2r_Num):
                     src_a2Fq2r = src_a2Fq2r_Num
                 else:
-                    print(f"In {str(i+1)}, dyn-file doesn't exist ! Exit the program!")
+                    print(f"{src_a2Fq2r} doesn't exist ! Exit the program!")
                     sys.exit(1)
                 shutil.copy(src_a2Fq2r, dst_a2Fq2r)
                 print(f"a2Fq2r.{str(j)}.1 copy finished  {dst_a2Fq2r}")

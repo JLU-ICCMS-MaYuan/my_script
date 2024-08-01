@@ -27,6 +27,8 @@ minim.min_step_struc = 0.01   # The minimization step on the structure
 minim.kong_liu_ratio = 0.5     # The parameter that estimates whether the ensemble is still good
 minim.gradi_op = "all" # Check the stopping condition on both gradients
 minim.meaningful_factor = 0.00001 # How much small the gradient should be before I stop?
+minim.neglect_symmetries = False # whether neglect symmetries or not when relaxing structures
+
 relax = sscha.Relax.SSCHA(minim, ase_calculator = None,
                          N_configs = ENSNUM,
                          max_pop = 1,
