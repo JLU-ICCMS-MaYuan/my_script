@@ -1,0 +1,1 @@
+rm -fr calcFold formula_pool mlFold tem.log log.txt log.err log.out results* nohup.out

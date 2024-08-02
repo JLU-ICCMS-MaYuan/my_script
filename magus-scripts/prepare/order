@@ -1,2 +1,0 @@
-nohup magus search -i input.yaml -m > tem.log 2>&1 &
-echo $! > taskids

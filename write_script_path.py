@@ -8,6 +8,8 @@ scripts_names = [
     'calypso-toolkit', 
     'lobster-toolkit', 
 
+    'deepkit-dpgen-toolkit',
+
     'mytoolkit/convexhull', 
     'mytoolkit/energy_curve_with_pressure', 
     'mytoolkit/files_tidy',
