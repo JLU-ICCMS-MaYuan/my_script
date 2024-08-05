@@ -51,9 +51,17 @@ magus search -m
 
 ## 注意事项
 ### 1. 记得准备inputFold/MTP/train.cfg
-### 2. 记得修改input.yaml中的pressure，单位GPa
-### 3. 记得修改input.yaml中的ppLabel，例如：ppLabel: ['_GW','_sv','']
-### 4. 不管是input.yaml的MLCalculator还是MainCalculator, 都要记得设置preProcessing，例如：
+### 2. input.yaml的设置注意事项
+<span style="font-size: 15px; color: skyblue;"> **2.1 记得修改input.yaml中的pressure，单位GPa** 
+
+<span style="font-size: 15px; color: skyblue;">  **2.2 记得修改input.yaml中的ppLabel**
+
+例如：ppLabel: ['_GW','_sv','']
+
+
+<span style="font-size: 15px; color: skyblue;">  **2.3 不管是input.yaml的MLCalculator还是MainCalculator, 都要记得设置preProcessing，**
+
+例如：
 ```shell
  preProcessing: |            
   source /work/home/may/intel/oneapi/setvars.sh --force
@@ -62,9 +70,34 @@ magus search -m
   export MPIR_CVAR_COLL_ALIAS_CHECK=0
   ulimit -s unlimited
 ```
-### 5. input.yaml中的段落前空格非常重要
-### 6. 记得修改input.yaml中的minNAtoms和maxNAtoms，特别是当你做定组分结构预测的时候，一定要保证你的组分的
-### 7. 记得激活环境
+
+<span style="font-size: 15px; color: skyblue;">  **2.4 input.yaml中的段落前空格非常重要**
+
+<span style="font-size: 15px; color: skyblue;">  **2.5 记得修改input.yaml中的minNAtoms和maxNAtoms, 或者min_n_atoms和max_n_atoms**
+
+特别是当你做定组分结构预测的时候，一定要保证你的组分的原子数足够大
+
+<span style="font-size: 15px; color: skyblue;">  **2.6 formula_pool 这个参数非常重要，它控制了产生结构的配比，如果你不主动删除它，它是不会更新的。**
+
+所以它还有一种奇特的用法：你可以手动指定formula_pool中的内容以保证只产生你需要的配比。
+
+
+<span style="font-size: 15px; color: skyblue;">  kill_time的设置
+
+kill_time: 86400 设置好了之后就可以控制slurm，pbs系统提交的作业可以运行的最长时间。
+
+它的代码是在 parallel/queuemanage.py 中
+```python
+hours = self.kill_time // 3600
+minites = (self.kill_time % 3600) // 60
+seconds = int(self.kill_time % 60)
+...
+f'#SBATCH --time={hours}:{minites}:{seconds}\n'
+...
+```
+
+
+### 3. 记得激活环境
 ```shell
 source activate /work/home/may/miniconda3/envs/magus
 ```
@@ -86,13 +119,13 @@ mpirun -n 1 mlp calc-grade pot.mtp train.cfg train.cfg temp.cfg --als-filename=A
 
 ```
 
-### 8. 记得检查输出的文件中的Distance Dict参数对应的原子间距离
+### 4. 记得检查输出的文件中的Distance Dict参数对应的原子间距离
 ```shell
 grep "Distance Dict"  tem.log
 ```
-### 9. volume_ratio在magus中的含义是：In our program, volume-ratio of each structure is calculated by cell_volume / SUM(atom_ball_volume). 在定组分中命名为volume_ratio，在变组分中命名为volRatio
+### 5. volume_ratio在magus中的含义是：In our program, volume-ratio of each structure is calculated by cell_volume / SUM(atom_ball_volume). 在定组分中命名为volume_ratio，在变组分中命名为volRatio
 
-### 10. magus生成结构： 
+### 6. magus生成结构： 
 ```
 # 读取输入文件生成10个结构
 magus generate -i input.yaml -n 10
@@ -103,29 +136,23 @@ magus summary gen.traj
 # 保存结构
 magus summary gen.traj -s -o poscars
 ```
-### 11.magus的卸载
+### 7.magus的卸载
 ```shell
 pip uninstall magus-kit
 ```
 
-### 12. 千万记得修改magus的input.yaml中的min_n_atoms和max_n_atoms
-
-### 13. formula_pool 这个参数非常重要，它控制了产生结构的配比，如果你不主动删除它，它是不会更新的。
-所以它还有一种奇特的用法：你可以手动指定formula_pool中的内容以保证只产生你需要的配比。
-
-
-### 14. 在用summary模式时，可以手动添加信息，例如额外添加体积信息：
+### 8. 在用summary模式时，可以手动添加信息，例如额外添加体积信息：
 ```shell
 magus summary  gen.traj -a volume
 ```
 
-### 15. 修改了代码中计算grade的部分，不使用mpirun计算，直接使用穿行计算  (calculators/mtp.py的249行)
+### 9. 修改了代码中计算grade的部分，不使用mpirun计算，直接使用穿行计算  (calculators/mtp.py的249行)
 
-### 16. 修改了代码中slurm提交VASP任务后检查任务是否完成的部分，删了一行alldone=False. (parallel/queuemanage.py的274行)
+### 10. 修改了代码中slurm提交VASP任务后检查任务是否完成的部分，删了一行alldone=False. (parallel/queuemanage.py的274行)
 
-### 17. 种子文件制作：创建一个叫做Seeds的文件，然后在其中起名POSCARS_m, 代表在第m代读入种子文件。
+### 11. 种子文件制作：创建一个叫做Seeds的文件，然后在其中起名POSCARS_m, 代表在第m代读入种子文件。
 
-### 18. pot.mtp 是机器学习的初始势函数，这个势函数不能乱选，如果你之前没有训练好的势能，那么就用mlip给的未训练的势函数， 他们存放在这里：
+### 12. pot.mtp 是机器学习的初始势函数，这个势函数不能乱选，如果你之前没有训练好的势能，那么就用mlip给的未训练的势函数， 他们存放在这里：
 ```shell
 
 cd mlip-2-master/untrained_mtps
@@ -138,7 +165,7 @@ cp ~/code/mlip-2/untrained_mtps/20.mtp inputFold/MTP/pot.mtp
 # 然后依照input.yaml中的mindist，修改inputFold/MTP/pot.mtp中的min_dist和species_count即可，species_count代表元素个数，min_dist是最小的合理距离。
 ```
 
-### 19 magus-master/magus/parallel/queuemanage.py中新增加了这样的代码用于slurm系统检测任务运行状态。
+### 13. magus-master/magus/parallel/queuemanage.py中新增加了这样的代码用于slurm系统检测任务运行状态。
 
 
 ```python

@@ -1,54 +1,44 @@
 #GAsearch of variable composition CeScH
-formulaType: var        
+formulaType: fix
 structureType: bulk
 poolSize: 2000
 pressure: 200
 initSize: 200        # number of structures of 1st generation
-popSize: 100         # number of structures of per generation
-numGen: 100          # number of total generation
-saveGood: 8         # number of good structures kept to the next generation
+popSize: 200         # number of structures of per generation
+numGen: 60          # number of total generation
+saveGood: 3         # number of good structures kept to the next generation
 #structure parameters
 symbols: ['Ce','Sc','H']
-formula: [[1,0,2],[0,1,1],[0,0,1]]         #Zn: (OH) = 1:1       
-min_n_atoms: 5              # minimum number of atoms per unit cell
-max_n_atoms: 30              # maximum number of atoms per unit cell
-full_ele: False                #structure must contain all elements
+formula: [1,2,27]         #Zn: (OH) = 1:1       
+min_n_atoms: 30              # minimum number of atoms per unit cell
+max_n_atoms: 120              # maximum number of atoms per unit cell
+full_ele: True                #structure must contain all elements
 spacegroup: [2-230]
-d_ratio: 0.5
-volume_ratio: 0.7
+d_ratio: 0.8
+volume_ratio: 1.3
 #GA parameters
-rand_ratio: 0.3               # fraction of random structures per generation (except 1st gen.)
+rand_ratio: 0.4               # fraction of random structures per generation (except 1st gen.)
 add_sym: True                 # add symmetry to each structure during evolution
 #main calculator settings
 MainCalculator:
  jobPrefix: ['Vasp1', 'Vasp2', 'Vasp3'] # only the last one will be used
  preProcessing: |
-  source activate /work/home/may/miniconda3/envs/magus 
-  source /work/home/may/intel/oneapi/setvars.sh --force
-  export I_MPI_ADJUST_REDUCE=3
-  export MPIR_CVAR_COLL_ALIAS_CHECK=0
-  ulimit -s unlimited
+  module load intelmpi/impi_23.2.0
+  module load intel/23.02.1
  mode: parallel
  #vasp parameters
  xc: PBE 
- ppLabel: ['_GW','_sv','']
+ ppLabel: ['_h','_sv','']
  #parallel settings
- numParallel: 8
- numCore: 48
- queueName: lhy 
+ numParallel: 10
+ numCore: 40
+ queueName: mpc
+ kill_time: 86400
  waitTime: 100 
 MLCalculator:
  jobPrefix: MTP 
  preProcessing: |
-  source /work/home/may/intel/oneapi/setvars.sh --force
-  source activate /work/home/may/miniconda3/envs/magus 
-  export I_MPI_ADJUST_REDUCE=3
-  export MPIR_CVAR_COLL_ALIAS_CHECK=0
-  ulimit -s unlimited
+  module load intelmpi/impi_23.2.0
+  module load intel/23.02.1
  init_times: 1
- queueName: lhy 
- force_tolerance: 0.001
- stress_tolerance: 0.01
- numCore: 48
- min_dist: 0.5
- waitTime: 30   
+ queueName: mpc
