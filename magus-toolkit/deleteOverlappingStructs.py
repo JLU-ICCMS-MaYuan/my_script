@@ -1,4 +1,7 @@
 import re
+import sys
+
+min_dist_thres = float(sys.argv[1])
 
 def read_train_cfg(file_path):
     with open(file_path, 'r') as file:
@@ -9,7 +12,7 @@ def write_train_cfg(file_path, content):
     with open(file_path, 'w') as file:
         file.write(content)
 
-def filter_cfg_data(content, min_distance_threshold=0.5):
+def filter_cfg_data(content, min_distance_threshold=min_dist_thres):
     # 匹配BEGIN_CFG到END_CFG之间的所有内容
     pattern = re.compile(r'BEGIN_CFG.*?END_CFG', re.DOTALL)
     cfg_blocks = pattern.findall(content)
