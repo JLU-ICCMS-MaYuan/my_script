@@ -1,5 +1,8 @@
 # <div align="center"> <span style="color:red"> QE 报错集合 </span> </div>
 
+## qe安装教程
+https://zhuanlan.zhihu.com/p/427794442
+
 ## 电声耦合计算的报错集合 
 ### <span style="color:green"> 1. 声子计算加速自洽  </span> </div>
 1. alpha_mix(1)=0.3 一般用0.3， 算的比较快，值越大算的越慢。**所以我采用的默认参数alpha_mix(1)=0.3, 如果你自己需要高精度，自己调整**。

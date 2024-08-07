@@ -192,8 +192,15 @@ Summed el-ph coupling    0.8098717
 该文件包含各向异性超导隙的分布Δnk(ω=0) (eV)，由虚轴计算得到。
 
 
+### prefix.pade_aniso_gap0_xx
+该文件包含与prefix.imag_aniso_gap0_XX相似的信息，但是这些超导能隙是通过Pade近似在实轴上计算得到的。
+
+### prefix.qdos_XX
+这个文件包括了超导态准粒子的态密度，
+
 
 ## 注意事项以及细节要求：
+### 并行方式
 在使用EPW计算时，因为目前的版本还不支持平面波plancewaves G并行，所以必须设置并行核数等于并行k点数，即-np和-npool必须一致：
 ```shell
 mpirun -np N $QEBIN/pw.x   -npool N < scf.in > scf.out
@@ -201,3 +208,13 @@ mpirun -np N $QEBIN/pw.x   -npool N < nscf.in > nscf.out
 mpirun -np N $QEBIN/ph.x   -npool N < ph.in > ph.out
 mpirun -np N $EPWBIN/epw.x -npool N < epw.in > epw.out
 ```
+
+### Wannier90均匀撒点的方式
+
+`/home/h240012/soft/qe-7.0/W90/utility/kmesh.pl`可以产生均匀的k点，使用方法：
+```shell
+perl kmesh.pl 4 4 4
+```
+上述脚本产生的k点是分数坐标的，需要再成倒格矢变为支教坐标
+
+特别注意：六角格子的第一布里渊区是正六边形，但是kmesh.pl撒点时会在一个平行四边形里面撒点，这就会导致绘制电声耦合强度图不在第一布里渊区内。
