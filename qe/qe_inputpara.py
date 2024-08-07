@@ -502,7 +502,8 @@ class qephono_inputpara(qe_inputpara):
             # el_ph_sigma = float(re.search(r'\d+\.\d+', os.popen(greporder).read()).group())
             # greporder = f"grep el_ph_nsigma {ph_no_split_in_path}"
             # el_ph_nsigma = int(re.search(r'\d+', os.popen(greporder).read()).group())
-            el_ph_sigma = self.el_ph_sigma
+            el_ph_sigma = float(self.el_ph_sigma)
+            el_ph_nsigma = int(self.el_ph_nsigma)
             gaussian0 = [el_ph_sigma*(1+i) for i in range(0, self.el_ph_nsigma)]
         else:
             print("\nNote: --------------------")
