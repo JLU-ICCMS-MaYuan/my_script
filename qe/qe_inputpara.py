@@ -504,7 +504,7 @@ class qephono_inputpara(qe_inputpara):
             # el_ph_nsigma = int(re.search(r'\d+', os.popen(greporder).read()).group())
             el_ph_sigma = float(self.el_ph_sigma)
             el_ph_nsigma = int(self.el_ph_nsigma)
-            gaussian0 = [el_ph_sigma*(1+i) for i in range(0, self.el_ph_nsigma)]
+            gaussian0 = [el_ph_sigma*(1+i) for i in range(0, el_ph_nsigma)]
         else:
             print("\nNote: --------------------")
             print("     The program didn't get `ph_no_split.in`. So you need input it by yourself.")
