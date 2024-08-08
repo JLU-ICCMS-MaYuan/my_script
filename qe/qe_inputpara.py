@@ -1131,7 +1131,7 @@ class qesc_inputpara(qephono_inputpara):
             sys.exit(1)
 
         # 判断el_ph_nsigma是否大于10, 如果大于10,  alpha2F.dat文件折叠出2行来记录数据，巨恶心
-        interval = np.ceil(int(self.el_ph_nsigma)/10)
+        interval = ceil(int(self.el_ph_nsigma)/10)
         #  alpha2F.dat文件折叠出2行
         if interval == 2: 
             # 读取alpha2F.dat内容
@@ -1146,8 +1146,8 @@ class qesc_inputpara(qephono_inputpara):
             merged_alpha2F_dat_path = self.work_path.joinpath('merged_alpha2F.dat')
             with open(merged_alpha2F_dat_path, 'w') as file:
                 file.write("\n".join(merged_lines))
-            shlorder = f"sed -i 's/#//g' {merged_alpha2F_dat_path}" # 这是因为第一行由于一个#, 删除它才不影响pandas读入 # E(THz)     0.005     0.010     0.015     0.020     0.025     0.030     0.035     0.040     0.045     0.050
-            os.system(shlorder)
+            shlorder = f"sed -i 's/#//g' {merged_alpha2F_dat_path}"; os.system(shlorder)
+            shlorder = f"sed -i 's/#//g' {alpha2F_dat_path}"; os.system(shlorder)
             alpha2F_dat = pd.read_table(
             merged_alpha2F_dat_path,
             sep='\s+',
