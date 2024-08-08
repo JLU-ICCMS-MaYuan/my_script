@@ -1,4 +1,5 @@
 import os
+import io
 import re
 import sys
 import time
@@ -1128,12 +1129,38 @@ class qesc_inputpara(qephono_inputpara):
             print("\nNote: --------------------")
             print("    `alpha2F.dat` file doesn't exist!!!")
             sys.exit(1)
-        shlorder = f"sed -i 's/#//g' {alpha2F_dat_path}" # 这是因为第一行由于一个#, 删除它才不影响pandas读入 # E(THz)     0.005     0.010     0.015     0.020     0.025     0.030     0.035     0.040     0.045     0.050
-        os.system(shlorder)
-        alpha2F_dat = pd.read_table(
+
+        # 判断el_ph_nsigma是否大于10, 如果大于10,  alpha2F.dat文件折叠出2行来记录数据，巨恶心
+        interval = np.ceil(int(self.el_ph_nsigma)/10)
+        #  alpha2F.dat文件折叠出2行
+        if interval == 2: 
+            # 读取alpha2F.dat内容
+            with open(alpha2F_dat_path, 'r') as file:
+                lines = file.readlines()
+            # 每n行合并成一行, n是el_ph_nsigma/10向上取整的结果
+            merged_lines = []
+            for i in range(0, len(lines), interval):
+                merged_line = lines[i].strip() + " " + lines[i + 1].strip()
+                merged_lines.append(merged_line)
+            # 将合并的内容写入新的文件或直接读取
+            merged_alpha2F_dat_path = self.work_path.joinpath('merged_alpha2F.dat')
+            with open(merged_alpha2F_dat_path, 'w') as file:
+                file.write("\n".join(merged_lines))
+            shlorder = f"sed -i 's/#//g' {merged_alpha2F_dat_path}" # 这是因为第一行由于一个#, 删除它才不影响pandas读入 # E(THz)     0.005     0.010     0.015     0.020     0.025     0.030     0.035     0.040     0.045     0.050
+            os.system(shlorder)
+            alpha2F_dat = pd.read_table(
+            merged_alpha2F_dat_path,
+            sep='\s+',
+            )
+        elif interval == 1:
+            shlorder = f"sed -i 's/#//g' {alpha2F_dat_path}" # 这是因为第一行由于一个#, 删除它才不影响pandas读入 # E(THz)     0.005     0.010     0.015     0.020     0.025     0.030     0.035     0.040     0.045     0.050
+            os.system(shlorder)
+            alpha2F_dat = pd.read_table(
             alpha2F_dat_path,
             sep='\s+',
-        )
+            )
+        # TODO 还没写完处理alpha2F.dat
+
         print("\nNote: --------------------")
         print(f"    Converged gauss index inputed = {converged_gauss_index+1}, its value = {gauss}")
         print(f"    So in alpha2F.dat, corresponding gauss value = {alpha2F_dat.columns[converged_gauss_index+1]} ")
