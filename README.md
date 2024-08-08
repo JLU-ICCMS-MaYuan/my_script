@@ -53,7 +53,7 @@ qe_main.py -i 输入文件路径 -w 工作目录 -p 压强 -j 运行方式
 
 结构优化时，对于体系的对称性非常敏感，也就是QE自身不会寻找体系的对称性，只能依靠手动输入体系的对称性，这点与VASP相比是非常欠缺的，因为VASP是可以自己寻找对称性的
 ```shell
-relax -m mode=relax-vc kpoints_dense="20 20 20" conv_thr=1.0d-8 core=48 npool=4  queue=lhy
+relax -m mode=relax-vc kpoints_dense="20 20 20" conv_thr=1.0d-8 execmd='mpirun -np 48' npool=4  queue=lhy
 ```
 
 ###  <span style="color:yellow"> 自洽
@@ -63,42 +63,42 @@ relax -m mode=relax-vc kpoints_dense="20 20 20" conv_thr=1.0d-8 core=48 npool=4 
 
 **所以我采用的默认参数mixing_beta=0.3, degauss=0.05, 如果你自己需要高精度，自己调整**
 ```shell
-scf -m mode=scffit kpoints_dense='24 24 24' core=48 npool=4  queue=lhy
+scf -m mode=scffit kpoints_dense='24 24 24' execmd='mpirun -np 48' npool=4  queue=lhy
 ```
 
 ```shell
-scf -m mode=scf kpoints_sparse='12 12 12' core=48 npool=4  queue=lhy
+scf -m mode=scf kpoints_sparse='12 12 12' execmd='mpirun -np 48' npool=4  queue=lhy
 ```
 
 ###  <span style="color:yellow"> 非自洽计算
 ```shell
-qe_main.py -i relax.out -j bash scf -m mode=nscf kpoints_dense='32 32 32' core=2 queue=local
+qe_main.py -i relax.out -j bash scf -m mode=nscf kpoints_dense='32 32 32' execmd='mpirun -np 48' queue=local
 ```
 
 ### <span style="color:yellow"> 声子计算
 
 ####  <span style="color:green"> 不分q点计算声子
 ```shell
-phono -m mode=nosplit qpoints='6 6 6' dyn0_flag=False queue=lhy core=48 npool=4  queue=lhy el_ph_nsigma=10 
+phono -m mode=nosplit qpoints='6 6 6' dyn0_flag=False queue=lhy execmd='mpirun -np 48' npool=4  queue=lhy el_ph_nsigma=10 
 ```
 <span style="color:green"> **提示：如果你的工作目录中已经存在了dyn0文件，那么可以不用输入qpoints这个参数，程序会自动读入dyn0中的第一行以获得qpoints**
 
 ####  <span style="color:green"> 分q点计算声子 : split_dyn0模式
 ```shell
-phono -m mode=nosplit qpoints='6 6 6' dyn0_flag=True core=1 npool=1 queue=local
+phono -m mode=nosplit qpoints='6 6 6' dyn0_flag=True execmd='' npool=1 queue=local
 ```
 ```shell
-phono -m mode=split_dyn0 qpoints='6 6 6' core=48 npool=4 queue=local
+phono -m mode=split_dyn0 qpoints='6 6 6' execmd='mpirun -np 48' npool=4 queue=local
 ```
 
 ####  <span style="color:green"> 分q点计算声子 : split_assignQ模式
 ```shell
-phono -m mode=split_assignQ qpoints='6 6 6' core=1 npool=1 queue=local
+phono -m mode=split_assignQ qpoints='6 6 6' execmd='mpirun -np 48' npool=1 queue=local
 ```
 
 ####  <span style="color:green"> 合并声子文件
 ```shell
-phono -m mode=merge core=1 queue=local
+phono -m mode=merge execmd='mpirun -np 48' queue=local
 ```
 
 ####  <span style="color:green"> 合并某一个q点下的所有不可约表示
@@ -240,25 +240,25 @@ xmlr_closetag: severe error, closing tag that was never opened
 
 ###  <span style="color:yellow"> 计算力常数
 ```shell
-phono -m mode=q2r qpoints='6 6 6' core=1 npool=1 queue=local
+phono -m mode=q2r qpoints='6 6 6' execmd='' npool=1 queue=local
 ```
 
 ###  <span style="color:yellow"> 声子态密度计算
 ####  <span style="color:green"> 计算phonodos, 计算态密度时要用更密的q点网格, 通过设置qpoints获得更密集得q点网格
 ```shell
-phono -m mode=phonodos core=1 npool=1 queue=local qpoints='8 8 8' ndos=500 
+phono -m mode=phonodos execmd='mpirun -np 48' npool=1 queue=local qpoints='8 8 8' ndos=500 
 ```
 
 
 ####  <span style="color:green"> 处理出投影到每种元素的phonodos，并且会输出一个文件phdos_proj2eles.csv用来绘制投影态密度
 ```shell
-phono -m mode=phonodosdata core=1 queue=local
+phono -m mode=phonodosdata execmd='' queue=local
 ```
 
 ###  <span style="color:yellow"> 考虑振动熵后的吉布斯自由能的计算
 
 ```shell
-phono -m mode=gibbsvb core=1 queue=local
+phono -m mode=gibbsvb execmd='mpirun -np 48' queue=local
 ```
 运行完该命令后会得到三个文件分别为： thermodynamics_from_dyn1.csv，thermodynamics_from_dyns.csv，thermodynamics_from_phtdos.csv。他们的文件格式都一样，第一列是温度，第二列是每个结构的自由能，单位是eV，第三列是平均到每原子的自由能，单位是meV。第一行是零点振动能（Zero Point ENERGY）
 
@@ -296,18 +296,18 @@ $$\beta=1/k_BT$$
 
 ####  <span style="color:green">**先进行非自洽计算获得dos数据, k点要比自洽密一些**</span>
 ```shell
-scf -m mode=nscf core=48 npool=4 queue=local kpoints_dense='16 16 16' 
+scf -m mode=nscf execmd='mpirun -np 48' npool=4 queue=local kpoints_dense='16 16 16' 
 ```
 
 ####  <span style="color:green">**处理eletdos和elepdos数据获得可以origin绘图的数据**</span>
 ```shell
-eletron -m mode=elepdos core=1 npool=1 queue=local kpoints_dense='8 8 8' 
+eletron -m mode=elepdos execmd='mpirun -np 1' npool=1 queue=local kpoints_dense='8 8 8' 
 ```
 
 
 ####  <span style="color:green">**单独处理eletdos数据**</span>
 ```shell
-eletron -m mode=eletdos core=1 npool=1 queue=local kpoints_dense='8 8 8' 
+eletron -m mode=eletdos execmd='mpirun -np 1' npool=1 queue=local kpoints_dense='8 8 8' 
 ```
 
 算出来的*.tdos文件就是可以画图的总电子态密度数据了
@@ -345,18 +345,18 @@ eletron -m mode=eletdos core=1 npool=1 queue=local kpoints_dense='8 8 8'
 
 ####  <span style="color:green">**单独处理elepdos数据**</span>
 ```shell
-eletron -m mode=elepdos core=1 npool=1 queue=local kpoints_dense='8 8 8' 
+eletron -m mode=elepdos execmd='mpirun -np 1' npool=1 queue=local kpoints_dense='8 8 8' 
 ```
 
 ###  <span style="color:yellow"> 电子能带结构计算
 ####  <span style="color:green">**获得eleband数据**</span>
 ```shell
-eletron -m mode=eleband core=1 npool=1 queue=local kinserted=200 nbnd=500
+eletron -m mode=eleband execmd='mpirun -np 1' npool=1 queue=local kinserted=200 nbnd=500
 ```
 
 ####  <span style="color:green">**处理eleband数据获得可以origin绘图的数据**</span>
 ```shell
-eletron -m mode=elebanddata core=1 queue=local
+eletron -m mode=elebanddata execmd='mpirun -np 1' queue=local
 ```
 
 ###  <span style="color:yellow"> 同时进行 电子能带结构计算 电子态密度计算 并且 处理好数据
@@ -368,7 +368,7 @@ eletron -m mode=elebanddata core=1 queue=local
 **1eV = 0.0734986443513 Ry**
 
 ```shell
-eletron -m mode=eleproperties core=48 npool=4 queue=local kinserted=200 nbnd=500  kpoints_dense='8 8 8' 
+eletron -m mode=eleproperties execmd='mpirun -np 48' npool=4 queue=local kinserted=200 nbnd=500  kpoints_dense='8 8 8' 
 ```
 **不必处理数据，数据是已经都处理好的了，可以直接绘图**
 
@@ -540,17 +540,17 @@ sed '1,1d' alpha2f.dat | awk '{print $1/6579.684, $6}' ALPHA2F.OUT
 **处理电荷屏蔽常数为0.1和0.13,得到 $\lambda$ 和 $\omega_{log}$ 并且输出一个文件**
 ```shell
 # 根据真实费米面选择
-sc -m mode=Tc core=1 npool=1 queue=local temperature_steps=100 a2fdos=True alpha2fdat=False broaden=0.5 smearing_method=1 nef=xxxxx
+sc -m mode=Tc execmd='mpirun -np 48' npool=1 queue=local temperature_steps=100 a2fdos=True alpha2fdat=False broaden=0.5 smearing_method=1 nef=xxxxx
 ```
 
 ```shell
 # 自动选择gaussid以及gauss
-sc -m mode=Tc core=1 npool=1 queue=local temperature_steps=100 a2fdos=True alpha2fdat=False broaden=0.5 smearing_method=1
+sc -m mode=Tc execmd='' npool=1 queue=local temperature_steps=100 a2fdos=True alpha2fdat=False broaden=0.5 smearing_method=1
 ```
 
 ```shell
 # 当然如果你不满意程序给你选择的gaussid以及gauss, 你也可以自己指定
-qe_main.py -i relax.out -j bash sc -m mode=Tc core=1 npool=1 queue=local temperature_steps=100 a2fdos=True alpha2fdat=False broaden=0.5 smearing_method=1 gaussid=10 gauss=0.05
+qe_main.py -i relax.out -j bash sc -m mode=Tc execmd='mpirun -np 48' npool=1 queue=local temperature_steps=100 a2fdos=True alpha2fdat=False broaden=0.5 smearing_method=1 gaussid=10 gauss=0.05
 ```
 
 
@@ -631,7 +631,7 @@ screen_constant(库伦屏蔽常数0.1~0.13)
 <span style="color:green"> **这一步会覆盖上一步计算声子态密度时产生的文件gam.lines 和 xxx.freq.qp 和 xxx.freq 三个文件。所以一定要确保计算完声子的态密度之后将声子态密度数据处理出来。**
 
 ```shell
-phono -m mode=matdyn qpoints='6 6 6' core=1 npool=1 queue=local qinserted=50
+phono -m mode=matdyn qpoints='6 6 6' execmd='mpirun -np 48' npool=1 queue=local qinserted=50
 ```
 
 ####  <span style="color:green"> 处理数据获得声子谱
@@ -640,11 +640,11 @@ phono -m mode=matdyn qpoints='6 6 6' core=1 npool=1 queue=local qinserted=50
 ####  <span style="color:green"> 这里是处理声子谱的命令
 
 ```shell
-phono -m mode=phonobanddata core=1
+phono -m mode=phonobanddata execmd='mpirun -np 48'
 ```
 ####  <span style="color:green"> **这里是获得高对称点投影路径的命令， 可以用来在origin中绘制高对称点的垂直参考线**
 ```shell
-phono -m mode=hspp core=1
+phono -m mode=hspp execmd='mpirun -np 1'
 ```
 
 **因为计算声子谱设置的q点和计算声子态密度设置的q点不一样，但是它们两个计算完都会重新覆盖，`体系名称`.freq文件, `体系名称`.freq.gq文件这三个文件。所以请务必确保：无论是计算完声子态密度还是声子谱，都一定要处理数据，然后再进行下一步计算。**
@@ -851,9 +851,9 @@ batchrelax -m mode=rv1 core=28 ediff=1e-8 ediffg=-0.001 ismear=1 kspacing=0.18 e
 ```shell
 # 这里有两种设置KPOINTS的方法：
 # 方法一：根据kdensity='36 36 36'进行设置，命令如下：
-phono -m supercell='2 2 2' kdensity='36 36 36' mode=disp core=48 ismear=1 encut=800 ediff=1E-08 ediffg=-0.001 lreal=.FALSE. queue=lhy core=48
+phono -m supercell='2 2 2' kdensity='36 36 36' mode=disp execmd='mpirun -np 48' ismear=1 encut=800 ediff=1E-08 ediffg=-0.001 lreal=.FALSE. queue=lhy execmd='mpirun -np 48'
 # 方法二：根据kspacing=0.18进行设置，命令如下：
-phono -m supercell='2 2 2' kspacing=0.18 mode=disp core=48 ismear=1 encut=800 ediff=1E-08 ediffg=-0.001 lreal=.FALSE. queue=lhy core=48
+phono -m supercell='2 2 2' kspacing=0.18 mode=disp execmd='mpirun -np 48' ismear=1 encut=800 ediff=1E-08 ediffg=-0.001 lreal=.FALSE. queue=lhy execmd='mpirun -np 48'
 ```
 
 ###  <span style="color:yellow"> 密度泛函微扰DFPT法计算声子谱  </span>
@@ -862,9 +862,9 @@ phono -m supercell='2 2 2' kspacing=0.18 mode=disp core=48 ismear=1 encut=800 ed
 ```shell
 # 这里有两种设置KPOINTS的方法：
 # 方法一：根据kdensity='36 36 36'进行设置，命令如下：
-phono -m supercell='2 2 2' kdensity='36 36 36' mode=dfpt core=48 ismear=1 encut=800 ediff=1e-08 ediffg=-0.001 lreal=.FALSE. queue=lhy
+phono -m supercell='2 2 2' kdensity='36 36 36' mode=dfpt execmd='mpirun -np 48' ismear=1 encut=800 ediff=1e-08 ediffg=-0.001 lreal=.FALSE. queue=lhy
 # 方法二：根据kspacing=0.18进行设置，命令如下：
-phono -m supercell='2 2 2' kspacing=0.18 mode=dfpt core=48 ismear=1 encut=800 ediff=1e-08 ediffg=-0.001 lreal=.FALSE. queue=lhy
+phono -m supercell='2 2 2' kspacing=0.18 mode=dfpt execmd='mpirun -np 48' ismear=1 encut=800 ediff=1e-08 ediffg=-0.001 lreal=.FALSE. queue=lhy
 ```
 
 ###  <span style="color:yellow"> 有限位移法计算声子谱——数据处理band  </span>
@@ -938,32 +938,32 @@ LORBIT = 11   # 输出分波态密度信息
 
 ```shell
 # 只计算scf,  工作路径-w下一定包含eband, scf, eledos三个文件，即使单独算其中一个，也要在eletron目录下，不要进入scf目录计算。
-eletron -m mode=scf encut=800 ediff=1e-8 ediffg=-0.001 ismear=0 sigma=0.01 kspacing=0.18 lreal=.FALSE. queue=lhy core=48
+eletron -m mode=scf encut=800 ediff=1e-8 ediffg=-0.001 ismear=0 sigma=0.01 kspacing=0.18 lreal=.FALSE. queue=lhy execmd='mpirun -np 48'
 
 
 # 只计算能带,  工作路径-w下一定包含eband, scf, eledos三个文件，即使单独算其中一个，也要在eletron目录下，不要进入eband目录计算。在准备输入阶段，会先检查eletron目录中有没有scf/CHGCAR，如果没有就退出。
-eletron -m mode=eband  encut=800 ediff=1e-8 ediffg=-0.001 ismear=0 sigma=0.01 kspacing=0.18 lreal=.FALSE. queue=lhy core=48
+eletron -m mode=eband  encut=800 ediff=1e-8 ediffg=-0.001 ismear=0 sigma=0.01 kspacing=0.18 lreal=.FALSE. queue=lhy execmd='mpirun -np 48'
 
 
 # 只计算电子态密度,  工作路径-w下一定包含eband, scf, eledos三个文件，即使单独算其中一个，也要在eletron目录下，不要进入eledos目录计算。在准备输入阶段，会先检查eletron目录中有没有scf/CHGCAR，如果没有就退出。
 # 前面提到自洽的kspacing是电子态密度的一半，不需要你自己指定，只需要保持你设置的kspacing与scf的kspacing保持一致即可，程序自己会加倍kspacing。
-eletron -m mode=eledos  encut=800 ediff=1e-8 ediffg=-0.001 ismear=0 sigma=0.01 kspacing=0.18 lreal=.FALSE. queue=lhy core=48
+eletron -m mode=eledos  encut=800 ediff=1e-8 ediffg=-0.001 ismear=0 sigma=0.01 kspacing=0.18 lreal=.FALSE. queue=lhy execmd='mpirun -np 48'
 
 
 # 同时计算scf和eband
-eletron -m mode='scf eband'  encut=800 ediff=1e-8 ediffg=-0.001 ismear=0 sigma=0.01 kspacing=0.18 lreal=.FALSE. queue=lhy core=48
+eletron -m mode='scf eband'  encut=800 ediff=1e-8 ediffg=-0.001 ismear=0 sigma=0.01 kspacing=0.18 lreal=.FALSE. queue=lhy execmd='mpirun -np 48'
 
 
 # 同时计算scf和eledos。# 前面提到自洽的kspacing是电子态密度的一半，不需要你自己指定，只需要保持你设置的kspacing与scf的kspacing保持一致即可，程序自己会加倍kspacing。
-eletron -m mode='scf eledos' encut=800  ediff=1e-8 ediffg=-0.001 ismear=0 sigma=0.01 kspacing=0.18 lreal=.FALSE. queue=lhy core=48
+eletron -m mode='scf eledos' encut=800  ediff=1e-8 ediffg=-0.001 ismear=0 sigma=0.01 kspacing=0.18 lreal=.FALSE. queue=lhy execmd='mpirun -np 48'
 
 
 # 同时计算scf和eledos和eband。# 前面提到自洽的kspacing是电子态密度的一半，不需要你自己指定，只需要保持你设置的kspacing与scf的kspacing保持一致即可，程序自己会加倍kspacing。
-eletron -m mode='scf eledos eband' encut=800  ediff=1e-8 ediffg=-0.001 ismear=0 sigma=0.01 kspacing=0.18 lreal=.FALSE. queue=lhy core=48
+eletron -m mode='scf eledos eband' encut=800  ediff=1e-8 ediffg=-0.001 ismear=0 sigma=0.01 kspacing=0.18 lreal=.FALSE. queue=lhy execmd='mpirun -np 48'
 
 
 #获得投影到一维路径的高对称路径点
-vasp_main.py -i CONTCAR -j bash data -m mode=hspp core=1
+vasp_main.py -i CONTCAR -j bash data -m mode=hspp execmd='mpirun -np 48'
 ```
 
 

@@ -98,9 +98,9 @@ if __name__ == "__main__":
     
     # Create a second y-axis
     ax2 = ax1.twinx()
-    ax2.plot(total_sigma, mu1_tc, marker='o', linestyle='-', color='r', label='Mu1 TC')
-    ax2.plot(total_sigma, mu2_tc, marker='o', linestyle='-', color='g', label='Mu2 TC')
-    ax2.plot(total_sigma, mu3_tc, marker='o', linestyle='-', color='m', label='Mu3 TC')
+    ax2.plot(total_sigma, mu1_tc, marker='o', linestyle='-', color='r', label='Mu1 = 0.1')
+    ax2.plot(total_sigma, mu2_tc, marker='o', linestyle='-', color='g', label='Mu2 = 0.13')
+    ax2.plot(total_sigma, mu3_tc, marker='o', linestyle='-', color='m', label='Mu3 = 0.16')
     ax2.set_ylabel('Mu TC', color='r')
     ax2.tick_params(axis='y', labelcolor='r')
     ax2.grid(True)  # 添加网格
