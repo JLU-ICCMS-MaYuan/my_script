@@ -282,8 +282,8 @@ class qe_superconduct:
 
             # 因此初始化qesc_inputpara时还会根据已经获得的self.sc_inputpara.gaussid 和 self.sc_inputpara.gauss， 
             # 去读取相应展宽的 alpha2F.dat 和a2F.dos*
-            self.alpha2Fdat_data = self.sc_inputpara.get_a2Fdos_data(self.sc_inputpara.gaussid)
-            self.a2Fdos_data = self.sc_inputpara.get_alpha2Fdat_data(self.sc_inputpara.gaussid, self.sc_inputpara.gauss)
+            self.a2Fdos_data = self.sc_inputpara.get_a2Fdos_data(self.sc_inputpara.gaussid)
+            self.alpha2Fdat_data = self.sc_inputpara.get_alpha2Fdat_data(self.sc_inputpara.gaussid, self.sc_inputpara.gauss)
 
             # lambda
             Lambda_byalpha2f = self.sc_inputpara.get_lambda_from_alpha2f_single_broadening(self.alpha2Fdat_data, self.sc_inputpara.gaussid, self.sc_inputpara.gauss)
@@ -296,7 +296,7 @@ class qe_superconduct:
             w2_bya2Fdos   = self.sc_inputpara.get_w2_from_a2fdos_single_broadening(self.a2Fdos_data, Lambda_bya2Fdos, self.sc_inputpara.gaussid)
 
             # McAD-Tc
-            Lambda_byqe, wlog_byqe, Tc_McM_byqe = self.sc_inputpara.getTc_by_Mc(self.sc_inputpara.gaussid)
+            Lambda_byqe, wlog_byqe, Tc_McM_byqe = self.sc_inputpara.getTc_McM_byqe(self.sc_inputpara.gaussid)
 
             # McAD-Tc
             Tc_McM_bya2Fdos, Tc_AD_bya2Fdos = self.sc_inputpara.getTc_by_McAD_from_a2fdos_single_broadening(
