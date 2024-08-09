@@ -1262,8 +1262,9 @@ class qesc_inputpara(qephono_inputpara):
         """
 
 
-        f1 = np.cbrt(1 + (Lambda / (2.46 * (1 + 3.8 * screen_constant)))**(3/2) )
-        f2 = 1 + (Lambda**2 * (1 - w2 / wlog)) / (Lambda**2 + 3.312 * ((1 + 6.3 * screen_constant) * w2 / wlog)**2)
+        f1 = np.cbrt(1 + np.power(Lambda / (2.46 * (1 + 3.8 * screen_constant)), 1.5) )
+        # f2 = 1 + (Lambda**2 * (1 - w2 / wlog)) / (Lambda**2 + 3.312 * ((1 + 6.3 * screen_constant) * w2 / wlog)**2)
+        f2 = 1 - (Lambda**2 * (1-w2/wlog)) / (Lambda**2 + 3.312*(1+6.3*screen_constant)**2)
         Tc_McM = wlog/1.2 * np.exp( (-1.04*(1+Lambda)) / (Lambda-screen_constant*(1+0.62*Lambda)) )
         Tc_AD  = f1*f2*Tc_McM
         return Tc_McM, Tc_AD
