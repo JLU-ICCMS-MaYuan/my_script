@@ -345,7 +345,7 @@ class qephono_inputpara(qe_inputpara):
         else:
             self.path_name_coords = None
 
-        # 这一部分是关于如果获得收敛的gaussid和gauss
+        # 这一部分是关于如何获得收敛的gaussid和gauss
         if self.mode == "Tc" or self.mode == "phonobanddata":
             if hasattr(self, "gaussid") and hasattr(self, "gauss"):
                 self.gaussid = int(self.gaussid) - 1
@@ -995,7 +995,7 @@ class qesc_inputpara(qephono_inputpara):
             print("    No exist q2r.out ! The program will exit !!!")
             sys.exit(1)
         
-        # Mc-A-D
+        # Mc
         phonodos_file = Path(self.work_path).joinpath(self.system_name+"_phono.dos")
         if phonodos_file.exists():
             self.top_freq = self.get_top_freq(dosfile=phonodos_file)
@@ -1003,14 +1003,14 @@ class qesc_inputpara(qephono_inputpara):
             print(f"    There is no {self.system_name}+'_phono.dos'")
             sys.exit(1)
         
-        # Mc-A-D
+        # Mc
         if not hasattr(self, "broaden"):
             self.broaden = 0.5
             print("    You didn't set the `broaden` ! ")
             print("    The program will use default value: broaden=0.5")
             print("    ***** Don't change easily the parameter of broaden, 0.5 is good enough !!!! ***** ")
 
-        # Mc-A-D
+        # Mc
         if not hasattr(self, "smearing_method"):
             self.smearing_method = 1
             print("    You didn't set the `smearing_method`!  The program will use default value: smearing_method=1")
@@ -1044,6 +1044,132 @@ class qesc_inputpara(qephono_inputpara):
             print("    The shell order used is:")
             print("    sed '1,5d' a2F.dos%s | sed '/lambda/d' | awk '{print $1/2, $2}' > ALPHA2F.OUT"%("xxx"))
 
+
+    def get_a2Fdos_data(self, gauss_idx):
+        a2Fdos_path = self.work_path.joinpath("a2F.dos"+str(gauss_idx))
+        if not a2Fdos_path.exists():
+            print("\nNote: --------------------")
+            print(f"    `a2F.dos+{str(gauss_idx)}` file doesn't exist!!!")
+            sys.exit(1)
+        # 这里简单说明一下a2F.dos*的文件结构
+        # 频率             总a2F   剩下的列是N*3列，是N个原子，每个原子3个振动模式。
+        # 特别注意第一列频率的单位是：里德伯Ry
+        a2Fdos_data = os.popen(f"sed '1,5d' {a2Fdos_path} | sed '/lambda/d' ").readlines()
+        a2Fdos_data = np.array([[float(x) for x in line.strip('\n').split()] for line in a2Fdos_data])
+
+        return a2Fdos_data
+
+    def get_alpha2Fdat_data(self, gauss_idx, gauss):
+        alpha2F_dat_path = self.work_path.joinpath("alpha2F.dat")
+        if not alpha2F_dat_path.exists():
+            print("\nNote: --------------------")
+            print("    `alpha2F.dat` file doesn't exist!!!")
+            sys.exit(1)
+
+        # 判断el_ph_nsigma是否大于10, 如果大于10,  alpha2F.dat文件折叠出2行来记录数据，巨恶心
+        interval = ceil(int(self.el_ph_nsigma)/10)
+        #  alpha2F.dat文件折叠出2行
+        if interval == 2: 
+            # 读取alpha2F.dat内容
+            with open(alpha2F_dat_path, 'r') as file:
+                lines = file.readlines()
+            # 每n行合并成一行, n是el_ph_nsigma/10向上取整的结果
+            merged_lines = []
+            for i in range(0, len(lines), interval):
+                merged_line = lines[i].strip() + " " + lines[i + 1].strip()
+                merged_lines.append(merged_line)
+            # 将合并的内容写入新的文件或直接读取
+            merged_alpha2F_dat_path = self.work_path.joinpath('merged_alpha2F.dat')
+            with open(merged_alpha2F_dat_path, 'w') as file:
+                file.write("\n".join(merged_lines))
+            shlorder = f"sed -i 's/#//g' {merged_alpha2F_dat_path}"; os.system(shlorder)
+            shlorder = f"sed -i 's/#//g' {alpha2F_dat_path}"; os.system(shlorder)
+            alpha2F_data = pd.read_table(
+            merged_alpha2F_dat_path,
+            sep='\s+',
+            )
+        elif interval == 1:
+            shlorder = f"sed -i 's/#//g' {alpha2F_dat_path}" # 这是因为第一行由于一个#, 删除它才不影响pandas读入 # E(THz)     0.005     0.010     0.015     0.020     0.025     0.030     0.035     0.040     0.045     0.050
+            os.system(shlorder)
+            alpha2F_data = pd.read_table(
+            alpha2F_dat_path,
+            sep='\s+',
+            )
+
+        print("\nNote: --------------------")
+        print(f"    Converged gauss index inputed = {gauss_idx}, its value = {gauss}")
+        print(f"    So in alpha2F.dat, corresponding gauss value = {alpha2F_data.columns[gauss_idx]} ")
+        
+        return alpha2F_data
+
+    def get_lambda_from_alpha2f_single_broadening(self, alpha2Fdat_data, gauss_idx, gauss):
+        """
+        输入: 
+            gauss_idx: 是一个收敛的degauss的索引, 因为python是从0开始的, 所以一定要小心
+            gauss: 对应索引的Gaussian值
+        """
+        
+        # 计算lambda
+        frequency  = np.array(alpha2Fdat_data.iloc[:, 0]); frequency[frequency == 0.0] = 0.00001
+        a2F = np.array(alpha2Fdat_data.iloc[:, gauss_idx])
+        lambda_value = np.trapz(2 * a2F / frequency, frequency)
+
+        w_alpha2f = pd.DataFrame([frequency, a2F])
+        w_alpha2f.columns = ['omegas(Thz)', 'alpha2f']
+        w_alpha2f.to_csv(
+            self.work_path.joinpath("w_alpha2f_from_alpha2Fdat.csv"),
+            header=True,
+            index=False,
+        )
+        return lambda_value
+
+    def get_lambda_from_a2fdos_single_broadening(self, a2Fdos_data, gauss_idx):
+        """
+        输入: 
+            gauss_idx: 是一个收敛的degauss的索引, 因为python是从0开始的, 所以一定要小心
+            gauss: 对应索引的Gaussian值
+        """
+
+        # 计算lambda
+        frequency = a2Fdos_data[:,0]
+        a2F = a2Fdos_data[:,1]
+        lambda_value = np.trapz(2 * a2F / frequency, frequency)
+
+        w_alpha2f = pd.DataFrame([frequency, a2F])
+        w_alpha2f.columns = ['omegas(Rydberg)', 'a2F']
+        w_alpha2f.to_csv(
+            self.work_path.joinpath("w_alpha2f_from_a2Fdos"+str(gauss_idx)+".csv"),
+            header=True,
+            index=False,
+        )
+        return lambda_value
+    
+    def get_wlog_from_a2fdos_single_broadening(self, a2Fdos_data, Lambda_bya2Fdos, gauss_idx):
+        """
+        输入: 
+            gauss_idx: 是一个收敛的degauss的索引, 因为python是从0开始的, 所以一定要小心
+            gauss: 对应索引的Gaussian值
+        """
+
+        # 计算wlog
+        Ry2K = 157887.51240116
+        frequency = a2Fdos_data[:,0]
+        a2F = a2Fdos_data[:,1]
+        Lambda = self.get_lambda_from_a2fdos_single_broadening(gauss_idx)
+        w_log = Ry2K * np.exp(2/Lambda_bya2Fdos * np.trapz(a2F / frequency * np.log(frequency), frequency))
+        return w_log
+
+    def get_w2_from_a2fdos_single_broadening(self, a2Fdos_data, Lambda_bya2Fdos, gauss_idx):
+        """
+        输入: 
+            gauss_idx: 是一个收敛的degauss的索引, 因为python是从0开始的, 所以一定要小心
+            gauss: 对应索引的Gaussian值
+        """
+        # 计算w2
+        frequency = a2Fdos_data[:,0]
+        a2F = a2Fdos_data[:,1]
+        w2  = np.sqrt(2/Lambda_bya2Fdos * np.trapz(frequency*a2F, frequency))
+        return w2
 
     def getTc_by_eliashberg(self):
         '''
@@ -1097,10 +1223,10 @@ class qesc_inputpara(qephono_inputpara):
             print("    Maybe the imaginary frequency of phono leads to NAN in ELIASHBERG_GAP_T.OUT. So The program will exit.")
             sys.exit(1)
 
-    def getTc_by_McAD(self, converged_gauss_index):
+    def getTc_by_Mc(self, gauss_idx):
         """
         输入: 
-        converged_gauss_index: 是一个收敛的degauss的索引, 因为python是从0开始的, 所以一定要小心
+        gauss_idx: 是一个收敛的degauss的索引, 因为python是从0开始的, 所以一定要小心
         gauss: 对应索引的Gaussian值
         """
         lambda_out_path = self.work_path.joinpath("lambda.out")
@@ -1112,91 +1238,29 @@ class qesc_inputpara(qephono_inputpara):
         content  = [line.strip('\n').split() for line in os.popen(shlorder).readlines()]
         lambda_omegalog_Tc = [[float(line[0]), float(line[1]), float(line[2])] for idx, line in enumerate(content)]
 
-        Lambda = lambda_omegalog_Tc[converged_gauss_index][0]
-        omega_log = lambda_omegalog_Tc[converged_gauss_index][1]
-        tc = lambda_omegalog_Tc[converged_gauss_index][2]
+        Lambda = lambda_omegalog_Tc[gauss_idx][0]
+        omega_log = lambda_omegalog_Tc[gauss_idx][1]
+        tc = lambda_omegalog_Tc[gauss_idx][2]
         return Lambda, omega_log, tc
 
-    def get_lambda_from_alpha2f(self, converged_gauss_index, gauss):
+    def getTc_by_McAD_from_a2fdos_single_broadening(
+            self, 
+            Lambda,
+            wlog,
+            w2,
+            screen_constant):
         """
         输入: 
-            converged_degauss_index: 是一个收敛的degauss的索引, 因为python是从0开始的, 所以一定要小心
-            gauss: 对应索引的Gaussian值
+        gauss_idx: 是一个收敛的degauss的索引, 因为python是从0开始的, 所以一定要小心
+        gauss: 对应索引的Gaussian值
         """
 
-        alpha2F_dat_path = self.work_path.joinpath("alpha2F.dat")
-        if not alpha2F_dat_path.exists():
-            print("\nNote: --------------------")
-            print("    `alpha2F.dat` file doesn't exist!!!")
-            sys.exit(1)
 
-        # 判断el_ph_nsigma是否大于10, 如果大于10,  alpha2F.dat文件折叠出2行来记录数据，巨恶心
-        interval = ceil(int(self.el_ph_nsigma)/10)
-        #  alpha2F.dat文件折叠出2行
-        if interval == 2: 
-            # 读取alpha2F.dat内容
-            with open(alpha2F_dat_path, 'r') as file:
-                lines = file.readlines()
-            # 每n行合并成一行, n是el_ph_nsigma/10向上取整的结果
-            merged_lines = []
-            for i in range(0, len(lines), interval):
-                merged_line = lines[i].strip() + " " + lines[i + 1].strip()
-                merged_lines.append(merged_line)
-            # 将合并的内容写入新的文件或直接读取
-            merged_alpha2F_dat_path = self.work_path.joinpath('merged_alpha2F.dat')
-            with open(merged_alpha2F_dat_path, 'w') as file:
-                file.write("\n".join(merged_lines))
-            shlorder = f"sed -i 's/#//g' {merged_alpha2F_dat_path}"; os.system(shlorder)
-            shlorder = f"sed -i 's/#//g' {alpha2F_dat_path}"; os.system(shlorder)
-            alpha2F_dat = pd.read_table(
-            merged_alpha2F_dat_path,
-            sep='\s+',
-            )
-        elif interval == 1:
-            shlorder = f"sed -i 's/#//g' {alpha2F_dat_path}" # 这是因为第一行由于一个#, 删除它才不影响pandas读入 # E(THz)     0.005     0.010     0.015     0.020     0.025     0.030     0.035     0.040     0.045     0.050
-            os.system(shlorder)
-            alpha2F_dat = pd.read_table(
-            alpha2F_dat_path,
-            sep='\s+',
-            )
-        # TODO 还没写完处理alpha2F.dat
-
-        print("\nNote: --------------------")
-        print(f"    Converged gauss index inputed = {converged_gauss_index+1}, its value = {gauss}")
-        print(f"    So in alpha2F.dat, corresponding gauss value = {alpha2F_dat.columns[converged_gauss_index+1]} ")
-        omegas  = np.array(alpha2F_dat.iloc[:, 0])
-        alpha2fs = np.array(alpha2F_dat.iloc[:, converged_gauss_index+1])
-
-        # 定义被积函数的插值函数
-        integrand_func = 2*np.nan_to_num(alpha2fs / omegas, nan=0) # 计算 alpha2f / omegas，并将结果中的 NaN 替换为 0
-
-        # 定义步长, 总共有len(omegas)个omega值，那么就有len(omegas)-1段
-        d_omega = (omegas[-1] - omegas[1]) / (len(omegas) -1)
-
-        # 许多小正方形的面积
-        squares_areas = [integrand_func[idx] * d_omega for idx, omega in enumerate(omegas)]
-
-        # 梯形累计求和。例如对[1,2,3,4,5]梯形累计求和就是[1,3,6,10,15]
-        lambdas = np.cumsum(squares_areas)
-        if len(omegas) == len(alpha2fs) == len(lambdas):
-            omegas_alpha2fs_lambdas = np.vstack((omegas*33.356409519815, alpha2fs, lambdas)).T
-            # omegas_alpha2fs_lambdas 拼接出来的效果如下。所以必须要转置
-            # [[xxx, ..., ..., ..., ..., ..., ..., ..., ..., ..., xxx] ]
-            #  [xxx, ..., ..., ..., ..., ..., ..., ..., ..., ..., xxx] ]
-            #  [xxx, ..., ..., ..., ..., ..., ..., ..., ..., ..., xxx] ]
-            w_alpha2f_lamd = pd.DataFrame(omegas_alpha2fs_lambdas)
-            w_alpha2f_lamd.columns = ['omegas', 'alpha2f', 'lambdas']
-            w_alpha2f_lamd.to_csv(
-                self.work_path.joinpath("w_alpha2f_lambda.csv"),
-                header=True,
-                index=False,
-            )
-            return lambdas[-1]
-        else:
-            print("\nNote: --------------------")
-            print("    Number of omegas != Number of alpha2fs != Number of lambdas")
-            sys.exit(1)
-
+        f1 = np.cbrt(1 + (Lambda / (2.46 * (1 + 3.8 * screen_constant)))**(3/2) )
+        f2 = 1 + (Lambda**2 * (1 - w2 / wlog)) / (Lambda**2 + 3.312 * ((1 + 6.3 * screen_constant) * w2 / wlog)**2)
+        Tc_McM = wlog/1.2 * np.exp( (-1.04*(1+Lambda)) / (Lambda-screen_constant*(1+0.62*Lambda)) )
+        Tc_AD  = f1*f2*Tc_McM
+        return Tc_McM, Tc_AD
 
 class qeprepare_inputpara(qephono_inputpara):
 

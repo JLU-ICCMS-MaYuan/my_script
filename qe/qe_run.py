@@ -266,6 +266,8 @@ class qe_superconduct:
 
         # prepare input parameter
         self.sc_inputpara  = qesc_inputpara.init_from_config(self._config)
+        # 这里注意初始化qesc_inputpara时会初始化两个非常重要的参数self.sc_inputpara.gaussid 和 self.sc_inputpara.gauss
+        # 这两个参数时qephono_inputpara中继承过来的
 
         # 当电荷屏蔽常数为0.10 和 0.13 时
         results = []
@@ -278,29 +280,57 @@ class qe_superconduct:
             if self.sc_inputpara.queue is not None:
                 self.qe_submitjob.submit_mode0(inputfilename, dotx_file="lambda.x")
 
-            idx = self.sc_inputpara.gaussid
-            gauss = self.sc_inputpara.gauss
+            # 因此初始化qesc_inputpara时还会根据已经获得的self.sc_inputpara.gaussid 和 self.sc_inputpara.gauss， 
+            # 去读取相应展宽的 alpha2F.dat 和a2F.dos*
+            self.alpha2Fdat_data = self.sc_inputpara.get_a2Fdos_data(self.sc_inputpara.gaussid)
+            self.a2Fdos_data = self.sc_inputpara.get_alpha2Fdat_data(self.sc_inputpara.gaussid, self.sc_inputpara.gauss)
+
+            # lambda
+            Lambda_byalpha2f = self.sc_inputpara.get_lambda_from_alpha2f_single_broadening(self.alpha2Fdat_data, self.sc_inputpara.gaussid, self.sc_inputpara.gauss)
+            Lambda_bya2Fdos  = self.sc_inputpara.get_lambda_from_a2fdos_single_broadening(self.a2Fdos_data, self.sc_inputpara.gaussid)
+            
+            # wlog
+            wlog_bya2Fdos = self.sc_inputpara.get_wlog_from_a2fdos_single_broadening(self.a2Fdos_data, Lambda_bya2Fdos, self.sc_inputpara.gaussid)
+
+            # w2
+            w2_bya2Fdos   = self.sc_inputpara.get_w2_from_a2fdos_single_broadening(self.a2Fdos_data, Lambda_bya2Fdos, self.sc_inputpara.gaussid)
 
             # McAD-Tc
-            Lambda_byqe, omega_log, Tc_McAD = self.sc_inputpara.getTc_by_McAD(idx)
+            Lambda_byqe, wlog_byqe, Tc_McM_byqe = self.sc_inputpara.getTc_by_Mc(self.sc_inputpara.gaussid)
+
+            # McAD-Tc
+            Tc_McM_bya2Fdos, Tc_AD_bya2Fdos = self.sc_inputpara.getTc_by_McAD_from_a2fdos_single_broadening(
+                Lambda_bya2Fdos,
+                wlog_bya2Fdos,
+                w2_bya2Fdos,
+                screen_constant
+                )
 
             # eliashberg-Tc
             inputfilename = self.qe_writeinput.write_eliashberg_in(self.sc_inputpara.work_path, screen_constant)
-            self.qe_writeinput.write_alpha2f_out(self.sc_inputpara.work_path, idx)
+            self.qe_writeinput.write_alpha2f_out(self.sc_inputpara.work_path, self.sc_inputpara.gaussid)
             if self.sc_inputpara.queue is not None:
                 self.qe_submitjob.submit_mode0(inputfilename, dotx_file="eliashberg.x")
             Tc_eliashberg = self.sc_inputpara.getTc_by_eliashberg()
 
-            Lambda_byalpha2f = self.sc_inputpara.get_lambda_from_alpha2f(idx, gauss)
             
             results.append({
                 "screen_constant": screen_constant,
-                "gaussid":idx, 
-                "gauss":gauss, 
+                "gaussid":self.sc_inputpara.gaussid, 
+                "gauss":self.sc_inputpara.gauss, 
+                
                 "Lambda_byqe":Lambda_byqe, 
-                "Lambda_byalpha2f":Lambda_byalpha2f, 
-                "omega_log":omega_log, 
-                "Tc_McAD":Tc_McAD, 
+                # "Lambda_byalpha2f":Lambda_byalpha2f, 
+                "Lambda_bya2Fdos":Lambda_bya2Fdos, 
+
+                "wlog_byqe": wlog_byqe,
+                "wlog_bya2Fdos":wlog_bya2Fdos,
+
+                "w2_bya2Fdos":w2_bya2Fdos,
+
+                "Tc_McM_byqe":Tc_McM_byqe, 
+                "Tc_McM_bya2Fdos":Tc_McM_bya2Fdos,
+                "Tc_AD_bya2Fdos":Tc_AD_bya2Fdos,
                 "Tc_eliashberg":Tc_eliashberg,
                 })
             self.backupfile(screen_constant)
@@ -314,9 +344,12 @@ class qe_superconduct:
             print(f'    Converged gaussid = {res["gaussid"]+1}')
             print(f'    Corresponding gauss = {res["gauss"]}')
             print(f'    Corresponding Lambda_byqe = {res["Lambda_byqe"]}')
-            print(f'    Corresponding Lambda_byalpha2f = {res["Lambda_byalpha2f"]}')
-            print(f'    Corresponding omega_log = {res["omega_log"]}')
-            print(f'    Corresponding Tc_Mc = {res["Tc_McAD"]}')
+            print(f'    Corresponding Lambda_bya2Fdos = {res["Lambda_bya2Fdos"]}')
+            print(f'    Corresponding wlog_byqe = {res["wlog_byqe"]}')
+            print(f'    Corresponding wlog_bya2Fdos = {res["wlog_bya2Fdos"]}')
+            print(f'    Corresponding Tc_McM_byqe = {res["Tc_McM_byqe"]}')
+            print(f'    Corresponding Tc_McM_bya2Fdos = {res["Tc_McM_bya2Fdos"]}')
+            print(f'    Corresponding Tc_AD_bya2Fdos = {res["Tc_AD_bya2Fdos"]}')
             print(f'    Corresponding Tc_eliashberg = {res["Tc_eliashberg"]}')
             print("\n")
 
