@@ -1,9 +1,9 @@
-qebin_path = "/home/mayuan/mysoftware/q-e-qe-7.1/bin"
-qe_source_libs = "/home/mayuan/mysoftware/all_pbe_UPF_v1.5"
-eliashberg_x_path = "/home/mayuan/mycode/my_script/qe/eliashberg/eliashberg.x"
+qebin_path = "/data/home/mayuan/soft/qe-7.0/bin"
+qe_source_libs = "/data/home/mayuan/POT/qepp/all_pbe_UPF_v1.5"
+eliashberg_x_path = "/data/home/mayuan/code/my_script/qe/eliashberg/eliashberg.x"
 
-vaspbin_path = "/home/mayuan/mysoftware/vasp.6.1.0/bin/vasp_std"
-potcar_source_libs = "/home/mayuan/mysoftware/pot"
+vaspbin_path = "/data/home/mayuan/soft/vasp.6.1.0/bin/vasp_std"
+potcar_source_libs = "/data/home/mayuan/POT/vasppp/potpaw_PBE54"
 
 
 bashtitle = '''#!/bin/sh   
@@ -15,13 +15,14 @@ slurmtitle = '''#!/bin/sh
 #SBATCH  --job-name=mayqe                      
 #SBATCH  --output=log.out                       
 #SBATCH  --error=log.err                       
-#SBATCH  --partition=lhy          
+#SBATCH  --partition=intel6430
 #SBATCH  --nodes=1                          
-#SBATCH  --ntasks=48                          
-#SBATCH  --ntasks-per-node=48                          
+#SBATCH  --ntasks=64
+#SBATCH  --ntasks-per-node=64
 #SBATCH  --cpus-per-task=1                         
-source /work/home/may/intel/oneapi/setvars.sh --force      
-#source /work/home/mayuan/intel/oneapi/setvars.sh --force      
+
+source /data/home/mayuan/intel/oneapi/setvars.sh
+
 ulimit -s unlimited
 '''
 
@@ -92,3 +93,17 @@ if __name__ == "__main__":
     print("        export MPIR_CVAR_COLL_ALIAS_CHECK=0")
     print(pbstitle, "\n")
 
+    def Write_Tobin(qebin_path, vaspbin_path, my_scriptrc_ini):
+        with open(my_scriptrc_ini, "r") as f:
+            content = f.read()
+    
+        with open(qebin_path, "w") as qe:
+            qe.writelines(content)
+    
+        with open(vaspbin_path, "w") as vasp:
+            vasp.write(content)
+    
+    my_scriptrc_ini = Path.home().joinpath(".my_scriptrc.py")
+    qebin_path      = Path.home().joinpath("code/my_script/qe/qebin.py")
+    vaspbin_path    = Path.home().joinpath("code/my_script/vasp/vaspbin.py")
+    Write_Tobin(qebin_path, vaspbin_path, my_scriptrc_ini)
