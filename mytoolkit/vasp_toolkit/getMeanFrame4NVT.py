@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import sys
 
 from ase.io.vasp import read_vasp_xdatcar, write_vasp 
