@@ -1,5 +1,13 @@
 # deepkit+结构预测
 
+
+帖子
+```shell
+https://bohrium-doc.dp.tech/docs/software/CALYPSO/
+
+```
+
+
 ##  <span style="color:red">  0. 安装软件，准备目录以及相应的输入文件和训练集
 
 ###  <span style="color:yellow"> 0.1 安装deepmd-kit
@@ -112,5 +120,13 @@ python calypso_run_model_devi.py --all_models ../gen_stru_analy.000/graph.000.pb
 4
 ```
 
-然而在riken的主节点机器上运行这个脚本会导致一堆core-python文件的爆出. 所以最好还是把它放到远程机器上运行. 在执行上述`python calypso_run_model_devi.py ....`命令前, 先在iter.000000/01.model_devi/record.calypso中添加数字4, 然后手动执行命令, 然后执行` nohup dpgen run param.json machine.json 1>log 2>err &
+然而在riken的主节点机器上运行这个脚本会导致一堆core-python文件的爆出. 所以最好还是把它放到远程机器上运行. 怎么操作呢？
+
+**第1种情况：挂在后台的dpgen进程中断了**
+
+在执行上述`python calypso_run_model_devi.py ....`命令前, 先在iter.000000/01.model_devi/record.calypso中添加数字4, 然后手动执行命令sbatch sub_devi.sh, 具体sub_devi.sh的内容已经写在各个机器相应的目录中了, 然后执行` nohup dpgen run param.json machine.json 1>log 2>err &
 `
+
+**第2种情况：挂在后台的dpgen进程正常运行**
+
+直接手动执行命令sbatch sub_devi.sh，dpgen会自动在iter.000000/01.model_devi/record.calypso中添加数字4

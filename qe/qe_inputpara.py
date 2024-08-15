@@ -1269,6 +1269,7 @@ class qesc_inputpara(qephono_inputpara):
         Tc_AD  = f1*f2*Tc_McM
         return Tc_McM, Tc_AD
 
+
 class qeprepare_inputpara(qephono_inputpara):
 
     def __init__(

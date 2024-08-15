@@ -1,5 +1,11 @@
 # deepkit+结构预测
 
+帖子
+```shell
+https://bohrium-doc.dp.tech/docs/software/CALYPSO/
+
+```
+
 ##  <span style="color:red">  0. 准备目录
 
 ```shell

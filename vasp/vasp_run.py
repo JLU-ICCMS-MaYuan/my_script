@@ -411,6 +411,7 @@ class vasp_eletron:
             )
         return cohp_path
 
+
 class vasp_md:
 
     def __init__(self, args: ArgumentParser):
