@@ -1,7 +1,10 @@
 ## 网络经验贴
-1. https://www.bilibili.com/read/cv23297817/
-2. 
+```shell
+https://www.bilibili.com/read/cv23297817/
 
+# 我的帖子
+https://zhuanlan.zhihu.com/p/685715050
+```
 
 ## 将OUTCAR转化为train.cfg
 ```shell

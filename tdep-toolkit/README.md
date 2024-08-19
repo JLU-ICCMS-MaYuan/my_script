@@ -1,6 +1,6 @@
 # 流程大纲
 
-帖子
+**帖子**
 ```shell
 https://tiandijunhao.github.io/2020/06/28/tdep-ji-suan-sheng-zi-pu/
 
@@ -16,6 +16,15 @@ https://mixzeng.github.io/2020/12/27/tdep-install/
 
 # 我的帖子
 https://zhuanlan.zhihu.com/p/714272645
+```
+
+**网络git仓库**
+```shell
+# 关于处理数据的脚本
+https://github.com/tiandijunhao/SomeScripts/tree/main
+
+# 关于tdep的官方教程
+https://github.com/tdep-developers/tdep-tutorials/tree/main
 ```
 
 ## <span style="color:red">  准备文件
