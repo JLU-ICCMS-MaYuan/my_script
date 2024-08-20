@@ -168,7 +168,36 @@ zstandard               0.19.0
 
 ```
 
-###  <span style="color:yellow"> deepgen的命令
+###  <span style="color:yellow"> 直接复制conda环境配置dpgen
+
+需要修改的部分：
+
+1. `deepmd-kit/condabin/conda`的头关于python的路径修改为`realpath  deepmd-kit/bin/python`执行后的路径。
+2. `deepmd-kit/bin/conda`的头关于python的路径修改为`realpath  deepmd-kit/bin/python`执行后的路径。
+3. `source deepmd-kit/bin/activate`执行会报错类似`-bash: /home/h240012/soft/deepmd-kit/etc/profile.d/conda.sh: No such file or directory`。
+   修改`deepmd-kit/etc/profile.d/conda.sh`中关于python路径和conda路径的内容。
+   修改`deepmd-kit/bin/activate`中关于`_CONDA_ROOT`的内容。
+4. `deepmd-kit/bin/pip`的头关于python的路径修改为`realpath  deepmd-kit/bin/python`执行后的路径。
+
+```shell
+realpath  deepmd-kit/bin/python
+
+deepmd-kit/condabin/conda
+deepmd-kit/bin/conda
+deepmd-kit/bin/activate
+deepmd-kit/etc/profile.d/conda.sh
+deepmd-kit/bin/pip
+```
+
+
+
+
+
+###  <span style="color:yellow"> dpgen+calypso运行流程
+
+
+
+
 ```shell
 nohup dpgen run param.json machine.json 1>log 2>err &
 # param.json 参数设置文件
