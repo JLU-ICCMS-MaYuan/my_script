@@ -1145,7 +1145,7 @@ class qesc_inputpara(qephono_inputpara):
             'alpha2f': a2F
         })
         w_alpha2f.to_csv(
-            self.work_path.joinpath("w_alpha2f_from_a2Fdos"+str(gauss_idx)+".csv"),
+            self.work_path.joinpath("w_alpha2f_from_a2Fdos"+str(gauss_idx+1)+".csv"),
             header=True,
             index=False,
         )
