@@ -1098,7 +1098,7 @@ class qesc_inputpara(qephono_inputpara):
 
         print("\nNote: --------------------")
         print(f"    Converged gauss index inputed = {gauss_idx}, its value = {gauss}")
-        print(f"    So in alpha2F.dat, corresponding gauss value = {alpha2F_data.columns[gauss_idx-1]} ")
+        print(f"    So in alpha2F.dat, corresponding gauss value = {alpha2F_data.columns[gauss_idx]} ") # alpha2F_data.columns[gauss_idx]获取列的名称, 第0列是E(Thz)列, 第1列是0.005列. 由于我们输入的gauss_idx是从1开始的, 所以要获得正确的列不需要对gauss_idx做任何处理
         
         return alpha2F_data
 
@@ -1111,7 +1111,7 @@ class qesc_inputpara(qephono_inputpara):
         
         # 计算lambda
         frequency  = np.array(alpha2Fdat_data.iloc[:, 0]); frequency[frequency == 0.0] = 0.00001
-        a2F = np.array(alpha2Fdat_data.iloc[:, gauss_idx-1])
+        a2F = np.array(alpha2Fdat_data.iloc[:, gauss_idx]) # alpha2Fdat_data 第0列是E(Thz)列, 第1列是0.005列. 由于我们输入的gauss_idx是从1开始的, 所以要获得正确的列相应的a2F不需要对gauss_idx做任何处理
         lambda_value = np.trapz(2 * a2F / frequency, frequency)
 
         # 将 frequency 和 a2F 作为列来创建 DataFrame
@@ -1229,10 +1229,10 @@ class qesc_inputpara(qephono_inputpara):
             print("    Maybe the imaginary frequency of phono leads to NAN in ELIASHBERG_GAP_T.OUT. So The program will exit.")
             sys.exit(1)
 
-    def getTc_McM_byqe(self, gauss_idx-1):
+    def getTc_McM_byqe(self, gauss_idx):
         """
         输入: 
-        gauss_idx-1: 是一个收敛的degauss的索引, 因为python是从0开始的, 所以一定要小心
+        gauss_idx: 是一个收敛的degauss的索引, 因为python是从0开始的, 所以一定要小心
         gauss: 对应索引的Gaussian值
         """
         lambda_out_path = self.work_path.joinpath("lambda.out")
