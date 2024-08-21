@@ -234,7 +234,6 @@ class qe_eletron:
             ef_scf = None
         return ef_scffit, ef_scf
 
-
     def get_Nef(self, ef_scffit, ef_scf):
         eletdos_path = self.eletron_inputpara.work_path.joinpath(self.eletron_inputpara.system_name+".tdos")
         if not eletdos_path.exists():
@@ -290,10 +289,10 @@ class qe_superconduct:
             Lambda_bya2Fdos  = self.sc_inputpara.get_lambda_from_a2fdos_single_broadening(self.a2Fdos_data, self.sc_inputpara.gaussid)
             
             # wlog
-            wlog_bya2Fdos = self.sc_inputpara.get_wlog_from_a2fdos_single_broadening(self.a2Fdos_data, Lambda_bya2Fdos, self.sc_inputpara.gaussid)
+            wlog_bya2Fdos = self.sc_inputpara.get_wlog_from_a2fdos_single_broadening(self.a2Fdos_data, Lambda_bya2Fdos)
 
             # w2
-            w2_bya2Fdos   = self.sc_inputpara.get_w2_from_a2fdos_single_broadening(self.a2Fdos_data, Lambda_bya2Fdos, self.sc_inputpara.gaussid)
+            w2_bya2Fdos   = self.sc_inputpara.get_w2_from_a2fdos_single_broadening(self.a2Fdos_data, Lambda_bya2Fdos)
 
             # McAD-Tc
             Lambda_byqe, wlog_byqe, Tc_McM_byqe = self.sc_inputpara.getTc_McM_byqe(self.sc_inputpara.gaussid)
@@ -341,7 +340,7 @@ class qe_superconduct:
         print("\nNote: --------------------")
         for res in results:
             print(f'    screen_constant = {res["screen_constant"]}')
-            print(f'    Converged gaussid = {res["gaussid"]+1}')
+            print(f'    Converged gaussid = {res["gaussid"]}')
             print(f'    Corresponding gauss = {res["gauss"]}')
             print(f'    Corresponding Lambda_byqe = {res["Lambda_byqe"]}')
             print(f'    Corresponding Lambda_bya2Fdos = {res["Lambda_bya2Fdos"]}')

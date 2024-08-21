@@ -348,7 +348,7 @@ class qephono_inputpara(qe_inputpara):
         # 这一部分是关于如何获得收敛的gaussid和gauss
         if self.mode == "Tc" or self.mode == "phonobanddata":
             if hasattr(self, "gaussid") and hasattr(self, "gauss"):
-                self.gaussid = int(self.gaussid) - 1
+                self.gaussid = int(self.gaussid)
                 self.gauss = float(self.gauss)
             elif hasattr(self, "efermi_dos"):
                 self.efermi_dos = float(self.efermi_dos)
@@ -548,7 +548,7 @@ class qephono_inputpara(qe_inputpara):
         print("\nNote: --------------------")
         print(f'    Converged gaussid = {idx+1}, corresponding gaussian value={gaussian1[idx]}')
         # time.sleep(3)
-        return idx, gauss
+        return idx+1, gauss  # 因为python都是从0开始
 
     def get_gam_lines(self, gauss:float, q_number:int, freq_number:int):
         """
@@ -1097,8 +1097,8 @@ class qesc_inputpara(qephono_inputpara):
             )
 
         print("\nNote: --------------------")
-        print(f"    Converged gauss index inputed = {gauss_idx+1}, its value = {gauss}")
-        print(f"    So in alpha2F.dat, corresponding gauss value = {alpha2F_data.columns[gauss_idx+1]} ")
+        print(f"    Converged gauss index inputed = {gauss_idx}, its value = {gauss}")
+        print(f"    So in alpha2F.dat, corresponding gauss value = {alpha2F_data.columns[gauss_idx-1]} ")
         
         return alpha2F_data
 
@@ -1111,7 +1111,7 @@ class qesc_inputpara(qephono_inputpara):
         
         # 计算lambda
         frequency  = np.array(alpha2Fdat_data.iloc[:, 0]); frequency[frequency == 0.0] = 0.00001
-        a2F = np.array(alpha2Fdat_data.iloc[:, gauss_idx])
+        a2F = np.array(alpha2Fdat_data.iloc[:, gauss_idx-1])
         lambda_value = np.trapz(2 * a2F / frequency, frequency)
 
         # 将 frequency 和 a2F 作为列来创建 DataFrame
@@ -1145,13 +1145,13 @@ class qesc_inputpara(qephono_inputpara):
             'alpha2f': a2F
         })
         w_alpha2f.to_csv(
-            self.work_path.joinpath("w_alpha2f_from_a2Fdos"+str(gauss_idx+1)+".csv"),
+            self.work_path.joinpath("w_alpha2f_from_a2Fdos"+str(gauss_idx)+".csv"),
             header=True,
             index=False,
         )
         return lambda_value
     
-    def get_wlog_from_a2fdos_single_broadening(self, a2Fdos_data, Lambda_bya2Fdos, gauss_idx):
+    def get_wlog_from_a2fdos_single_broadening(self, a2Fdos_data, Lambda_bya2Fdos):
         """
         输入: 
             gauss_idx: 是一个收敛的degauss的索引, 因为python是从0开始的, 所以一定要小心
@@ -1165,7 +1165,7 @@ class qesc_inputpara(qephono_inputpara):
         w_log = Ry2K * np.exp(2/Lambda_bya2Fdos * np.trapz(a2F / frequency * np.log(frequency), frequency))
         return w_log
 
-    def get_w2_from_a2fdos_single_broadening(self, a2Fdos_data, Lambda_bya2Fdos, gauss_idx):
+    def get_w2_from_a2fdos_single_broadening(self, a2Fdos_data, Lambda_bya2Fdos):
         """
         输入: 
             gauss_idx: 是一个收敛的degauss的索引, 因为python是从0开始的, 所以一定要小心
@@ -1229,10 +1229,10 @@ class qesc_inputpara(qephono_inputpara):
             print("    Maybe the imaginary frequency of phono leads to NAN in ELIASHBERG_GAP_T.OUT. So The program will exit.")
             sys.exit(1)
 
-    def getTc_McM_byqe(self, gauss_idx):
+    def getTc_McM_byqe(self, gauss_idx-1):
         """
         输入: 
-        gauss_idx: 是一个收敛的degauss的索引, 因为python是从0开始的, 所以一定要小心
+        gauss_idx-1: 是一个收敛的degauss的索引, 因为python是从0开始的, 所以一定要小心
         gauss: 对应索引的Gaussian值
         """
         lambda_out_path = self.work_path.joinpath("lambda.out")
@@ -1244,9 +1244,9 @@ class qesc_inputpara(qephono_inputpara):
         content  = [line.strip('\n').split() for line in os.popen(shlorder).readlines()]
         lambda_omegalog_Tc = [[float(line[0]), float(line[1]), float(line[2])] for idx, line in enumerate(content)]
 
-        Lambda = lambda_omegalog_Tc[gauss_idx][0]
-        omega_log = lambda_omegalog_Tc[gauss_idx][1]
-        tc = lambda_omegalog_Tc[gauss_idx][2]
+        Lambda = lambda_omegalog_Tc[gauss_idx-1][0]
+        omega_log = lambda_omegalog_Tc[gauss_idx-1][1]
+        tc = lambda_omegalog_Tc[gauss_idx-1][2]
         return Lambda, omega_log, tc
 
     def getTc_by_McAD_from_a2fdos_single_broadening(
