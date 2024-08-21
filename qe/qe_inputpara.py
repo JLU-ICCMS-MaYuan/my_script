@@ -982,7 +982,7 @@ class qesc_inputpara(qephono_inputpara):
         print("\nNote: --------------------")
         print("If you want to run `superconduct`, you had better set these values!")
         # Mc-A-D and Eliashberg
-        self.screen_constant = [0.10, 0.13]
+        self.screen_constant = [0.10, 0.13, 0.16]
 
         # Mc-A-D
         q2r_names = list(Path(self.work_path).glob("q2r.out"))
