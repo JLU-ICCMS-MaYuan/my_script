@@ -1,0 +1,13 @@
+#!/bin/bash
+  
+# 运行并显示当前正在运行的任务
+echo "running"
+squeue -u h240012 -h --format '%A    %t    %R    %M    %Z' | grep " R " 
+
+# 显示当前正在等待的任务
+echo "waiting"
+squeue -u h240012 -h --format '%A    %t    %R    %M    %Z' | grep " PD " 
+
+# 显示提交的总任务数
+echo -n '提交总任务数:'
+squeue | grep h240012 | wc -l

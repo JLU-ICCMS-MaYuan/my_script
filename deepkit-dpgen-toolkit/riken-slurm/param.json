@@ -8,7 +8,7 @@
 	"mass_map": [58, 21, 1],
 	"init_data_prefix":"../1.dp-data",
 	"init_data_sys": [ 
-		"Ce1Sc2H22",
+		    "Ce1Sc2H22",
 	      	"Ce2Sc4H44",
 	      	"Ce3Sc6H66",
 	        "Ce4Sc8H88"
