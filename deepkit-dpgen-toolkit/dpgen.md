@@ -271,7 +271,7 @@ git checkout origin/devel
 
 至于参数1和参数2有什么不同，参见：https://github.com/wangzyphysics/dpgen/blob/devel/examples/run/dp-calypso-vasp/param.json
 
-###  <span style="color:green"> 注意 calypso_run_model_devi.py 的运行. 
+###  <span style="color:green"> 注意 calypso_run_model_devi.py 的运行
 
 `iter.00000/01.model_devi/model_devi_results/`里面有个脚本`calypso_run_model_devi.py` 只能在主节点上运行, 具体是 在`iter.000000/01.model_devi/model_devi_results/` 目录下运行下面的命令:
 ```shell
@@ -302,3 +302,46 @@ python calypso_run_model_devi.py --all_models ../gen_stru_analy.000/graph.000.pb
 **第2种情况：挂在后台的dpgen进程正常运行**
 
 直接手动执行命令sbatch sub_devi.sh，dpgen会自动在iter.000000/01.model_devi/record.calypso中添加数字4
+
+###  <span style="color:green"> 注意设置压强
+
+关于压强的参数有3个地方需要设置：
+```shell
+# 第1个地方
+0.vasp-dataset/INCAR_{1..5}
+...
+PSTRESS = 2000
+...
+
+# 第2个地方
+2.get-dpmod/calypso_input/input.dat
+...
+PSTRESS = 2000
+...
+
+# 第3个地方
+2.get-dpmod/vasp_input/INCAR
+...
+PSTRESS = 2000
+...
+```
+
+### 关于dpdata的LabeledSystem的使用小贴士：
+1. `/home/h240012/soft/deepmd-kit/lib/python3.10/site-packages/dpdata/system.py:1109`是LabeledSystem的位置。
+2. 索引读取后的数据的性质时，有：`energies`, `forces`, `virials`三项可以通过字典的方式索引。
+
+
+## <span style="color:red"> 如何判断势训练的优劣
+
+### <span style="color:green"> 检查candidate的数量
+
+dpgen.log里面`iter.*task 06`记录了每一代相应的candidate的数量。
+
+其中`"model_devi_f_trust_lo": 0.5`和`"model_devi_f_trust_hi": 0.9`控制着被选为candidate的数量，低于`"model_devi_f_trust_lo"`则认为是accurate，高于`model_devi_f_trust_hi`则认为是failed
+
+
+
+### <span style="color:green"> 绘制The model deviation distribution
+
+### <span style="color:green"> dptest检查数据集
+

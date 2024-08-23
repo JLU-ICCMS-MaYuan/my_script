@@ -1,0 +1,2 @@
+echo "You had better run it in 2.getdp-mod/iter.00000*/00.train/000"
+dp test -m frozen_model.pb -s ../../../../1.dp-data/ -d result > result.log 2>&1 &

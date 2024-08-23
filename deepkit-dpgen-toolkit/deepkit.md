@@ -59,9 +59,6 @@ dp train input.json
 log &
 ```
 
-###  <span style="color:yellow"> 远程提交作业
-不在本地训练，而是在集群训练，需要准备提交作业的脚本。参考center-slurm目录下的slurm作业脚本
-
 ###  <span style="color:yellow"> 检查模型收敛性
 训练完了，需要检查哪些文件去判断模型是否可以投入使用？
 
@@ -79,6 +76,21 @@ head -n 2 lcurve.out && tail -n 2 lcurve. out
 python plotlcurve.py
 ```
 
+
+###  <span style="color:yellow"> 无法主节点运行任务
+
+可能是因为这些机器限制某一个任务可以使用的最大进程数，并不是不能运行，只要把下面这三个参数调小一点就可以跑起来了
+更多详细的设置可以参考：`https://docs.deepmodeling.com/projects/deepmd/en/r2/troubleshooting/howtoset_num_nodes.html`
+
+
+
+```shell
+# ---- dpgen ----
+
+export OMP_NUM_THREADS=3 # 设置用于 OpenMP 并行计算的线程数。
+export TF_INTER_OP_PARALLELISM_THREADS=3 # 设置 TensorFlow 内部操作（Intra-Op）并行计算的线程数。
+export TF_INTER_OP_PARALLELISM_THREADS=2 # 设置 TensorFlow 操作之间（Inter-Op）并行计算的线程数。
+```
 
 ##  <span style="color:red"> 3. 冻结模型以及测试模型
 

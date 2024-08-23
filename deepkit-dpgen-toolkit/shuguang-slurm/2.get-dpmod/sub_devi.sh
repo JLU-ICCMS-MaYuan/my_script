@@ -12,6 +12,6 @@ ulimit -s unlimited
 module load intelmpi/impi_23.2.0
 module load intel/23.02.1
 
-conda activate /home/h240012/soft/deepmd-kit
+source /work/home/acvm651ob1/mayuan/deepmd-kit/bin/activate
 
 python calypso_run_model_devi.py --all_models ../gen_stru_analy.000/graph.000.pb ../gen_stru_analy.000/graph.001.pb ../gen_stru_analy.000/graph.002.pb ../gen_stru_analy.000/graph.003.pb --type_map Ce Sc H

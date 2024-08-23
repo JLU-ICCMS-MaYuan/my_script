@@ -1,0 +1,79 @@
+{
+  "api_version": "1.0",
+  "deepmd_version": "2.2.2",
+
+  "train" :[
+    {
+      "command": "/lustre/home/h240012/soft/deepmd-kit/bin/dp",
+      "machine": {
+        "batch_type": "Slurm",
+        "context_type": "LocalContext",
+        "local_root" : "./",
+        "remote_root" : "./execute/tra",
+        "remote_profile":{
+
+        }
+      },
+      "resources": {
+        "number_node": 1,
+        "cpu_per_node": 40,
+        "gpu_per_node": 0,
+        "queue_name": "mpc",
+        "group_size": 1,
+        "custom_flags": ["#SBATCH --account=hp240139", "#SBATCH --time=24:00:00"],
+        "para_deg": 4,
+        "source_list": []
+      }
+    }],
+
+  "model_devi":[
+    {
+      "_comment_1": "calypso_path is the local calypso path",
+      "calypso_path":"/lustre/home/h240012/work/Ce-Sc-H/CeSc2H22/2.dp-module/calypso_input",
+      "_comment_2": "deepmdkit_python is the remote machine python path",
+      "deepmdkit_python":"/lustre/home/h240012/soft/deepmd-kit/bin/python3.10",
+      "command": "",
+      "machine": {
+        "batch_type": "Slurm",
+        "context_type": "LocalContext",
+        "local_root" : "./",
+        "remote_root" : "./execute/mod",
+        "remote_profile":{
+
+        }
+      },
+      "resources": {
+        "number_node": 1,
+        "cpu_per_node": 20,
+        "gpu_per_node": 0,
+        "queue_name": "mpc",
+        "group_size": 2,
+        "custom_flags": ["#SBATCH --account=hp240139", "#SBATCH --time=24:00:00"]
+      }
+    }],
+
+  "fp":[
+    {
+      "command": "module load intelmpi/impi_23.2.0; module load intel/23.02.1; ulimit -s unlimited; log=`ls|grep fp.log|wc -l`;if [ $log -ne 0 ]; then err8=`grep -E 'Inconsistent Bravais lattice types found for crystalline and|IBZKPT: not all point group operations associated with the symmetry' fp.log|wc -l`; if [ $err8 -ne 0 ]; then sed -i 's/SYMPREC = 1e-3/SYMPREC = 1e-7/g' INCAR; fi; fi; srun /lustre/home/h240012/soft/vasp.6.1.0/bin/vasp_std",
+      "machine": {
+        "batch_type": "Slurm",
+        "context_type": "LocalContext",
+        "local_root" : "./",
+        "remote_root" : "./execute/fp",
+        "remote_profile":{
+
+        }
+      },
+      "resources": {
+        "number_node": 1,
+        "cpu_per_node": 28,
+        "gpu_per_node": 0,
+        "queue_name": "mpc",
+        "group_size": 1,
+        "source_list": [],
+        "custom_flags": ["#SBATCH --account=hp240139", "#SBATCH --time=24:00:00"]
+      }
+    }
+]
+}
+
