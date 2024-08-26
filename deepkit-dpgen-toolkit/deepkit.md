@@ -59,39 +59,6 @@ dp train input.json
 log &
 ```
 
-###  <span style="color:yellow"> 检查模型收敛性
-训练完了，需要检查哪些文件去判断模型是否可以投入使用？
-
-检查lcurve.out文件的第4、5行, 第6、7行, 分别是能量的训练和测试误差，力的训练和测试误差
-```shell
-head -n 2 lcurve.out && tail -n 2 lcurve. out
-#                                      能量误差     能量误差      力的误差     力的误差
-  ****  step      rmse_val    rmse_trn    rmse_e_val  rmse_e_trn    rmse_f_val  rmse_f_trn         lr
-      0      2.87e+01    5.23e+01      6.84e-01    1.55e+00      9.07e-01    1.65e+00    1.0e-03
- 998000      1.43e-01    3.28e-01      2.93e-02    7.29e-02      4.90e-02    7.90e-02    1.1e-08
-1000000      5.58e-02    4.34e-02      6.83e-03    1.53e-04      3.83e-02    4.32e-02    1.0e-08
-```
-通过执行脚本 plotlcurve.py可以可视化误差的收敛性
-```shell
-python plotlcurve.py
-```
-
-
-###  <span style="color:yellow"> 无法主节点运行任务
-
-可能是因为这些机器限制某一个任务可以使用的最大进程数，并不是不能运行，只要把下面这三个参数调小一点就可以跑起来了
-更多详细的设置可以参考：`https://docs.deepmodeling.com/projects/deepmd/en/r2/troubleshooting/howtoset_num_nodes.html`
-
-
-
-```shell
-# ---- dpgen ----
-
-export OMP_NUM_THREADS=3 # 设置用于 OpenMP 并行计算的线程数。
-export TF_INTER_OP_PARALLELISM_THREADS=3 # 设置 TensorFlow 内部操作（Intra-Op）并行计算的线程数。
-export TF_INTER_OP_PARALLELISM_THREADS=2 # 设置 TensorFlow 操作之间（Inter-Op）并行计算的线程数。
-```
-
 ##  <span style="color:red"> 3. 冻结模型以及测试模型
 
 ###  <span style="color:yellow"> 冻结模型的命令
@@ -145,4 +112,40 @@ python plotrelation.py
 1. DFT的数据精度不够：garbage in, garbage out
 2. 缺失数据
 3. 数据中原子距离过近
-4. 
+
+
+
+###  <span style="color:yellow"> 检查模型收敛性遇到的问题
+训练完了，需要检查哪些文件去判断模型是否可以投入使用？
+
+检查lcurve.out文件的第4、5行, 第6、7行, 分别是能量的训练和测试误差，力的训练和测试误差
+```shell
+head -n 2 lcurve.out && tail -n 2 lcurve. out
+#                                      能量误差     能量误差      力的误差     力的误差
+  ****  step      rmse_val    rmse_trn    rmse_e_val  rmse_e_trn    rmse_f_val  rmse_f_trn         lr
+      0      2.87e+01    5.23e+01      6.84e-01    1.55e+00      9.07e-01    1.65e+00    1.0e-03
+ 998000      1.43e-01    3.28e-01      2.93e-02    7.29e-02      4.90e-02    7.90e-02    1.1e-08
+1000000      5.58e-02    4.34e-02      6.83e-03    1.53e-04      3.83e-02    4.32e-02    1.0e-08
+```
+通过执行脚本 plotlcurve.py可以可视化误差的收敛性
+```shell
+python plotlcurve.py
+```
+
+
+###  <span style="color:yellow"> dp test 无法主节点运行dp test，报错`Aborted (core dumped)`
+
+可能是因为这些机器限制某一个任务可以使用的最大进程数，并不是不能运行，只要把下面这三个参数调小一点就可以跑起来了
+更多详细的设置可以参考：`https://docs.deepmodeling.com/projects/deepmd/en/r2/troubleshooting/howtoset_num_nodes.html`
+
+
+
+```shell
+# ---- dpgen ----
+# 默认DP_INFER_BATCH_SIZE=1024, 如果设置的过大，会导致`Aborted (core dumped)`
+export DP_INFER_BATCH_SIZE=2048
+
+export OMP_NUM_THREADS=3 # 设置用于 OpenMP 并行计算的线程数。
+export TF_INTER_OP_PARALLELISM_THREADS=3 # 设置 TensorFlow 内部操作（Intra-Op）并行计算的线程数。
+export TF_INTER_OP_PARALLELISM_THREADS=2 # 设置 TensorFlow 操作之间（Inter-Op）并行计算的线程数。
+```

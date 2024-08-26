@@ -50,5 +50,6 @@ MLCalculator:
  force_tolerance: 0.001
  stress_tolerance: 0.01
  numCore: 48
+ num_parallel: 2
  min_dist: 0.5
  waitTime: 30   

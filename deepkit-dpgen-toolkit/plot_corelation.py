@@ -56,6 +56,7 @@ def prepare_single_compositions(testdata_path, pbfile_path):
 
 
 if __name__ == "__main__":
+    print("You had better run it in: 2.getdp-mod/iter.00000*/00.train/000")
     print("You can run it by: \npython plot_corelation.py ../../../../1.dp-data/2.testset/Ce1Sc2H22/ frozen_model.pb \nor \npython plot_corelation.py ../../../../1.dp-data/2.testset frozen_model.pb")
     # 制定训练集的路径
     testdata_path = os.path.abspath(sys.argv[1])

@@ -72,7 +72,7 @@ MaxNumAtom = 60
 
 # The Variation Range for each type atom
 @CtrlRange
-1  10
+1  6
 1  80
 @End
 

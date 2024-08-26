@@ -15,7 +15,7 @@ except:
 vaspfiles = list(Path.cwd().glob("*.vasp"))
 vaspfiles = sorted(vaspfiles)
 
-indexed_dirs = Path.cwd().joinpath("stlibs")
+indexed_dirs = Path.cwd().joinpath("stdlibs")
 if not indexed_dirs.exists():
     os.mkdir(indexed_dirs) 
 

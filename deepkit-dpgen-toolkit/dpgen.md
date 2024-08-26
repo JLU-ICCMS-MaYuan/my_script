@@ -69,7 +69,7 @@ dargs                   0.4.8
 deepmd-kit              2.2.2
 dpdata                  0.2.15
 dpdispatcher            0.6.6
-dpgen                   0.10.1.dev82+gdc57c9a
+dpgen                   0.10.1.dev82+gdc57c9a  # 它的主程序代码位置是： deepmd-kit/lib/python3.10/site-packages/dpgen/generator/run.py，跑出bug了就来看看这里。
 Flask                   3.0.3
 flatbuffers             2.0
 fonttools               4.53.1
@@ -104,7 +104,7 @@ mpmath                  1.3.0
 multidict               6.0.2
 networkx                3.3
 numkit                  1.3.0
-numpy                   1.25.0
+numpy                   1.25.0     #####   ----- very important -------------
 oauthlib                3.2.0
 opt-einsum              3.3.0
 packaging               23.0
@@ -124,7 +124,7 @@ pycosat                 0.6.4
 pycparser               2.21
 PyDispatcher            2.0.7
 PyJWT                   2.4.0
-pymatgen                2022.5.18
+pymatgen                2022.5.18   #####   ----- very important -------------
 PyNaCl                  1.5.0
 pyOpenSSL               23.0.0
 pyparsing               3.1.2
@@ -174,17 +174,16 @@ zstandard               0.19.0
 
 1. `deepmd-kit/condabin/conda`的头关于python的路径修改为`realpath  deepmd-kit/bin/python`执行后的路径。
 2. `deepmd-kit/bin/conda`的头关于python的路径修改为`realpath  deepmd-kit/bin/python`执行后的路径。
-3. `source deepmd-kit/bin/activate`执行会报错类似`-bash: /home/h240012/soft/deepmd-kit/etc/profile.d/conda.sh: No such file or directory`。
-   修改`deepmd-kit/etc/profile.d/conda.sh`中关于python路径和conda路径的内容。
-   修改`deepmd-kit/bin/activate`中关于`_CONDA_ROOT`的内容。
-4. `deepmd-kit/bin/pip`的头关于python的路径修改为`realpath  deepmd-kit/bin/python`执行后的路径。
-5. `deepmd-kit/bin/conda-env`的头关于python的路径修改为`realpath  deepmd-kit/bin/python`执行后的路径。这样就可以用`conda env list`查看conda环境了
-6. 执行`which dp`，修改头相应的python的路径
-7. 执行`which dpgen`修改头相应的python的路径
-8. 执行`which dpdata`修改头相应的python的路径
-9. 执行`which dpdisp`修改头相应的python的路径
-10. 执行`which dp_ipi`修改头相应的python的路径
-11. 执行`which dp_gmx_patch`修改头相应的python的路径
+3. `source deepmd-kit/bin/activate`执行会报错类似`-bash: /home/h240012/soft/deepmd-kit/etc/profile.d/conda.sh: No such file or directory`。   修改`deepmd-kit/bin/activate`中关于`_CONDA_ROOT`的内容。
+4. 修改`deepmd-kit/etc/profile.d/conda.sh`中关于python路径和conda路径的内容。
+5. `deepmd-kit/bin/pip`的头关于python的路径修改为`realpath  deepmd-kit/bin/python`执行后的路径。
+6. `deepmd-kit/bin/conda-env`的头关于python的路径修改为`realpath  deepmd-kit/bin/python`执行后的路径。这样就可以用`conda env list`查看conda环境了
+7. 执行`which dp`，修改头相应的python的路径
+8. 执行`which dpgen`修改头相应的python的路径
+9. 执行`which dpdata`修改头相应的python的路径
+10. 执行`which dpdisp`修改头相应的python的路径
+11. 执行`which dp_ipi`修改头相应的python的路径
+12. 执行`which dp_gmx_patch`修改头相应的python的路径
 ```shell
 realpath  deepmd-kit/bin/python
 
@@ -201,9 +200,6 @@ deepmd-kit/bin/pip
 
 ###  <span style="color:yellow"> dpgen+calypso运行流程
 
-
-
-
 ```shell
 nohup dpgen run param.json machine.json 1>log 2>err &
 echo $! > taskids
@@ -213,8 +209,7 @@ ps -ef | grep dpgen
 # -ef 显示进程具体信息
 ```
 
-
-#我修改的部分
+###  <span style="color:yellow">  我修改的部分代码
 
 ```python
 /public/home/mayuan/miniconda3/envs/deepmd/lib/python3.10/site-packages/dpdispatcher/machines/pbs.py
@@ -224,7 +219,7 @@ ret, stdin, stdout, stderr = self.context.block_call("qstat -l " + job_id)
 ```
 
 
-##  <span style="color:yellow"> deepgen+calypso的使用注意事项
+##  <span style="color:green"> deepgen+calypso的使用注意事项
 
 ###  <span style="color:green"> 关于record.dpgen的解释
 ```shell
@@ -251,8 +246,38 @@ ret, stdin, stdout, stderr = self.context.block_call("qstat -l " + job_id)
 
 下载好dpgen的代码后，用这个切换分支
 ```shell
-git checkout origin/devel
+# 检查全部分支
+git branch -a 
+
+# 切换到 remotes/origin/devel
+git checkout remotes/origin/devel
+
+# 切换到 本地分支devel
+git checkout devel
+# Branch devel set up to track remote branch devel from origin.
+# Switched to a new branch 'devel'
+
+# 切换完了之后检查一下deepmd-kit/lib/python3.10/site-packages/dpgen/generator/run.py 里面有没有关于`calypso`的关键字。确保你切换对了分支
+grep calypso run.py 
 ```
+
+###  <span style="color:green"> 注意 一定要给 `2.get-dpmod/calypso_input/calypso.x`加上可执行的权限
+```shell
+# 不然跑不起来
+chmod u+x 2.get-dpmod/calypso_input/calypso.x
+```
+
+###  <span style="color:green"> 注意：做变组分结构预测的时候，input.dat设置的组分变化范围太大，容易超出calypso允许产生配比的最大范围。
+```shell
+# 三元体系，下面的参数设置，就差不多了
+# The Variation Range for each type atom
+@CtrlRange
+1  6
+1  6
+1  80
+@End
+```
+
 
 ###  <span style="color:green"> 注意 param.json 一对互斥的参数
 
@@ -271,7 +296,7 @@ git checkout origin/devel
 
 至于参数1和参数2有什么不同，参见：https://github.com/wangzyphysics/dpgen/blob/devel/examples/run/dp-calypso-vasp/param.json
 
-###  <span style="color:green"> 注意 calypso_run_model_devi.py 的运行
+###  <span style="color:green"> 注意 calypso_run_model_devi.py 无法主节点运行
 
 `iter.00000/01.model_devi/model_devi_results/`里面有个脚本`calypso_run_model_devi.py` 只能在主节点上运行, 具体是 在`iter.000000/01.model_devi/model_devi_results/` 目录下运行下面的命令:
 ```shell
@@ -303,6 +328,11 @@ python calypso_run_model_devi.py --all_models ../gen_stru_analy.000/graph.000.pb
 
 直接手动执行命令sbatch sub_devi.sh，dpgen会自动在iter.000000/01.model_devi/record.calypso中添加数字4
 
+最后dp官网还给出了一种命令行参数的方式获得Model_Devi.out, 详细参考：https://docs.deepmodeling.com/projects/deepmd/en/r2/test/model-deviation.html
+```shell
+dp model-devi -m graph.000.pb graph.001.pb graph.002.pb graph.003.pb -s ./data -o Model_Devi.out
+```
+
 ###  <span style="color:green"> 注意设置压强
 
 关于压强的参数有3个地方需要设置：
@@ -326,10 +356,25 @@ PSTRESS = 2000
 ...
 ```
 
-### 关于dpdata的LabeledSystem的使用小贴士：
+###  <span style="color:green"> 关于dpdata的LabeledSystem的使用小贴士：
 1. `/home/h240012/soft/deepmd-kit/lib/python3.10/site-packages/dpdata/system.py:1109`是LabeledSystem的位置。
 2. 索引读取后的数据的性质时，有：`energies`, `forces`, `virials`三项可以通过字典的方式索引。
 
+###   <span style="color:green"> dp test 无法主节点运行，报错`Aborted (core dumped)`
+
+可能是因为这些机器限制某一个任务可以使用的最大进程数，并不是不能运行，只要把下面这三个参数调小一点就可以跑起来了
+更多详细的设置可以参考：`https://docs.deepmodeling.com/projects/deepmd/en/r2/troubleshooting/howtoset_num_nodes.html`
+
+```shell
+# ---- dpgen ----
+# 默认DP_INFER_BATCH_SIZE=1024, 如果设置的过大，会导致`Aborted (core dumped)`
+export DP_INFER_BATCH_SIZE=2048
+
+export OMP_NUM_THREADS=3 # 设置用于 OpenMP 并行计算的线程数。
+export TF_INTER_OP_PARALLELISM_THREADS=3 # 设置 TensorFlow 内部操作（Intra-Op）并行计算的线程数。
+export TF_INTER_OP_PARALLELISM_THREADS=2 # 设置 TensorFlow 操作之间（Inter-Op）并行计算的线程数。
+```
+将上述4个参数设置好后，calypso_run_model_devi.py就也可以在后台运行了。
 
 ## <span style="color:red"> 如何判断势训练的优劣
 
@@ -341,7 +386,35 @@ dpgen.log里面`iter.*task 06`记录了每一代相应的candidate的数量。
 
 
 
+
 ### <span style="color:green"> 绘制The model deviation distribution
+`plot_ModelDevi.py`可以用于绘制Model_devi.out中力的统计分布数。
+
+它有两种
+```shell
+
+```
 
 ### <span style="color:green"> dptest检查数据集
 
+```shell
+dp test -m frozen_model.pb -s ../../../../1.dp-data/2.testset/  -d result > result.log 2>&1
+```
+
+主要集中看result.log的最后关于`weighted average of errors`的部分的`RMSE/Natoms`，例如：
+```shell
+DEEPMD INFO    # ----------weighted average of errors-----------
+DEEPMD INFO    # number of systems : 29
+DEEPMD INFO    Energy MAE         : 4.879041e-01 eV
+DEEPMD INFO    Energy RMSE        : 7.563694e-01 eV  
+DEEPMD INFO    Energy MAE/Natoms  : 8.717066e-03 eV
+DEEPMD INFO    Energy RMSE/Natoms : 1.380319e-02 eV   # -------very important------
+DEEPMD INFO    Force  MAE         : 1.690654e-01 eV/A
+DEEPMD INFO    Force  RMSE        : 2.512424e-01 eV/A # -------very important------
+DEEPMD INFO    Virial MAE         : 8.679276e+00 eV
+DEEPMD INFO    Virial RMSE        : 2.049670e+01 eV
+DEEPMD INFO    Virial MAE/Natoms  : 1.501872e-01 eV    
+DEEPMD INFO    Virial RMSE/Natoms : 3.432773e-01 eV   # -------very important------
+DEEPMD INFO    # -----------------------------------------------
+
+```

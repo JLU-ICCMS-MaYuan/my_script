@@ -32,6 +32,7 @@ MainCalculator:
  #parallel settings
  numParallel: 10
  numCore: 40
+ num_parallel: 1
  queueName: mpc
  kill_time: 86400
  waitTime: 100 
