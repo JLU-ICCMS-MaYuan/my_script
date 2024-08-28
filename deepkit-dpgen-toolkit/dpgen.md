@@ -209,40 +209,9 @@ ps -ef | grep dpgen
 # -ef 显示进程具体信息
 ```
 
-###  <span style="color:yellow">  我修改的部分代码
+##  <span style="color:red"> 1. deepgen+calypso的使用注意事项
 
-```python
-/public/home/mayuan/miniconda3/envs/deepmd/lib/python3.10/site-packages/dpdispatcher/machines/pbs.py
-
-#ret, stdin, stdout, stderr = self.context.block_call("qstat -x " + job_id)
-ret, stdin, stdout, stderr = self.context.block_call("qstat -l " + job_id)
-```
-
-
-##  <span style="color:green"> deepgen+calypso的使用注意事项
-
-###  <span style="color:green"> 关于record.dpgen的解释
-```shell
-# 第0代
-00 检查准备好的输入文件 
-01 train
-02 analysis
-03 motivation and exploration
-
-# 第1代
-10 检查准备好的输入文件 
-11 train
-12 analysis
-13 motivation and exploration
-
-...
-...
-
-```
-
-如果你要从02开始续算，那么就把02后面的03 10 11 12 13 ... 都删掉了. 这表示重新做motivation and exploration
-
-###  <span style="color:green"> 注意切换dpgen的分支
+###  <span style="color:yellow"> 注意切换dpgen的分支
 
 下载好dpgen的代码后，用这个切换分支
 ```shell
@@ -261,13 +230,116 @@ git checkout devel
 grep calypso run.py 
 ```
 
-###  <span style="color:green"> 注意 一定要给 `2.get-dpmod/calypso_input/calypso.x`加上可执行的权限
+
+###  <span style="color:yellow"> 关于record.dpgen的解释
+```shell
+# 第0代
+00 make_train 检查准备好的输入文件 
+01 run_train
+02 post_train
+03 make_model_devi
+04 run_model_devi  # 即执行calypso_run_model_devi.py
+05 post_model_devi # 空函数，没有任何内容
+06 make_fp
+07 run_fp
+08 post_fp
+
+
+# 第1代
+10 make_train 检查准备好的输入文件 
+11 run_train
+12 post_train
+13 make_model_devi
+14 run_model_devi 
+15 post_model_devi
+16 make_fp
+17 run_fp
+18 post_fp
+...
+...
+
+```
+
+如何通过修改record.dpgen控制从指定的位置续算呢？
+比如要重新运行calypso_run_model_devi.py，那么就删除03及其后面的所有，只保留00 01 02
+比如要在运行完calypso_run_model_devi.py的基础上续算，那么就删除04及其后面的所有，只保留00 01 02 03
+
+###  <span style="color:yellow">  /deepmd-kit/lib/python3.10/site-packages/dpgen/generator/run.py的程序主干
+
+```python
+3791     while cont:
+3792         ii += 1
+3793         iter_name=make_iter_name(ii)
+3794         sepline(iter_name,'=')
+3795         for jj in range (numb_task) :
+3796             print(jj)
+3797             if ii * max_tasks + jj <= iter_rec[0] * max_tasks + iter_rec[1] :
+3798                 continue
+3799             task_name="task %02d"%jj
+3800             sepline("{} {}".format(iter_name, task_name),'-')
+3801             if   jj == 0 :
+3802                 log_iter ("make_train", ii, jj)
+3803                 make_train (ii, jdata, mdata)
+3804             elif jj == 1 :
+3805                 log_iter ("run_train", ii, jj)
+3806                 run_train  (ii, jdata, mdata)
+3807             elif jj == 2 :
+3808                 log_iter ("post_train", ii, jj)
+3809                 post_train (ii, jdata, mdata)
+3810             elif jj == 3 :
+3811                 log_iter ("make_model_devi", ii, jj)
+3812                 cont = make_model_devi (ii, jdata, mdata)
+3813                 if not cont :
+3814                     break
+3815             elif jj == 4 :
+3816                 log_iter ("run_model_devi", ii, jj)
+3817                 run_model_devi (ii, jdata, mdata)
+3818 
+3819             elif jj == 5 :
+3820                 log_iter ("post_model_devi", ii, jj)
+3821                 post_model_devi (ii, jdata, mdata)
+3822             elif jj == 6 :
+3823                 log_iter ("make_fp", ii, jj)
+3824                 make_fp (ii, jdata, mdata)
+3825             elif jj == 7 :
+3826                 log_iter ("run_fp", ii, jj)
+3827                 run_fp (ii, jdata, mdata)
+3828             elif jj == 8 :
+3829                 log_iter ("post_fp", ii, jj)
+3830                 post_fp (ii, jdata)
+3831             else :
+3832                 raise RuntimeError ("unknown task %d, something wrong" % jj)
+3833             record_iter (record, ii, jj)
+```
+
+
+###  <span style="color:yellow">  我修改的部分代码
+
+```python
+deepmd-kit/lib/python3.10/site-packages/dpdispatcher/machines/pbs.py
+
+#ret, stdin, stdout, stderr = self.context.block_call("qstat -x " + job_id)
+ret, stdin, stdout, stderr = self.context.block_call("qstat -l " + job_id)
+```
+
+```python
+deepmd-kit/lib/python3.10/site-packages/dpgen/generator/run.py
+
+# standard_incar = incar_upper(Incar.from_str(incar))
+standard_incar = incar_upper(Incar.from_string(incar))
+
+# kp=Kpoints.from_str(ret)
+kp=Kpoints.from_string(ret)
+```
+
+
+###  <span style="color:yellow"> 注意 一定要给 `2.get-dpmod/calypso_input/calypso.x`加上可执行的权限
 ```shell
 # 不然跑不起来
 chmod u+x 2.get-dpmod/calypso_input/calypso.x
 ```
 
-###  <span style="color:green"> 注意：做变组分结构预测的时候，input.dat设置的组分变化范围太大，容易超出calypso允许产生配比的最大范围。
+###  <span style="color:yellow"> 注意：做变组分结构预测的时候，input.dat设置的组分变化范围太大，容易超出calypso允许产生配比的最大范围。
 ```shell
 # 三元体系，下面的参数设置，就差不多了
 # The Variation Range for each type atom
@@ -279,7 +351,7 @@ chmod u+x 2.get-dpmod/calypso_input/calypso.x
 ```
 
 
-###  <span style="color:green"> 注意 param.json 一对互斥的参数
+###  <span style="color:yellow"> 注意 param.json 一对互斥的参数
 
 ```json
 # 参数1
@@ -296,7 +368,7 @@ chmod u+x 2.get-dpmod/calypso_input/calypso.x
 
 至于参数1和参数2有什么不同，参见：https://github.com/wangzyphysics/dpgen/blob/devel/examples/run/dp-calypso-vasp/param.json
 
-###  <span style="color:green"> 注意 calypso_run_model_devi.py 无法主节点运行
+###  <span style="color:yellow"> 注意 calypso_run_model_devi.py 无法主节点运行
 
 `iter.00000/01.model_devi/model_devi_results/`里面有个脚本`calypso_run_model_devi.py` 只能在主节点上运行, 具体是 在`iter.000000/01.model_devi/model_devi_results/` 目录下运行下面的命令:
 ```shell
@@ -332,8 +404,33 @@ python calypso_run_model_devi.py --all_models ../gen_stru_analy.000/graph.000.pb
 ```shell
 dp model-devi -m graph.000.pb graph.001.pb graph.002.pb graph.003.pb -s ./data -o Model_Devi.out
 ```
+<span style="color:lightblue"> **注意: 当你发现`task.*.000`中没有`model_devi.out`时，可以通过运行`dp model-devi ...`或者`python calypso_run_model_devi.py ...`获得, 然后通过执行`merge_model_devi.py`将所有的`task.*.000`中的`model_devi.out`合并为`Model_Devi.out`。具体步骤如下：**
 
-###  <span style="color:green"> 注意设置压强
+<span style="color:lightblue"> **1. 进入指定的目录，执行`check_model_devi.sh`检查哪些目录中缺少`model_devi.out`
+```shell
+cd 2.getdp-mod/iter.00000*/01.model_devi/model_devi_results
+./check_model_devi.sh 000 820
+```
+<span style="color:lightblue"> **2. 备份所有的task.*.000，这一步非常重要，因为每次运行`python calypso_run_model_devi.py ...`，其它task目录总会莫名其妙少了`model_devi.out`，为了防止你不停的丢失文件，你可以备份它们，如果真丢失了`model_devi.out`可以直接拷贝**
+```shell
+mkdir backup
+cp task* backup
+```
+<span style="color:lightblue"> **3. 对需要重新运行`python calypso_run_model_devi.py ...`的结构，执行下面的命令。 另外：`python calypso_run_model_devi.py ...`运行输出的model_devi.out比`dp model-devi ...`运行输出的结果多一列`min_dis`, 相应的`python calypso_run_model_devi.py ...`运行输出的Model_Devi.out也多一列`min_dis`**
+
+```shell
+./retry_model_devi.sh
+```
+
+<span style="color:lightblue"> **4. 合并`model_devi.out`到`Model_Devi.out`. 执行下面的命令:**
+
+```shell
+python merge_model_devi.py 
+```
+
+
+
+###  <span style="color:yellow"> 注意设置压强
 
 关于压强的参数有3个地方需要设置：
 ```shell
@@ -356,11 +453,11 @@ PSTRESS = 2000
 ...
 ```
 
-###  <span style="color:green"> 关于dpdata的LabeledSystem的使用小贴士：
+###  <span style="color:yellow"> 关于dpdata的LabeledSystem的使用小贴士：
 1. `/home/h240012/soft/deepmd-kit/lib/python3.10/site-packages/dpdata/system.py:1109`是LabeledSystem的位置。
 2. 索引读取后的数据的性质时，有：`energies`, `forces`, `virials`三项可以通过字典的方式索引。
 
-###   <span style="color:green"> dp test 无法主节点运行，报错`Aborted (core dumped)`
+###  <span style="color:yellow"> dp test 无法主节点运行，报错`Aborted (core dumped)`
 
 可能是因为这些机器限制某一个任务可以使用的最大进程数，并不是不能运行，只要把下面这三个参数调小一点就可以跑起来了
 更多详细的设置可以参考：`https://docs.deepmodeling.com/projects/deepmd/en/r2/troubleshooting/howtoset_num_nodes.html`
@@ -376,9 +473,20 @@ export TF_INTER_OP_PARALLELISM_THREADS=2 # 设置 TensorFlow 操作之间（Inte
 ```
 将上述4个参数设置好后，calypso_run_model_devi.py就也可以在后台运行了。
 
-## <span style="color:red"> 如何判断势训练的优劣
+### <span style="color:yellow"> 发现fp时候或者model_devi的时候，不报任何错，但是task任务没有跑起来。
 
-### <span style="color:green"> 检查candidate的数量
+<span style="color:lightblue">  **原因1：可能是因为节点损坏，任务提交上去后立刻掉。可以修改machine.json里面的`"custom_flags": ["SBATCH --exclude=node21"]`, 将坏节点排除出去。**
+
+
+<span style="color:lightblue">  **原因2：可能是因为在写machine.json的fp部分的command参数时，加入了很多带#的内容, 直接把后面的shell命令注释了，所以最好还是不要加任何#**
+
+```shell
+
+```
+
+## <span style="color:red"> 2. 如何判断势训练的优劣
+
+### <span style="color:yellow"> 检查candidate的数量
 
 dpgen.log里面`iter.*task 06`记录了每一代相应的candidate的数量。
 
@@ -387,15 +495,21 @@ dpgen.log里面`iter.*task 06`记录了每一代相应的candidate的数量。
 
 
 
-### <span style="color:green"> 绘制The model deviation distribution
+### <span style="color:yellow"> 绘制The model deviation distribution
 `plot_ModelDevi.py`可以用于绘制Model_devi.out中力的统计分布数。
 
-它有两种
+它有两种运行模式：
 ```shell
+You can run it by: 
 
+python plot_corelation.py ../../../../1.dp-data/2.testset/Ce1Sc2H22/ frozen_model.pb 
+
+or 
+
+python plot_corelation.py ../../../../1.dp-data/2.testset frozen_model.pb
 ```
 
-### <span style="color:green"> dptest检查数据集
+### <span style="color:yellow"> dptest检查数据集
 
 ```shell
 dp test -m frozen_model.pb -s ../../../../1.dp-data/2.testset/  -d result > result.log 2>&1

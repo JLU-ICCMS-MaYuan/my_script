@@ -214,6 +214,8 @@ class vasp_writeincar:
             incar.write("ISYM     = {}   \n".format(str(self.isym))) 
             incar.write("ENCUT    = 500  \n")        
             incar.write("PREC     = A    \n")
+            incar.write("SYMPREC  = {}   \n".format(str(self.symprec)))
+
             incar.write("NCORE    = 4    \n")         
             incar.write("KSPACING = 0.30 \n")            
             incar.write("ISMEAR   = 0    \n")   
@@ -226,8 +228,8 @@ class vasp_writeincar:
             incar.write("IBRION   = 2    \n")   
             incar.write("ISIF     = 3    \n")        
             incar.write("POTIM    = 0.05 \n")
-            incar.write("LWAVE  = .FALSE.\n")                 
-            incar.write("LCHARG = .FALSE.\n")   
+            incar.write("LWAVE    = .FALSE.\n")                 
+            incar.write("LCHARG   = .FALSE.\n")   
             incar.write("PSTRESS  = {}   \n".format(str(float(self.press)*10))) 
         return incar_filepath   
 
