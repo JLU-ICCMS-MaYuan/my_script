@@ -7,14 +7,15 @@ if [ -z "$name" ]; then # -z：检查字符串的长度是否为零。如果字�
     name=$(pwd)
 fi
 
-# 运行并显示当前正在运行的任务
+# 运行 squeue 一次并存储输出
+squeue_output=$(squeue -h --format '%A    %t    %R    %M    %Z     %s' | grep mayuan)
+
 echo "running"
-squeue -u h240012 -h --format '%A    %t    %R    %M    %Z' | grep " R " | grep "$name"
+echo "$squeue_output" | grep " R "  | grep "$name"
 
-# 显示当前正在等待的任务
 echo "waiting"
-squeue -u h240012 -h --format '%A    %t    %R    %M    %Z' | grep " PD " | grep "$name"
+echo "$squeue_output" | grep " PD " | grep "$name"
 
-# 显示提交的总任务数
-echo -n '提交总任务数:'
-squeue | grep h240012 | grep "$name" | wc -l
+# 提交总任务数
+echo -n '提交总任务数: '
+echo "$squeue_output" | wc -l | grep "$name"

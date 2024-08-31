@@ -21,8 +21,7 @@
         "queue_name": "normal",
         "group_size": 1,
         "para_deg": 4,
-        "custom_flags": ["SBATCH --exclude=node21"]
-      }
+        "custom_flags": ["#SBATCH --exclude=node21"]      }
     }],
 
   "model_devi":[
@@ -47,14 +46,13 @@
         "gpu_per_node": 0,
         "queue_name": "normal",
         "group_size": 2,
-        "custom_flags": ["SBATCH --exclude=node21"]
-      }
+        "custom_flags": ["#SBATCH --exclude=node21"]      }
     }],
 
   "fp":[
     {
-      "command": "source /public/home/liuhanyu/intel/oneapi/setvars.sh; ulimit -s unlimited; export I_MPI_ADJUST_REDUCE=3; export MPIR_CVAR_COLL_ALIAS_CHECK=0; export I_MPI_FABRICS=shm; export MKL_DEBUG_CPU_TYPE=5; log=`ls|grep fp.log|wc -l`;if [ $log -ne 0 ]; then err8=`grep -E 'Inconsistent Bravais lattice types found for crystalline and|IBZKPT: not all point group operations associated with the symmetry' fp.log|wc -l`; if [ $err8 -ne 0 ]; then sed -i 's/SYMPREC = 1e-3/SYMPREC = 1e-7/g' INCAR; fi; fi; mpirun -n 64 /public/home/liuhanyu/software/apps/vasp.6.3.2/bin/vasp_std > vasp.log 2>&1",
-      "machine": {
+      "command": "source /public/home/liuhanyu/intel/oneapi/setvars.sh --force; ulimit -s unlimited; export I_MPI_ADJUST_REDUCE=3; export MPIR_CVAR_COLL_ALIAS_CHECK=0; export I_MPI_FABRICS=shm; export MKL_DEBUG_CPU_TYPE=5; log=`ls|grep vasp.log|wc -l`; if [ $log -ne 0 ]; then err1=`grep -E 'Inconsistent Bravais lattice types found for crystalline and|try changing SYMPREC.|Your reciprocal lattice and k-lattice belong to different lattice|In most cases this is due to inaccuracies in the specification of|try to increase SYMPREC|IBZKPT: not all point group operations associated with the symmetry' vasp.log|wc -l`; if [ $err1 -ne 0 ]; then sed -i 's/SYMPREC = 1e-3/SYMPREC = 1e-9/g' INCAR; fi; err2=`grep -E 'The distance between some ions is very small.' vasp.log|wc -l`; if [ $err2 -ne 0 ]; then sed -i '2s/.*/2.0/' POSCAR; sed -i '$a AMIX = 0.02' INCAR; sed -i '$a BMIX = 0.0001' INCAR; fi; err3=`grep -E 'The electronic self-consistency was not achieved' vasp.log|wc -l`; if [ $err3 -ne 0 ]; then sed -i 's/NELM = 60/NELM = 120/g' INCAR; sed -i '$a AMIX = 0.02' INCAR; sed -i '$a BMIX = 0.0001' INCAR; fi; err4=`grep -E 'and for larger cells it|large supercell' vasp.log|wc -l`; if [ $err4 -ne 0 ]; then sed -i '$a AMIX = 0.02' INCAR; sed -i '$a BMIX = 0.0001' INCAR; sed -i '$a LREAL= Auto' INCAR; fi; fi; mpirun -n 64 /public/home/liuhanyu/software/apps/vasp.6.3.2/bin/vasp_std > vasp.log 2>&1",
+        "machine": {
         "batch_type": "Slurm",
         "context_type": "LocalContext",
         "local_root" : "./",
@@ -70,8 +68,7 @@
         "queue_name": "normal",
         "group_size": 1,
         "source_list": [],
-        "custom_flags": ["SBATCH --exclude=node21"]
-      }
+        "custom_flags": ["#SBATCH --exclude=node21"]      }
     }
 ]
 }

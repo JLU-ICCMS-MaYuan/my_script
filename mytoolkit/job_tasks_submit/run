@@ -1,9 +1,11 @@
 #!/bin/bash
 
-# 运行并显示当前正在运行的任务
-echo "running"
-squeue -u liuhanyu -h --format '%A    %t    %R    %M    %Z' | grep " R "
+# 运行 squeue 一次并存储输出
+squeue_output=$(squeue -h --format '%A    %t    %R    %M    %Z     %s' | grep mayuan)
 
-# 显示提交的总任务数
-echo -n '提交总任务数:'
-squeue | grep liuhanyu |  wc -l
+echo "running"
+echo "$squeue_output" | grep " R "
+
+# 提交总任务数
+echo -n '提交总任务数: '
+echo "$squeue_output" | wc -l

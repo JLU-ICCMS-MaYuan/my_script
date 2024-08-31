@@ -18,14 +18,6 @@
 	"sys_configs_prefix": "",
     "sys_configs": [], 
 
-    "training_init_model":              false,
-    "training_reuse_iter":              1,
-    "training_reuse_old_ratio":         0.9,
-    "training_reuse_start_lr":          1e-4,
-    "training_reuse_stop_batch":        1000000,
-    "training_reuse_start_pref_e":      0.2,
-    "training_reuse_start_pref_f":      100,
-
     "numb_models": 4,
     "default_training_param": {
     "model": {
@@ -74,9 +66,9 @@
         "save_ckpt": "model.ckpt",
         "disp_training": true,
         "time_training": true,
-	"_tensorboard":	true,
-	"_tensorboard_log_dir":"log",
-	"_tensorboard_freq": 1000,
+        "_tensorboard":	true,
+        "_tensorboard_log_dir":"log",
+        "_tensorboard_freq": 1000,
         "profiling": false,
         "profiling_file": "timeline.json",
         "_set_prefix": "set"

@@ -1,4 +1,4 @@
-# deepkit+结构预测
+# dpgen+结构预测
 
 
 帖子
@@ -111,6 +111,7 @@ packaging               23.0
 palettable              3.3.3
 pandas                  2.2.2
 paramiko                3.4.1
+phonopy                 2.27.0     #####    ----- very important -------------
 pillow                  10.4.0
 pip                     23.0.1
 plotly                  5.23.0
@@ -477,11 +478,41 @@ export TF_INTER_OP_PARALLELISM_THREADS=2 # 设置 TensorFlow 操作之间（Inte
 
 <span style="color:lightblue">  **原因1：可能是因为节点损坏，任务提交上去后立刻掉。可以修改machine.json里面的`"custom_flags": ["SBATCH --exclude=node21"]`, 将坏节点排除出去。**
 
-
 <span style="color:lightblue">  **原因2：可能是因为在写machine.json的fp部分的command参数时，加入了很多带#的内容, 直接把后面的shell命令注释了，所以最好还是不要加任何#**
 
+### <span style="color:yellow"> 发现fp时候, 有些fp迟迟算不完。你需要进到目录里面看一下，但是你要找不到是相应的哪个task目录。
 ```shell
+第一步：找到相应任务号
+第二步：vi log
+第三步：搜索相应任务号，并找到对于的哈希值x
+第四步：在 2.getdp-mod/execute/fp/哈希值目录y 中找到对应的哈希值x作业脚本：x.sub.run。
+里面就写着task目录。
 
+例如：
+cd $REMOTE_ROOT
+cd task.100.000000
+test $? -ne 0 && exit 1
+if [ ! -f db5409944b5165c01038009c21b4dee6722a9365_task_tag_finished ] ;then
+...
+...
+
+大功告成。
+```
+
+### <span style="color:yellow"> param.json 里面有一块参数（如下）会影响numb_steps等参数的设置。如果你要从头跑dpgen，最好把它们删掉了。
+
+```json
+{
+  ...
+    "training_init_model":              false,
+    "training_reuse_iter":              1,
+    "training_reuse_old_ratio":         0.9,
+    "training_reuse_start_lr":          1e-4,
+    "training_reuse_stop_batch":        1000000,
+    "training_reuse_start_pref_e":      0.2,
+    "training_reuse_start_pref_f":      100,
+  ...
+}
 ```
 
 ## <span style="color:red"> 2. 如何判断势训练的优劣
@@ -532,3 +563,68 @@ DEEPMD INFO    Virial RMSE/Natoms : 3.432773e-01 eV   # -------very important---
 DEEPMD INFO    # -----------------------------------------------
 
 ```
+
+
+## <span style="color:red"> 报错解读
+
+### <span style="color:yellow"> 做fp的时候遇到如下报错，多半是因为intel的oneapi编译器在source的时候，没有加上`--foce`。在`machine.json`中的fp的部分的`command`部分写完整的source命令即可。例如：`source /public/home/liuhanyu/intel/oneapi/setvars.sh --force`.
+
+```shell
+Traceback (most recent call last):
+  File "/public/home/liuhanyu/workplace/mayuan/software/deepmd-kit/lib/python3.10/site-packages/dpdispatcher/submission.py", line 358, in handle_unexpected_submission_state
+    job.handle_unexpected_job_state()
+  File "/public/home/liuhanyu/workplace/mayuan/software/deepmd-kit/lib/python3.10/site-packages/dpdispatcher/submission.py", line 862, in handle_unexpected_job_state
+    raise RuntimeError(err_msg)
+RuntimeError: job:734273b19c6e20d77b77e4e34ece5bb2e0a08668 530904 failed 3 times.
+Possible remote error message: ==> /public/home/liuhanyu/workplace/mayuan/40.La-Sc-H/2.getdp-mod/execute/fp/9e16ce64ccdfa65bee93be36838740e338edd476/task.010.000010/fp.log <==
+red on exiting setvars.sh.
+  
+ 
+:: WARNING: setvars.sh has already been run. Skipping re-execution.
+   To force a re-execution of setvars.sh, use the '--force' option.
+   Using '--force' can result in excessive use of your environment variables.
+  
+usage: source setvars.sh [--force] [--config=file] [--help] [...]
+  --force        Force setvars.sh to re-run, doing so may overload environment.
+  --config=file  Customize env vars using a setvars.sh configuration file.
+  --help         Display this help message and exit.
+  ...            Additional args are passed to individual env/vars.sh scripts
+                 and should follow this script's arguments.
+  
+  Some POSIX shells do not accept command-line options. In that case, you can pass
+  command-line options via the SETVARS_ARGS environment variable. For example:
+  
+  $ SETVARS_ARGS="ia32 --config=config.txt" ; export SETVARS_ARGS
+  $ . path/to/setvars.sh
+  
+  The SETVARS_ARGS environment variable is cleared on exiting setvars.sh.
+  
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/public/home/liuhanyu/workplace/mayuan/software/deepmd-kit/bin/dpgen", line 8, in <module>
+    sys.exit(main())
+  File "/public/home/liuhanyu/workplace/mayuan/software/deepmd-kit/lib/python3.10/site-packages/dpgen/main.py", line 185, in main
+    args.func(args)
+  File "/public/home/liuhanyu/workplace/mayuan/software/deepmd-kit/lib/python3.10/site-packages/dpgen/generator/run.py", line 3944, in gen_run
+    run_iter (args.PARAM, args.MACHINE)
+  File "/public/home/liuhanyu/workplace/mayuan/software/deepmd-kit/lib/python3.10/site-packages/dpgen/generator/run.py", line 3827, in run_iter
+    run_fp (ii, jdata, mdata)
+  File "/public/home/liuhanyu/workplace/mayuan/software/deepmd-kit/lib/python3.10/site-packages/dpgen/generator/run.py", line 3187, in run_fp
+    run_fp_inner(iter_index, jdata, mdata,  forward_files, backward_files, _vasp_check_fin,
+  File "/public/home/liuhanyu/workplace/mayuan/software/deepmd-kit/lib/python3.10/site-packages/dpgen/generator/run.py", line 3166, in run_fp_inner
+    submission.run_submission()
+  File "/public/home/liuhanyu/workplace/mayuan/software/deepmd-kit/lib/python3.10/site-packages/dpdispatcher/submission.py", line 231, in run_submission
+    self.handle_unexpected_submission_state()
+  File "/public/home/liuhanyu/workplace/mayuan/software/deepmd-kit/lib/python3.10/site-packages/dpdispatcher/submission.py", line 362, in handle_unexpected_submission_state
+    raise RuntimeError(
+RuntimeError: Meet errors will handle unexpected submission state.
+Debug information: remote_root==/public/home/liuhanyu/workplace/mayuan/40.La-Sc-H/2.getdp-mod/execute/fp/9e16ce64ccdfa65bee93be36838740e338edd476.
+Debug information: submission_hash==9e16ce64ccdfa65bee93be36838740e338edd476.
+Please check error messages above and in remote_root. The submission information is saved in /public/home/liuhanyu/.dpdispatcher/submission/9e16ce64ccdfa65bee93be36838740e338edd476.json.
+For furthur actions, run the following command with proper flags: dpdisp submission 9e16ce64ccdfa65bee93be36838740e338edd476
+
+```
+

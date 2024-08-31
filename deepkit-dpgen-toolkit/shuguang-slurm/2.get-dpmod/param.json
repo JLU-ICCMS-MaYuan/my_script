@@ -1,27 +1,19 @@
 {
-    "model_devi_engine":"calypso",
-    "calypso_input_path":"./calypso_input",
-    "model_devi_max_iter": 15,
-    "vsc":true,
-    "ratio_failed":0.2,
-    "type_map": ["La", "Sc", "H"],
-    "mass_map": [57, 21, 1],
-    "init_data_prefix":"../1.dp-data/1.trainset",
-    "init_data_sys": [
-        "La1Sc1H11"
-     ],
+"model_devi_engine":"calypso",
+"calypso_input_path":"./calypso_input",
+"model_devi_max_iter": 15,
+"vsc":true,
+"ratio_failed":0.2,
+"type_map": ["La", "Sc", "H"],
+"mass_map": [57, 21, 1],
+"init_data_prefix":"../1.dp-data/1.trainset",
+"init_data_sys": [
+    "La1Sc1H11"
+    ],
 "_comment": " that's all ",
     "_comment3": "sys_configs_prefix 指定跑分子动力学的初始结构的路径的前缀。sys_configs在上述路径下的具体结构的路径",
     "sys_configs_prefix": "",
 "sys_configs": [], 
-
-"training_init_model":              false,
-"training_reuse_iter":              1,
-"training_reuse_old_ratio":         0.9,
-"training_reuse_start_lr":          1e-4,
-"training_reuse_stop_batch":        1000000,
-"training_reuse_start_pref_e":      0.2,
-"training_reuse_start_pref_f":      100,
 
 "numb_models": 4,
 "default_training_param": {
@@ -95,5 +87,6 @@
 "fp_task_min": 5,        
 "fp_pp_path": "./vasp_input",
 "fp_pp_files": ["POTCAR.La", "POTCAR.Sc", "POTCAR.H"],
-"fp_incar":"./vasp_input/INCAR"
+"fp_incar":"./vasp_input/INCAR",
+
 }

@@ -21,9 +21,10 @@ def parepare_single_model_deviation(file_path):
 
 def plot_single_model_deviation(max_devi_f: list[float], ax=None):
 
+    filtered_max_devi_f = [x for x in max_devi_f if 0 <= x <= 5]  
     if ax is None:
         fig, ax = plt.subplots()
-    ax.hist(max_devi_f, bins=100, color='blue', edgecolor='black', alpha=0.7)
+    ax.hist(filtered_max_devi_f, bins=100, color='blue', edgecolor='black', alpha=0.7)
     ax.set_title('Distribution of Max Devi F')
     ax.set_xlabel('Max Devi F')
     ax.set_ylabel('Frequency')
