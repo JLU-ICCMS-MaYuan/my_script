@@ -27,16 +27,28 @@ for sqline in squeuelines:
     hash_subrun_path = os.path.join(fppath, hashid+'.sub.run')
     with open(hash_subrun_path, 'r') as f:
         hash_subrun_content = f.read()
-    taskid = re.search(r'task\.\d+\.\d+', hash_subrun_content).group()
-    task_path = os.path.join(fppath, taskid) 
-    if 'R' == sqline[1]:
-        running.append([jobid, hashid, time, task_path])
-    elif 'PD' == sqline[1]:
-        waiting.append([jobid, hashid, time, task_path])
+    try:
+        taskid = re.search(r'task\.\d+\.\d+', hash_subrun_content).group()
+        task_path = os.path.join(fppath, taskid)
+        if 'R' == sqline[1]:
+            running.append([jobid, hashid, time, task_path])
+        elif 'PD' == sqline[1]:
+            waiting.append([jobid, hashid, time, task_path])
+    except AttributeError:
+        taskid = re.search(r'task\.\d+', hash_subrun_content).group()
+        task_path = os.path.join(fppath, taskid)
+        if 'R' == sqline[1]:
+            running.append([jobid, hashid, time, task_path])
+        elif 'PD' == sqline[1]:
+            waiting.append([jobid, hashid, time, task_path])
+    except Exception as e:
+        pass
 
-print('Running')
-for runid, hashid, time, runpath in running:
-    print(runid, hashid, time, runpath)
+
+
 print('Waiting')
 for waitid, hashid, time, waitpath in waiting:
     print(waitid, hashid, time, waitpath)
+print('Running')
+for runid, hashid, time, runpath in running:
+    print(runid, hashid, time, runpath)

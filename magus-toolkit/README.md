@@ -179,3 +179,23 @@ wait_command = f"salloc {wait_condition} {self.wait_params} -p {self.queue_name}
 ```python
 wait_command = f"salloc {wait_condition} {self.wait_params} -p {self.queue_name} --account=hp240139 sleep 10"
 ```
+
+### 14. 如何续算magus？ 
+
+一般来说，magus分为`Initialize`, `Generation 1`, `Generation 2`....这么几步。要想续算，必须保证Initialize完成才能续算，不然它永远会从Initialize开始
+
+```shell
+============== Initialize ==============
+...
+============= Generation 1 =============
+...
+============= Generation 2 =============
+...
+============= Generation 3 =============
+...
+```
+
+续算的时候，只需要在原本的命令中加入-r即可。
+```shell
+
+```
