@@ -29,7 +29,7 @@ for dir in task.*; do
         nelm_steps=$(grep -s -a "NELM   =" "$OUTCAR" | awk '{print $3}' | tr -d ';')
         iteration_steps=$(grep -s -a "Iteration" "$OUTCAR" | wc -l)
 
-        echo "$nelm_steps" "$iteration_steps"
+        # echo "$nelm_steps" "$iteration_steps"
 
         # 满足条件的认为是收敛
         if [ "$free_energie" -eq 0 ] && [ "$timing_info" -eq 0 ] && [ "$in_kb" -ne 0 ] && (( $(echo "$nelm_steps > $iteration_steps" | bc -l) )); then

@@ -334,10 +334,21 @@ kp=Kpoints.from_string(ret)
 ```
 
 
-###  <span style="color:yellow"> 注意 一定要给 `2.get-dpmod/calypso_input/calypso.x`加上可执行的权限
+###  <span style="color:yellow"> 注意： 一定要给 `2.get-dpmod/calypso_input/calypso.x`加上可执行的权限
 ```shell
 # 不然跑不起来
 chmod u+x 2.get-dpmod/calypso_input/calypso.x
+```
+
+###  <span style="color:yellow"> 注意：dpgen+calypso的变组分包含广义的变组分和狭义的变组分两种设置方法。
+
+广义的变组分：在`param.json`里面设置`"vsc":true`, 此时不仅变配比，还会变元素种类，例如做Ce-Sc-H体系，你需要准备Ce, Sc, H, Ce-Sc, Ce-H, Sc-H, Ce-Sc-H七种input.dat。因此你需要在`2.getdp-mod/calypso_input`目录中准备以下七个文件：
+```shell
+input.dat.Sc  input.dat.ScH  input.dat.Ce  input.dat.CeSc  input.dat.CeCaH  input.dat.CeH  input.dat.H
+```
+狭义的变组分：在`param.json`里面设置`"vsc":false`, 此时只变配比，只需要确保你使用的input.dat中设置了`VSC = True`和`@CtrlRange...@End`. 而且你需要在`2.getdp-mod/calypso_input`目录中准备好`input.dat`, 不能在`input.dat`中加任何后缀：
+```shell
+input.dat
 ```
 
 ###  <span style="color:yellow"> 注意：做变组分结构预测的时候，input.dat设置的组分变化范围太大，容易超出calypso允许产生配比的最大范围。
@@ -480,7 +491,9 @@ export TF_INTER_OP_PARALLELISM_THREADS=2 # 设置 TensorFlow 操作之间（Inte
 
 <span style="color:lightblue">  **原因2：可能是因为在写machine.json的fp部分的command参数时，加入了很多带#的内容, 直接把后面的shell命令注释了，所以最好还是不要加任何#**
 
-### <span style="color:yellow"> 发现fp时候, 有些fp迟迟算不完。你需要进到目录里面看一下，但是你要找不到是相应的哪个task目录。
+### <span style="color:yellow"> 发现fp时候, 有些fp迟迟算不完。你需要仔细检查结构是不是出问题了。
+
+首先：你需要进到相应的那个task目录目录里面看一下，进入方法如下：
 ```shell
 第一步：找到相应任务号
 第二步：vi log
@@ -497,6 +510,41 @@ if [ ! -f db5409944b5165c01038009c21b4dee6722a9365_task_tag_finished ] ;then
 ...
 
 大功告成。
+```
+
+然后：进入那个目录，检查POSCAR是不是非常不合理，特别是检查晶格的三个边长是不是差别特别大，晶格的三个角度是不是差别特别大。
+
+如果特别不合理，而且你不想对这个结构做fp了，你只需要做下面的事情即可跳过这个结构的fp:
+1. 搞清楚这个目录下控制计算的`哈希值文件名`是什么，然后创建它, 
+2. 然后把这个目录下运行的vasp任务scancel或者qdel掉了。
+3. 等dpgen下次再次提交这个目录下的任务时，dpgen会自动检测这个目录下控制计算的`哈希值文件`是否存在，如果存在就会认为这个目录算好了，然后跳过这个目录。
+
+下面给出具体的操作：
+```shell
+$ pwd
+/public/home/liuhanyu/workplace/mayuan/36.Ce-Ca-H/200GPa/2.getdp-mod
+
+# 获取正在运行的task任务的目录
+$ python check_task.py 
+1538014 036f429d20854c4abaf66e67b34c0d96306f585f 0:00 /public/home/liuhanyu/workplace/mayuan/36.Ce-Ca-H/200GPa/2.getdp-mod/execute/fp/4de7c3ce3491fde307fa28957e723ff48e4d125a/task.685.000000
+Running
+1491310 3d7da62f423cf1ac51184dcbc502ebd7f4365822 33:43 /public/home/liuhanyu/workplace/mayuan/36.Ce-Ca-H/200GPa/2.getdp-mod/execute/fp/4de7c3ce3491fde307fa28957e723ff48e4d125a/task.089.000000
+
+# 进入你怀疑有问题的目录
+$ cd  /public/home/liuhanyu/workplace/mayuan/36.Ce-Ca-H/200GPa/2.getdp-mod/execute/fp/4de7c3ce3491fde307fa28957e723ff48e4d125a/task.089.000000
+
+# grep找到相应的*.sub.run文件中应该touch的哈希值文件
+$ grep "task.089.000000" ../*.sub.run | grep touch
+../3d7da62f423cf1ac51184dcbc502ebd7f4365822.sub.run:  if test $? -eq 0; then touch c083fadca032f17f4ffe348d4c14f43b11e9bc58_task_tag_finished; else echo 1 > $REMOTE_ROOT/3d7da62f423cf1ac51184dcbc502ebd7f4365822_flag_if_job_task_fail;tail -v -c 1000 $REMOTE_ROOT/task.089.000000/fp.log > $REMOTE_ROOT/3d7da62f423cf1ac51184dcbc502ebd7f4365822_last_err_file;fi
+
+# 创建哈希值文件
+touch c083fadca032f17f4ffe348d4c14f43b11e9bc58_task_tag_finished
+
+# scancel任务
+scancel 1491310
+
+
+大功告成！！！
 ```
 
 ### <span style="color:yellow"> param.json 里面有一块参数（如下）会影响numb_steps等参数的设置。如果你要从头跑dpgen，最好把它们删掉了。

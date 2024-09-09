@@ -6,7 +6,7 @@ alias gp='grep PSTRESS INCAR*'
 alias gv='grep volume OUTCAR | tail -n 1'
 alias lt="ls -ltr"
 alias pl='getfreq() { grep "freq" *.dyn"$1" | head; }; getfreq'
-alias gstress='grepstress() { grep -A3 stress OUT"$1".dat | tail -n 3; }; grepstress'
+alias gstress='grepstress() { grep -A3 stress OUT"$1".dat | tail -n 4; grep -A3 "STRESS TENSOR \[GPa\]" OUT"$1".dat | tail -n 4; }; grepstress'
 alias gfc='grepfc() { grep "FC gradient modulus" OUT"$1".dat | tail -n 1; }; grepfc'
 alias lcu='tail */lcurve.out' 
 
