@@ -74,3 +74,17 @@ calypso.x.acnn_cu  000000000040299E  Unknown               Unknown  Unknown
 VSCEnergy= 0 0 
 ```
 
+## 5. `dpgen+calypso`做变组分结构预测时在param.json里面设置了`"vsc":false`的报错
+
+```shell
+sh: qconvex: command not found
+forrtl: severe (24): end-of-file during read, unit 80, file /public/home/liuhanyu/workplace/mayuan/40.La-Sc-H/2.getdp-mod/iter.000000/01.model_devi/gen_stru_analy.000/test_qconvex.out
+Image              PC                Routine            Line        Source
+calypso.x          000000000134AE89  Unknown               Unknown  Unknown
+calypso.x          000000000096C1C8  read_qconvex_              56  VSCfitness.f90
+calypso.x          000000000096BC99  vscfitness_                34  VSCfitness.f90
+calypso.x          00000000008EF06A  MAIN__                    109  Main.F90
+calypso.x          0000000000402ABD  Unknown               Unknown  Unknown
+calypso.x          00000000013C2C20  Unknown               Unknown  Unknown
+calypso.x          000000000040299E  Unknown               Unknown  Unknown
+```

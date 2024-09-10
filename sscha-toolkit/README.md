@@ -301,8 +301,13 @@ for i in 1 2 3 4; do echo $i; grep freq V3_Hessian.dyn$i | head -n 10;  done
 
 ## <span style="color:red"> 3. 使用V3_Hessian.dyn*中的结构, 计算两组动力学矩阵, 一组稀疏的, 一组稠密的, 然后用这两组动力学矩阵和V3_Hessian.dyn*插值获得最终的非谐的动力学矩阵
 
-### <span style="color:yellow"> 3.1 重新计算两组动力学矩阵需要重新准备自洽和声子计算的输入文件,输入文件中的结构准备要注意以下几点
-V3_Hessian.dyn中的结构文件的说明:
+### <span style="color:yellow"> 3.1 重新计算稀疏的、稠密的动力学矩阵
+
+需要重新准备自洽和声子计算的输入文件
+
+输入文件`scffit.in`和`scf.in`中的结构信息最好都从`V3_Hessian.dyn`中提取。
+
+`V3_Hessian.dyn`中的结构文件的说明:
 ```shell
 Dynamical matrix file
 File generated with the CellConstructor by Lorenzo Monacelli
@@ -345,6 +350,77 @@ Basis vectors # 单位是alat, 对应的scffit.in scf.in中都要用alat
 
 ```
 
-如果不愿意手动制作scf.in的输入文件，可以用
+如果不愿意手动制作`scffit.in`, `scf.in`的输入文件，可以用`qedyn2struct.py`脚本制作。执行命令如下。注意：最好去读取`V3_Hessian.dyn*`中的结构.
+```shell
+python qedyn2struct.py -i V3_Hessian.dyn1 -o qe
 
-### <span style="color:yellow"> 3.2 插值好的动力学矩阵为: inter_dyn_*, 降低拷贝为
+# 然后你需要格外注意并修改scffit.in 和 scf.in 中以下部分的参数
+# You have to confirm the 4 iterms, namely 
+# `pp path`, 
+# `ATOMIC_SPECIES`, 
+# `K_POINTS in scffit.in`, 
+# `K_POINTS in scf.in`.
+```
+
+### <span style="color:yellow"> 3.2 回收`1.sparse`目录中稀疏q网格的动力学矩阵，`2.fine`目录中稠密q网格的动力学矩阵，`1.sscha-relax`目录中V3_Hessian动力学矩阵。
+用到了`3.Inter`里面的`get_dense.sh`，`get_sparse.sh`，`get_v3_hessian.sh`三个脚本。有相关路径需要自己修改，很简单。
+
+### <span style="color:yellow"> 3.3 在`2.interpolation/3.Inter`目录中获得插值动力学矩阵：`inter_dyn_*`
+
+修改`2_Inter.py`的内容，并通过`SUB_INTER.sh`提交任务。
+```python
+···
+...
+# 详细说明需要修改的内容：
+inter_dyn = CC.Phonons.Phonons()
+dyn_sscha = CC.Phonons.Phonons("V3_Hessian.dyn",4) # 指定好V3_Hessian的名称和不可以q点数量。
+dyn_coarse= CC.Phonons.Phonons("222.dyn",4) # 指定好稀疏动力学矩阵的名称和不可以q点数量。
+dyn_fine  = CC.Phonons.Phonons("666.dyn",20)# 指定好稠密动力学矩阵的名称和不可以q点数量。
+# 以上名称有赖于你自己的定义。前后统一即可。
+inter_dyn = dyn_sscha.Interpolate(coarse_grid=[2,2,2], fine_grid=[6,6,6], support_dyn_coarse=dyn_coarse, support_dyn_fine=dyn_fine, symmetrize=True)
+#dyn_222.SwapQPoints(dyn_sscha)
+#dyn_222.save_qe("i")
+inter_dyn.save_qe("inter_dyn_") # 插好值的动力学矩阵被命名为inter_dyn_1, inter_dyn_2, ......
+···
+···
+```
+
+### <span style="color:yellow"> 3.4 利用插值好的动力学矩阵计算超导
+
+1. 首先，将`inter_dyn_*`, 降低拷贝为指定体系名称的动力学矩阵。只需要看看你之前的动力学矩阵的命名规则就行。
+2. 其次在`3.Tc`目录中准备如下四个文件：`scffit.in`(自洽输入文件la2F=.true.), `scf.in`(自洽输入文件la2F=.false.), `s5_PhAssignQ.sh`(提交任务的脚本), `split_ph.in`(分q点计算的脚本)。特别注意：
+   ```shell
+   Electron-phonon coefficients for Nb4H14
+    &inputph
+    tr2_ph=1.0d-14,
+    prefix='Nb4H14',
+    fildvscf='Nb4H14.dv',
+    electron_phonon='interpolated',
+    el_ph_sigma=0.005,
+    el_ph_nsigma=10,
+    alpha_mix(1)=0.3,
+    amass(1)=92.90638 ,
+    amass(2)=1.00794 ,
+    outdir='./tmp',
+    fildyn='Nb4H14.dyn',
+    trans=.false., # 一定要false，代表从动力学矩阵后续算电声耦合计算
+    ldisp=.false., # 一定要false，代表通过指定q点坐标的方式进行分q点计算
+    nq1=6,nq2=6,nq3=6,
+    start_q=1
+    last_q=1
+    /
+    XQ1 XQ2 XQ3
+   ```
+3. 从`2.fine`目录中拷贝记录了不可约q点坐标的`*.dyn0`文件到`3.Tc`目录中。
+   
+4. 准备分q点目录，并且在各个分q点目录中tmp文件中的`dv文件`和`patterns文件`。
+   
+    **这里非常重要。因为通过`ldisp=.false.`和`XQ1 XQ2 XQ3`方式指定q点，所以每一个分q点的tmp/_ph0/*.phsave/目录中patterns.*.xml都要改为tmp/_ph0/*.phsave/patterns.1.xml**
+
+    **<span style="color:lightblue"> 以上步骤都可以通过`pre.sh`准备好, 准备好之后通过`sub.sh`提交任务。**
+
+5. 后面的步骤就和`QE`计算超导的步骤一样了。
+
+
+
+

@@ -1,0 +1,20 @@
+Electron-phonon coefficients for Nb4H14
+ &inputph
+  tr2_ph=1.0d-14,
+  prefix='Nb4H14',
+  fildvscf='Nb4H14.dv',
+  electron_phonon='interpolated',
+  el_ph_sigma=0.005,
+  el_ph_nsigma=10,
+  alpha_mix(1)=0.3,
+  amass(1)=92.90638 ,
+  amass(2)=1.00794 ,
+  outdir='./tmp',
+  fildyn='Nb4H14.dyn',
+  trans=.false.,
+  ldisp=.false.,
+  nq1=6,nq2=6,nq3=6,
+  start_q=1
+  last_q=1
+/
+XQ1 XQ2 XQ3
