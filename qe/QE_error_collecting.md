@@ -162,4 +162,81 @@ tmp/_ph0/La1Ce1Th2Be4H32.phsave/patterns.1.xml
 
 ### <span style="color:green"> 10. Error in routine lambda (100):  wrong # or too many modes
 
-这是因为
+这是因为默认qe代码中最多只能计算100个振动模式，需要手动调大`PH`中的振动模式
+
+### <span style="color:green"> 11. 通过`start_q`和`last_q`方式进行q点计算，如何合并各个q点目录中的tmp目录中关于动力学矩阵的文件
+
+首先要搞清楚：1/tmp中的目录结构和2/tmp中目录结构的差别. 通过对比可以知道：唯一差别就是`tmp/_ph0`的差别. 
+
+`1/tmp`中只有`Nb4H14.Nb4H14.dv1`和`Nb4H14.phsave`(`Nb4H14.phsave`包含：`control_ph.xml`, `dynmat.1.*.xml`, `elph.1.*.xml `, `patterns.*.xml`, `status_run.xml`)，
+
+`2/tmp`中只有`Nb4H14.q_2`和`Nb4H14.phsave`(`Nb4H14.phsave`包含：`control_ph.xml`, `dynmat.1.*.xml`, `elph.1.*.xml `, `patterns.*.xml`, `status_run.xml`), 最重要的`Nb4H14.Nb4H14.dv1`保存在了`Nb4H14.q_2`中。特别的：`patterns.2.xml`是控制第2个q点的计算主要控制文件。
+
+```shell
+# 这是1/tmp的内容
+├── Nb4H14.a2Fsave  
+├── Nb4H14.save  
+│   ├── charge-density.dat  
+│   ├── data-file-schema.xml  
+│   ├── h_pbe_v1.uspp.F.UPF  
+│   ├── nb_pbe_v1.uspp.F.UPF  
+│   ├── wfc1.dat  
+│   ├── ...  
+│   └── wfc165.dat  
+├── Nb4H14.wfc1  
+├── ...  
+├── Nb4H14.wfc64  
+├── Nb4H14.xml  
+└── _ph0  
+    ├── Nb4H14.Nb4H14.dv1  
+    └── Nb4H14.phsave  
+        ├── control_ph.xml  
+        ├── dynmat.1.0.xml  
+        ├── ... # 这里dynmat从0-21是因为第1个q点
+        ├── dynmat.1.21.xml  
+        ├── elph.1.1.xml  
+        ├── ...  
+        ├── elph.1.21.xml  
+        ├── patterns.1.xml  
+        ├── ...  
+        ├── patterns.10.xml  
+        └── status_run.xml  
+```
+
+```shell
+# 这是1/tmp的内容
+├── Nb4H14.a2Fsave
+├── Nb4H14.save
+│   ├── charge-density.dat
+│   ├── data-file-schema.xml
+│   ├── h_pbe_v1.uspp.F.UPF
+│   ├── nb_pbe_v1.uspp.F.UPF
+│   ├── wfc1.dat  
+│   ├── ...  
+│   └── wfc165.dat 
+├── Nb4H14.wfc1  
+├── ...  
+├── Nb4H14.wfc64  
+├── Nb4H14.xml
+└── _ph0
+    ├── Nb4H14.phsave
+    │   ├── control_ph.xml
+    │   ├── dynmat.2.0.xml
+    |   ├── ...        
+    │   ├── dynmat.2.39.xml
+    │   ├── elph.2.1.xml
+    |   ├── ...     
+    │   ├── elph.2.39.xml
+    │   ├── patterns.1.xml
+    │   ├── ...
+    │   ├── patterns.10.xml
+    │   └── status_run.xml
+    └── Nb4H14.q_2
+        ├── Nb4H14.Nb4H14.dv1
+        ├── Nb4H14.save
+        │   ├── charge-density.dat
+        │   └── data-file-schema.xml
+        ├── Nb4H14.wfc1
+        ├── ...
+        ├── Nb4H14.wfc64
+```

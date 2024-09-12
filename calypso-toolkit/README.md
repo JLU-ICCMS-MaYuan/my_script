@@ -88,3 +88,20 @@ calypso.x          0000000000402ABD  Unknown               Unknown  Unknown
 calypso.x          00000000013C2C20  Unknown               Unknown  Unknown
 calypso.x          000000000040299E  Unknown               Unknown  Unknown
 ```
+你需要手动安装好qhull. 网站连接：http://www.qhull.org/download/qhull-2020-src-8.0.2.tgz. 安装步骤如下：
+
+```shell
+tar -xzvf qhull-2020-src-8.0.2.tgz 
+
+cd qhull-2020.2
+
+make 
+
+export PATH=$PATH:xxxx/qhull-2020.2/bin
+```
+
+为了测试你的qhull是否安装成功，你可以进入：2.getdp-mod/iter.000001/01.model_devi/gen_stru_analy.000目录运行下面的命令：
+
+```shell
+qconvex i < test_qconvex.in > test_qconvex.out 
+```
