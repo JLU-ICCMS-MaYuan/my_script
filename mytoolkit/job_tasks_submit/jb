@@ -50,6 +50,10 @@ qe_main.py -i CONTCAR -j slurm scf -m mode=nscf ecutwfc=80 ecutrho=960 kpoints_d
 
 qe_main.py -i CONTCAR -j slurm eletron -m mode=eletdos execmd='' npool=1 queue=local kpoints_dense='48 48 48'
 
+qe_main.py -i CONTCAR -j slurm eletron -m mode=eleband execmd='srun --mpi=pmi2' npool=1 queue=local kinserted=200 nbnd=500
+
+
+
 for i in {1..18}; do cd \$i; sbatch s5_PhAssignQ.sh; cd ..; done
 for i in {1..18}; do cd \$i; echo \$i; pl \$i; cd ..; done
 for i in {1..18}; do cd \$i; echo \$i; ls elph_dir; cd ..; done
