@@ -46,7 +46,7 @@ qe_main.py -i CONTCAR -j bash phono -m mode=phonobanddata execmd=''
 
 qe_main.py -i CONTCAR -j bash sc -m mode=Tc execmd='' npool=1 queue=local temperature_steps=100 a2fdos=True alpha2fdat=False broaden=0.5 smearing_method=1  gauss=0.035 gaussid=7
 
-qe_main.py -i CONTCAR -j slurm scf -m mode=nscf ecutwfc=80 ecutrho=960 kpoints_sparse='48 48 48'  degauss=0.02 execmd='srun --mpi=pmi2' npool=4 queue=lhy
+qe_main.py -i CONTCAR -j slurm scf -m mode=nscf ecutwfc=80 ecutrho=960 kpoints_dense='48 48 48'  degauss=0.02 execmd='srun --mpi=pmi2' npool=4 queue=lhy
 
 qe_main.py -i CONTCAR -j slurm eletron -m mode=eletdos execmd='' npool=1 queue=local kpoints_dense='48 48 48'
 

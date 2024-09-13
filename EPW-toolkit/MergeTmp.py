@@ -2,7 +2,40 @@
 import sys
 import os
 import re
+import shutil
 
+from ase.io import read
+from pymatgen.io.ase import AseAtomsAdaptor
+from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
+from pymatgen.io.vasp import Poscar
+
+def get_struct_info(struct_path):
+    '''
+    input parameter:
+        struct:         pymatgen class structure
+        output_poscar:  the output path of primitive cell
+    return:
+        None
+    '''
+    atom   = read(struct_path)
+    struct = AseAtomsAdaptor.get_structure(atom)
+    spa = SpacegroupAnalyzer(struct)
+    # bstruct = spa.get_conventional_standard_structure()
+    # pstruct = spa.get_primitive_standard_structure()
+    # Poscar(pstruct).write_file(output_poscar.joinpath("PPOSCAR"))
+
+    # 处理PPOSCAR的pymatgen对象
+    # 获得元素名称 和 每种元素的原子个数
+    composition        = struct.composition.get_el_amt_dict()
+    species            = struct.composition.elements
+    # 获得体系的 化学配比
+    system_name        = struct.composition.formula.replace(" ", "")
+    # 获得元素种类的个数
+    species_quantity   = len(composition)
+    # 获得每种元素的相对原子质量
+    all_atoms_quantity = int(sum(composition.values()))
+
+    return system_name
 
 def get_q_from_dyn0(dyn0_path):
     '''
@@ -31,16 +64,50 @@ def get_q_from_dyn0(dyn0_path):
     return qtot, qirreduced, qirreduced_coords
 
 if __name__ == "__main__":
-    dyn0_path = sys.argv[1] 
+    
+    system_name     = get_struct_info("scffit.out")
+    dyn0_path       = system_name+".dyn0"
+    print(dyn0_path)
     qtot, qirreduced, qirreduced_coords = get_q_from_dyn0(dyn0_path)
-
+    
     #准备好合并后的tmp
     merged_tmp_path = os.path.abspath("tmp")
     merged_ph0_path = os.path.join(merged_tmp_path, "_ph0")
-    merged_phsave_path = os.path.join(merged_tmp_path, "Nb4H14.phsave")
-    if (not os.path.exists(merged_tmp_path)) and (not os.path.exists(merged_ph0_path)) and (not os.path.exists(merged_phsave_path)):
+    merged_phsave_path = os.path.join(merged_ph0_path, system_name+".phsave")
+    if (not os.path.exists(merged_tmp_path)):
         os.makedirs(merged_tmp_path)
+    if (not os.path.exists(merged_ph0_path)):
+        os.makedirs(merged_ph0_path)
+    if (not os.path.exists(merged_phsave_path)):
+        os.makedirs(merged_phsave_path)
+        
     for i in range(qirreduced):
+        print(i+1)
         if i==0 :
-            splited_ph0_path = os.path.join(str(i+1), "tmp", "Nb4H14.Nb4H14.dv1")
-            splited_phsave_path = os.path.join(str(i+1), "tmp", "Nb4H14.phsave")
+            splited_dv1_path    = os.path.join(str(i+1), "tmp", "_ph0", system_name+"."+system_name+".dv1")
+            merged_dv1_path     = os.path.join(merged_ph0_path,         system_name+"."+system_name+".dv1")
+            shutil.copy(splited_dv1_path, merged_dv1_path)
+
+            splited_control_ph_path = os.path.join(str(i+1), "tmp", "_ph0", system_name+".phsave", "control_ph.xml")
+            merged_control_ph_path  = os.path.join(merged_ph0_path,         system_name+".phsave", "control_ph.xml")
+            shutil.copy(splited_control_ph_path, merged_control_ph_path)
+        else:
+            q_num_path          = os.path.join(merged_ph0_path,         system_name+".q_"+str(i+1))
+            if not os.path.exists(q_num_path):
+                os.makedirs(q_num_path)
+            splited_dv1_path    = os.path.join(str(i+1), "tmp", "_ph0", system_name+".q_"+str(i+1), system_name+"."+system_name+".dv1")
+            merged_dv1_path     = os.path.join(q_num_path,                                          system_name+"."+system_name+".dv1")    
+            shutil.copy(splited_dv1_path, merged_dv1_path)
+
+        splited_phsave_path = os.path.join(str(i+1), "tmp", "_ph0", system_name+".phsave")
+        merged_phsave_path  = os.path.join(merged_ph0_path, system_name+".phsave")
+        for src in os.listdir(splited_phsave_path):
+            print(src)
+            src_path = os.path.join(splited_phsave_path, src)
+            if "dynmat" in src_path or "elph" in src_path:
+                shutil.copy(src_path, merged_phsave_path)
+
+        splited_patterns_path = os.path.join(str(i+1), "tmp", "_ph0", system_name+".phsave", "patterns."+str(i+1)+".xml")
+        merged_patterns_path  = os.path.join(merged_ph0_path,         system_name+".phsave", "patterns."+str(i+1)+".xml")
+        shutil.copy(splited_patterns_path, merged_patterns_path)
+
