@@ -4,10 +4,10 @@ from pymatgen.core.structure import Structure
 from pymatgen.io.vasp import Poscar
 
 inputfilename = sys.argv[1]
-deleteatom = sys.argv[2].split()
+deleteelements = sys.argv[2].split()
 
 struct = Structure.from_file(inputfilename)
-struct.remove_species(deleteatom)
+struct.remove_species(deleteelements)
 
 try:
     outputfilename =  sys.argv[3]

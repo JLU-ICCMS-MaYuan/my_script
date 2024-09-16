@@ -1,0 +1,100 @@
+{
+    "model":{
+    "type_map":    ["Nb", "H"],
+    "descriptor":{
+        "type":            "se_e2_a",
+        "rcut":            6.00,
+        "rcut_smth":       0.50,
+        "sel":             "auto",
+        "neuron":          [25, 50, 100],
+        "resnet_dt":       false,
+        "axis_neuron":     16,
+        "seed":            19951104,
+        "_comment":        "that's all"
+        },
+    "fitting_net":{
+        "neuron":          [240, 240, 240],
+        "resnet_dt":       true,
+        "seed":            1,
+        "_comment":        "that's all"
+    },
+    "_comment":    "that's all"
+    },
+    "learning_rate" :{
+    "type":                "exp",
+    "decay_steps":         2500,
+    "start_lr":            0.001,
+    "stop_lr":             3.51e-8,
+    "_comment":            "that's all"
+    },
+    "loss" :{
+        "type":                "ener",
+        "start_pref_e":        0.02,
+        "limit_pref_e":        1,
+        "start_pref_f":        1000,
+        "limit_pref_f":        1,
+        "start_pref_v":        0,
+        "limit_pref_v":        0,
+        "_comment":            "that's all"
+    },
+    "training" : {
+    "training_data": {
+        "systems": [
+            "../dpdata/Nb32H101",
+            "../dpdata/Nb32H103",
+            "../dpdata/Nb32H104",
+            "../dpdata/Nb32H105",
+            "../dpdata/Nb32H106",
+            "../dpdata/Nb32H107",
+            "../dpdata/Nb32H108",
+            "../dpdata/Nb32H109",
+            "../dpdata/Nb32H110",
+            "../dpdata/Nb32H111",
+            "../dpdata/Nb32H112",
+            "../dpdata/Nb32H113",
+            "../dpdata/Nb32H114",
+            "../dpdata/Nb32H115",
+            "../dpdata/Nb32H116",
+            "../dpdata/Nb32H117",
+            "../dpdata/Nb32H118",
+            "../dpdata/Nb32H119",
+            "../dpdata/Nb32H120",
+            "../dpdata/Nb32H121"
+        ],
+        "batch_size":         "auto",
+        "_comment":           "that's all"
+    },
+    "validation_data":{
+        "systems": [
+            "../dpdata/Nb32H101",
+            "../dpdata/Nb32H103",
+            "../dpdata/Nb32H104",
+            "../dpdata/Nb32H105",
+            "../dpdata/Nb32H106",
+            "../dpdata/Nb32H107",
+            "../dpdata/Nb32H108",
+            "../dpdata/Nb32H109",
+            "../dpdata/Nb32H110",
+            "../dpdata/Nb32H111",
+            "../dpdata/Nb32H112",
+            "../dpdata/Nb32H113",
+            "../dpdata/Nb32H114",
+            "../dpdata/Nb32H115",
+            "../dpdata/Nb32H116",
+            "../dpdata/Nb32H117",
+            "../dpdata/Nb32H118",
+            "../dpdata/Nb32H119",
+            "../dpdata/Nb32H120",
+            "../dpdata/Nb32H121"
+        ],
+        "batch_size":         "auto",
+        "numb_btch":          1,
+        "_comment":           "that's all"
+    },
+    "numb_steps":             500000,
+    "seed":                   10,
+    "disp_file":              "lcurve.out",
+    "disp_freq":              200,
+    "save_freq":              10000
+    }
+}

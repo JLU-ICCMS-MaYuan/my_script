@@ -97,7 +97,7 @@ for combination in combinations:
             for i in range(len(Lowest_structures)):
                 if np.isclose(Lowest_structures[i][1], max_energy):
                     Lowest_structures[i] = [s3, energy]
-                    Poscar(s3).write_file('POSCAR_'+str(i))
+                    Poscar(s3).write_file('POSCAR_'+str(i+1))
                     break
 
 Lowest_structures.sort(key=lambda x: x[1])
