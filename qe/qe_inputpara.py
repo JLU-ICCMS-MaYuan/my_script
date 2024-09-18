@@ -964,7 +964,7 @@ class qeeletron_inputpara(qe_inputpara):
         if not hasattr(self, "lsym"):
             print("\nNote: --------------------")
             print("    You didn't set lsym, the default value lsym=.true.")
-            self.nbnd = 'true'
+            self.lsym = 'true'
 
 class qesc_inputpara(qephono_inputpara):
 
