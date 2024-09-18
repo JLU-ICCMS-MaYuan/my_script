@@ -56,8 +56,7 @@ qe_main.py -i CONTCAR -j slurm eletron -m mode=eledosdata execmd='' npool=1 queu
 # 特别注意nbnd的设置, 不要太高了, 不然根本算不动。
 qe_main.py -i CONTCAR -j slurm eletron -m mode=eleband execmd='srun --mpi=pmi2' npool=1 queue=local kinserted=200 nbnd=500
 
-qe_main.py -i CONTCAR -j slurm eletron -m mode=elebandprojdata execmd='srun --mpi=pmi2' npool=1 queue=local kinserted=200 nbnd=500
-
+qe_main.py -i scffit.out -j bash eletron -m mode=elebanddata execmd='' queue=lhy
 
 
 for i in {1..18}; do cd \$i; sbatch s5_PhAssignQ.sh; cd ..; done

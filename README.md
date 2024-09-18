@@ -338,18 +338,16 @@ eletron -m mode=eledosdata execmd='mpirun -np 1' npool=1 queue=local kpoints_den
   10.000  0.2322E+01  0.3444E+02
 ```
 
-####  <span style="color:green">**单独处理elepdos数据**</span>
-```shell
-eletron -m mode=elepdos execmd='mpirun -np 1' npool=1 queue=local kpoints_dense='8 8 8' 
-```
-
 ###  <span style="color:yellow"> 电子能带结构计算
+
+做完scf.in自洽计算，然后做nscf.in的非自洽计算，就可以进行eleband.in的能带计算了。
+
 ####  <span style="color:green">**获得eleband数据**</span>
 ```shell
 eletron -m mode=eleband execmd='mpirun -np 1' npool=1 queue=local kinserted=200 nbnd=500
 ```
 
-####  <span style="color:green">**处理eleband数据获得可以origin绘图的数据**</span>
+####  <span style="color:green">**处理eleband数据获得可以origin绘图的能带数据和投影能带数据**</span>
 ```shell
 eletron -m mode=elebanddata execmd='mpirun -np 1' queue=local
 ```

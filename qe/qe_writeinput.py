@@ -814,7 +814,7 @@ class qe_writeinput:
             f.write(" prefix='{}',\n".format(self.system_name))
             f.write(" outdir='./tmp',\n")
             f.write(" lsym=.{}.,\n".format(self.lsym))
-            f.write(" filproj = 'elefatbandpro'\n")
+            f.write(" filproj = 'elebandprojdata'\n")
             f.write("/\n")
         return inputfilename
 
