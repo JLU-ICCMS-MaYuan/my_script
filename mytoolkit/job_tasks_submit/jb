@@ -46,6 +46,9 @@ qe_main.py -i CONTCAR -j bash phono -m mode=phonobanddata execmd=''
 
 qe_main.py -i CONTCAR -j bash sc -m mode=Tc execmd='' npool=1 queue=local temperature_steps=100 a2fdos=True alpha2fdat=False broaden=0.5 smearing_method=1  gauss=0.035 gaussid=7
 
+
+# 电子性质
+
 qe_main.py -i CONTCAR -j slurm scf -m mode=nscf ecutwfc=80 ecutrho=960 kpoints_dense='48 48 48'  degauss=0.02 execmd='srun --mpi=pmi2' npool=4 queue=lhy
 
 qe_main.py -i CONTCAR -j slurm eletron -m mode=eledosdata execmd='' npool=1 queue=local kpoints_dense='48 48 48'
@@ -53,6 +56,7 @@ qe_main.py -i CONTCAR -j slurm eletron -m mode=eledosdata execmd='' npool=1 queu
 # 特别注意nbnd的设置, 不要太高了, 不然根本算不动。
 qe_main.py -i CONTCAR -j slurm eletron -m mode=eleband execmd='srun --mpi=pmi2' npool=1 queue=local kinserted=200 nbnd=500
 
+qe_main.py -i CONTCAR -j slurm eletron -m mode=elebandprojdata execmd='srun --mpi=pmi2' npool=1 queue=local kinserted=200 nbnd=500
 
 
 

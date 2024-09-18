@@ -210,6 +210,7 @@ class qe_writeinput:
             nbnd=other_class.nbnd,
             ngauss=other_class.ngauss,
             pdosdegauss=other_class.pdosdegauss,
+            lsym=other_class.lsym,
         )
         return self
 
@@ -809,10 +810,10 @@ class qe_writeinput:
         inputfilename = "elebandprojdata.in"
         eletronband_in = work_directory.joinpath(inputfilename)
         with open(eletronband_in, "w") as f:
-            f.write("&BANDS\n")
+            f.write("&projwfc\n")
             f.write(" prefix='{}',\n".format(self.system_name))
             f.write(" outdir='./tmp',\n")
-            f.write(" lsym=.true.,\n")
+            f.write(" lsym=.{}.,\n".format(self.lsym))
             f.write(" filproj = 'elefatbandpro'\n")
             f.write("/\n")
         return inputfilename

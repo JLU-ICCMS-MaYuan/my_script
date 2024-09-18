@@ -301,14 +301,9 @@ scf -m mode=nscf execmd='mpirun -np 48' npool=4 queue=local kpoints_dense='16 16
 
 ####  <span style="color:green">**处理eletdos和elepdos数据获得可以origin绘图的数据**</span>
 ```shell
-eletron -m mode=elepdos execmd='mpirun -np 1' npool=1 queue=local kpoints_dense='8 8 8' 
+eletron -m mode=eledosdata execmd='mpirun -np 1' npool=1 queue=local kpoints_dense='16 16 16' 
 ```
 
-
-####  <span style="color:green">**单独处理eletdos数据**</span>
-```shell
-eletron -m mode=eletdos execmd='mpirun -np 1' npool=1 queue=local kpoints_dense='8 8 8' 
-```
 
 算出来的*.tdos文件就是可以画图的总电子态密度数据了
 
