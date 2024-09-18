@@ -359,6 +359,11 @@ eletron -m mode=eleband execmd='mpirun -np 1' npool=1 queue=local kinserted=200 
 eletron -m mode=elebanddata execmd='mpirun -np 1' queue=local
 ```
 
+#### <span style="color:green">**处理eleband的投影轨道数据获得可以获得origin绘制投影轨道的能带**</span>
+```shell
+eletron -m mode=elebandprojdata execmd='mpirun -np 1' queue=local
+```
+
 ###  <span style="color:yellow"> 同时进行 电子能带结构计算 电子态密度计算 并且 处理好数据
 
 <span style="color:green"> **(qe计算出来的电子态密度的横坐标能量的单位是Ry, 而vasp计算出来的电子态密度的横坐标的单位是eV)**

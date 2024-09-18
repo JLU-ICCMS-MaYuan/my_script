@@ -180,6 +180,9 @@ class qe_eletron:
             inputfilename = self.qe_writeinput.writeinput(mode="elebanddata")
             if self.eletron_inputpara.queue is not None:
                 self.qe_submitjob.submit_mode0(inputfilename, dotx_file="bands.x")
+            inputfilename = self.qe_writeinput.writeinput(mode="elebandprojdata")
+            if self.eletron_inputpara.queue is not None:
+                self.qe_submitjob.submit_mode0(inputfilename, dotx_file="projwfc.x")
             self.get_fermi_energy()
         elif self.eletron_inputpara.mode == "eledosdata": 
             self.qe_writeinput = qe_writeinput.init_from_eletroninput(self.eletron_inputpara)

@@ -314,6 +314,9 @@ class qe_writeinput:
         if mode == "elebanddata":
             inputfilename = self.write_elebanddata_in(self.work_path)
             return inputfilename
+        if mode == "elebandprojdata":
+            inputfilename = self.write_elebandprojdata_in(self.work_path)
+            return inputfilename
         if mode == "phonodos":
             inputfilename = self.write_phonodos_in(self.work_path)
             return inputfilename
@@ -802,6 +805,18 @@ class qe_writeinput:
             f.write("/\n")
         return inputfilename
     
+    def write_elebandprojdata_in(self, work_directory:Path):
+        inputfilename = "elebandprojdata.in"
+        eletronband_in = work_directory.joinpath(inputfilename)
+        with open(eletronband_in, "w") as f:
+            f.write("&BANDS\n")
+            f.write(" prefix='{}',\n".format(self.system_name))
+            f.write(" outdir='./tmp',\n")
+            f.write(" lsym=.true.,\n")
+            f.write(" filproj = 'elefatbandpro'\n")
+            f.write("/\n")
+        return inputfilename
+
     def write_phonodos_in(self, work_directory:Path):
         inputfilename = "phonodos.in"
         phonodos_in = work_directory.joinpath(inputfilename) 
