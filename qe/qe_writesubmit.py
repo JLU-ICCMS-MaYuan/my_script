@@ -382,7 +382,7 @@ class qe_writesubmit:
         _script_filepath = os.path.join(_dirpath, jobname)
         with open(_script_filepath, "w") as j:
             j.writelines(self.jobtitle)
-            j.write('{} {}/pw.x <{}> {}  \n'.format(self.execmd, qebin_path,  _inpufilename, _outputfilename))
+            j.write('{} {}/pw.x -npool {} <{}> {}  \n'.format(self.execmd, qebin_path, self.npool, _inpufilename, _outputfilename))
         return jobname
 
     def s8_elebanddata(self, _dirpath, inputfilename):
