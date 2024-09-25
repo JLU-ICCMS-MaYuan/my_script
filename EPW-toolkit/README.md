@@ -200,6 +200,7 @@ Summed el-ph coupling    0.8098717
 
 
 ## 注意事项以及细节要求：
+
 ### 并行方式
 在使用EPW计算时，因为目前的版本还不支持平面波plancewaves G并行，所以必须设置并行核数等于并行k点数，即-np和-npool必须一致：
 ```shell

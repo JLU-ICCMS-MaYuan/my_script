@@ -70,6 +70,9 @@ python3 supercell_expansion.py -i POSCAR -nds 0 1 1 1 0 1 1 1 0
 -nds 0 1 1 1 0 1 1 1 0 生成一个 3x3 的非对角扩胞
 python3 supercell_expansion.py -i POSCAR -ds 2 2 2 -o O C H
 -o O C H 表示按氧、碳、氢的顺序排序
+
+# 给定FCC的原胞, 希望扩一个立方的晶胞
+get_supercell.py -i POSCAR -nds -2 2 2  2 -2 2  2 2 -2 -o Nb H
 '''
 
     # 解析命令行参数
