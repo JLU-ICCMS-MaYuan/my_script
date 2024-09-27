@@ -1,11 +1,25 @@
 #!/usr/bin/env python3
 import sys
+import argparse
 
 from itertools import chain
 from ase.io import read
 from ase import Atom
 import numpy as np
 
+
+
+def interpolate_points(start, end, num_points):
+    return np.linspace(start, end, num_points + 2)[1:-1]  # 不包括端点
+
+def write_interpolated_points(path_name_coords, num_points):
+    with open("path.dat", "w") as f:
+        for i in range(len(path_name_coords) - 1):
+            start = np.array(path_name_coords[i][1])
+            end = np.array(path_name_coords[i + 1][1])
+            interpolated = interpolate_points(start, end, num_points)
+            for point in interpolated:
+                f.write("{:<10.6f} {:<10.6f} {:<10.6f}\n".format(point[0], point[1], point[2]))
 
 def get_hspp(ase_atom:Atom):
     """
@@ -95,8 +109,14 @@ def write4tdep_type(path_name_coords):
 
 
 if __name__ == "__main__":
-    filename = sys.argv[1]
-    ase_atom = read(filename)
+    parser = argparse.ArgumentParser(description='Process high symmetry paths.')
+    parser.add_argument('filename', help='Input filename for ASE atom')
+    parser.add_argument('-n', '--num_points', type=int, default=0, help='Number of interpolation points between high symmetry points')
+    
+    args = parser.parse_args()
+    ase_atom = read(args.filename)
     path_name_coords = get_hspp(ase_atom)
-    #print(path_name_coords)
+
     write4tdep_type(path_name_coords)
+    if args.num_points > 0:
+        write_interpolated_points(path_name_coords, args.num_points)

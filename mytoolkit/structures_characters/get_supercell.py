@@ -73,6 +73,9 @@ python3 supercell_expansion.py -i POSCAR -ds 2 2 2 -o O C H
 
 # 给定FCC的原胞, 希望扩一个立方的晶胞
 get_supercell.py -i POSCAR -nds -2 2 2  2 -2 2  2 2 -2 -o Nb H
+
+想实现以上扩胞, 不光可以使用这个脚本, TDEP也有一个脚本叫 generate_structure, 也可以实现对角和非对角的扩胞.
+
 '''
 
     # 解析命令行参数
