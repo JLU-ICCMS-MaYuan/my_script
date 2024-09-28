@@ -10,16 +10,31 @@ import numpy as np
 
 
 def interpolate_points(start, end, num_points):
-    return np.linspace(start, end, num_points + 2)[1:-1]  # 不包括端点
+    # return np.linspace(start, end, num_points + 2)[1:-1]  # 不包括端点
+    return np.linspace(start, end, num_points + 1)[:-1]  # 包含前一个端点，不包括后一个端点
 
 def write_interpolated_points(path_name_coords, num_points):
+    total_points = sum(num_points for _ in range(len(path_name_coords) - 1)) + 1
     with open("path.dat", "w") as f:
+        f.write(f"{total_points} crystal\n")  # 添加总点数和“crystal”
         for i in range(len(path_name_coords) - 1):
             start = np.array(path_name_coords[i][1])
             end = np.array(path_name_coords[i + 1][1])
             interpolated = interpolate_points(start, end, num_points)
-            for point in interpolated:
-                f.write("{:<10.6f} {:<10.6f} {:<10.6f}\n".format(point[0], point[1], point[2]))
+
+            # 计算插值点与前一个点之间的距离
+            array = (end-start)/num_points
+            index = np.nonzero(array)[0]
+            # print(array[index])
+            distances = np.repeat(np.abs(array[index]), len(interpolated))
+            # print(distances)
+            
+            # 写入插值点及其距离
+            for j, point in enumerate(interpolated):
+                f.write("{:<10.6f} {:<10.6f} {:<10.6f} {:<10.6f}\n".format(point[0], point[1], point[2], distances[j]))
+        f.write("{:<10.6f} {:<10.6f} {:<10.6f} {:<10.6f}\n".format(path_name_coords[-1][1][0], path_name_coords[-1][1][1], path_name_coords[-1][1][2], distances[j]))
+
+
 
 def get_hspp(ase_atom:Atom):
     """
