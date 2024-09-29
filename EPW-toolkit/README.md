@@ -220,6 +220,12 @@ perl kmesh.pl 4 4 4
 
 特别注意：六角格子的第一布里渊区是正六边形，但是kmesh.pl撒点时会在一个平行四边形里面撒点，这就会导致绘制电声耦合强度图不在第一布里渊区内。
 
-### 相关帖子
+
+## 报错集锦
+###  `Error in routine davcio (116):     error writing file "../tmp/Nb4H14.epmatwe1"`
+
+
+## 相关帖子
 关于电声耦合计算：https://xh125.github.io/2021/12/16/QE-epw/
 关于超导温度的计算：https://blog.csdn.net/lielie12138/article/details/127283037
+
