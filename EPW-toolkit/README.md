@@ -1,143 +1,172 @@
 # EPW使用教程
 
-## EPW计算超导流程
+## <span style="color:red">  EPW计算超导流程
 
-### 1.自洽计算
+### <span style="color:lightgreen"> 1.自洽计算
 ```shell
 mpirun -np N $QEBIN/pw.x -npool N < scf.in > scf.out
 ```
 
-### 2.声子计算
+### <span style="color:lightgreen"> 2.声子计算
 ```shell
 mpirun -np N $QEBIN/ph.x  -npool N < ph.in > ph.out
 ```
 
-### 3.准备EPW计算的文件
+### <span style="color:lightgreen"> 3.准备EPW计算的文件
 ```shell
 python pp.py
 ```
 
-### 4.重新自洽计算
+### <span style="color:lightgreen"> 4.重新自洽计算
 ```shell
 mpirun -np N $QEBIN/pw.x -npool N < scf.in > scf.out
 ```
 
-### 5.非自洽计算
+### <span style="color:lightgreen"> 5.非自洽计算
 ```shell
 mpirun -np N $QEBIN/pw.x -npool N < nscf.in > nscf.out
 ```
 
-### 6. EPW计算
+### <span style="color:lightgreen"> 6. EPW计算
 ```shell
 mpirun -np N $EPWBIN/epw.x -npool N < epw.in > epw.out
 ```
-#### 6.1 计算超导时相关的epw.in参数设置
 
-```shell
+计算超导时相关的epw.in参数设置总览
+```fortran
 &inputepw
+  ...
+  ...
+/
+```
+
+关于结构信息
+```fortran
   prefix      = 'MgB2',
   amass(1)    = 24.305,
   amass(2)    = 10.811
-  outdir      = './'
+```
 
-  ep_coupling = .true.  # 计算电声耦合
-  elph        = .true.  # 计算电声耦合系数
-  epbwrite    = .true.  # 粗糙布洛赫表示的电声耦合矩阵元和相关的数据（比如动力学矩阵）写入磁盘，存储为prefix.epb
-  epbread     = .false. # 粗糙布洛赫表示的电声耦合矩阵元和相关的数据从prefix.epb文件中读取
+关于文件读写
+```fortran
+  outdir      = 'tmp'   ! qe生成的tmp文件的路径
+  dvscf_dir   = 'save'  ! pp.py保存的动力学矩阵和自洽势文件的路径
+  
+  wannierize  = .true.  ! 使用W90库调用计算万尼尔函数，并将旋转矩阵写入文件filukk文件。如果为False，旋转矩阵信息不自动产生，从filukk文件中读取。
 
-  epwwrite = .true.     # 粗糙瓦尼尔表示的电声耦合矩阵元和相关的数据（比如动力学矩阵）写入磁盘，存储为epwdata.fmt和XX.epmatwpX
-  epwread  = .false.    # 粗糙瓦尼尔表示的电声耦合矩阵元和相关的数据从epwdata.fmt和XX.epmatwpX中读取。这个开关一般用于续算，
-                        # 要设置epwread = .true., 需要同时设置 kmaps = .true., 这是因为设置epwread = .true.时, kmaps相关信息不会重新计算产生，必须读取，所以必须设置kmaps = .true.。并且确保事先已经设置好 epwwrite = .true.
-                        # kmaps = .true. 用于从 prefix.kmap and prefix.kgmap 中读取k+q->k的散射情况。
+  ep_coupling = .true.  ! 计算电声耦合
+  elph        = .true.  ! 计算电声耦合系数
+  ephwrite    = .true. ! 如果设置了Eliasberg = .true.，那么设置 ephwrite = .true.
+                      !  ephwrite = .true. 会产生4个文件，这4个文件都需要在求解 Eliashberg equations 计算超导温度时被用到
+                      ! ‘ephmatXX’  (XX: pool dependent files) files with e-ph matrix elements within the Fermi window (fsthick) on fine k and q meshes on the disk
+                      ! ‘freq’ file contains the phonon frequencies
+                      ! ‘egnv’ file contains the eigenvalues within the Fermi window
+                      ! ‘ikmap’ file contains the index of the k-point on the irreducible grid within the Fermi window.
 
-  etf_mem     =  1      # etf_mem = 1 所有致密的Bloch-space的电声耦合矩阵元都存在内存中 faster, IO更慢但是要求更少的内存
-                        # etf_mem = 2 在mode上对致密网格插补部分做了一个附加回路。通过设置“nmodes”可以进一步降低内存需求。
-                        # etf_mem = 3 多用于输运性质计算
+  epbwrite    = .true.  ! 粗糙布洛赫表示的电声耦合矩阵元和相关的数据（比如动力学矩阵）写入磁盘，存储为prefix.epb
+  epbread     = .false. ! 粗糙布洛赫表示的电声耦合矩阵元和相关的数据从prefix.epb文件中读取
+  
+  epwwrite = .true.     ! 粗糙瓦尼尔表示的电声耦合矩阵元和相关的数据（比如动力学矩阵）写入磁盘，存储为epwdata.fmt和XX.epmatwpX
+  epwread  = .false.    ! 粗糙瓦尼尔表示的电声耦合矩阵元和相关的数据从epwdata.fmt和XX.epmatwpX中读取。这个开关一般用于续算，
+                        ! 要设置epwread = .true., 需要同时设置 kmaps = .true., 这是因为设置epwread = .true.时, kmaps相关信息不会重新计算产生，必须读取，所以必须设置kmaps = .true.。并且确保事先已经设置好 epwwrite = .true.
+                        ! kmaps = .true. 用于从 prefix.kmap and prefix.kgmap 中读取k+q->k的散射情况。
+  
+  etf_mem     =  1      ! etf_mem = 1 所有致密的Bloch-space的电声耦合矩阵元都存在内存中 faster, IO更慢但是要求更少的内存
+                        ! etf_mem = 2 在mode上对致密网格插补部分做了一个附加回路。通过设置“nmodes”可以进一步降低内存需求。
+                        ! etf_mem = 3 多用于输运性质计算
+```
 
-  nbndsub     =  5,     # 要使用的wannier函数的数量。
-
-  wannierize  = .true.  # 使用W90库调用计算万尼尔函数，并将旋转矩阵写入文件filukk文件。如果为False，旋转矩阵信息不自动产生，从filukk文件中读取。
-  num_iter    = 500     # 为了最小化而传递给Wannier90的迭代次数
-  dis_froz_max= 8.8     # Wannier90的冻结状态
-  proj(1)     = 'B:pz'               # 在万尼90计算中使用的初始投影，比较简单的方法是：proj(1) = 'random'
+关于Wannier90
+```fortran
+  nbndsub     =  5,     ! 要使用的wannier函数的数量。
+  num_iter    = 500     ! 为了最小化而传递给Wannier90的迭代次数
+  dis_froz_max= 8.8     ! Wannier90的冻结状态
+  proj(1)     = 'B:pz'               ! 在万尼90计算中使用的初始投影，比较简单的方法是：proj(1) = 'random'
   proj(2)     = 'f=0.5,1.0,0.5:s'
   proj(3)     = 'f=0.0,0.5,0.5:s'
   proj(4)     = 'f=0.5,0.5,0.5:s'
+```
 
-  iverbosity  = 2 # 2 = 罗嗦的输出针对超导部分
-                  # 3 = 罗嗦的输出针对电声耦合部分
+关于电声耦合计算
+```fortran
+  iverbosity  = 2         ! 2 = 罗嗦的输出针对超导部分
+                          ! 3 = 罗嗦的输出针对电声耦合部分
+  fsthick     = 0.4       ! 考虑自能δ函数的费米表面窗口宽度，单位是eV。缩小这个值可以减少自能量计算中包含的带数量。
+  degaussw    = 0.10      ! Smearing in the energy-conserving delta functions in [eV]，默认0.025
+  nsmear      = 1         ! 用于计算声子自能的不同smearings。
+  delta_smear = 0.04      ! 声子自能计算时每一次额外的smearing的改变量，单位时eV
 
-  eps_acustic = 2.0    # 在进行电声耦合计算和a2f计算时的声子频率的下边界，单位时cm-1
-  ephwrite    = .true. # 如果设置了Eliasberg = .true.，那么设置 ephwrite = .true.
-                       # ephwrite = .true. 会产生4个文件，这4个文件都需要在求解 Eliashberg equations 计算超导温度时被用到
-                       # ‘ephmatXX’  (XX: pool dependent files) files with e-ph matrix elements within the Fermi window (fsthick) on fine k and q meshes on the disk
-                       # ‘freq’ file contains the phonon frequencies
-                       # ‘egnv’ file contains the eigenvalues within the Fermi window
-                       # ‘ikmap’ file contains the index of the k-point on the irreducible grid within the Fermi window.
-                       
+```
 
-  fsthick     = 0.4       # 考虑自能δ函数的费米表面窗口宽度，单位是eV。缩小这个值可以减少自能量计算中包含的带数量。
-  degaussw    = 0.10      # Smearing in the energy-conserving delta functions in [eV]，默认0.025
-  nsmear      = 1         # 用于计算声子自能的不同smearings。
-  delta_smear = 0.04      # 声子自能计算时每一次额外的smearing的改变量，单位时eV
+关于超导计算
+```fortran
+  ! eps_acustic = 2.0    ! 在进行电声耦合计算和a2f计算时的声子频率的下边界，单位时cm-1
+  ! degaussq     = 0.5      ! 对q的所有电声耦合求和时的Smearing，起始值是0.5 ，单位是meV
+  ! delta_qsmear = 0.05     ! 每次额外qsmearing的能量变化为0.05 meV 
 
-  degaussq     = 0.5      # 对q的所有电声耦合求和时的Smearing，起始值是0.5 ，单位是meV
-  delta_qsmear = 0.05     # 每次额外qsmearing的能量变化为0.05 meV 
-  # 这两个参数在 preifx.a2f 中最后几行的有详细写到，可以对应着检查。
-  # preifx.a2f中第2-11列是smearing=0.5, 0.55,...., 0.95的a2f， 
-  # preifx.a2f中第12-21列是smearing=0.5, 0.55,...., 0.95的2*a2f/w的积分
+  ! degaussq和delta_qsmear两个参数在 preifx.a2f 中最后几行的有详细写到，可以对应着检查。
+  ! preifx.a2f中第2-11列是smearing=0.5, 0.55,...., 0.95的a2f， 
+  ! preifx.a2f中第12-21列是smearing=0.5, 0.55,...., 0.95的2*a2f/w的积分
 
-  nqstep       = 500      # 用于计算a2f的步数
+  nqstep       = 500      ! 用于计算a2f的步数
 
-  eliashberg  = .true.    # 启动超导计算的相关开关
+  eliashberg  = .true.    ! 启动超导计算的相关开关 
+                          ! Note: To reuse .ephmat, .freq, .egnv, .ikmap files obtained in a previous run, one needs to set ep_coupling =.false., elph =.false., and ephwrite =.false. in the input file.
+  laniso = .true.         ! 在虚轴上求解各向异性 Eliashberg equations，ephmat, .freq, .egnv, .ikmap 文件都必须提取准备好，它们由 ephwrite =.true.产生
+  limag = .true.          ! 在虚轴上求解 Eliashberg equations
+  lpade = .true.          ! 用 Padé 近似法将虚轴Eliashberg方程延续到实轴。这个开关要搭配 limag =.true.一起用
 
-  laniso = .true.         # 在虚轴上求解各向异性 Eliashberg equations，ephmat, .freq, .egnv, .ikmap 文件都必须提取准备好，它们由 ephwrite =.true.产生
-  limag = .true.          # 在虚轴上求解 Eliashberg equations
-  lpade = .true.          # 用 Padé 近似法将虚轴Eliashberg方程延续到实轴。这个开关要搭配 limag =.true.一起用
+  conv_thr_iaxis = 1.0d-4 ! 虚轴Eliashberg方程迭代解的收敛阈值。
 
-  conv_thr_iaxis = 1.0d-4 # 虚轴Eliashberg方程迭代解的收敛阈值。
+  wscut = 1.0      ! 单位eV，在求解Elisashberg 方程时的频率上限，必须搭配limag = .true.使用。如果设置了nswi为不为0的值，wscut被忽略。
 
-  wscut = 1.0      # 单位eV，在求解Elisashberg 方程时的频率上限，必须搭配limag = .true.使用。如果设置了nswi为不为0的值，wscut被忽略。
+  nstemp   = 1     ! 用于超导、传输、惯性等的温度点 数目。
+                   ! 如果nstemp为空，或者等于temps(:)中的条目数，则使用temps(:)中提供的温度。
+                   ! 如果nstemp>2并且temps(:)中只给出两个温度，则生成一个均匀间隔的温度网格，点之间的步长由(temps(2) - temps(1)) / (nstemp-1)给出。这个网格包含nstemp点。
+                   ! nstemp不能大于50。
+  temps    = 15.00 ! 用于超导、输运、惯性等的温度值，以开尔文为单位。
+                   ! 如果没有提供temp，则temps=300和nstemp =1。
+                   ! 如果提供两个温度，其中temps(1)<temps(2)和nstemp >2，则将temps转换为具有nstemp点的等间距网格。 其中temps(1)和temps(2)分别为最小值和最大值，在这种情况下，点的间隔根据(temps(2) - temps(1)) / (nstemp-1)设置。
+                   !    例如 nstemp = 5 
+                   !         temps = 300 500
+                   ! 其它设置情况中，temps将被视为一个列表，直接使用给定的温度[temps = 17 20 30]。以这种方式提供的温度不能超过50个温度点。
+  nsiter   = 500   ! 求解实轴或虚轴Eliashberg方程时自洽循环的迭代次数。
 
-  nstemp   = 1     # 用于超导、传输、惯性等的温度点 数目。
-                   # 如果nstemp为空，或者等于temps(:)中的条目数，则使用temps(:)中提供的温度。
-                   # 如果nstemp>2并且temps(:)中只给出两个温度，则生成一个均匀间隔的温度网格，点之间的步长由(temps(2) - temps(1)) / (nstemp-1)给出。这个网格包含nstemp点。
-                   # nstemp不能大于50。
-  temps    = 15.00 # 用于超导、输运、惯性等的温度值，以开尔文为单位。
-                   # 如果没有提供temp，则temps=300和nstemp =1。
-                   # 如果提供两个温度，其中temps(1)<temps(2)和nstemp >2，则将temps转换为具有nstemp点的等间距网格。 其中temps(1)和temps(2)分别为最小值和最大值，在这种情况下，点的间隔根据(temps(2) - temps(1)) / (nstemp-1)设置。
-                   #    例如 nstemp = 5 
-                   #         temps = 300 500
-                   # 其它设置情况中，temps将被视为一个列表，直接使用给定的温度[temps = 17 20 30]。以这种方式提供的温度不能超过50个温度点。
-  nsiter   = 500   # 求解实轴或虚轴Eliashberg方程时自洽循环的迭代次数。
+  muc     = 0.16   ! 有效库仑势在Eliashberg方程中的应用。
+```
 
-  muc     = 0.16   # 有效库仑势在Eliashberg方程中的应用。
-
-  dvscf_dir   = '../phonons/save'
-  
-  nk1         = 6 # 粗电子网格的尺寸，对应于outdir中的nscf的计算和wfs。
+关于均匀网格选择
+```fortran
+  nk1         = 6 ! 粗电子网格的尺寸，对应于outdir中的nscf的计算和wfs。
   nk2         = 6
   nk3         = 6
 
-  nq1         = 6 # 粗声子网格的尺寸，对应于nqs列表。
-  nq2         = 6
-  nq3         = 6
+  nq1         = 3 ! 粗声子网格的尺寸，对应于nqs列表。
+  nq2         = 3
+  nq3         = 3
 
-  mp_mesh_k = .true. # 如果.true.，设置在irr. wedge中设置精细的电子网，否则整个BZ中使用均匀网格
+  mp_mesh_k = .true. ! 如果.true.，设置在irr. wedge中设置精细的电子网，否则整个BZ中使用均匀网格
 
-  nkf1 = 20 # 如果filkf没有给出，则使用nkf指定的精细电子网格
-  nkf2 = 20
-  nkf3 = 20
+  nkf1 = 36 ! 如果filkf没有给出，则使用nkf指定的精细电子网格
+  nkf2 = 36
+  nkf3 = 36
 
-  nqf1 = 20 # 如果filqf没有给出，则使用nqf1指定的精细声子网格
-  nqf2 = 20
-  nqf3 = 20
+  nqf1 = 18 ! 如果filqf没有给出，则使用nqf1指定的精细声子网格
+  nqf2 = 18
+  nqf3 = 18
  /
 ```
 
-## 输出文件的说明
+关于高对称路径的选择以及绘制EPW计算出的声子谱和能带, 其中path.dat可以通过get_hspp.py获得
+```fortran
+  band_plot = .true.
+  filkf = 'path.dat'
+  filqf = 'path.dat'
+```
+**特别注意:nkf1, nkf2, nkf3和filkf是互斥的一组参数, nqf1, nqf2, nqf3和filqf是互斥的一组参数**
+## <span style="color:red"> 输出文件的说明
 
-### prefix.a2f
+### <span style="color:lightgreen"> prefix.a2f
 ```shell
  w[meV] a2f and integrated 2*a2f/w for   10 smearing values
    # 频率      0.5展宽a2f       0.55展宽a2f                0.95展宽a2f      0.55展宽2*a2f/w积分值    0.90展宽2*a2f/w积分值  0.95展宽2*a2f/w积分值
@@ -158,7 +187,7 @@ Summed el-ph coupling    0.8098717
 
 ```
 
-### prefix.imag_aniso_XX
+### <span style="color:lightgreen"> prefix.imag_aniso_XX
 ```shell
    #        w [eV]         Enk-Ef [eV]            znorm(w)       delta(w) [eV]           nznorm(w)
    #      频率              K-S本征态          准粒子重整化          超导能隙        正常态的准粒子重整化
@@ -174,7 +203,7 @@ Summed el-ph coupling    0.8098717
     ..............
 ```
 
-### prefix.pade_aniso_XX
+### <span style="color:lightgreen"> prefix.pade_aniso_XX
 
 该文件包含与MgB2中类似的信息。imag_aniso_XX，但超导间隙沿实轴，通过Pade近似得到。如果输入文件中的iverbosity=2，则写入该文件
 
@@ -188,18 +217,25 @@ Summed el-ph coupling    0.8098717
 
 ```
 
-### prefix.imag_aniso_gap0_XX
+### <span style="color:lightgreen"> prefix.imag_aniso_gap0_XX
 该文件包含各向异性超导隙的分布Δnk(ω=0) (eV)，由虚轴计算得到。
 
 
-### prefix.pade_aniso_gap0_xx
+### <span style="color:lightgreen"> prefix.pade_aniso_gap0_xx
 该文件包含与prefix.imag_aniso_gap0_XX相似的信息，但是这些超导能隙是通过Pade近似在实轴上计算得到的。
 
-### prefix.qdos_XX
+### <span style="color:lightgreen"> prefix.qdos_XX
 这个文件包括了超导态准粒子的态密度，
 
 
-## 注意事项以及细节要求：
+## <span style="color:red"> 注意事项以及细节要求：
+
+### 续算注意事项
+```shell
+Note: To reuse .ephmat, .freq, .egnv, .ikmap files obtained in a previous run, 
+one needs to set ep_coupling =.false., elph =.false., and ephwrite =.false. in the input file.
+```
+
 
 ### 并行方式
 在使用EPW计算时，因为目前的版本还不支持平面波plancewaves G并行，所以必须设置并行核数等于并行k点数，即-np和-npool必须一致：
@@ -220,12 +256,31 @@ perl kmesh.pl 4 4 4
 
 特别注意：六角格子的第一布里渊区是正六边形，但是kmesh.pl撒点时会在一个平行四边形里面撒点，这就会导致绘制电声耦合强度图不在第一布里渊区内。
 
+### EPW也可以处理出各向同性的超导温度
 
-## 报错集锦
-###  `Error in routine davcio (116):     error writing file "../tmp/Nb4H14.epmatwe1"`
+```shell
+fila2f = '' (Default)
+Description: Input file with isotropic Eliashberg spectral function. 
+The file contains the Eliashberg spectral function as a function of frequency in [meV]. 
+This file can only be used to calculate the isotropic Eliashberg equations. 
+In this case *.ephmat, *.freq, *.egnv, and *.ikmap files are not required.
+''
+```
 
+## <span style="color:red"> 报错集锦
+###  `Error in routine davcio (116): error writing file "../tmp/Nb4H14.epmatwe1"`
 
-## 相关帖子
-关于电声耦合计算：https://xh125.github.io/2021/12/16/QE-epw/
-关于超导温度的计算：https://blog.csdn.net/lielie12138/article/details/127283037
+原因是多个epw的计算任务公用同一个tmp文件中的波函数。
+因为epw在计算的时候会在`outdir`指定的目录中创建一个目录叫`Nb4H14.ephmat`
+这个目录中保存了`egnv`, `ephmat*`, `freq`, `ikmap`。
+这几个文件都是都是`ephwrite=.true.`产生的。所以你如果公用的话，很有可能导致这个文件被不同的epw.in参数覆盖，导致文件内容混乱。
+
+### `Error in routine read_ephmat (1): nnk should be equal to nkfs`
+
+这个错误发生在`ephwrite=.false.`时，读取`$outdir\Nb4H14.ephmat\ephmat*`时发生的错误.
+
+## <span style="color:red"> 相关帖子
+1. 关于电声耦合计算：https://xh125.github.io/2021/12/16/QE-epw/
+2. 关于超导温度的计算：https://blog.csdn.net/lielie12138/article/details/127283037
+3. EPW官方培训school的PDF文件：Tue.6.Lafuente.pdf(特别有帮助)
 

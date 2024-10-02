@@ -5,106 +5,29 @@ import shutil
 
 import numpy as np
 
-def write_incar(pstress, input_incar, work_path):
-
-    with open(input_incar, 'r') as f:
-        lines = f.readlines()
-
-    for idx, line in enumerate(lines):
-        if "PSTRESS" in line:
-            lines[idx] = f" PSTRESS = {pstress*10}\n"
-
+def write_incar(pstress, work_path):
     incar_path = os.path.join(work_path, "INCAR")
-    with open(incar_path, "w") as incarfile:
-        incarfile.writelines(lines)
-
-def write_submit(jobtype:str, work_path):
-
-    chaoyin_pbs = """#!/bin/sh
-#PBS -N    mayqe                                    
-#PBS -q    liuhy         
-#PBS -l    nodes=1:ppn=28               
-#PBS -j    oe                                      
-#PBS -V  
-source /public/home/mayuan/intel/oneapi/setvars.sh --force
-export I_MPI_ADJUST_REDUCE=3
-export MPIR_CVAR_COLL_ALIAS_CHECK=0
-ulimit -s unlimited        
-cd $PBS_O_WORKDIR    
-
-#killall -9 vasp_std
-
-for i in 1 2 3
-do 
-mpirun -n 28 /public/home/mayuan/software/vasp.6.1.0/bin/vasp_std > vasp.log 2>&1 
-cp CONTCAR POSCAR
-done 
-"""
-
-    tangB_slurm = """#!/bin/sh
-#SBATCH  --job-name=mayqe                      
-#SBATCH  --output=log.out                       
-#SBATCH  --error=log.err                       
-#SBATCH  --partition=lhy          
-#SBATCH  --nodes=1                          
-#SBATCH  --ntasks=48                          
-#SBATCH  --ntasks-per-node=48                          
-#SBATCH  --cpus-per-task=1                         
-
-source /work/home/may/intel/oneapi/setvars.sh --force
-export I_MPI_ADJUST_REDUCE=3
-export MPIR_CVAR_COLL_ALIAS_CHECK=0
-ulimit -s unlimited
-
-
-for i in 1 2 3
-do 
-mpirun -n 48 /work/home/may/software/vasp.6.1.0/bin/vasp_std > vasp.log 2>&1 
-cp CONTCAR POSCAR
-done 
-"""
-
-    coshare_slurm = """#!/bin/sh
-#SBATCH  --job-name=vaspopt-1
-#SBATCH  --output=log.out
-#SBATCH  --error=log.err
-#SBATCH  --partition=normal                       
-#SBATCH  --nodes=1                            
-#SBATCH  --ntasks=64
-#SBATCH  --ntasks-per-node=64
-#SBATCH  --cpus-per-task=1                    
-#SBATCH  --exclude=node37,node34,node38,node48,node10,node15,node5,node20
-
-source /public/env/mpi_intelmpi-2021.3.0.sh
-source /public/env/compiler_intel-compiler-2021.3.0.sh
-
-ulimit -s unlimited
-export I_MPI_ADJUST_REDUCE=3
-export MPIR_CVAR_COLL_ALIAS_CHECK=0
-export I_MPI_FABRICS=shm
-export MKL_DEBUG_CPU_TYPE=5
-
-for i in 1 2 3
-do 
-mpirun -n 64 /public/software/apps/vasp/intelmpi/5.4.4/bin/vasp_std > vasp.log 2>&1
-cp CONTCAR POSCAR
-done 
-
-"""
-
-    if jobtype == "chaoyin_pbs":
-        jobsystem = chaoyin_pbs
-    elif jobtype == "tangB_slurm":
-        jobsystem = tangB_slurm
-    elif jobtype == "coshare_slurm":
-        jobsystem = coshare_slurm
-    else:
-        print("其它机器的任务系统, 你没有准备这个机器的提作业脚本. 程序退出. ")
-        sys.exit(1)
-
-    submit_path = os.path.join(work_path, "submit.sh")
-    with open(submit_path, "w") as jobfile:
-        jobfile.write(jobsystem)
+    with open(incar_path, 'w') as incar:
+        incar.write("ISTART   = 0    \n")   
+        incar.write("ICHARG   = 2    \n")
+        incar.write("ISYM     = 2    \n") 
+        incar.write("ENCUT    = 600  \n")
+        incar.write("PREC     = A    \n") 
+        incar.write("NCORE    = 4    \n")         
+        incar.write("KSPACING = 0.188\n")            
+        incar.write("ISMEAR   = 0    \n")   
+        incar.write("SIGMA    = 0.2  \n")   
+        incar.write("NELM     = 200  \n")   
+        incar.write("NELMIN   = 6    \n")   
+        incar.write("EDIFF    = 1e-6 \n")
+        incar.write("EDIFFG   = -0.1 \n")
+        incar.write("NSW      = 200  \n")   
+        incar.write("IBRION   = 2    \n")   
+        incar.write("ISIF     = 3    \n")
+        incar.write("POTIM    = 0.05  \n")
+        incar.write("LWAVE    = .FALSE.\n")                 
+        incar.write("LCHARG   = .FALSE.\n")   
+        incar.write("PSTRESS  = {}   \n".format(pstress*10))
 
 def get_totalenergy(outcar_path):
     eV2hartree = 0.036749322175655
@@ -127,11 +50,8 @@ def get_volume(outcar_path):
 
 if __name__ == "__main__":
     
-    jobsystem = "chaoyin_pbs"
-    # jobsystem = "tangB_slurm"
-    # jobsystem = "coshare_slurm"
     print("Note: --------------------")
-    print("    你需要在当前目录下准备好: POSCAR, POTCAR, INCAR")
+    print("    你需要在当前目录下准备好: POSCAR, POTCAR, INCAR, submit.sh")
     print("    测试的PSTRESS值分别是: -5 0.0001 50 100 150 200 250 300 350 400")
     print("    该脚本不提供自动提任务的命令: 你可以用以下命令提供命令:")
     print("        for i in p-5 p+0.00001 p+50 p+100 p+150 p+200 p+250 p+300 p+350 p+400; do cd $i; qsub submit.sh; cd ..; done")
@@ -142,7 +62,7 @@ if __name__ == "__main__":
     press_s = [-5, 0.00001, 50, 100, 150, 200, 250, 300, 350, 400]
     potcar_path = os.path.abspath("POTCAR")
     poscar_path = os.path.abspath("POSCAR")
-    incar_path  = os.path.abspath("INCAR")
+    submit_path = os.path.abspath("submit.sh")
 
     for pstress in press_s:
         if type(pstress) == int :
@@ -154,8 +74,8 @@ if __name__ == "__main__":
             os.mkdir(test_path)
         os.system(f"cp -f {potcar_path} {test_path}")
         os.system(f"cp -f {poscar_path} {test_path}")
-        write_incar(pstress, incar_path, test_path)
-        write_submit(jobsystem, test_path)
+        os.system(f"cp -f {submit_path} {test_path}")
+        write_incar(pstress, test_path)
 
     V_pstress = []
     v_energy = []
