@@ -84,8 +84,8 @@ if __name__ == "__main__":
     for i in range(qirreduced):
         print(i+1)
         if i==0 :
-            splited_dv1_path    = os.path.join(str(i+1), "tmp", "_ph0", system_name+"."+system_name+".dv1")
-            merged_dv1_path     = os.path.join(merged_ph0_path,         system_name+"."+system_name+".dv1")
+            splited_dv1_path    = os.path.join(str(i+1), "tmp", "_ph0", system_name+".dvscf1")
+            merged_dv1_path     = os.path.join(merged_ph0_path,         system_name+".dvscf1")
             shutil.copy(splited_dv1_path, merged_dv1_path)
 
             splited_control_ph_path = os.path.join(str(i+1), "tmp", "_ph0", system_name+".phsave", "control_ph.xml")
@@ -95,8 +95,8 @@ if __name__ == "__main__":
             q_num_path          = os.path.join(merged_ph0_path,         system_name+".q_"+str(i+1))
             if not os.path.exists(q_num_path):
                 os.makedirs(q_num_path)
-            splited_dv1_path    = os.path.join(str(i+1), "tmp", "_ph0", system_name+".q_"+str(i+1), system_name+"."+system_name+".dv1")
-            merged_dv1_path     = os.path.join(q_num_path,                                          system_name+"."+system_name+".dv1")    
+            splited_dv1_path    = os.path.join(str(i+1), "tmp", "_ph0", system_name+".q_"+str(i+1), system_name+".dvscf1")
+            merged_dv1_path     = os.path.join(q_num_path,                                          system_name+".dvscf1")    
             shutil.copy(splited_dv1_path, merged_dv1_path)
 
         splited_phsave_path = os.path.join(str(i+1), "tmp", "_ph0", system_name+".phsave")
