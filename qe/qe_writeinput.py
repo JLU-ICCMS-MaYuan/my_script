@@ -764,7 +764,8 @@ class qe_writeinput:
             qe.write(" ecutrho = {},                   \n".format(self.ecutrho))
             qe.write(" lspinorb = .{}.,                \n".format(self.lspinorb))
             qe.write(" noncolin = .{}.,                \n".format(self.noncolin))
-            qe.write(" nbnd = {},                      \n".format(self.nbnd))
+            if self.nbnd is not None:
+                qe.write(" nbnd = {},                  \n".format(self.nbnd))
             qe.write("/\n")
 
             qe.write("&ELECTRONS\n")

@@ -340,7 +340,13 @@ eletron -m mode=eledosdata execmd='mpirun -np 1' npool=1 queue=local kpoints_den
 
 ###  <span style="color:yellow"> 电子能带结构计算
 
-做完scf.in自洽计算，然后做nscf.in的非自洽计算，就可以进行eleband.in的能带计算了。
+做完scf.in自洽计算，然后用pw.x做eleband.in的非自洽能带计算, 然后用band.x处理出能带的数据
+```shell
+# 很多人以为做qe的能带计算需要先做 calculation=’nscf’ 然后再做 calculation=’bands’
+# 这其实是错误的, qe做能带计算只需要在 calculation=’scf’ 后做 calculation=’bands’ 即可.
+The difference between a calculation=’bands’ and calculation=’nscf’ is that the former uses exclusively
+the k-point provided while the latter might add points to respect crystal symmetry.
+```
 
 ####  <span style="color:green">**获得eleband数据**</span>
 ```shell

@@ -54,7 +54,8 @@ qe_main.py -i CONTCAR -j slurm scf -m mode=nscf ecutwfc=80 ecutrho=960 kpoints_d
 qe_main.py -i CONTCAR -j slurm eletron -m mode=eledosdata execmd='' npool=1 queue=local kpoints_dense='48 48 48'
 
 # 特别注意nbnd的设置, 不要太高了, 不然根本算不动。
-qe_main.py -i CONTCAR -j slurm eletron -m mode=eleband execmd='srun --mpi=pmi2' npool=1 queue=local kinserted=200 nbnd=500
+# nbnd=500
+qe_main.py -i CONTCAR -j slurm eletron -m mode=eleband execmd='srun --mpi=pmi2' npool=1 queue=local kinserted=200 
 
 qe_main.py -i scffit.out -j bash eletron -m mode=elebanddata execmd='' queue=lhy
 

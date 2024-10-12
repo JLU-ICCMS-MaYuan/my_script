@@ -3,7 +3,8 @@
 ## <span style="color:red"> 计算EOS并与其他第一性原理软件计算的EOS对比
 
 
-### 网络帖子：
+## <span style="color:red"> 网络热帖子：
+https://zhuanlan.zhihu.com/p/758415675
 https://zhuanlan.zhihu.com/p/687280376#:~:text=ELK%20%E4%BB%A3%E7%A0%81%E4%B8%AD%E7%BC%96%E8%AF%91%E4%BA%86
 https://sourceforge.net/p/elk/discussion/897820/thread/d5b59f97/#:~:text=I%20am%20a%20new%20user%20of%20Elk%20code.%20Now%20I
 
@@ -37,6 +38,5 @@ latvopt = 2
 
 ## `findsym`和`findsymcrys`
 
-## <span style="color:red"> 网络热帖子：
-https://zhuanlan.zhihu.com/p/758415675
+
 

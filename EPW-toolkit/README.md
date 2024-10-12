@@ -268,19 +268,95 @@ In this case *.ephmat, *.freq, *.egnv, and *.ikmap files are not required.
 ```
 
 ## <span style="color:red"> 报错集锦
-###  `Error in routine davcio (116): error writing file "../tmp/Nb4H14.epmatwe1"`
+### <span style="color:lightgreen"> 1. Error in routine davcio (116): error writing file "../tmp/Nb4H14.epmatwe1"
 
 原因是多个epw的计算任务公用同一个tmp文件中的波函数。
 因为epw在计算的时候会在`outdir`指定的目录中创建一个目录叫`Nb4H14.ephmat`
 这个目录中保存了`egnv`, `ephmat*`, `freq`, `ikmap`。
 这几个文件都是都是`ephwrite=.true.`产生的。所以你如果公用的话，很有可能导致这个文件被不同的epw.in参数覆盖，导致文件内容混乱。
 
-### `Error in routine read_ephmat (1): nnk should be equal to nkfs`
+### <span style="color:lightgreen"> 2. Error in routine read_ephmat (1): nnk should be equal to nkfs
 
 这个错误发生在`ephwrite=.false.`时，读取`$outdir\Nb4H14.ephmat\ephmat*`时发生的错误.
+
+### <span style="color:lightgreen"> 3. coarse k-mesh needs to be strictly positive in 1st BZ
+这是因为你的`prefix.save`中存储的波函数文件被覆盖了, 并不是epw.in要求的均匀网格nscf下的波函数文件. 
+
+1. 仔细检查你提交任务的脚本是不是里面重复覆盖了波函数文件
+2. 仔细检查你的nscf.in里面的k点的是不是用kmesh.pl生成的
+
+### <span style="color:lightgreen"> 4. Error in routine elphon_shuffle_wrap (121): error opening crystal.fmt
+
+这个错是卡在计算完所有的不可以q点之后，Bloch2wane之前。
+
+我推测是因为epw.in没有完整跑完了， crystal.fmt应该是在epw.in没有完整跑完后生成的文件，
+所以如果用`epwwrite    = .false.,  epwread     = .true.`续算的话，需要读取这个文件又找不到只能报错。
+所以说，不能续算。
+
+### <span style="color:lightgreen"> 5. Error in routine epw_readin (1):  must use same w90 rotation matrix for entire run
+这是因为你在一个完整的epw都没有算完的情况下就贸然开了`epwread = .true.`, 切记不要贸然打开。你都没有epwwrite，怎么epwread呢？
+
+### <span style="color:lightgreen"> 6. Error in routine ephwann_shuffle (1): Error allocating epmatwe
+
+<span style="color:lightyellow"> **这个错是卡在计算完所有的不可以q点之后，Bloch2wane之前。在修改参数开始跑之前，最好搞清楚怎么续算？
+因为整个epw计算没有完成，停在了Bloch2wane之前，所以epbread和epwread不能同时打开, 如果倔强的你同时打开了，就会报错`Error in routine epw_readin (1): epbread cannot be used with epwread`。
+
+只能按照如下方式续算**
+```shell
+elph        = .true.            no change
+epbwrite    = .true.    --->    epbwrite    = .false.  
+epbread     = .false.   --->    epbread     = .true.   
+epwwrite    = .true.            no change
+epwread     = .false.           no change
+```
+
+不清楚为什么报这个错，但是epw.out里面提到在输入文件里面加上`use_ws = .true.   ! Use the optimal Wigner-Seitz cell`可能会有帮助。
+所以我加上了它，md，还是没跑过去。
+
+下面是epw在`https://docs.epw-code.org/doc/GaN-II.html?highlight=use_ws`帖子里面提到了GaN-II计算epw时用到了use_ws这个参数。
+```shell
+Because our k and q coarse grid are so coarse, we need use_ws.
+However it makes the calculation heavier (more vectors). 
+If your fine grids are big enough (6x6x6 or more), you probably can use Gamma centered WS cell and use use_ws = .false.
+```
+
+通过检查EPW源代码发现了报错的位置：
+```Fortran
+!EPW/src/ephwann_shuffle.f90
+...
+...
+    IF (etf_mem == 0) THEN
+      ALLOCATE(epmatwe(nbndsub, nbndsub, nrr_k, nmodes, nqc), STAT = ierr)
+      IF (ierr /= 0) CALL errore('ephwann_shuffle', 'Error allocating epmatwe', 1)
+      ALLOCATE(epmatwp(nbndsub, nbndsub, nrr_k, nmodes, nrr_g), STAT = ierr)
+      IF (ierr /= 0) CALL errore('ephwann_shuffle', 'Error allocating epmatwp', 1)
+      epmatwe(:, :, :, :, :) = czero
+      epmatwp(:, :, : ,: ,:) = czero
+    ELSE
+      ALLOCATE(epmatwe_mem(nbndsub, nbndsub, nrr_k, nmodes), STAT = ierr)
+      IF (ierr /= 0) CALL errore('ephwann_shuffle', 'Error allocating epmatwe_mem', 1)
+      epmatwe_mem(:, :, :, :) = czero
+    ENDIF
+...
+...
+```
+
+**那么这个时候问题有解了，只需要找到关于内存设置的地方就行。原来是因为我之前用的是etf_mem = 0，后来改成etf_mem = 1就行。**
+```shell
+# 下面是关于内存设置的一个重要开关：etf_mem
+
+etf_mem = 0, then all the fine Bloch-space el-ph matrix elements are stored in memory (faster). 
+etf_mem = 1, more IO (slower) but less memory is required. 
+etf_mem = 2, an additional loop is done on mode for the fine grid interpolation part. This reduces the memory further by a factor “nmodes”. 
+etf_mem = 3 is like etf_mem = 1 but the fine k-point grid is generated with points within the fsthick window using k-point symmetry (mp_mesh_k = .true. is needed) and the fine q-grid is generated on the fly. 
+etf_mem = 3 is used for transport calculations with ultra dense fine momentum grids.
+```
+
+### <span style="color:lightgreen"> 7. tetrahedra need automatic k-point grid
+
+报这个错是因为在做非自洽计算时，你用了指定坐标的k点设置方式，但是这种设置方式不允许四面体方法计算非自洽。
 
 ## <span style="color:red"> 相关帖子
 1. 关于电声耦合计算：https://xh125.github.io/2021/12/16/QE-epw/
 2. 关于超导温度的计算：https://blog.csdn.net/lielie12138/article/details/127283037
-3. EPW官方培训school的PDF文件：Tue.6.Lafuente.pdf(特别有帮助)
-
+3. EPW官方培训school的PDF文件：Tue.6.Lafuente.pdf(特别有帮助)，Wed.9.Mori(对于算超导特别有帮助) 
