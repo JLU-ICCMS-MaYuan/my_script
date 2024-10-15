@@ -1,4 +1,48 @@
-# 经验贴
+#【VASP 基础03】关于VAPS分子动力学的计算细节
+
+**zhihu 在vscode上的插件不好用了, 一登录就显示`已经登陆了undefinded`，只能用这个网站 https://md2.sleele.com/ 转化完排版后，粘贴到知乎网页的创作文版里面。哎~！！！真麻烦**
+
+最近在跑一些合金的分子动力学，发现里面门道好多，网上帖子也是层出不穷，乱七八糟，参差不齐。我就把我学习的贴出来，大家一起学习。
+
+我先给一下NVT和NPT的输入文件INCAR
+
+**NVT ensemble**
+```shell
+SYSTEM = your system
+ENCUT = 650  # 可以不用很大，师兄告诉我，稍微粗糙一点没关系，但是尽量还是用测试收敛的值，放心，宝贝儿，测试收敛的ENCUT也没多大。
+
+EDIFF = 1E-5 # 很高了，不要再比这个精度高了，
+NSW = 500000 # 50万步
+POTIM = 1 # 每步1 fs， 如果你跑的体系里面有H等小质量元素，可以试试0.5
+# 合起来就是总共模拟500000 fs = 500 ps
+ISMEAR = 0
+SIGMA = 0.05
+
+IBRION = 0  # 启动分子动力学计算
+ISIF = 2    # 2代表NVT模式
+MDALGO = 2  # 指定md热浴，2是Nose-Hoover thermostat。特别注意官网说：The Nose-Hoover thermostat is currently only available for the NVT ensemble.
+SMASS = 0   # SMASS controls the velocities during an ab-initio molecular-dynamics run.
+
+NPAR=2
+KPAR=4
+ISYM=0
+
+LREAL = Auto
+PREC = Normal
+
+TEBEG = 3500
+TEEND = 3500
+
+
+LWAVE  = .FALSE.
+LCHARG = .FALSE.
+
+NELM = 200
+
+```
+
+
+## <span style="color:red"> 经验贴
 ```shell
 https://github.com/tamaswells/XDATCAR_toolkit/tree/master
 https://docs.mdanalysis.org/stable/index.html
@@ -6,20 +50,20 @@ https://docs.mdanalysis.org/stable/index.html
 ```
 
 
-# 1. 获得内能
+##  <span style="color:red"> 1. 获得内能
 ```shell
 grep "free  energy" OUTCAR|awk ' {print $5}' > energy.dat
 ```
 
-# 2. 获得压强
+##  <span style="color:red"> 2. 获得压强
 ```shell
 grep "external pressure" OUTCAR | awk '{print $4}' > externalpressure.dat
 ```
 
-在获得压强信息之后，我得解释一下vasp中OUTCAR的压强信息都代表什么含义？不然你个憨批啥也不知道！
+### <span style="color:lightgreen"> 在获得压强信息之后，我得解释一下vasp中OUTCAR的压强信息都代表什么含义？不然你个憨批啥也不知道！
 
 
-## Pullay stress 是密度泛函理论（DFT）计算中的一种数值技术，用于修正晶格优化中的原子受力，数值上等于我们预设的压强（即参数PSTRESS就是Pullay stress的简称，巧妙吧，我也是刚刚发现P就是Pullay的意思），VASP默认为0（常压）。
+Pullay stress 是密度泛函理论（DFT）计算中的一种数值技术，用于修正晶格优化中的原子受力，数值上等于我们预设的压强（即参数PSTRESS就是Pullay stress的简称，巧妙吧，我也是刚刚发现P就是Pullay的意思），VASP默认为0（常压）。
 
 
 ```shell
@@ -82,7 +126,7 @@ external pressure = Total in kB - Pullay stress = 78.32
 
 Total in kB 在 XX, YY, ZZ, XY, YZ, ZX 6个方向上的分量就是一个晶胞感受到的应力，而这个应力的对角相 XX, YY, ZZ的和就是我们施加在其上的外压力。
 
-## external pressure在vasp做结构优化时的含义
+### <span style="color:lightgreen"> external pressure在vasp做结构优化时的含义
 
 external pressure如果大于0，则表示该结构在该压强下会膨胀，随着结构优化external pressure变小，晶格会随之变大，external pressure如果小于0，则表示该结构在该压强下会压缩，晶格会变小一些。那么这是为什么呢？？？
 
@@ -125,42 +169,51 @@ $ grep "external pressure" OUTCAR
   external pressure =       -0.01 kB  Pullay stress =      300.00 kB
 ```
 
-## external pressure在做分子动力学时的含义
+### <span style="color:lightgreen"> external pressure在做分子动力学时的含义
 
-### external pressure在做NVT时的含义
+首先明确在做NVT时，我们并不会设置PSTRESS，所以 Pullay stress = 0。
+那么在每次计算完一个离子步后输出的external pressure表示当前晶格感受到的外压是多少。
+按理说，如果你的结构是在100 GPa下优化好的，并且你这个结构在做NVT时保持稳定，那么计算出来的external pressure就会在100GPa附近上下波动。
+但是这里必须要指出：你并不能通过检查external pressure是否在某个压强点附近上下波动来判断你的结构是否稳定，
+在做NVT时，external pressure没有判断稳定性的价值。（这是我的好基友一个分子动力学大佬告诉我的，我也不知道为什么？）
 
-首先明确在做NVT时，我们并不会设置PSTRESS，所以 Pullay stress = 0。那么在每次计算完一个离子步后输出的external pressure表示当前晶格感受到的外压是多少。按理说，如果你的结构是在100 GPa下优化好的，并且你这个结构在做NVT时保持稳定，那么计算出来的external pressure就会在100GPa附近上下波动。但是这里必须要指出：你并不能通过检查external pressure是否在某个压强点附近上下波动来判断你的结构是否稳定，在做NVT时，external pressure没有判断稳定性的价值。（这是我的好基友一个分子动力学大佬告诉我的，我也不知道为什么？）
-
-# 3. 获得体积：
+##  <span style="color:red"> 3. 获得体积：
 ```shell
 grep "volume of cell" OUTCAR | awk '{print $5}' > volume.dat
 ```
 
-# 4. 获得温度：
+##  <span style="color:red"> 4. 获得温度：
 ```shell
 grep "T= " OSZICAR | awk '{print $1 " " $3 " " }' > temperature_energy.dat
 ```
 
 
-# 如何计算MSD?
+##  <span style="color:red"> 5. 如何计算MSD?
 
-## MSD的物理意义
+### <span style="color:lightgreen"> MSD的物理意义
 
 单个粒子在单位时间间隔内的位移
 
-## MSD的两种计算方法
+### <span style="color:lightgreen"> MSD的两种计算方法
 
 
-## 什么是质心漂移？
+### <span style="color:lightgreen"> 什么是质心漂移？
 
 
 
-# 如何计算RDF?
+##  <span style="color:red"> 6. 如何计算RDF?
 
-## 网络帖子
+### <span style="color:lightgreen"> 网络帖子
 https://www.bilibili.com/read/cv27581963/?jump_opus=1
 
 
-## MSD的物理意义
+### <span style="color:lightgreen"> RDF的物理意义
 
-## RDF的计算方法
+### <span style="color:lightgreen"> RDF的计算方法
+
+## <span style="color:red"> 分子动力学问题集锦和解释
+
+### <span style="color:red">  1. 温度波动大
+
+1. 原子数越多，温度波动越小
+2. SMASS=0~3之间调一调会有影响。一般体系中含有H原子的用SMASS=0就可以了, 如果没有H原子适当根据默认值把SMASS值放大一些，3有点太大了。可以先用SMASS=0产生的默认SMASS值，在OUTCAR里grep SMASS OUTCAR看到。这个数值是40个时间步长温度波动一次。然后再根据你的体系里最大的振动频率适当调整这个默认SMASS值重启计算就行了。

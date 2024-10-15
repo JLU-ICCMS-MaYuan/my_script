@@ -8,7 +8,9 @@ if [ -z "$name" ]; then # -z：检查字符串的长度是否为零。如果字�
 fi
 
 # 运行 squeue 一次并存储输出
-squeue_output=$(squeue -h --format '%A    %t    %R    %M    %Z     %s' | grep mayuan)
+# squeue_output=$(squeue -h --format '%A    %t    %R    %M    %Z     %s' | grep mayuan)
+
+squeue_output=$(squeue -h --format '%A    %t    %R    %M    %Z' | grep mayuan)
 
 echo "running"
 echo "$squeue_output" | grep " R "  | grep "$name"
