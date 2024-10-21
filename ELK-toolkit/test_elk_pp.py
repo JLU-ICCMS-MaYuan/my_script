@@ -5,32 +5,41 @@ import numpy as np
 
 from ase.io import read
 from ase.units import Bohr, Hartree
-from ase.io.elk import read_elk, write_elk_in
+from ase.io.elk import read_elk
 from ase.calculators.calculator import kpts2mp
 
-def get_ngridk_vkloff(atoms, kspacing):
-    ngridk = kpts2mp(atoms, kspacing)
+# def get_ngridk_vkloff(atoms, kspacing):
+#     ngridk = kpts2mp(atoms, kspacing)
+#     vkloff = []  # is this below correct?
+#     for nk in ngridk:
+#         if nk % 2 == 0:  # shift kpoint away from gamma point
+#             vkloff.append(0.5)
+#         else:
+#             vkloff.append(0)
+#     return ngridk, vkloff
+
+def write_elk_in(input_file, output_file, species_path): #, kspacing):
+    # 读取结构
+    atoms = read(input_file)
+    task = 0
+    latvopt = 0
+    epspot = 1.e-7
+    epsstress = 1.e-3
+    mixtype = 3 # type of mixing required for the potential   3 Broyden mixing
+    xctype = 20 # GGA, Perdew-Burke-Ernzerhof, Phys. Rev. Lett. 77, 3865 (1996)
+    isgkmax = -1  # Use the average of the muffin-tin radii
+    rgkmax = 6 # ok
+    gmaxvr = 24
+    maxscl = 200
+    # nempty = 15
+    #ngridk, vkloff = get_ngridk_vkloff(atoms, kspacing)
+    ngridk = [8, 8, 8]
     vkloff = []  # is this below correct?
     for nk in ngridk:
         if nk % 2 == 0:  # shift kpoint away from gamma point
             vkloff.append(0.5)
         else:
             vkloff.append(0)
-    return ngridk, vkloff
-
-def write_elk_in(input_file, output_file, species_path, kspacing):
-    # 读取结构
-    atoms = read(input_file)
-    task = 0
-    latvopt = 1
-    epspot = 1.e-7
-    epsstress = 1.e-3
-    mixtype = 3 # type of mixing required for the potential   3 Broyden mixing
-    xctype = 20 # GGA, Perdew-Burke-Ernzerhof, Phys. Rev. Lett. 77, 3865 (1996)
-    isgkmax = -2 # species for which the muffin-tin radius will be used for calculating gkmax
-    rgkmax = 8
-    gmaxvr = 18
-    ngridk, vkloff = get_ngridk_vkloff(atoms, kspacing)
 
 
     with open(output_file, 'w') as fd:
@@ -43,9 +52,11 @@ def write_elk_in(input_file, output_file, species_path, kspacing):
         fd.write('isgkmax\n  {}\n\n'.format(isgkmax))
         fd.write('rgkmax\n  {}\n\n'.format(rgkmax))
         fd.write('gmaxvr\n  {}\n\n'.format(gmaxvr))
+        # fd.write('nempty\n  {}\n\n'.format(nempty))
+        fd.write('maxscl\n  {}\n\n'.format(maxscl))
         fd.write('ngridk\n  {}  {}  {}\n\n'.format(ngridk[0], ngridk[1], ngridk[2]))
 
-        fd.write("sppath\n  '{}/'\n\n".format(species_path))
+        fd.write("sppath\n  '{}'\n\n".format(species_path))
         # cell
         fd.write('avec\n')
         for vec in atoms.cell:
@@ -76,7 +87,7 @@ def get_total_energy(info_path):
     """计算并返回结构能量 单位的hartree"""
     try:
         Et = float(os.popen(f""" grep -s "total energy" {info_path}""" + """ | tail -n 1  | awk '{print $4}' """).read().strip('\n'))
-        Et = Et*27.211386230 # 注意单位是Hartree, 需要转化为eV
+        #Et = Et*27.211386230 # 注意单位是Hartree, 需要转化为eV
         return Et
     except:
         Et = 1000000000000.0
@@ -85,7 +96,7 @@ def get_total_energy(info_path):
 def get_volume(info_path):
     try:
         V = float(os.popen(f""" grep -s "Unit cell volume" {info_path}""" + """ | tail -n 1  | awk '{print $5}' """).read().strip('\n'))
-        # V = V * (0.52917721092**3) # 注意单位是Hartree, 需要转化为eV
+        # V = V * (0.52917721092**3) 
         return V
     except:
         V = 1000000000000.0
@@ -110,7 +121,7 @@ Note: --------------------
     parser = argparse.ArgumentParser(description='Generate ELK input file for structure optimization.')
     parser.add_argument('-i', '--input', required=True, help='Input structure directory')
     parser.add_argument('-s', '--sppath', required=True, help='Species path directory')
-    parser.add_argument('-k', '--kspacing', type=float, required=True, help='K-point spacing for the grid')
+    # parser.add_argument('-k', '--kspacing', type=float, required=True, help='K-point spacing for the grid')
 
     args = parser.parse_args()
     
@@ -129,7 +140,7 @@ Note: --------------------
         if not os.path.exists(test_path):
             os.mkdir(test_path)
 
-        write_elk_in(poscar_path, new_elk_in, args.sppath, args.kspacing)
+        write_elk_in(poscar_path, new_elk_in, args.sppath) #, args.kspacing)
         submit_path = os.path.abspath("submit.sh")
         os.system(f"cp -f {submit_path} {test_path}")
 

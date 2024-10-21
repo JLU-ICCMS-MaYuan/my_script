@@ -216,4 +216,14 @@ https://www.bilibili.com/read/cv27581963/?jump_opus=1
 ### <span style="color:red">  1. 温度波动大
 
 1. 原子数越多，温度波动越小
-2. SMASS=0~3之间调一调会有影响。一般体系中含有H原子的用SMASS=0就可以了, 如果没有H原子适当根据默认值把SMASS值放大一些，3有点太大了。可以先用SMASS=0产生的默认SMASS值，在OUTCAR里grep SMASS OUTCAR看到。这个数值是40个时间步长温度波动一次。然后再根据你的体系里最大的振动频率适当调整这个默认SMASS值重启计算就行了。
+2. SMASS=0~3之间调一调会有影响。一般体系中含有H原子的用SMASS=0就可以了, 如果没有H原子适当根据默认值把SMASS值放大一些，3有点太大了。可以先用SMASS=0产生的默认SMASS值，在OUTCAR里grep SMASS OUTCAR看到。这个数值是40个时间步长温度波动一次。然后再根据你的体系里最大的振动频率适当调整这个默认SMASS值重启计算就行了。\
+   
+### <span style="color:red">  2. 报错 Information: wavefunction orthogonal band
+
+帖子：https://www.cnblogs.com/scandit/p/15829049.html
+
+在INCAR中设置IWAVPR=11，可适当减小MD步长（POTIM）
+
+### <span style="color:red">  3. 报错  ERROR FEXCP: supplied Exchange-correletion table
+
+帖子：https://tpmk.github.io/2022/01/29/VASP-error-BRMIX-very-serious-problems-the-old-and-the-new-charge-density-differ/

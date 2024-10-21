@@ -4,10 +4,12 @@
 
 
 ## <span style="color:red"> 网络热帖子：
-https://zhuanlan.zhihu.com/p/758415675
-https://zhuanlan.zhihu.com/p/687280376#:~:text=ELK%20%E4%BB%A3%E7%A0%81%E4%B8%AD%E7%BC%96%E8%AF%91%E4%BA%86
-https://sourceforge.net/p/elk/discussion/897820/thread/d5b59f97/#:~:text=I%20am%20a%20new%20user%20of%20Elk%20code.%20Now%20I
-deepmd公司写的测试eos的：https://bohrium.dp.tech/notebooks/77351186918
+1. https://zhuanlan.zhihu.com/p/758415675
+2. https://zhuanlan.zhihu.com/p/687280376#:~:text=ELK%20%E4%BB%A3%E7%A0%81%E4%B8%AD%E7%BC%96%E8%AF%91%E4%BA%86
+3. https://sourceforge.net/p/elk/discussion/897820/thread/d5b59f97/#:~:text=I%20am%20a%20new%20user%20of%20Elk%20code.%20Now%20I
+4. deepmd公司写的测试eos的：https://bohrium.dp.tech/notebooks/77351186918
+5. ELK官网给出了一些非常重要的问题回答https://elk.sourceforge.io/faq.html。里面的第7个Basis set and convergence回答了很多重要的问题。
+   1. 比如那些参数需要关注收敛性: rgkmax, gmaxvr, lmaxapw, lmaxvr, nempty, lradstp, swidth
 
 
 ## <span style="color:red"> 输入文件的参数解读
@@ -31,13 +33,18 @@ latvopt = 2
 
 ### INFO.OUT中可以检查MPI运行是否正确
 
-## `spacegroup`可以产生晶体结构
+## <span style="color:red"> ELK自带小程序
 
-## `eos`可以拟合equations of state to energy-volume data
+### `spacegroup`可以产生晶体结构
 
-## `findprimcell`
+### `eos`可以拟合equations of state to energy-volume data
 
-## `findsym`和`findsymcrys`
+### `findprimcell`
 
+### `findsym`和`findsymcrys`
 
+## <span style="color:red"> 报错集锦
 
+### Warning(occupy): not enough empty states for k-point  
+
+解决方法：increase nempty and also to perform a converge test of the total energy
