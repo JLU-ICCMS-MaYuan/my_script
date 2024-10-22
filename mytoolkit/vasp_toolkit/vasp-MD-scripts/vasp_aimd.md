@@ -211,6 +211,12 @@ https://www.bilibili.com/read/cv27581963/?jump_opus=1
 
 ### <span style="color:lightgreen"> RDF的计算方法
 
+### <span style="color:lightgreen"> 分子动力学方法模拟熔点
+
+相关帖子：
+1. https://mp.weixin.qq.com/s/nfwMWoCLP6I4lqNDAybKTA
+2. https://zhuanlan.zhihu.com/p/2332163668
+
 ## <span style="color:red"> 分子动力学问题集锦和解释
 
 ### <span style="color:red">  1. 温度波动大

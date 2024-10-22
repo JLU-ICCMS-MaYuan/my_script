@@ -30,81 +30,6 @@ def write_elk_in(atom, ngridk, elk_in, work_path):
     with open(new_elk_in, "w") as f:
         f.writelines(lines)
 
-def write_submit(jobtype:str, work_path):
-
-    chaoyin_pbs = """#!/bin/sh
-#PBS -N    mayqe                                    
-#PBS -q    liuhy         
-#PBS -l    nodes=1:ppn=28               
-#PBS -j    oe                                      
-#PBS -V  
-source /public/home/mayuan/intel/oneapi/setvars.sh --force
-export I_MPI_ADJUST_REDUCE=3
-export MPIR_CVAR_COLL_ALIAS_CHECK=0
-ulimit -s unlimited        
-cd $PBS_O_WORKDIR    
-
-#killall -9 vasp_std
-
-mpirun -n 28 /public/home/mayuan/software/vasp.6.1.0/bin/vasp_std > vasp.log 2>&1  
-"""
-
-    tangB_slurm = """#!/bin/sh                       
-#SBATCH  --job-name=vasp
-#SBATCH  --output=log.out                       
-#SBATCH  --error=log.err                       
-##SBATCH  --partition=intel6240r_384
-#SBATCH  --partition=intel6240r_192
-#SBATCH  --nodes=1                          
-#SBATCH  --ntasks=48                          
-#SBATCH  --ntasks-per-node=48                          
-#SBATCH  --cpus-per-task=1
-                      
-source /work/home/mayuan/intel/oneapi/setvars.sh --force  
-export I_MPI_ADJUST_REDUCE=3
-export MPIR_CVAR_COLL_ALIAS_CHECK=0    
-ulimit -s unlimited
-
-mpirun -np 48 /work/home/mayuan/software/vasp.6.1.0/bin/vasp_std > vasp.log 2>&1
-"""
-
-    coshare_slurm = """#!/bin/sh
-#SBATCH  --job-name=vaspopt-1
-#SBATCH  --output=log.out
-#SBATCH  --error=log.err
-#SBATCH  --partition=normal                       
-#SBATCH  --nodes=1                            
-#SBATCH  --ntasks=64
-#SBATCH  --ntasks-per-node=64
-#SBATCH  --cpus-per-task=1                    
-#SBATCH  --exclude=node37,node34,node38,node48,node10,node15,node5,node20
-
-source /public/env/mpi_intelmpi-2021.3.0.sh
-source /public/env/compiler_intel-compiler-2021.3.0.sh
-
-ulimit -s unlimited
-export I_MPI_ADJUST_REDUCE=3
-export MPIR_CVAR_COLL_ALIAS_CHECK=0
-export I_MPI_FABRICS=shm
-export MKL_DEBUG_CPU_TYPE=5
-
-mpirun -n 64 /public/software/apps/vasp/intelmpi/5.4.4/bin/vasp_std > vasp.log 2>&1
-"""
-
-    if jobtype == "chaoyin_pbs":
-        jobsystem = chaoyin_pbs
-    elif jobtype == "tangB_slurm":
-        jobsystem = tangB_slurm
-    elif jobtype == "coshare_slurm":
-        jobsystem = coshare_slurm
-    else:
-        print("其它机器的任务系统, 你没有准备这个机器的提作业脚本. 程序退出. ")
-        sys.exit(1)
-
-    submit_path = os.path.join(work_path, "submit.sh")
-    with open(submit_path, "w") as jobfile:
-        jobfile.write(jobsystem)
-
 def get_info_per_atom(atom, totenergy_out_path):
 
     try:
@@ -161,6 +86,7 @@ if __name__ == "__main__":
 
     poscar_path = os.path.abspath("POSCAR")
     elk_in_path  = os.path.abspath("elk.in")
+    submit_path = os.path.abspath("submit.sh")
 
     atom = read(poscar_path)
     
@@ -169,7 +95,7 @@ if __name__ == "__main__":
         if not os.path.exists(test_path):
             os.mkdir(test_path)
         write_elk_in(atom, ngridk, elk_in_path, test_path)
-        write_submit(jobsystem, test_path)
+        os.system(f"cp -f {submit_path} {test_path}")
 
     print("    尝试获得每原子的焓值 dE(meV/atom)")
     ngridk_dE_dF_dV = []

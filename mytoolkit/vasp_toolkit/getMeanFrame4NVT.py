@@ -10,8 +10,8 @@ try:
 except:
     filename = "XDATCAR"
     
-begin_steps = int(sys.argv[2])
-end_steps   = int(sys.argv[3])
+begin_steps = int(sys.argv[2]) # 包含左
+end_steps   = int(sys.argv[3]) # 不包含后右
 
 frames = read_vasp_xdatcar(filename, index=slice(begin_steps, end_steps))
 
