@@ -9,6 +9,8 @@ scripts_names = [
     'lobster-toolkit', 
 
     'deepkit-dpgen-toolkit',
+    'ELK-toolkit',
+    'EPW-toolkit',
 
     'mytoolkit/convexhull', 
     'mytoolkit/energy_curve_with_pressure', 
