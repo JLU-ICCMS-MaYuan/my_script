@@ -55,8 +55,10 @@ numb_steps / 200 = decay_steps
 ### <span style="color:yellow">  训练模型命令：
 ```shell
 # deepkit的命令
-dp train input.json
-log &
+dp train input.json > dp.log 2>&1
+
+# 续算的话，指定续算的文件即可
+dp train --restart model.ckpt input.json > dp.log 2>&1
 ```
 
 ##  <span style="color:red"> 3. 冻结模型以及测试模型

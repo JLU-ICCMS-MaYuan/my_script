@@ -211,11 +211,18 @@ https://www.bilibili.com/read/cv27581963/?jump_opus=1
 
 ### <span style="color:lightgreen"> RDF的计算方法
 
-### <span style="color:lightgreen"> 分子动力学方法模拟熔点
+### <span style="color:lightgreen"> 7.分子动力学方法模拟熔点
 
 相关帖子：
 1. https://mp.weixin.qq.com/s/nfwMWoCLP6I4lqNDAybKTA
 2. https://zhuanlan.zhihu.com/p/2332163668
+
+
+### <span style="color:lightgreen"> 8.分子动力学方法模拟恒定升温过程
+
+1. 如果想模拟300K-1000K恒定升温过程，那么就设置TEBEG = 300, TEEND = 1000, SMASS = -1, ISIF = 0, MDALGO=0. 这是一种强行的升温的算法，每一个升温点都是做一个NVE的系综
+2. 如果想模拟300K-1000K弛豫方式的升温，那么就设置TEBEG = 300, TEEND = 1000, SMASS = 0, ISIF = 2, MDALGO=2. 这是一种弛豫方式升温的算法，每一个温度点都是做一个NVT系综升上去
+
 
 ## <span style="color:red"> 分子动力学问题集锦和解释
 
