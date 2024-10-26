@@ -1,0 +1,62 @@
+{
+    "train":
+    {
+      "command": "/work/home/mayuan/software/deepmd-kit/bin/dp",
+      "machine": {
+        "batch_type": "Slurm",
+        "context_type": "LocalContext",
+        "local_root": "./",
+        "remote_root": "./execute/tra"
+      },
+      "resources": {
+        "number_node": 1,
+        "cpu_per_node": 48,
+        "gpu_per_node": 0,
+        "group_size": 1,
+        "queue_name": "intel6240r_192",
+        "source_list": ["/work/home/mayuan/intel/oneapi/setvars.sh"]
+      }
+    },
+
+
+    "model_devi":
+    {
+      "command": "/work/home/mayuan/software/deepmd-kit/bin/lmp",
+      "machine": {
+       "context_type": "LocalContext",
+        "batch_type": "Slurm",
+        "local_root": "./",
+        "remote_root": "./execute/mod"
+      },
+      "resources": {
+        "number_node": 1,
+        "cpu_per_node": 48,
+        "gpu_per_node": 0,
+        "queue_name": "intel6240r_192",
+        "custom_flags" : [],
+        "group_size": 10,
+        "source_list": ["/work/home/mayuan/intel/oneapi/setvars.sh"]
+      }
+    },
+
+
+    "fp":
+    {
+      "command": "mpirun -np 48 /work/home/mayuan/software/vasp.6.1.0/bin/vasp_std",
+      "machine": {
+       "context_type": "LocalContext",
+        "batch_type": "Slurm",
+        "local_root": "./",
+        "remote_root": "./execute/fp",
+        "remote_profile": {}
+      },
+      "resources": {
+        "number_node": 1,
+        "cpu_per_node": 48,
+        "gpu_per_node": 0,
+        "queue_name": "intel6240r_192",
+        "group_size": 5,
+        "source_list": ["/work/home/mayuan/intel/oneapi/setvars.sh"]
+      }
+    }
+}
