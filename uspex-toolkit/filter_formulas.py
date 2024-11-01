@@ -15,7 +15,7 @@ np.savetxt(formulas_backup, formulas, fmt='%d')
 
 
 # 筛选目标formulas
-filtered_formulas = formulas[(formulas[:, 0] <= 6) & (formulas[:, 1] <= 6)]
+filtered_formulas = formulas[(formulas[:, 0] <= 6) & (formulas[:, 1] <= 6) & (formulas[:, 0] > 0) & (formulas[:, 1] > 0)]
 print('After filter, number of formulas: {}'.format(filtered_formulas.shape[0]))
 # 扩胞目标formulas
 # extended_formulas = np.vstack([filtered_formulas, filtered_formulas*2, filtered_formulas*3, filtered_formulas*4])

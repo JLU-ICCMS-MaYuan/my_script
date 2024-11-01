@@ -5,7 +5,7 @@
 3. https://uspex-team.org/online_utilities/uspex_manual_release/ChineseVersion/uspex_manual_chinese_V10.2/index.html
 4. https://uspex-team.org/online_utilities/uspex_manual_release/ChineseVersion/uspex_manual_chinese_V10.2/sect0018.html (变组分结构预测)
 5. https://uspex-team.org/online_utilities/uspex_manual_release/ChineseVersion/uspex_manual_chinese_V10.2/faq_compositions.html (如何控制成分)
-
+6. https://www.bilibili.com/read/cv8674987/
 ## 2. 准备好输入文件后，提交任务
 ```shell
 nohup ./submit.sh > submit.log 2>&1 &
@@ -123,4 +123,120 @@ export MKL_DEBUG_CPU_TYPE=5
     jobNumber = int(output.split('.')[0])
 
 ......
+```
+
+## 报错处理
+
+### Error using python_uspex (line 91) System error: Traceback (most recent call last):   File "~/USPEX/application/archive/src/FunctionFolder/random_topology.py", line 3, in <module>  from randomTopology import generate_structure ModuleNotFoundError: No module named 'randomTopology' Command executed: python3 -W ignore /public/home/liuhanyu/workplace/mayuan/software/USPEX/application/archive/src/FunctionFolder/random_topology.py 0 168.27 NONE 3 11   3   0 Error in random_topology (line 10) Error in Random_Init_301 (line 53) Error in initialize_POP_STRUC_301 (line 129) Error in Initialize (line 46) Error in Start (line 46) Error in USPEX (line 39) MATLAB:python:ExecutionError  
+
+```shell
+安装python3.5版本，更高版本都会报错~
+
+conda create -n uspex python=3.9.13
+
+conda activate uspex
+
+```
+然后按照下面的库安装. 如果你不想安装，我还有一个完整的conda环境，里面的所有库都已经配置好了名为`uspex-condaenv`，只需要解压到miniconda的env目录下即可。
+```shell
+Package               Version
+--------------------- -----------
+abipy                 0.9.2
+appdirs               1.4.4
+APScheduler           3.9.1
+ase                   3.22.1
+astropy               5.1
+asttokens             2.0.8
+asyncssh              2.12.0
+backcall              0.2.0
+certifi               2022.9.14
+cffi                  1.15.1
+cftime                1.6.2
+charset-normalizer    2.1.1
+chart-studio          1.1.0
+contourpy             1.0.5
+cryptography          38.0.1
+cycler                0.11.0
+decorator             5.1.1
+emmet-core            0.36.1
+executing             1.0.0
+fonttools             4.37.3
+future                0.18.2
+idna                  3.4
+importlib-metadata    4.12.0
+ipython               8.5.0
+jedi                  0.18.1
+joblib                1.2.0
+kiwisolver            1.4.4
+latexcodec            2.0.1
+llvmlite              0.39.1
+matplotlib            3.6.0
+matplotlib-inline     0.1.6
+monty                 2022.9.9
+mp-api                0.27.3
+mpmath                1.2.1
+msgpack               1.0.4
+netCDF4               1.6.1
+networkx              2.8.6
+numba                 0.56.2
+numpy                 1.23.3
+packaging             21.3
+palettable            3.3.0
+pandas                1.5.0
+parsec                3.14
+parso                 0.8.3
+pexpect               4.8.0
+pickleshare           0.7.5
+Pillow                9.2.0
+pip                   22.1.2
+plotly                5.10.0
+pooch                 1.6.0
+prettytable           3.4.1
+prompt-toolkit        3.0.31
+ptyprocess            0.7.0
+pure-eval             0.2.2
+py3Dmol               1.8.1
+pybtex                0.24.0
+pycparser             2.21
+pydantic              1.10.2
+PyDispatcher          2.0.6
+pyerfa                2.0.0.1
+Pygments              2.13.0
+pymatgen              2022.9.21
+pyparsing             3.0.9
+pyshtools             4.10
+python-dateutil       2.8.2
+pytz                  2022.2.1
+pytz-deprecation-shim 0.1.0.post0
+pyxtal                0.5.3
+PyYAML                6.0
+requests              2.28.1
+retrying              1.3.3
+ruamel.yaml           0.17.21
+ruamel.yaml.clib      0.2.6
+scikit-learn          1.1.2
+scipy                 1.9.1
+seaborn               0.12.0
+setuptools            59.8.0
+six                   1.16.0
+sklearn               0.0
+spglib                2.0.1
+stack-data            0.5.0
+sympy                 1.11.1
+tabulate              0.8.10
+tenacity              8.1.0
+threadpoolctl         3.1.0
+toml                  0.10.2
+tqdm                  4.64.1
+traitlets             5.4.0
+typing_extensions     4.3.0
+tzdata                2022.2
+tzlocal               4.2
+uncertainties         3.1.7
+urllib3               1.26.12
+USPEX                 2022.0.1
+wcwidth               0.2.5
+wheel                 0.37.1
+xarray                2022.6.0
+zipp                  3.8.1
 ```

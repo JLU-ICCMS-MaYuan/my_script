@@ -55,11 +55,20 @@ numb_steps / 200 = decay_steps
 ### <span style="color:yellow">  训练模型命令：
 ```shell
 # deepkit的命令
+# 最普通的开始训练
 dp train input.json > dp.log 2>&1
 
-# 续算的话，指定续算的文件即可
+# Initialize the training from the frozen model.
+dp train input.json --init-frz-model graph.pb > dp.log 2>&1
+
+# initializes the model training with an existing model that is stored in the path prefix of checkpoint files model.ckpt, 
+# the network architectures should match.
+dp train input.json --init-model model.ckpt > dp.log 2>&1
+
+# 续算的话，指定续算的文件即可， Restart the training from the provided checkpoint
 dp train --restart model.ckpt input.json > dp.log 2>&1
 ```
+更多关于续算的命令参考：https://docs.deepmodeling.com/projects/deepmd/en/r2/train/training-advanced.html
 
 ##  <span style="color:red"> 3. 冻结模型以及测试模型
 
@@ -151,3 +160,5 @@ export OMP_NUM_THREADS=3 # 设置用于 OpenMP 并行计算的线程数。
 export TF_INTER_OP_PARALLELISM_THREADS=3 # 设置 TensorFlow 内部操作（Intra-Op）并行计算的线程数。
 export TF_INTER_OP_PARALLELISM_THREADS=2 # 设置 TensorFlow 操作之间（Inter-Op）并行计算的线程数。
 ```
+
+### 一个报错点：

@@ -40,3 +40,5 @@ Running
 ```shell
 lmp -in input.lammps
 ```
+
+编译vasp couple lammps: https://zhuanlan.zhihu.com/p/4018186574

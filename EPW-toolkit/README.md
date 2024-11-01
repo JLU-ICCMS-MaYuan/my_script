@@ -4,30 +4,39 @@
 
 ### <span style="color:lightgreen"> 1.自洽计算
 ```shell
+mkdir 0.phonon
+cd 0.phonon
 mpirun -np N $QEBIN/pw.x -npool N < scf.in > scf.out
 ```
 
 ### <span style="color:lightgreen"> 2.声子计算
 ```shell
+cd 0.phonon
 mpirun -np N $QEBIN/ph.x  -npool N < ph.in > ph.out
 ```
 
-### <span style="color:lightgreen"> 3.准备EPW计算的文件
+### <span style="color:lightgreen"> 3.QE能带计算，其实也是一种非自洽计算，只不过k点是高对称路径的
+```shell
+mkdir -p tmp/Nb4H14.save
+cp ../phonon/tmp/Nb4H14.save/charge-density.dat     tmp/Nb4H14.save/
+cp ../phonon/tmp/Nb4H14.save/data-file-schema.xml   tmp/Nb4H14.save/
+mpirun -np 48 /work/home/mayuan/software/qe-7.1/bin/pw.x -npool 4 <eleband.in> eleband.out
+```
+
+### <span style="color:lightgreen"> 4.准备QE动力学矩阵和受力
 ```shell
 python pp.py
 ```
 
-### <span style="color:lightgreen"> 4.重新自洽计算
+### <span style="color:lightgreen"> 5.非自洽计算, k点是均匀网格点
 ```shell
-mpirun -np N $QEBIN/pw.x -npool N < scf.in > scf.out
+cp ../phonon/tmp/Nb4H14.save/charge-density.dat     tmp/Nb4H14.save/
+cp ../phonon/tmp/Nb4H14.save/data-file-schema.xml   tmp/Nb4H14.save/
+mpirun -np 48 /work/home/mayuan/software/qe-7.1/bin/pw.x  -npool 4 <nscf.in> nscf.out  
+
 ```
 
-### <span style="color:lightgreen"> 5.非自洽计算
-```shell
-mpirun -np N $QEBIN/pw.x -npool N < nscf.in > nscf.out
-```
-
-### <span style="color:lightgreen"> 6. EPW计算
+### <span style="color:lightgreen"> 6. EPW计算声子
 ```shell
 mpirun -np N $EPWBIN/epw.x -npool N < epw.in > epw.out
 ```
@@ -352,11 +361,18 @@ etf_mem = 3 is like etf_mem = 1 but the fine k-point grid is generated with poin
 etf_mem = 3 is used for transport calculations with ultra dense fine momentum grids.
 ```
 
-### <span style="color:lightgreen"> 7. tetrahedra need automatic k-point grid
+### <span style="color:lightgreen"> 7. qe报错：tetrahedra need automatic k-point grid
 
-报这个错是因为在做非自洽计算时，你用了指定坐标的k点设置方式，但是这种设置方式不允许四面体方法计算非自洽。
+报这个错是因为在做qe非自洽计算时，你用了指定坐标的k点设置方式，但是这种设置方式不允许四面体方法计算非自洽。
 
 ## <span style="color:red"> 相关帖子
 1. 关于电声耦合计算：https://xh125.github.io/2021/12/16/QE-epw/
 2. 关于超导温度的计算：https://blog.csdn.net/lielie12138/article/details/127283037
 3. EPW官方培训school的PDF文件：Tue.6.Lafuente.pdf(特别有帮助)，Wed.9.Mori(对于算超导特别有帮助) 
+
+### <span style="color:lightgreen"> 8. Error in routine mem_size_eliashberg (1): Size of required memory exceeds max_memlt
+
+通过检查`Size of allocated memory per pool: ~=    5.1757 Gb`可以知道每个pool分配到内存大小
+
+然后设置`max_memlt = 8`可以增大每个pool分配的内存。
+

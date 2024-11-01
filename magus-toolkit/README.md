@@ -167,6 +167,9 @@ cp ~/code/mlip-2/untrained_mtps/20.mtp inputFold/MTP/pot.mtp
 
 # 然后依照input.yaml中的mindist，修改inputFold/MTP/pot.mtp中的min_dist和species_count即可，species_count代表元素个数，min_dist是最小的合理距离。
 ```
+通过多次计算发现，似乎不论input.yaml中min_dist怎么调整，最小原子间距离一直都是0.5左右。
+然后我通过查看源码发现，min_dist似乎在默认值那里设置了0.5，没有读入input.yaml中关于min_dist的设置
+所以我就在`magus/mtp.py`中修改关于`min_dist`的默认值为0.85
 
 ### 13. magus-master/magus/parallel/queuemanage.py中新增加了这样的代码用于slurm系统检测任务运行状态。
 
