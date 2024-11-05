@@ -1,10 +1,11 @@
 # LAMMPS 使用注意事项
 
-网络热帖：
+##  <span style="color:red">  网络热帖：
 1. https://wap.sciencenet.cn/blog-3437453-1264601.html?mobile=1
 2. https://casea1998.cn/2022/12/09/Lammps1/
 3. https://lammpscnv2.vercel.app/
-4. 
+4. lammps的基础中文教程：https://blog.csdn.net/lammps_jiayou/category_10782482.html
+5. 编译vasp couple lammps: https://zhuanlan.zhihu.com/p/4018186574
 
 
 input通常分为四部分：
@@ -41,4 +42,4 @@ Running
 lmp -in input.lammps
 ```
 
-编译vasp couple lammps: https://zhuanlan.zhihu.com/p/4018186574
+网络热帖：

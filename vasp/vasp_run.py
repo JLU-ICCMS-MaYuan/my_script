@@ -904,8 +904,10 @@ class vasp_clear:
         self._config = config(args).read_config()
         self.work_path       = Path(self._config['work_path'])
         self.mode            = self._config['mode']
-        if self.mode == "all":
+        if self.mode == "clearall":
             self.clear_all()
+        elif self.mode == "clearopt":
+            self.clear_for_opt()
 
     def clear_all(self):
         """
@@ -928,6 +930,11 @@ class vasp_clear:
                 pass
             else:
                 os.system(f"rm -fr {str(Path(self.work_path).joinpath(file))}")
+    
+    def clear_for_opt(self):
+        files = ["CHG", "CHGCAR", "DOSCAR", "EIGENVAL", "FERMI_ENERGY", "OSZICAR", "PCDAT", "PROCAR", "REPORT", "WAVECAR", "XDATCAR", "vasprun.xml"]
+        for file in files:
+            os.system(f"rm -fr {str(Path(self.work_path).joinpath(file))}")
 
 
 

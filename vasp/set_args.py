@@ -11,7 +11,7 @@ def set_more_args(parser: ArgumentParser):
         type=str,
         default=None,
         dest='input_file_path',
-        help="please tell me your POSCAR path, please notice your file format had better to be ***.vasp\n"
+        help="please tell me your POSCAR path, please notice your file format had better to be ***.vasp, POSCAR, CONTCAR, ***.cif and so on\n"
             "attention please:\n"
             "   if you use the `batchrelax` or `batchphono`, your input_file_path have to be a directory.\n"
             "   In the directory, there are your candidate-structures that is waiting to be calculate!!!"
@@ -23,7 +23,7 @@ def set_more_args(parser: ArgumentParser):
         type=float,
         default=0.0,
         dest='press',
-        help="please tell me your press which you were on",
+        help="please tell me your press which you were on, unit is GPa, default value is 0.0 GPa",
     )
     # 指明工作目录
     parser.add_argument(
@@ -34,14 +34,11 @@ def set_more_args(parser: ArgumentParser):
         dest='work_path',
         help="please tell me your calculated directory, it will determine two things\n"
             "   1. the directory of `work_path` \n"
-            "       when you tell me your work_path, the program will create the directory of `work_path` named:\n"
-            "       input_file_name + mode + press\n"
-            "           such as: POSCAR-disp-200\n"
-            "                    CaH6-dfpt-100\n"
-            "                    LaH10-rvf-50\n"
-            "   2. the directory of `workpath_pppath` \n"
+            "       when you tell me your work_path, the program will create the directory of `work_path` named: $work_path\n"
+            "   2. if you don't tell me your work_path, the program will create the directrory in the current path\n"
+            "   3. the directory of `workpath_pppath` about pseudopotential \n"
             "       when you tell me your work_path, the program will create the directory of `workpath_pppath` named:\n"
-            "       potcar_lib\n"
+            "       potcar_lib in the work_path\n"
             
 
     )
@@ -52,7 +49,7 @@ def set_more_args(parser: ArgumentParser):
         type=str,
         default="slurm",
         dest='submit_job_system',
-        help="please tell me your job submition system, eg: slurm, pbs",
+        help="please tell me your job submition system, eg: slurm, pbs, or bash",
     )
 
     subparsers = parser.add_subparsers(help="subparsers")
@@ -65,7 +62,7 @@ def set_more_args(parser: ArgumentParser):
         type=str,
         dest='more_args',
         nargs='+',
-        help="输入更多关于结构弛豫的参数, 例如：\n"
+        help="more parameters about relax, for example:\n"
             "encut=600 (default)\n"
             "kspacing = 0.3 \n"
             "ismear = 0 \n"
@@ -76,10 +73,10 @@ def set_more_args(parser: ArgumentParser):
             "isif = 3 \n"
             "potim = 0.1 \n"
             "nelm = 200 \n"
-            "ncore = 1 \n"
             "lreal = Auto \n"
             "mode = None, you can set it to be: rvf rv3 \n"
-            "queue = xieyu\n"
+            "execmd = 'mpirun -np 48' or 'srun' \n"
+            "queue = mayuan\n"
     )
     parser_relax.set_defaults(vasp_workflow=vasp_relax)
     
@@ -91,7 +88,7 @@ def set_more_args(parser: ArgumentParser):
         type=str,
         dest='more_args',
         nargs='+',
-        help="输入更多关于的性质计算：自洽，能带，电子态密度参数, 例如：\n"
+        help="more parameters about eletron, for example\n"
             "encut=600 (default)\n"
             "kspacing = 0.3 \n"
             "ismear = 0 \n"
@@ -102,9 +99,9 @@ def set_more_args(parser: ArgumentParser):
             "isif = 3 \n"
             "potim = 0.1 \n"
             "nelm = 200 \n"
-            "ncore = 1 \n"
             "lreal = Auto \n"
             "mode = None, you can set it to be: rvf rv3 \n"
+            "execmd = 'mpirun -np 48' or 'srun' \n"
             "queue = xieyu\n"
     )
     parser_relax.set_defaults(vasp_workflow=vasp_eletron)
@@ -117,7 +114,7 @@ def set_more_args(parser: ArgumentParser):
         type=str,
         dest='more_args',
         nargs='+',
-        help="输入更多关于声子计算的参数\n"
+        help="more parameters about phonon, for example\n"
             "encut=600 (default)\n"
             "kspacing = 0.3  or kpoints=[None, None, None]\n"
             "   The program will prefer to check whether kpoints is set\n"
@@ -134,6 +131,7 @@ def set_more_args(parser: ArgumentParser):
             "nelm = 200 \n"
             "lreal = Auto, I suggest you to set it to be 'lreal=.FALSE.' \n"
             "mode = None,  you have `disp` and `dfpt`  \n"
+            "execmd = 'mpirun -np 48' or 'srun' \n"
             "queue = xieyu\n"
     )
     parser_phono.set_defaults(vasp_workflow=vasp_phono) 
@@ -146,8 +144,8 @@ def set_more_args(parser: ArgumentParser):
         type=str,
         dest='more_args',
         nargs='+',
-        help="输入更多关于分子动力学计算的参数\n"
-            "POTIM 决定分子动力学的步长, 默认是POTIM=0.5"
+        help="more parameters about Molecular dynamics, for example\n"
+            "POTIM determins the time for one step, POTIM=0.5 fs"
     )
     parser_md.set_defaults(vasp_workflow=vasp_phono)
 
@@ -159,7 +157,7 @@ def set_more_args(parser: ArgumentParser):
         type=str,
         dest='more_args',
         nargs='+',
-        help="输入更多关于批量结构弛豫的参数\n"
+        help="more parameters about batch relax, for example\n"
             "encut=600 (default)\n"
             "kspacing = 0.3 \n"
             "ismear = 0 \n"
@@ -185,7 +183,7 @@ def set_more_args(parser: ArgumentParser):
         type=str,
         dest='more_args',
         nargs='+',
-        help="输入更多关于批量声子计算参数\n"
+        help="more parameters about batch phonon, for example\n"
             "encut=600 (default)\n"
             "kspacing = 0.3  or kpoints=[None, None, None]\n"
             "   The program will prefer to check whether kpoints is set\n"
@@ -214,7 +212,7 @@ def set_more_args(parser: ArgumentParser):
         type=str,
         dest='more_args',
         nargs='+',
-        help="输入更多关于声子计算后处理的的参数\n"
+        help="more parameters about post-phonon\n"
             "supercell has no default, you have to set it by yourself\n"
             "   supercell='num1 num2 num3'\n"
             "   mp='8 8 8'\n"
@@ -235,8 +233,8 @@ def set_more_args(parser: ArgumentParser):
         type=str,
         dest='more_args',
         nargs='+',
-        help="输入更多关于清理数据的参数\n"
-           "清理全部数据，除了 'POSCAR', 'PPOSCAR', 'POTCAR', 'OUTCAR', 'INCAR*', '*.sh', '*.vasp', '*.slurm'\n"
+        help="more parameters about clear vaspdata\n"
+           "mode=all: means clear all vaspdata except for 'POSCAR', 'PPOSCAR', 'POTCAR', 'OUTCAR', 'INCAR*', '*.sh', '*.vasp', '*.slurm'\n"
     )
     parser_clear.set_defaults(vasp_workflow=vasp_clear) 
 
