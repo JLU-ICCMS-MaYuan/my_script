@@ -53,10 +53,13 @@ class qe_writesubmit:
         self = cls(
             work_path=other_class.work_path,
             submit_job_system=other_class.submit_job_system,
+            system_name=other_class.system_name,
             mode=other_class.mode,
             queue=other_class.queue,
             execmd=other_class.execmd,
             npool=other_class.npool,
+            charge_density_dat=other_class.charge_density_dat,
+            data_file_schema_xml=other_class.data_file_schema_xml,
         )
         return self
     
@@ -66,6 +69,7 @@ class qe_writesubmit:
         self = cls(
             work_path=other_class.work_path,
             submit_job_system=other_class.submit_job_system,
+            system_name=other_class.system_name,
             mode=other_class.mode,
             queue=other_class.queue,
             execmd=other_class.execmd,
@@ -82,10 +86,13 @@ class qe_writesubmit:
         self = cls(
             work_path=other_class.work_path,
             submit_job_system=other_class.submit_job_system,
+            system_name=other_class.system_name,
             mode=other_class.mode,
             queue=other_class.queue,
             execmd=other_class.execmd,
             npool=other_class.npool,
+            charge_density_dat=other_class.charge_density_dat,
+            data_file_schema_xml=other_class.data_file_schema_xml,
         )
         return self
 
@@ -95,6 +102,7 @@ class qe_writesubmit:
         self = cls(
             work_path=other_class.work_path,
             submit_job_system=other_class.submit_job_system,
+            system_name=other_class.system_name,
             mode=other_class.mode,
             queue=other_class.queue,
             execmd=other_class.execmd,
@@ -108,6 +116,7 @@ class qe_writesubmit:
         self = cls(
             work_path=other_class.work_path,
             submit_job_system=other_class.submit_job_system,
+            system_name=other_class.system_name,
             mode=other_class.mode,
             queue=other_class.queue,
             execmd=other_class.execmd,
@@ -382,6 +391,9 @@ class qe_writesubmit:
         _script_filepath = os.path.join(_dirpath, jobname)
         with open(_script_filepath, "w") as j:
             j.writelines(self.jobtitle)
+            j.writelines('mkdir -p tmp/{}.save/    \n'.format(self.system_name))
+            j.writelines("cp {}    tmp/{}.save/    \n".format(Path(self.charge_density_dat).absolute(), self.system_name))
+            j.writelines("cp {}    tmp/{}.save/    \n".format(Path(self.data_file_schema_xml).absolute(), self.system_name))
             j.write('{} {}/pw.x -npool {} <{}> {}  \n'.format(self.execmd, qebin_path, self.npool, _inpufilename, _outputfilename))
         return jobname
 
@@ -434,6 +446,9 @@ class qe_writesubmit:
         _script_filepath = os.path.join(_dirpath, jobname)
         with open(_script_filepath, "w") as j:
             j.writelines(self.jobtitle)
+            j.writelines('mkdir -p tmp/{}.save/    \n'.format(self.system_name))
+            j.writelines("cp {}    tmp/{}.save/    \n".format(Path(self.charge_density_dat).absolute(), self.system_name))
+            j.writelines("cp {}    tmp/{}.save/    \n".format(Path(self.data_file_schema_xml).absolute(), self.system_name))
             j.write('{} {}/pw.x  -npool {} <{}> {}  \n'.format(self.execmd, qebin_path, self.npool, _inpufilename, _outputfilename))
         return jobname
 

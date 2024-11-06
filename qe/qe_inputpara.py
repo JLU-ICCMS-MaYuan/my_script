@@ -121,6 +121,12 @@ class qe_inputpara(qe_base):
             self.electron_maxstep = "200"
             print("    You didn't set the `electron_maxstep`! The program will use default value: electron_maxstep=200")
 
+        if not hasattr(self, "charge_density_dat"):
+            self.charge_density_dat = ""
+
+        if not hasattr(self, "data_file_schema_xml"):
+            self.data_file_schema_xml = ""
+
         # &CELL
         if not hasattr(self, "press_conv_thr"):
             self.press_conv_thr = "0.01"
@@ -140,11 +146,27 @@ class qe_inputpara(qe_base):
         else:
             self.kpoints_dense = [16, 16, 16]    
 
+
         if hasattr(self, "kpoints_sparse"):
             _kpoints_sparse = self.kpoints_sparse.split()
             self.kpoints_sparse = list(map(int, _kpoints_sparse))
         else:
             self.kpoints_sparse = [8, 8, 8]    
+
+        if not hasattr(self, "wan"):
+            self.wan = False
+        else:
+            self.wan = eval(self.wan)
+
+        if not hasattr(self, "k_automatic"):
+            self.k_automatic = True
+            self.kpoints_coords = None
+        else:
+            if eval(self.k_automatic):
+                self.k_automatic = True
+            else:
+                self.k_automatic = False
+                self.kpoints_coords = self.get_kmesh_justlike_kmesh_pl()
 
     @classmethod
     def init_from_config(cls, config: dict):
@@ -240,6 +262,46 @@ class qe_inputpara(qe_base):
         print(string_names)
         print(string_coord)
         return path_name_coords 
+
+    def get_kmesh_justlike_kmesh_pl(self):
+        """
+        读取self.kpoints_dense参数, 将其传给n1, n2, n3, 再将n1, n2, n3转化为相应的倒空间的均匀网格点坐标
+        """
+        # 获取输入的 n1, n2, n3
+        n1, n2, n3 = self.kpoints_dense
+
+        # 参数检查：确保 n1, n2, n3 都大于 0
+        if n1 <= 0:
+            print("n1 must be > 0")
+            sys.exit()
+        if n2 <= 0:
+            print("n2 must be > 0")
+            sys.exit()
+        if n3 <= 0:
+            print("n3 must be > 0")
+            sys.exit()
+
+        # 计算总的 k 点数量
+        totpts = n1 * n2 * n3
+
+        kpoints_coords = []
+        if not self.wan: # 前三列写k点倒空间分数坐标，第四列写其权重
+            print("K_POINTS crystal")
+            print(totpts)
+            for x in range(n1):
+                for y in range(n2):
+                    for z in range(n3):
+                        # 格式化输出 k 点信息
+                        # print(f"{x/n1:12.8f}{y/n2:12.8f}{z/n3:12.8f}{1/totpts:14.6e}")
+                        kpoints_coords.append(f"{x/n1:12.8f}{y/n2:12.8f}{z/n3:12.8f}{1/totpts:14.6e}")
+        else:  # 只写前三列写k点倒空间分数坐标
+            for x in range(n1):
+                for y in range(n2):
+                    for z in range(n3):
+                        # 格式化输出 k 点信息（没有权重）
+                        # print(f"{x/n1:12.8f}{y/n2:12.8f}{z/n3:12.8f}")
+                        kpoints_coords.append(f"{x/n1:12.8f}{y/n2:12.8f}{z/n3:12.8f}")
+        return kpoints_coords
 
 
 class qephono_inputpara(qe_inputpara):
@@ -965,6 +1027,7 @@ class qeeletron_inputpara(qe_inputpara):
             print("\nNote: --------------------")
             print("    You didn't set lsym, the default value lsym=.false.")
             self.lsym = 'false'
+
 
 class qesc_inputpara(qephono_inputpara):
 

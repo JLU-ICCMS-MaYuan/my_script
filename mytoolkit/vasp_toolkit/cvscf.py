@@ -51,9 +51,13 @@ def custom_sort(item):
     parts = item.split("/")
     return (parts[:-1], eval(parts[-1]))
 
+
 print("\nscf-none")
 for line in none_d:
     print(line)
+with open('scf-none', 'w') as f:
+    f.writelines('\n'.join(none_d))
+
 
 print("\nscf-succeeded")
 try: 
@@ -62,6 +66,9 @@ except:
     success_d = success_d
 for line in success_d:
     print(line)
+with open('scf-succeeded', 'w') as f:
+    f.writelines('\n'.join(success_d))
+
 
 print("\nscf-failed")
 try: 
@@ -70,3 +77,5 @@ except:
     fail_d = fail_d
 for line in fail_d:
     print(line)
+with open('scf-failed', 'w') as f:
+    f.writelines('\n'.join(fail_d))

@@ -45,17 +45,24 @@ def custom_sort(item):
 print("\nrelax-none")
 for line in none_d:
     print(line)
+with open('relax-none', 'w') as f:
+    f.writelines('\n'.join(none_d))
+
 
 print("\nrelax-succeeded")
 success_d = sorted(success_d, key=custom_sort)
 for line in success_d:
     print(line)
+with open('relax-succeeded', 'w') as f:
+    f.writelines('\n'.join(success_d))
+
 
 print("\nrelax-failed")
 fail_d = sorted(fail_d, key=custom_sort)
 for line in fail_d:
     print(line)
-
+with open('relax-failed', 'w') as f:
+    f.writelines('\n'.join(fail_d))
 
 
 

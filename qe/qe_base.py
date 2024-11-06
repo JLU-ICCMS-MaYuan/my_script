@@ -114,11 +114,11 @@ class qe_base:
         self.fractional_sites   = self.get_coords(struct)
         # 获得倒格矢
         # 注意，这是用于固体物理的标准倒数晶格，因数为2π
-        self.reciprocal_plattice= self.get_reciprocal_lattice()
+        self.reciprocal_plattice= self.get_reciprocal_lattice(struct)
         # self.reciprocal_plattice = pstruct.lattice.reciprocal_lattice
         # self.reciprocal_blattice = bstruct.lattice.reciprocal_lattice
         # 返回晶体倒数晶格，即没有2π的因子。
-        # self.reciprocal_lattice_crystallographic = pstruct.lattice.reciprocal_lattice_crystallographic
+        # self.reciprocal_lattice_crystallographic = struct.lattice.reciprocal_lattice_crystallographic
 
     def get_USPP(self, workpath_pppath):
         '''
@@ -197,7 +197,7 @@ class qe_base:
             
         return choosed_pp
 
-    def get_reciprocal_lattice(self):
+    def get_reciprocal_lattice(self, struct):
         """
         读取scffit.out文件获得其中的reciprocal lattice
         Read the scffit.out file to get the reciprocal lattice
@@ -206,7 +206,8 @@ class qe_base:
         scffit_out_path = self.work_path.joinpath("scffit.out")
         scf_out_path = self.work_path.joinpath("scf.out")
         relax_out_path = self.work_path.joinpath("relax.out")
-
+        
+        res_path = None
         if scffit_out_path.exists():
             res_path = scffit_out_path
         elif scf_out_path.exists():
@@ -216,10 +217,8 @@ class qe_base:
         else:
             print("\nNote: --------------------")
             print("    scffit.out, scf.out and relax.out all don't exist. The program can't get reciprocal lattice from them.")
-            # time.sleep(2)
-            return None
 
-        try:
+        if res_path:
             # 从scffit.out中获得alat
             alat = float(os.popen(f"sed -n '/lattice parameter (alat)/p' {res_path}").read().split()[4])
 
@@ -234,10 +233,12 @@ class qe_base:
                 b = [float(bi) for bi in b]  # 这里不需要乘以 unit_reciprocal_axis
                 reciprocal_lattice.append(b)
             return np.array(reciprocal_lattice)
-        except:
+        else:
             print("\nNote: --------------------")
-            print("    The program fail to get reciprocal lattice from scffit.out, scf.out and relax.out.")
-            return None
+            print("    The program fail to get reciprocal lattice from scffit.out, scf.out and relax.out. So it will get reciprocal lattice from pymatgen, which unit is the same to the QE result.")
+            reciprocal_plattice = struct.lattice.reciprocal_lattice.matrix*0.529177 
+            return np.array(reciprocal_plattice)
+
 
     def get_cell(self, struct):
         cell_parameters = None
@@ -314,7 +315,7 @@ class qe_base:
                 site.frac_coords[2]) for ele, site in zip(element_names, struct.sites)
                 ]
             return fractional_sites
-        
+
 def get_pps_for_a_element(species_name:str, pp_files:list):
     """
     species_name: 元素名

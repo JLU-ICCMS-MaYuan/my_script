@@ -90,6 +90,9 @@ class qe_writeinput:
             fractional_sites=other_class.fractional_sites,
             kpoints_dense=other_class.kpoints_dense,
             kpoints_sparse=other_class.kpoints_sparse,
+            wan=other_class.wan,
+            k_automatic=other_class.k_automatic,
+            kpoints_coords=other_class.kpoints_coords,
 
             # basic parameter of control precision
             forc_conv_thr=other_class.forc_conv_thr,
@@ -573,8 +576,13 @@ class qe_writeinput:
             qe.write("ATOMIC_POSITIONS (crystal)       \n")
             for site in self.fractional_sites:
                 qe.write("{}\n".format(site))
-            qe.write("K_POINTS {automatic}             \n")
-            qe.write(" {} {} {} 0 0 0                  \n".format(self.kpoints_dense[0], self.kpoints_dense[1], self.kpoints_dense[2]))   
+            if self.k_automatic:
+                qe.write("K_POINTS {automatic}             \n")
+                qe.write(" {} {} {} 0 0 0                  \n".format(self.kpoints_dense[0], self.kpoints_dense[1], self.kpoints_dense[2]))
+            else:
+                qe.write("K_POINTS crystal                 \n")
+                for kinfo in self.kpoints_coords:
+                    qe.write(" {}    \n".format(kinfo))
         return inputfilename
 
     # not split mode
@@ -826,21 +834,21 @@ class qe_writeinput:
         inputfilename = "phonodos.in"
         phonodos_in = work_directory.joinpath(inputfilename) 
         with open(phonodos_in, "w") as qe:
-            qe.write("&input                                             \n")
-            qe.write("   asr = 'simple',                                 \n")                                 
+            qe.write("&input                      \n")
+            qe.write("   asr = 'simple',          \n")                                 
             for i, species_name in enumerate(self.composition.keys()):
                 element      = Element(species_name)
                 species_mass = str(element.atomic_mass).strip("amu")
                 qe.write("   amass({})={},                               \n".format(i+1, species_mass))                                    
-            qe.write("   flfrc = '{}.fc',                                \n".format(self.system_name))                                                                                    
-            qe.write("   flfrq = '{}.freq',                              \n".format(self.system_name))                                         
-            qe.write("   la2F = .true.,                                  \n")                                
-            qe.write("   dos = .true.,                                   \n")  # 计算声子态密度,dos必须设置为.true.                           
-            qe.write("   fldos = '{}.dos',                               \n".format(self.system_name+"_phono"))                                       
-            qe.write("   nk1={}, nk2={}, nk3={},                         \n".format(self.qpoints[0], self.qpoints[1], self.qpoints[2]))  # 计算态密度时要用更密的q点网格，这需设置nk1, nk2, nk3                                      
-            qe.write("   ndos={},                                        \n".format(self.ndos))  # 态密度的能量刻度上的点的数目                       
-            qe.write("   el_ph_nsigma={},                                \n".format(self.el_ph_nsigma))
-            qe.write("/                                                  \n")                                                                
+            qe.write("   flfrc = '{}.fc',         \n".format(self.system_name))
+            qe.write("   flfrq = '{}.freq',       \n".format(self.system_name))                                         
+            qe.write("   la2F = .true.,           \n")                                
+            qe.write("   dos = .true.,            \n")  # 计算声子态密度,dos必须设置为.true.                           
+            qe.write("   fldos = '{}.dos',        \n".format(self.system_name+"_phono"))                                       
+            qe.write("   nk1={}, nk2={}, nk3={},  \n".format(self.qpoints[0], self.qpoints[1], self.qpoints[2]))  # 计算态密度时要用更密的q点网格，这需设置nk1, nk2, nk3
+            qe.write("   ndos={},                 \n".format(self.ndos))  # 态密度的能量刻度上的点的数目                       
+            qe.write("   el_ph_nsigma={},         \n".format(self.el_ph_nsigma))
+            qe.write("/                           \n")                                                                
         return inputfilename
 
     def write_lambda_in(self, work_directory:Path, screen_constant):

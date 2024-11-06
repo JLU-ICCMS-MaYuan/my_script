@@ -6,7 +6,7 @@
 3. https://lammpscnv2.vercel.app/
 4. lammps的基础中文教程：https://blog.csdn.net/lammps_jiayou/category_10782482.html
 5. 编译vasp couple lammps: https://zhuanlan.zhihu.com/p/4018186574
-
+6. https://www.bilibili.com/video/BV1Af4y1z7vu/?spm_id_from=trigger_reload&vd_source=1597edad34c6ed03ef7be595efefb5a4
 
 input通常分为四部分：
 
