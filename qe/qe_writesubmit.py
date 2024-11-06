@@ -11,118 +11,19 @@ class qe_writesubmit:
 
     def __init__(
         self,
-        work_path: Path,
-        submit_job_system: str,
-        mode: str,
-        **kwargs,
+        qe_inputpara: qe_inputpara
         ):
  
-        self.work_path          = work_path
-        self.submit_job_system  = submit_job_system 
-        self.mode               = mode
+        self.qe_inputpara = qe_inputpara
 
-        for key, value in kwargs.items():
-            setattr(self, key, value)
-
-        if self.submit_job_system == "slurm":
+        if self.qe_inputpara.submit_job_system == "slurm":
             self.jobtitle =  slurmtitle, 
-        elif self.submit_job_system == "pbs":
+        elif self.qe_inputpara.submit_job_system == "pbs":
             self.jobtitle = pbstitle
-        elif self.submit_job_system == "bash":
+        elif self.qe_inputpara.submit_job_system == "bash":
             self.jobtitle = bashtitle
         else:
             self.jobtitle = ''
-
-
-    @classmethod
-    def init_from_relaxinput(cls, other_class: qe_inputpara):
-        
-        self = cls(
-            work_path=other_class.work_path,
-            submit_job_system=other_class.submit_job_system,
-            mode=other_class.mode,
-            queue=other_class.queue,
-            execmd=other_class.execmd,
-            npool=other_class.npool,
-        )
-        return self
-
-    @classmethod
-    def init_from_scfinput(cls, other_class: qe_inputpara):
-        
-        self = cls(
-            work_path=other_class.work_path,
-            submit_job_system=other_class.submit_job_system,
-            system_name=other_class.system_name,
-            mode=other_class.mode,
-            queue=other_class.queue,
-            execmd=other_class.execmd,
-            npool=other_class.npool,
-            charge_density_dat=other_class.charge_density_dat,
-            data_file_schema_xml=other_class.data_file_schema_xml,
-        )
-        return self
-    
-    @classmethod
-    def init_from_phonoinput(cls, other_class: qe_inputpara):
-        
-        self = cls(
-            work_path=other_class.work_path,
-            submit_job_system=other_class.submit_job_system,
-            system_name=other_class.system_name,
-            mode=other_class.mode,
-            queue=other_class.queue,
-            execmd=other_class.execmd,
-            npool=other_class.npool,
-
-            qirreduced=other_class.qirreduced,
-            qirreduced_coords=other_class.qirreduced_coords,
-        )
-        return self
-
-    @classmethod
-    def init_from_eletroninput(cls, other_class: qe_inputpara):
-        
-        self = cls(
-            work_path=other_class.work_path,
-            submit_job_system=other_class.submit_job_system,
-            system_name=other_class.system_name,
-            mode=other_class.mode,
-            queue=other_class.queue,
-            execmd=other_class.execmd,
-            npool=other_class.npool,
-            charge_density_dat=other_class.charge_density_dat,
-            data_file_schema_xml=other_class.data_file_schema_xml,
-        )
-        return self
-
-    @classmethod
-    def init_from_scinput(cls, other_class: qe_inputpara):
-
-        self = cls(
-            work_path=other_class.work_path,
-            submit_job_system=other_class.submit_job_system,
-            system_name=other_class.system_name,
-            mode=other_class.mode,
-            queue=other_class.queue,
-            execmd=other_class.execmd,
-            npool=other_class.npool,
-        )
-        return self
-
-    @classmethod
-    def init_from_prepareinput(cls, other_class: qe_inputpara):
-        
-        self = cls(
-            work_path=other_class.work_path,
-            submit_job_system=other_class.submit_job_system,
-            system_name=other_class.system_name,
-            mode=other_class.mode,
-            queue=other_class.queue,
-            execmd=other_class.execmd,
-            npool=other_class.npool,
-        )
-        return self
 
     def write_submit_scripts(self, inpufilename, mode=None):
 
@@ -134,30 +35,30 @@ class qe_writesubmit:
         print("{:<20} {:<20}".format("McAD", "eliashberg"))
 
         if mode==None:
-            mode=self.mode
+            mode=self.qe_inputpara.mode
 
         if mode == "relax-vc":
-            jobname = self.s1_relax(self.work_path, inpufilename)
+            jobname = self.s1_relax(self.qe_inputpara.work_path, inpufilename)
             return jobname
         if mode == "scffit":
-            jobname = self.s2_scffit(self.work_path, inpufilename)
+            jobname = self.s2_scffit(self.qe_inputpara.work_path, inpufilename)
             return jobname
         if mode == "scf":
-            jobname = self.s3_scf(self.work_path, inpufilename)
+            jobname = self.s3_scf(self.qe_inputpara.work_path, inpufilename)
             return jobname
         if mode =="prepareall":
-            jobname = self.s123_prepare(self.work_path, inpufilename)
+            jobname = self.s123_prepare(self.qe_inputpara.work_path, inpufilename)
             return jobname
         if mode =="preparescf":
-            jobname = self.s23_prepare(self.work_path, inpufilename)
+            jobname = self.s23_prepare(self.qe_inputpara.work_path, inpufilename)
             return jobname
         if mode =="nosplit":
-            jobname = self.s4_PhNoSplit(self.work_path, inpufilename)
+            jobname = self.s4_PhNoSplit(self.qe_inputpara.work_path, inpufilename)
             return jobname
         if mode =="split_dyn0":
             jobnames = []
             for i, inname in enumerate(inpufilename):
-                split_ph_dir = os.path.join(self.work_path, str(i+1))
+                split_ph_dir = os.path.join(self.qe_inputpara.work_path, str(i+1))
                 if not os.path.exists(split_ph_dir):
                     raise FileExistsError (f"There is no {split_ph_dir}")
                 jobname = self.s5_PhSplitDyn0(split_ph_dir, inname)
@@ -167,7 +68,7 @@ class qe_writesubmit:
         if mode =="split_assignQ":
             jobnames = []
             for i, inname in enumerate(inpufilename):
-                split_ph_dir = os.path.join(self.work_path, str(i+1))
+                split_ph_dir = os.path.join(self.qe_inputpara.work_path, str(i+1))
                 if not os.path.exists(split_ph_dir):
                     raise FileExistsError (f"There is no {split_ph_dir}")
                 jobname = self.s5_PhSplitAssignQ(split_ph_dir, inname)
@@ -175,37 +76,37 @@ class qe_writesubmit:
                 print(f"finish writing submit job script in {i+1}")
             return jobnames
         if mode =="q2r":
-            jobname = self.s6_q2r(self.work_path, inpufilename)
+            jobname = self.s6_q2r(self.qe_inputpara.work_path, inpufilename)
             return jobname
         if mode =="matdyn":
-            jobname = self.s7_matdyn(self.work_path, inpufilename)
+            jobname = self.s7_matdyn(self.qe_inputpara.work_path, inpufilename)
             return jobname
         if mode =="eletdos":
-            jobname = self.s8_eletdos(self.work_path, inpufilename)
+            jobname = self.s8_eletdos(self.qe_inputpara.work_path, inpufilename)
             return jobname
         if mode =="elepdos":
-            jobname = self.s8_elepdos(self.work_path, inpufilename)
+            jobname = self.s8_elepdos(self.qe_inputpara.work_path, inpufilename)
             return jobname
         if mode =="eleband":
-            jobname = self.s8_eleband(self.work_path, inpufilename)
+            jobname = self.s8_eleband(self.qe_inputpara.work_path, inpufilename)
             return jobname
         if mode =="elebanddata":
-            jobname = self.s8_elebanddata(self.work_path, inpufilename)
+            jobname = self.s8_elebanddata(self.qe_inputpara.work_path, inpufilename)
             return jobname
         if mode == "phonodos":
-            jobname = self.s8_phonodos(self.work_path, inpufilename)
+            jobname = self.s8_phonodos(self.qe_inputpara.work_path, inpufilename)
             return jobname
         if mode =="McAD":
-            jobname = self.s9_lambda(self.work_path, inpufilename)
+            jobname = self.s9_lambda(self.qe_inputpara.work_path, inpufilename)
             return jobname
         if mode =="eliashberg":
-            jobname = self.s9_eliashberg(self.work_path, inpufilename)
+            jobname = self.s9_eliashberg(self.qe_inputpara.work_path, inpufilename)
             return jobname
         if mode =="nscf":
-            jobname = self.s10_nscf(self.work_path, inpufilename)
+            jobname = self.s10_nscf(self.qe_inputpara.work_path, inpufilename)
             return jobname
         if mode =="eleproperties":
-            jobname = self.s11_eleproperties(self.work_path, inpufilename)
+            jobname = self.s11_eleproperties(self.qe_inputpara.work_path, inpufilename)
             return jobname
 
     #  job scripts
@@ -216,7 +117,7 @@ class qe_writesubmit:
         _script_filepath = os.path.join(_dirpath, jobname)
         with open(_script_filepath, "w") as j:
             j.writelines(self.jobtitle)
-            j.write('{} {}/pw.x -npool {} <{}> {}  \n'.format(self.execmd, qebin_path,  self.npool, _inpufilename, _outputfilename))
+            j.write('{} {}/pw.x -npool {} <{}> {}  \n'.format(self.qe_inputpara.execmd, qebin_path,  self.qe_inputpara.npool, _inpufilename, _outputfilename))
             j.write('check symmetry ops is consistent or not after vc-relax                      \n')
             j.write('grep "Sym. Ops." relax.out                                                  \n')
             j.write("awk '/Begin final coordinates/,/End final coordinates/{print $0}' relax.out \n")
@@ -229,7 +130,7 @@ class qe_writesubmit:
         _script_filepath = os.path.join(_dirpath, jobname)
         with open(_script_filepath, "w") as j:
             j.writelines(self.jobtitle)
-            j.write('{} {}/pw.x -npool {} <{}> {}  \n'.format(self.execmd, qebin_path, self.npool, _inpufilename, _outputfilename))                                                        
+            j.write('{} {}/pw.x -npool {} <{}> {}  \n'.format(self.qe_inputpara.execmd, qebin_path, self.qe_inputpara.npool, _inpufilename, _outputfilename))                                                        
         return jobname
         
     def s3_scf(self, _dirpath, inpufilename):
@@ -239,7 +140,7 @@ class qe_writesubmit:
         _script_filepath = os.path.join(_dirpath, jobname)
         with open(_script_filepath, "w") as j:
             j.writelines(self.jobtitle)
-            j.write('{} {}/pw.x -npool {} <{}> {} \n'.format(self.execmd, qebin_path, self.npool, _inpufilename,  _outputfilename)) 
+            j.write('{} {}/pw.x -npool {} <{}> {} \n'.format(self.qe_inputpara.execmd, qebin_path, self.qe_inputpara.npool, _inpufilename,  _outputfilename)) 
         return jobname
 
     def s123_prepare(self, _dirpath, inputfilenames):
@@ -251,7 +152,7 @@ class qe_writesubmit:
         with open(_script_filepath, "w") as j:
             j.writelines(self.jobtitle)
             relax_in, relax_out = input_output.__next__()
-            j.write('{} {}/pw.x -npool {} <{}> {} \n'.format(self.execmd, qebin_path, self.npool, relax_in,  relax_out))
+            j.write('{} {}/pw.x -npool {} <{}> {} \n'.format(self.qe_inputpara.execmd, qebin_path, self.qe_inputpara.npool, relax_in,  relax_out))
             j.write("wait\n")
             j.write("Nat=$(grep 'number of k points' -B 2 relax.out |head -n 1|awk {'print($1)'})\n")
             j.write("StruLine=$(expr $Nat + 5)\n")
@@ -268,7 +169,7 @@ class qe_writesubmit:
             j.write('sed -i "${cell_parameters}, ${stop_delete_position}d" scffit.in\n')
             j.write('sed -i "${insert_position}r new_structure.out" scffit.in\n')
             scffit_in, scffit_out = input_output.__next__()
-            j.write('{} {}/pw.x -npool {} <{}> {} \n'.format(self.execmd, qebin_path, self.npool, scffit_in,  scffit_out))
+            j.write('{} {}/pw.x -npool {} <{}> {} \n'.format(self.qe_inputpara.execmd, qebin_path, self.qe_inputpara.npool, scffit_in,  scffit_out))
             j.write("\n")
             j.write("\n")
             j.write("\n")
@@ -280,7 +181,7 @@ class qe_writesubmit:
             j.write('sed -i "${cell_parameters}, ${stop_delete_position}d" scf.in\n')
             j.write('sed -i "${insert_position}r new_structure.out" scf.in\n')
             scf_in, scf_out = input_output.__next__()
-            j.write('{} {}/pw.x -npool {} <{}> {} \n'.format(self.execmd, qebin_path, self.npool, scf_in,  scf_out))
+            j.write('{} {}/pw.x -npool {} <{}> {} \n'.format(self.qe_inputpara.execmd, qebin_path, self.qe_inputpara.npool, scf_in,  scf_out))
         return jobname
 
     def s23_prepare(self, _dirpath, inputfilenames):
@@ -292,9 +193,9 @@ class qe_writesubmit:
         with open(_script_filepath, "w") as j:
             j.writelines(self.jobtitle)
             scffit_in, scffit_out = input_output.__next__()
-            j.write('{} {}/pw.x -npool {} <{}> {} \n'.format(self.execmd, qebin_path, self.npool, scffit_in, scffit_out))
+            j.write('{} {}/pw.x -npool {} <{}> {} \n'.format(self.qe_inputpara.execmd, qebin_path, self.qe_inputpara.npool, scffit_in, scffit_out))
             scf_in, scf_out = input_output.__next__()
-            j.write('{} {}/pw.x -npool {} <{}> {} \n'.format(self.execmd, qebin_path, self.npool, scf_in,  scf_out))
+            j.write('{} {}/pw.x -npool {} <{}> {} \n'.format(self.qe_inputpara.execmd, qebin_path, self.qe_inputpara.npool, scf_in,  scf_out))
         return jobname
 
     def s4_PhNoSplit(self, _dirpath, inputfilename):
@@ -304,7 +205,7 @@ class qe_writesubmit:
         _script_filepath = os.path.join(_dirpath, jobname)
         with open(_script_filepath, "w") as j:
             j.writelines(self.jobtitle)
-            j.write('{} {}/ph.x -npool {} <{}> {} \n'.format(self.execmd, qebin_path,  self.npool, _inpufilename, _outputfilename))
+            j.write('{} {}/ph.x -npool {} <{}> {} \n'.format(self.qe_inputpara.execmd, qebin_path,  self.qe_inputpara.npool, _inpufilename, _outputfilename))
         return jobname
 
     def s5_PhSplitDyn0(self, _dirpath, inputfilename):
@@ -318,11 +219,11 @@ class qe_writesubmit:
             j.writelines(self.jobtitle)
             j.write('killall -9 vasp_std; killall -9 pw.x; killall -9 ph.x                  \n')
             j.write('echo "run scf.fit"                                                     \n')
-            j.write('{} {}/pw.x -npool {} <{}> {} \n'.format(self.execmd, qebin_path,  self.npool, _inputscffit_name, _outputscffit_name))
+            j.write('{} {}/pw.x -npool {} <{}> {} \n'.format(self.qe_inputpara.execmd, qebin_path,  self.qe_inputpara.npool, _inputscffit_name, _outputscffit_name))
             j.write('echo "run scf"                                                         \n')
-            j.write('{} {}/pw.x -npool {} <{}> {} \n'.format(self.execmd, qebin_path,  self.npool, _inputscf_name,     _outputscf_name))
+            j.write('{} {}/pw.x -npool {} <{}> {} \n'.format(self.qe_inputpara.execmd, qebin_path,  self.qe_inputpara.npool, _inputscf_name,     _outputscf_name))
             j.write('echo "run split_ph"                                                    \n')
-            j.write('{} {}/ph.x -npool {} <{}> {} \n'.format(self.execmd, qebin_path,  self.npool, _inputsplitph_name,  _outputsplitph_name))   
+            j.write('{} {}/ph.x -npool {} <{}> {} \n'.format(self.qe_inputpara.execmd, qebin_path,  self.qe_inputpara.npool, _inputsplitph_name,  _outputsplitph_name))   
         return jobname
 
     def s5_PhSplitAssignQ(self, _dirpath, inputfilename):
@@ -336,11 +237,11 @@ class qe_writesubmit:
             j.writelines(self.jobtitle)
             j.write('killall -9 vasp_std; killall -9 pw.x; killall -9 ph.x                  \n')
             j.write('echo "run scf.fit"                                                \n')
-            j.write('{} {}/pw.x -npool {} <{}> {} \n'.format(self.execmd, qebin_path,  self.npool, _inputscffit_name, _outputscffit_name))
+            j.write('{} {}/pw.x -npool {} <{}> {} \n'.format(self.qe_inputpara.execmd, qebin_path,  self.qe_inputpara.npool, _inputscffit_name, _outputscffit_name))
             j.write('echo "run scf"                                                    \n')
-            j.write('{} {}/pw.x -npool {} <{}> {} \n'.format(self.execmd, qebin_path,  self.npool, _inputscf_name, _outputscf_name))
+            j.write('{} {}/pw.x -npool {} <{}> {} \n'.format(self.qe_inputpara.execmd, qebin_path,  self.qe_inputpara.npool, _inputscf_name, _outputscf_name))
             j.write('echo "run split_ph"                                                    \n')
-            j.write('{} {}/ph.x -npool {} <{}> {} \n'.format(self.execmd, qebin_path,  self.npool, _inputsplitph_name,  _outputsplitph_name))   
+            j.write('{} {}/ph.x -npool {} <{}> {} \n'.format(self.qe_inputpara.execmd, qebin_path,  self.qe_inputpara.npool, _inputsplitph_name,  _outputsplitph_name))   
         return jobname
 
     def s6_q2r(self, _dirpath, inputfilename):
@@ -350,7 +251,7 @@ class qe_writesubmit:
         _script_filepath = os.path.join(_dirpath,jobname)
         with open(_script_filepath, "w") as j:
             j.writelines(self.jobtitle)
-            j.write('{} {}/q2r.x -npool {} <{}> {} \n'.format(self.execmd, qebin_path, self.npool, _inpufilename, _outputfilename))
+            j.write('{} {}/q2r.x -npool {} <{}> {} \n'.format(self.qe_inputpara.execmd, qebin_path, self.qe_inputpara.npool, _inpufilename, _outputfilename))
             j.write('grep nqs q2r.out > nqs                   \n')  
         return jobname
 
@@ -361,7 +262,7 @@ class qe_writesubmit:
         _script_filepath = os.path.join(_dirpath, jobname)
         with open(_script_filepath, "w") as j:
             j.writelines(self.jobtitle)
-            j.write('{} {}/matdyn.x -npool {} <{}> {} \n'.format(self.execmd, qebin_path, self.npool, _inpufilename, _outputfilename))
+            j.write('{} {}/matdyn.x -npool {} <{}> {} \n'.format(self.qe_inputpara.execmd, qebin_path, self.qe_inputpara.npool, _inpufilename, _outputfilename))
         return jobname
 
     def s8_eletdos(self, _dirpath, inputfilename):
@@ -371,7 +272,7 @@ class qe_writesubmit:
         _script_filepath = os.path.join(_dirpath, jobname)
         with open(_script_filepath, "w") as j:
             j.writelines(self.jobtitle)
-            j.write('{} {}/dos.x <{}> {}  \n'.format(self.execmd, qebin_path,  _inpufilename, _outputfilename))
+            j.write('{} {}/dos.x <{}> {}  \n'.format(self.qe_inputpara.execmd, qebin_path,  _inpufilename, _outputfilename))
         return jobname
 
     def s8_elepdos(self, _dirpath, inputfilename):
@@ -381,7 +282,7 @@ class qe_writesubmit:
         _script_filepath = os.path.join(_dirpath, jobname)
         with open(_script_filepath, "w") as j:
             j.writelines(self.jobtitle)
-            j.write('{} {}/projwfc.x <{}> {}  \n'.format(self.execmd, qebin_path,  _inpufilename, _outputfilename))
+            j.write('{} {}/projwfc.x <{}> {}  \n'.format(self.qe_inputpara.execmd, qebin_path,  _inpufilename, _outputfilename))
         return jobname
 
     def s8_eleband(self, _dirpath, inputfilename):
@@ -391,10 +292,10 @@ class qe_writesubmit:
         _script_filepath = os.path.join(_dirpath, jobname)
         with open(_script_filepath, "w") as j:
             j.writelines(self.jobtitle)
-            j.writelines('mkdir -p tmp/{}.save/    \n'.format(self.system_name))
-            j.writelines("cp {}    tmp/{}.save/    \n".format(Path(self.charge_density_dat).absolute(), self.system_name))
-            j.writelines("cp {}    tmp/{}.save/    \n".format(Path(self.data_file_schema_xml).absolute(), self.system_name))
-            j.write('{} {}/pw.x -npool {} <{}> {}  \n'.format(self.execmd, qebin_path, self.npool, _inpufilename, _outputfilename))
+            j.writelines('mkdir -p tmp/{}.save/    \n'.format(self.qe_inputpara.system_name))
+            j.writelines("cp {}    tmp/{}.save/    \n".format(Path(self.qe_inputpara.charge_density_dat).absolute(), self.qe_inputpara.system_name))
+            j.writelines("cp {}    tmp/{}.save/    \n".format(Path(self.qe_inputpara.data_file_schema_xml).absolute(), self.qe_inputpara.system_name))
+            j.write('{} {}/pw.x -npool {} <{}> {}  \n'.format(self.qe_inputpara.execmd, qebin_path, self.qe_inputpara.npool, _inpufilename, _outputfilename))
         return jobname
 
     def s8_elebanddata(self, _dirpath, inputfilename):
@@ -404,7 +305,7 @@ class qe_writesubmit:
         _script_filepath = os.path.join(_dirpath, jobname)
         with open(_script_filepath, "w") as j:
             j.writelines(self.jobtitle)
-            j.write('{} {}/bands.x <{}> {}  \n'.format(self.execmd, qebin_path,  _inpufilename, _outputfilename))
+            j.write('{} {}/bands.x <{}> {}  \n'.format(self.qe_inputpara.execmd, qebin_path,  _inpufilename, _outputfilename))
         return jobname
 
     def s8_phonodos(self, _dirpath, inputfilename):
@@ -414,7 +315,7 @@ class qe_writesubmit:
         _script_filepath = os.path.join(_dirpath, jobname)
         with open(_script_filepath, "w") as j:
             j.writelines(self.jobtitle)
-            j.write('{} {}/matdyn.x  <{}> {}  \n'.format(self.execmd, qebin_path, _inpufilename, _outputfilename))
+            j.write('{} {}/matdyn.x  <{}> {}  \n'.format(self.qe_inputpara.execmd, qebin_path, _inpufilename, _outputfilename))
         return jobname
 
     def s9_lambda(self, _dirpath, inputfilename):
@@ -424,7 +325,7 @@ class qe_writesubmit:
         _script_filepath = os.path.join(_dirpath, jobname)
         with open(_script_filepath, "w") as j:
             j.writelines(self.jobtitle)
-            j.write('{} {}/lambda.x  <{}> {}  \n'.format(self.execmd, qebin_path, _inpufilename, _outputfilename))
+            j.write('{} {}/lambda.x  <{}> {}  \n'.format(self.qe_inputpara.execmd, qebin_path, _inpufilename, _outputfilename))
         return jobname
 
     def s9_eliashberg(self, _dirpath, inputfilename):
@@ -446,10 +347,10 @@ class qe_writesubmit:
         _script_filepath = os.path.join(_dirpath, jobname)
         with open(_script_filepath, "w") as j:
             j.writelines(self.jobtitle)
-            j.writelines('mkdir -p tmp/{}.save/    \n'.format(self.system_name))
-            j.writelines("cp {}    tmp/{}.save/    \n".format(Path(self.charge_density_dat).absolute(), self.system_name))
-            j.writelines("cp {}    tmp/{}.save/    \n".format(Path(self.data_file_schema_xml).absolute(), self.system_name))
-            j.write('{} {}/pw.x  -npool {} <{}> {}  \n'.format(self.execmd, qebin_path, self.npool, _inpufilename, _outputfilename))
+            j.writelines('mkdir -p tmp/{}.save/    \n'.format(self.qe_inputpara.system_name))
+            j.writelines("cp {}    tmp/{}.save/    \n".format(Path(self.qe_inputpara.charge_density_dat).absolute(), self.qe_inputpara.system_name))
+            j.writelines("cp {}    tmp/{}.save/    \n".format(Path(self.qe_inputpara.data_file_schema_xml).absolute(), self.qe_inputpara.system_name))
+            j.write('{} {}/pw.x  -npool {} <{}> {}  \n'.format(self.qe_inputpara.execmd, qebin_path, self.qe_inputpara.npool, _inpufilename, _outputfilename))
         return jobname
 
     def s11_eleproperties(self, _dirpath, inputfilenames):
@@ -463,7 +364,7 @@ class qe_writesubmit:
             # 先做能带计算 输入文件是 eleband.in
             eleband_in, eleband_out = input_output.__next__()
             j.write('echo "eleband"\n')
-            j.write('{} {}/pw.x <{}> {}  \n\n'.format(self.execmd, qebin_path, eleband_in, eleband_out))
+            j.write('{} {}/pw.x <{}> {}  \n\n'.format(self.qe_inputpara.execmd, qebin_path, eleband_in, eleband_out))
             
             # 先做处理能带数据 输入文件是 elebanddata.in
             elebanddata_in, elebanddata_out = input_output.__next__()
@@ -473,18 +374,18 @@ class qe_writesubmit:
             # 再做非自洽计算
             nscf_in, nscf_out = input_output.__next__()
             j.write('echo "nscf"\n')
-            j.write('{} {}/pw.x <{}> {} \n\n'.format(self.execmd, qebin_path, nscf_in, nscf_out))
+            j.write('{} {}/pw.x <{}> {} \n\n'.format(self.qe_inputpara.execmd, qebin_path, nscf_in, nscf_out))
         
             # 再做总dos计算TDOS
             eletdos_in, eletdos_out = input_output.__next__()
             j.write('echo "eletdos"\n')
             # -pd .true. 避免调用mpirun时出错，似乎 dos.x并不能并行调用mpirun
-            j.write('{} {}/dos.x -pd .true. <{}> {} \n\n'.format(self.execmd, qebin_path, eletdos_in, eletdos_out))
+            j.write('{} {}/dos.x -pd .true. <{}> {} \n\n'.format(self.qe_inputpara.execmd, qebin_path, eletdos_in, eletdos_out))
 
             # 再做投影dos计算PDOS
             elepdos_in, elepdos_out = input_output.__next__()
             j.write('echo "elepdos"\n')
             # -pd .true. 避免调用mpirun时出错，似乎 projwfc.x并不能并行调用mpirun
-            j.write('{} {}/projwfc.x -pd .true. <{}> {}  \n\n'.format(self.execmd, qebin_path, elepdos_in, elepdos_out))
+            j.write('{} {}/projwfc.x -pd .true. <{}> {}  \n\n'.format(self.qe_inputpara.execmd, qebin_path, elepdos_in, elepdos_out))
 
         return jobname

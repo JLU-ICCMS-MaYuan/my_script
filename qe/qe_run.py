@@ -56,15 +56,15 @@ class qe_relax:
         self.relax_inputpara  = qe_inputpara.init_from_config(self._config)
 
         # init the input
-        self.qe_writeinput  = qe_writeinput.init_from_relaxinput(self.relax_inputpara)
+        self.qe_writeinput  = qe_writeinput(self.relax_inputpara)
         inputfilename = self.qe_writeinput.writeinput()
 
         # init the submit job script
-        self.qe_writesubmit = qe_writesubmit.init_from_relaxinput(self.relax_inputpara)
+        self.qe_writesubmit = qe_writesubmit(self.relax_inputpara)
         jobname = self.qe_writesubmit.write_submit_scripts(inputfilename)
         
         # submit the job. If we didn't set the parameter of `queue`, it will be set `None` in `qe_inputpara`
-        self.qe_submitjob = qe_submitjob.init_from_relaxinput(self.relax_inputpara)
+        self.qe_submitjob = qe_submitjob(self.relax_inputpara)
         if self.relax_inputpara.queue is not None:
             self.qe_submitjob.submit_mode1(inputfilename, jobname)
 
@@ -80,15 +80,15 @@ class qe_scf:
         self.scf_inputpara  = qe_inputpara.init_from_config(self._config)
 
         # init the input
-        self.qe_writeinput  = qe_writeinput.init_from_scfinput(self.scf_inputpara)
+        self.qe_writeinput  = qe_writeinput(self.scf_inputpara)
         inputfilename = self.qe_writeinput.writeinput()
 
         # init the submit job script
-        self.qe_writesubmit = qe_writesubmit.init_from_scfinput(self.scf_inputpara)
+        self.qe_writesubmit = qe_writesubmit(self.scf_inputpara)
         jobname = self.qe_writesubmit.write_submit_scripts(inputfilename)
 
         # submit the job
-        self.qe_submitjob = qe_submitjob.init_from_scfinput(self.scf_inputpara)
+        self.qe_submitjob = qe_submitjob(self.scf_inputpara)
         if self.scf_inputpara.queue is not None:
             self.qe_submitjob.submit_mode1(inputfilename, jobname)
 
@@ -128,15 +128,15 @@ class qe_phono:
             self.phono_inputpara.get_hspp()
         else:
             # init the input
-            self.qe_writeinput  = qe_writeinput.init_from_phonoinput(self.phono_inputpara)
+            self.qe_writeinput  = qe_writeinput(self.phono_inputpara)
             inputfilename = self.qe_writeinput.writeinput()
 
             # init the submit job script
-            self.qe_writesubmit = qe_writesubmit.init_from_phonoinput(self.phono_inputpara)
+            self.qe_writesubmit = qe_writesubmit(self.phono_inputpara)
             jobnames = self.qe_writesubmit.write_submit_scripts(inputfilename)
 
             # submit the job
-            self.qe_submitjob = qe_submitjob.init_from_phonoinput(self.phono_inputpara)
+            self.qe_submitjob = qe_submitjob(self.phono_inputpara)
             if self.phono_inputpara.queue is not None :
                 if self.phono_inputpara.mode == "nosplit":
                     self.qe_submitjob.submit_mode2(inputfilename, jobnames)
@@ -169,9 +169,9 @@ class qe_eletron:
             print("    fermi_energy = {:<8.4f} eV in scffit.out, N(Ef) = {:<8.4f} states/eV/(Unit Cell) = {:<10.6f} states/spin/Ry/(Unit Cell)".format(ef_scffit, nef_scffit, nef_scffit/2/eV_To_Ry))
             print("    fermi_energy = {:<8.4f} eV in scf.out,    N(Ef) = {:<8.4f} states/eV/(Unit Cell) = {:<10.6f} states/spin/Ry/(Unit Cell)".format(ef_scf, nef_scf, nef_scf/2/eV_To_Ry))
         elif self.eletron_inputpara.mode == "elebanddata": 
-            self.qe_writeinput = qe_writeinput.init_from_eletroninput(self.eletron_inputpara)
-            self.qe_writesubmit = qe_writesubmit.init_from_eletroninput(self.eletron_inputpara)
-            self.qe_submitjob  = qe_submitjob.init_from_eletroninput(self.eletron_inputpara)
+            self.qe_writeinput = qe_writeinput(self.eletron_inputpara)
+            self.qe_writesubmit = qe_writesubmit(self.eletron_inputpara)
+            self.qe_submitjob  = qe_submitjob(self.eletron_inputpara)
             print("\nNote: --------------------")
             print("    !!!!!!!!!! Remember to run pw.x to get eleband.out before you run bands.x") 
             print("    Run bands.x to get eleband.dat and  eleband.dat.gnu")
@@ -184,9 +184,9 @@ class qe_eletron:
                 self.qe_submitjob.submit_mode0(inputfilename, dotx_file="projwfc.x")
             self.get_fermi_energy()
         elif self.eletron_inputpara.mode == "eledosdata": 
-            self.qe_writeinput = qe_writeinput.init_from_eletroninput(self.eletron_inputpara)
-            self.qe_submitjob  = qe_submitjob.init_from_eletroninput(self.eletron_inputpara)
-            self.qe_writesubmit = qe_writesubmit.init_from_eletroninput(self.eletron_inputpara)
+            self.qe_writeinput = qe_writeinput(self.eletron_inputpara)
+            self.qe_submitjob  = qe_submitjob(self.eletron_inputpara)
+            self.qe_writesubmit = qe_writesubmit(self.eletron_inputpara)
             print("\nNote: --------------------")
             print("    !!!!!!!!!! Remember to run pw.x to get nscf.out before you run dos.x and projwfc.x") 
             print("    Run dos.x to get tdos and and run projwfc.x to get pdos")
@@ -198,27 +198,27 @@ class qe_eletron:
                 self.qe_submitjob.submit_mode0(inputfilename, dotx_file="projwfc.x")
             self.get_fermi_energy()
         elif self.eletron_inputpara.mode == "eleproperties":
-            self.qe_writeinput = qe_writeinput.init_from_eletroninput(self.eletron_inputpara)
-            self.qe_writesubmit = qe_writesubmit.init_from_eletroninput(self.eletron_inputpara)
+            self.qe_writeinput = qe_writeinput(self.eletron_inputpara)
+            self.qe_writesubmit = qe_writesubmit(self.eletron_inputpara)
             inputfilename1 = self.qe_writeinput.writeinput(mode="eleband")
             inputfilename2 = self.qe_writeinput.writeinput(mode="elebanddata")
             inputfilename3 = self.qe_writeinput.writeinput(mode="nscf")
             inputfilename4 = self.qe_writeinput.writeinput(mode="eletdos")
             inputfilename5 = self.qe_writeinput.writeinput(mode="elepdos")
-            self.qe_submitjob  = qe_submitjob.init_from_eletroninput(self.eletron_inputpara)
+            self.qe_submitjob  = qe_submitjob(self.eletron_inputpara)
             jobname = self.qe_writesubmit.write_submit_scripts([inputfilename1, inputfilename2, inputfilename3, inputfilename4, inputfilename5])
             if self.eletron_inputpara.queue is not None:
                 self.qe_submitjob.submit_mode1(inputfilename1, jobname)
             self.get_fermi_energy()
         else:
-            self.qe_writeinput  = qe_writeinput.init_from_eletroninput(self.eletron_inputpara)
-            self.qe_writesubmit = qe_writesubmit.init_from_eletroninput(self.eletron_inputpara)
+            self.qe_writeinput  = qe_writeinput(self.eletron_inputpara)
+            self.qe_writesubmit = qe_writesubmit(self.eletron_inputpara)
             # write input parameter
             inputfilename = self.qe_writeinput.writeinput()
             # init the submit job script
             jobname = self.qe_writesubmit.write_submit_scripts(inputfilename)
             # submit the job
-            self.qe_submitjob = qe_submitjob.init_from_eletroninput(self.eletron_inputpara)
+            self.qe_submitjob = qe_submitjob(self.eletron_inputpara)
             if self.eletron_inputpara.queue is not None:
                 self.qe_submitjob.submit_mode1(inputfilename, jobname)
             self.get_fermi_energy()
@@ -274,8 +274,8 @@ class qe_superconduct:
         results = []
         for screen_constant in self.sc_inputpara.screen_constant:
             # McAD
-            self.qe_writeinput  = qe_writeinput.init_from_scinput(self.sc_inputpara)
-            self.qe_submitjob = qe_submitjob.init_from_scinput(self.sc_inputpara)
+            self.qe_writeinput  = qe_writeinput(self.sc_inputpara)
+            self.qe_submitjob = qe_submitjob(self.sc_inputpara)
 
             inputfilename = self.qe_writeinput.write_lambda_in(self.sc_inputpara.work_path, screen_constant)
             if self.sc_inputpara.queue is not None:
@@ -380,7 +380,7 @@ class qe_prepare:
         # 准备relax.in,  scffit.in,  scf.in 的输入文件
 
         if self.prepare_inputpara.mode == "prepareall":
-            self.qe_writeinput  = qe_writeinput.init_from_relaxinput(self.prepare_inputpara)
+            self.qe_writeinput  = qe_writeinput(self.prepare_inputpara)
             inputfilename1 = self.qe_writeinput.writeinput(mode="relax-vc")
 
             self.qe_writeinput  = qe_writeinput.init_from_scfinput(self.prepare_inputpara)
@@ -393,7 +393,7 @@ class qe_prepare:
             self.qe_writesubmit = qe_writesubmit.init_from_prepareinput(self.prepare_inputpara)
             jobname = self.qe_writesubmit.write_submit_scripts([inputfilename1, inputfilename2, inputfilename3])
             # submit the job
-            self.qe_submitjob   = qe_submitjob.init_from_scinput(self.prepare_inputpara)
+            self.qe_submitjob   = qe_submitjob(self.prepare_inputpara)
             if self.prepare_inputpara.queue is not None:
                 self.qe_submitjob.submit_mode1(inputfilename1, jobname)
 
@@ -409,7 +409,7 @@ class qe_prepare:
             self.qe_writesubmit = qe_writesubmit.init_from_prepareinput(self.prepare_inputpara)
             jobname = self.qe_writesubmit.write_submit_scripts([inputfilename2, inputfilename3])
             # submit the job
-            self.qe_submitjob   = qe_submitjob.init_from_scinput(self.prepare_inputpara)
+            self.qe_submitjob   = qe_submitjob(self.prepare_inputpara)
             if self.prepare_inputpara.queue is not None:
                 self.qe_submitjob.submit_mode1(inputfilename2, jobname)
 

@@ -58,8 +58,13 @@ qe_main.py -i PPOSCAR -j bash eletron -m mode=elebanddata execmd='' queue=lhy
 
 # qe态密度计算
 
-qe_main.py -i ../phonon/PPOSCAR -j bash scf -m mode=nscf ecutwfc=80 ecutrho=960 kpoints_dense='48 48 48'  degauss=0.02 execmd='mpirun -np 4' npool=4 queue=lhy charge_density_dat='../phonon/tmp/H3S1.save/charge-density.dat' data_file_schema_xml='../phonon/tmp/H3S1.save/data-file-schema.xml'
+# 适用于EPW计算前的nscf计算，这里的展开方式是高斯展宽，因为EPW要求nscf的K点是自定义坐标的，而自定义坐标的nscf不支持四面体方法
+qe_main.py -i ../phonon/PPOSCAR -j bash scf -m mode=nscf ecutwfc=80 ecutrho=960 kpoints_dense='8 8 8'  degauss=0.02 execmd='mpirun -np 4' npool=4  charge_density_dat='../phonon/tmp/H3S1.save/charge-density.dat' data_file_schema_xml='../phonon/tmp/H3S1.save/data-file-schema.xml'  k_automatic=False wan=False  occupations=smearing  queue=lhy
 
+# 四面体方法计算nscf
+qe_main.py -i ../phonon/PPOSCAR -j bash scf -m mode=nscf ecutwfc=80 ecutrho=960 kpoints_dense='8 8 8'  degauss=0.02 execmd='mpirun -np 4' npool=4  charge_density_dat='../phonon/tmp/H3S1.save/charge-density.dat' data_file_schema_xml='../phonon/tmp/H3S1.save/data-file-schema.xml'  k_automatic=True   occupations=tetrahedra  queue=lhy
+
+# 处理态密度
 qe_main.py -i CONTCAR -j slurm eletron -m mode=eledosdata execmd='' npool=1 queue=local kpoints_dense='48 48 48'
 
 

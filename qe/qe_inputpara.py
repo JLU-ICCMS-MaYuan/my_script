@@ -161,12 +161,13 @@ class qe_inputpara(qe_base):
         if not hasattr(self, "k_automatic"):
             self.k_automatic = True
             self.kpoints_coords = None
+            self.totpts = 0
         else:
             if eval(self.k_automatic):
-                self.k_automatic = True
+                self.k_automatic = True; self.totpts = 0
             else:
-                self.k_automatic = False
-                self.kpoints_coords = self.get_kmesh_justlike_kmesh_pl()
+                self.k_automatic = False;
+                self.kpoints_coords, self.totpts = self.get_kmesh_justlike_kmesh_pl()
 
     @classmethod
     def init_from_config(cls, config: dict):
@@ -301,7 +302,7 @@ class qe_inputpara(qe_base):
                         # 格式化输出 k 点信息（没有权重）
                         # print(f"{x/n1:12.8f}{y/n2:12.8f}{z/n3:12.8f}")
                         kpoints_coords.append(f"{x/n1:12.8f}{y/n2:12.8f}{z/n3:12.8f}")
-        return kpoints_coords
+        return kpoints_coords, totpts
 
 
 class qephono_inputpara(qe_inputpara):
