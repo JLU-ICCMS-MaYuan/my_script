@@ -32,14 +32,14 @@ class vasp_relax:
         self.relax_inputpara  = vasp_inputpara.init_from_config1(_config)
 
         # init the INCAR
-        self._vasp_writeincar = vasp_writeincar.init_from_relaxinput(self.relax_inputpara)
+        self._vasp_writeincar = vasp_writeincar(self.relax_inputpara)
         self._vasp_writeincar.writeinput()
         
         # init the submit job script
-        _vasp_writesubmit = vasp_writesubmit.init_from_relaxinput(self.relax_inputpara)
+        _vasp_writesubmit = vasp_writesubmit(self.relax_inputpara)
         jobname = _vasp_writesubmit.write_submit_scripts()
         # submit the job
-        _vasp_submitjob = vasp_submitjob.init_from_relaxinput(self.relax_inputpara)
+        _vasp_submitjob = vasp_submitjob(self.relax_inputpara)
         if self.relax_inputpara.queue is not None:
             _vasp_submitjob.submit_mode1(jobname)
 
@@ -73,13 +73,13 @@ class vaspbatch_relax:
                     )
 
                 # init the INCAR
-                self._vasp_writeincar  = vasp_writeincar.init_from_relaxinput(self.relax_inputpara)
+                self._vasp_writeincar  = vasp_writeincar(self.relax_inputpara)
                 self._vasp_writeincar.writeinput()
                 # init the submit job script
-                _vasp_writesubmit = vasp_writesubmit.init_from_relaxinput(self.relax_inputpara)
+                _vasp_writesubmit = vasp_writesubmit(self.relax_inputpara)
                 jobname = _vasp_writesubmit.write_submit_scripts()
                 # submit the job
-                _vasp_submitjob   = vasp_submitjob.init_from_relaxinput(self.relax_inputpara)
+                _vasp_submitjob   = vasp_submitjob(self.relax_inputpara)
                 if self.relax_inputpara.queue is not None:
                     _vasp_submitjob.submit_mode1(jobname)
         else:
@@ -98,7 +98,7 @@ class vasp_phono:
         phono_inputpara  = vasp_phonopara.init_from_config1(_config)
 
         # init the INCAR
-        self._vasp_writeincar  = vasp_writeincar.init_from_phonoinput(phono_inputpara)
+        self._vasp_writeincar  = vasp_writeincar(phono_inputpara)
         self._vasp_writeincar.writeinput()
 
         # init the KPOINTS
@@ -116,12 +116,12 @@ class vasp_phono:
                 kpoints_path=phono_inputpara.work_path,
                 )
 
-
         # init the submit job script
-        _vasp_writesubmit = vasp_writesubmit.init_from_phonoinput(phono_inputpara)
+        _vasp_writesubmit = vasp_writesubmit(phono_inputpara)
         jobname = _vasp_writesubmit.write_submit_scripts()
+
         # submit the job
-        _vasp_submitjob   = vasp_submitjob.init_from_phonoinput(phono_inputpara)
+        _vasp_submitjob   = vasp_submitjob(phono_inputpara)
         if phono_inputpara.queue is not None:
             if phono_inputpara.mode == 'disp':
                 _vasp_submitjob.submit_mode2(jobname)
@@ -153,7 +153,7 @@ class vaspbatch_phono:
                     )
 
                 # init the INCAR
-                self._vasp_writeincar  = vasp_writeincar.init_from_phonoinput(phono_inputpara)
+                self._vasp_writeincar  = vasp_writeincar(phono_inputpara)
                 self._vasp_writeincar.writeinput()
                 # init the KPOINTS
                 phono_inputpara.create_kpoints_by_pymatgen(
@@ -162,10 +162,10 @@ class vaspbatch_phono:
                     phono_inputpara.kdensity,
                     )
                 # init the submit job script
-                _vasp_writesubmit = vasp_writesubmit.init_from_phonoinput(phono_inputpara)
+                _vasp_writesubmit = vasp_writesubmit(phono_inputpara)
                 jobname = _vasp_writesubmit.write_submit_scripts()
                 # submit the job
-                _vasp_submitjob   = vasp_submitjob.init_from_phonoinput(phono_inputpara)
+                _vasp_submitjob   = vasp_submitjob(phono_inputpara)
                 if phono_inputpara.queue is not None:
                     _vasp_submitjob.submit_mode2(jobname)
 
@@ -203,11 +203,11 @@ class vasp_eletron:
             ('eledos'      in self.eletron_inputpara.mode) and \
             ('eband'       in self.eletron_inputpara.mode):
             # 准备任务脚本
-            _vasp_writesubmit = vasp_writesubmit.init_from_eletron(self.eletron_inputpara)
+            _vasp_writesubmit = vasp_writesubmit(self.eletron_inputpara)
             jobname = _vasp_writesubmit.write_submit_scripts(
                 mode="scf-eband-eledos")
             # 提交任务
-            _vasp_submitjob = vasp_submitjob.init_from_eletroninput(self.eletron_inputpara)
+            _vasp_submitjob = vasp_submitjob(self.eletron_inputpara)
             if self.eletron_inputpara.queue is not None:
                 _vasp_submitjob.submit_mode1(jobname)
         # 只进行scf, eband计算
@@ -215,10 +215,10 @@ class vasp_eletron:
              ('eledos' not in self.eletron_inputpara.mode) and \
              ('eband'      in self.eletron_inputpara.mode):
             # 准备任务脚本
-            _vasp_writesubmit = vasp_writesubmit.init_from_eletron(self.eletron_inputpara)
+            _vasp_writesubmit = vasp_writesubmit(self.eletron_inputpara)
             jobname = _vasp_writesubmit.write_submit_scripts(mode="scf-eband")
             # 提交任务
-            _vasp_submitjob = vasp_submitjob.init_from_eletroninput(self.eletron_inputpara)
+            _vasp_submitjob = vasp_submitjob(self.eletron_inputpara)
             if self.eletron_inputpara.queue is not None:
                 _vasp_submitjob.submit_mode1(jobname)
         # 只进行scf, eledos计算
@@ -226,10 +226,10 @@ class vasp_eletron:
              ('eledos'     in self.eletron_inputpara.mode) and \
              ('eband'  not in self.eletron_inputpara.mode):
             # 准备任务脚本
-            _vasp_writesubmit = vasp_writesubmit.init_from_eletron(self.eletron_inputpara)
+            _vasp_writesubmit = vasp_writesubmit(self.eletron_inputpara)
             jobname = _vasp_writesubmit.write_submit_scripts(mode="scf-eledos")
             # 提交任务
-            _vasp_submitjob = vasp_submitjob.init_from_eletroninput(self.eletron_inputpara)
+            _vasp_submitjob = vasp_submitjob(self.eletron_inputpara)
             if self.eletron_inputpara.queue is not None:
                 _vasp_submitjob.submit_mode1(jobname)
         # 只进行eband, eledos计算
@@ -237,7 +237,7 @@ class vasp_eletron:
              ('eledos'     in self.eletron_inputpara.mode) and \
              ('eband'      in self.eletron_inputpara.mode):
             # 准备任务脚本
-            _vasp_writesubmit = vasp_writesubmit.init_from_eletron(self.eletron_inputpara)
+            _vasp_writesubmit = vasp_writesubmit(self.eletron_inputpara)
             jobname = _vasp_writesubmit.write_submit_scripts(
                 mode="eband-eledos")
             chgcar_src = self.eletron_inputpara.work_path.joinpath("scf", "CHGCAR")
@@ -246,7 +246,7 @@ class vasp_eletron:
                 print("So The program will exit")
                 sys.exit(1)
             # 提交任务
-            _vasp_submitjob = vasp_submitjob.init_from_eletroninput(self.eletron_inputpara)
+            _vasp_submitjob = vasp_submitjob(self.eletron_inputpara)
             if self.eletron_inputpara.queue is not None:
                 _vasp_submitjob.submit_mode1(jobname)
         ###########################################################################
@@ -258,12 +258,12 @@ class vasp_eletron:
              ('eledos' not in self.eletron_inputpara.mode) and \
              ('eband'  not in self.eletron_inputpara.mode):
             # 准备任务脚本
-            _vasp_writesubmit = vasp_writesubmit.init_from_eletron(self.eletron_inputpara)
+            _vasp_writesubmit = vasp_writesubmit(self.eletron_inputpara)
             jobname = _vasp_writesubmit.write_submit_scripts(
                 mode="only-scf",
                 submitjob_path=scf_path)
             # 提交任务
-            _vasp_submitjob = vasp_submitjob.init_from_eletroninput(self.eletron_inputpara)
+            _vasp_submitjob = vasp_submitjob(self.eletron_inputpara)
             if self.eletron_inputpara.queue is not None:
                 _vasp_submitjob.submit_mode1(jobname, submit_path=scf_path)
         # 只进行eband计算
@@ -271,7 +271,7 @@ class vasp_eletron:
              ('eledos' not in self.eletron_inputpara.mode) and \
              ('eband'      in self.eletron_inputpara.mode):
             # 准备任务脚本
-            _vasp_writesubmit = vasp_writesubmit.init_from_eletron(self.eletron_inputpara)
+            _vasp_writesubmit = vasp_writesubmit(self.eletron_inputpara)
             jobname = _vasp_writesubmit.write_submit_scripts(
                 mode="only-eband",
                 submitjob_path=eband_path)
@@ -284,7 +284,7 @@ class vasp_eletron:
             else:
                 shutil.copy(chgcar_src, chgcar_dst)
             # 提交任务
-            _vasp_submitjob = vasp_submitjob.init_from_eletroninput(self.eletron_inputpara)
+            _vasp_submitjob = vasp_submitjob(self.eletron_inputpara)
             if self.eletron_inputpara.queue is not None:
                 _vasp_submitjob.submit_mode1(jobname, submit_path=eband_path)
         # 只进行eledos计算
@@ -292,7 +292,7 @@ class vasp_eletron:
              ('eledos'     in self.eletron_inputpara.mode) and \
              ('eband'  not in self.eletron_inputpara.mode):
             # 准备任务脚本
-            _vasp_writesubmit = vasp_writesubmit.init_from_eletron(self.eletron_inputpara)
+            _vasp_writesubmit = vasp_writesubmit(self.eletron_inputpara)
             jobname = _vasp_writesubmit.write_submit_scripts(
                 mode="only-eledos",
                 submitjob_path=eledos_path)
@@ -305,20 +305,20 @@ class vasp_eletron:
             else:
                 shutil.copy(chgcar_src, chgcar_dst)
             # 提交任务
-            _vasp_submitjob = vasp_submitjob.init_from_eletroninput(self.eletron_inputpara)
+            _vasp_submitjob = vasp_submitjob(self.eletron_inputpara)
             if self.eletron_inputpara.queue is not None:
                 _vasp_submitjob.submit_mode1(jobname, submit_path=eledos_path)
         # 只进行cohp计算
         
         if   ('cohp'       in self.eletron_inputpara.mode):
             # 准备任务脚本
-            _vasp_writesubmit = vasp_writesubmit.init_from_eletron(self.eletron_inputpara)
+            _vasp_writesubmit = vasp_writesubmit(self.eletron_inputpara)
             jobname = _vasp_writesubmit.write_submit_scripts(
                 mode="only-cohp",
                 submitjob_path=cohp_path
                 )
             # 提交任务
-            _vasp_submitjob = vasp_submitjob.init_from_eletroninput(self.eletron_inputpara)
+            _vasp_submitjob = vasp_submitjob(self.eletron_inputpara)
             if self.eletron_inputpara.queue is not None:
                 _vasp_submitjob.submit_mode1(
                     jobname,
@@ -418,6 +418,34 @@ class vasp_md:
         # read input para
         _config = config(args).read_config()
 
+        # prepare the POSCAR POTCAR  
+        md_inputpara  = vasp_mdpara.init_from_config1(_config)
+
+        # init the INCAR
+        self._vasp_writeincar = vasp_writeincar(md_inputpara)
+        self._vasp_writeincar.writeinput()
+
+        # init the KPOINTS
+        if md_inputpara.kspacing is not None:
+            supercell_lattice = md_inputpara.sposcar_struct_type.lattice.matrix
+            md_inputpara.write_evenly_kpoints(
+                lattice = supercell_lattice,
+                kspacing=md_inputpara.kspacing, 
+                kpoints_path=md_inputpara.work_path,
+                )
+        else:
+            md_inputpara.write_gamma_kpoints(
+                kpoints_path=md_inputpara.work_path,
+                )
+        
+        # init the submit job script
+        _vasp_writesubmit = vasp_writesubmit(md_inputpara)
+        jobname = _vasp_writesubmit.write_submit_scripts()
+
+        # submit the job
+        _vasp_submitjob = vasp_submitjob(md_inputpara)
+        if self.md_inputpara.queue is not None:
+            _vasp_submitjob.submit_mode1(jobname)
 
 class vasp_processdata(vasp_base):
 

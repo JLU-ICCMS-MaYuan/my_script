@@ -1,9 +1,11 @@
-qebin_path = "/data/home/mayuan/soft/qe-7.0/bin"
-qe_source_libs = "/data/home/mayuan/POT/qepp/all_pbe_UPF_v1.5"
-eliashberg_x_path = "/data/home/mayuan/code/my_script/qe/eliashberg/eliashberg.x"
+qebin_path = "/work/home/mayuan/software/qe-7.1/bin"
+qe_source_libs = "/work/home/mayuan/POT/qe-pp/all_pbe_UPF_v1.5"
+eliashberg_x_path = "/work/home/mayuan/code/my_script/qe/eliashberg/eliashberg.x"
 
-vaspbin_path = "/data/home/mayuan/soft/vasp.6.1.0/bin/vasp_std"
-potcar_source_libs = "/data/home/mayuan/POT/vasppp/potpaw_PBE54"
+vaspstd_path = "/work/home/mayuan/software/vasp.6.1.0/bin/vasp_std"
+vaspgam_path = "/work/home/mayuan/software/vasp.6.1.0/bin/vasp_gam"
+
+potcar_source_libs = "/work/home/mayuan/POT/vasp_pot1/potpaw_PBE54"
 
 
 bashtitle = '''#!/bin/sh   
@@ -12,18 +14,20 @@ ulimit -s unlimited
 '''
 
 slurmtitle = '''#!/bin/sh                           
-#SBATCH  --job-name=mayqe                      
+#SBATCH  --job-name=vasp
 #SBATCH  --output=log.out                       
 #SBATCH  --error=log.err                       
-#SBATCH  --partition=intel6430
+##SBATCH  --partition=intel6240r_384
+#SBATCH  --partition=intel6240r_192
 #SBATCH  --nodes=1                          
-#SBATCH  --ntasks=64
-#SBATCH  --ntasks-per-node=64
+#SBATCH  --ntasks=48                          
+#SBATCH  --ntasks-per-node=48                          
 #SBATCH  --cpus-per-task=1                         
 
-source /data/home/mayuan/intel/oneapi/setvars.sh
-
+source /work/home/mayuan/intel/oneapi/setvars.sh --force      
 ulimit -s unlimited
+export I_MPI_ADJUST_REDUCE=3
+export MPIR_CVAR_COLL_ALIAS_CHECK=0
 '''
 
 pbstitle = '''#!/bin/sh                   
@@ -59,12 +63,20 @@ if __name__ == "__main__":
     else:
         raise FileNotFoundError(f"The path {eliashberg_x_path} you set wrong !!!")
 
-    vaspbin_path       = Path(vaspbin_path)
+    vaspstd_path       = Path(vaspstd_path)
     potcar_source_libs_path = Path(potcar_source_libs)
-    if Path(vaspbin_path).exists():
-        print(f"The path {vaspbin_path} you set rightly !!!")
+    if Path(vaspstd_path).exists():
+        print(f"The path {vaspstd_path} you set rightly !!!")
     else:
-        raise FileNotFoundError(f"The path {vaspbin_path} you set wrong !!!")
+        raise FileNotFoundError(f"The path {vaspstd_path} you set wrong !!!")
+    
+    vaspgam_path       = Path(vaspgam_path)
+    potcar_source_libs_path = Path(potcar_source_libs)
+    if Path(vaspgam_path).exists():
+        print(f"The path {vaspgam_path} you set rightly !!!")
+    else:
+        raise FileNotFoundError(f"The path {vaspgam_path} you set wrong !!!")
+
     if Path(potcar_source_libs_path).exists():
         print(f"The path {potcar_source_libs_path} you set rightly !!!")
     else:
@@ -106,4 +118,5 @@ if __name__ == "__main__":
     my_scriptrc_ini = Path.home().joinpath(".my_scriptrc.py")
     qebin_path      = Path.home().joinpath("code/my_script/qe/qebin.py")
     vaspbin_path    = Path.home().joinpath("code/my_script/vasp/vaspbin.py")
+
     Write_Tobin(qebin_path, vaspbin_path, my_scriptrc_ini)

@@ -5,6 +5,8 @@ import shutil
 import logging
 from pathlib import Path
 
+from numpy import isclose
+
 from ase.io import read
 from pymatgen.io.ase import AseAtomsAdaptor
 
@@ -50,7 +52,7 @@ class vasp_inputpara(vasp_base):
             self.encut = 600
         
         if not hasattr(self, "kspacing"):
-            self.kspacing = 0.3
+            self.kspacing = None
         else:
             self.kspacing = float(self.kspacing)
 
@@ -111,6 +113,9 @@ class vasp_inputpara(vasp_base):
         if not hasattr(self, "npar"):
             self.npar=4
         
+        if not hasattr(self, "kpar"):
+            self.kpar=1
+
         # 关于磁性的参数设置：
         if not hasattr(self, "isym"):
             self.isym = 2
@@ -343,6 +348,81 @@ class vaspbatch_phonopara(vaspbatch_base, vasp_phonopara):
         
         self.set_default_inputpara(kwargs)
         self.set_default_phonoinputpara(kwargs)
+
+
+class vasp_mdpara(vasp_inputpara):
+
+    def __init__(
+        self, 
+        work_path: str, 
+        press: int, 
+        submit_job_system: str, 
+        input_file_path: str, 
+        mode: str, 
+        **kwargs: dict
+        ):
+        super(vasp_mdpara, self).__init__(
+            work_path, 
+            press, 
+            submit_job_system, 
+            input_file_path, 
+            mode, 
+            **kwargs
+            )
+        
+        self.set_default_inputpara(kwargs)
+        self.set_default_mdinputpara(kwargs)
+    
+    def set_default_mdinputpara(self):
+         
+        if not hasattr(self, "tebeg"):
+            raise ValueError("You have to set tebeg(TEBEG)")
+
+        if not hasattr(self, "teend"):
+            raise ValueError("You have to set teend(TEEND))")
+
+        if not hasattr(self, "potim"):
+            self.potim = 0.5
+        
+        if not hasattr(self, "ibrion"):
+            self.ibrion = 0
+        elif hasattr(self, "ibrion") and int(self.ibrion) != 0:
+            self.ibrion = 0
+
+        elif hasattr(self, "potim") and isclose(float(self.potim), 0.1):
+            raise("Your sure that POTIM = {} ??????".format(self.potim))
+        else:
+            self.potim = int(self.potim)
+
+        if not hasattr(self, "nsw"):
+            self.nsw = 20000
+        else:
+            self.nsw = int(self.nsw)
+
+        if self.mode == 'nvt':
+            self.isif = 2
+            self.mdalgo = 2
+            if not hasattr(self, "smass"):
+                self.smass = 0 
+        elif self.mode == 'npt':
+            self.mdalgo = 3
+            self.isif = 3
+            if not hasattr(self, "langevin_gamma"):
+                self.langevin_gamma = [10.0]*len(self.species)  
+            else:
+                self.langevin_gamma = list(map(float, self.langevin_gamma.split()))
+            if not hasattr(self, "langevin_gamms_l"):
+                self.langevin_gamms_l = 1 
+            else:
+                self.langevin_gamms_l = int(self.langevin_gamms_l)
+            if not hasattr(self, "pmass"):
+                self.pmass = 1.0
+        elif self.mode == 'nve':
+            self.mdalgo = 1
+            if not hasattr(self, "smass"):
+                self.smass = -3
+            self.isif = 2
+            self.andersen_prob = 0.0
 
 
 if __name__ == "__main__":

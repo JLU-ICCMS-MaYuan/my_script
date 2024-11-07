@@ -244,6 +244,15 @@ class vasp_base:
             kp.write("{:<5} {:<5} {:<5}\n".format(str(N1), str(N2), str(N3)))
             kp.write("{:<5} {:<5} {:<5}\n".format("0", "0", "0"))
 
+    def write_gamma_kpoints(self, kpoints_path):
+        kpoints = Path(kpoints_path).joinpath("KPOINTS")
+        with open(kpoints, "w") as kp:
+            kp.write("from kspacing is {}\n".format('Gamma'))
+            kp.write("0\n")
+            kp.write("Gamma\n")
+            kp.write("{:<5} {:<5} {:<5}\n".format(1, 1, 1))
+            kp.write("{:<5} {:<5} {:<5}\n".format(0, 0, 0))
+
     def create_kpoints_by_pymatgen(self, pmg_struct, output_kpoints, kdensity):
         """
         automatic_density_by_length方法 根据输入的结构(第一个参数), 各个维度k点的密度(第二个参数), 是否强制使用Gamma方法产生k点(第三个参数)
