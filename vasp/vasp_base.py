@@ -447,7 +447,7 @@ class vaspbatch_base(vasp_base):
             self.input_file_name   = self.input_file_path.name.strip('.cif')
         else:
             self.input_file_name   = self.input_file_path.name
-            
+
         if self.work_path is None:
             self.work_path = Path.cwd().joinpath(self.input_file_name, str(self.press))
             if not self.work_path.exists():
@@ -462,7 +462,6 @@ class vaspbatch_base(vasp_base):
             print("    Now {} will be created".format(self.work_path))
 
         self.ase_type          = read(self.input_file_path)
-        print(self.ase_type)
         self.struct_type       = AseAtomsAdaptor.get_structure(self.ase_type)
         self.get_struct_info(self.struct_type, self.work_path)
         
