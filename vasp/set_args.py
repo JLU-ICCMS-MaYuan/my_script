@@ -25,6 +25,15 @@ def set_more_args(parser: ArgumentParser):
         dest='press',
         help="please tell me your press which you were on, unit is GPa, default value is 0.0 GPa",
     )
+    # 指明多个压强
+    parser.add_argument(
+        '-ps',
+        '--presses',
+        type=str,  # 设置输入为浮点数类型
+        dest='presses',
+        help="please tell me your press values (in GPa), separated by spaces; default is '100 200 300'",
+        default=0.0,
+    )
     # 指明工作目录
     parser.add_argument(
         '-w',

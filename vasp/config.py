@@ -6,7 +6,10 @@ class config:
     def read_config(self):
         config = {}
         config["input_file_path"] = self.args.input_file_path
+
         config["press"]           = self.args.press
+        config["presses"]         = self.args.presses
+        
         config["work_path"]       = self.args.work_path
         config["submit_job_system"] = self.args.submit_job_system
 

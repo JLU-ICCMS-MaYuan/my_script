@@ -33,12 +33,12 @@ class qe_inputpara(qe_base):
 
         for key, value in kwargs.items():
             setattr(self, key, value)
-
-        if not hasattr(self, "qe_workflow"):
-            raise AttributeError("there is no attribution of qe_workflow")
-
+        
+        self.parameters_info = []
         if not hasattr(self, "mode"):
-            raise AttributeError("there is no attribution of mode")
+            print("\nNote: --------------------")
+            print("    You must specify mode")
+            sys.exit(1)
 
         if not hasattr(self, "execmd"):
             print("\nNote: --------------------")
@@ -47,15 +47,13 @@ class qe_inputpara(qe_base):
 
         if not hasattr(self, "npool"):
             self.npool = 1
-            print("\nNote: --------------------")
-            print("    The program will set npool=1 in your submitjob scripts")
- 
+            self.parameters_info.append(f'npool = {self.npool}\n')
+
         if not hasattr(self, "queue"):
             self.queue = None
-            print("\nNote: ----------------------")
-            print("    You didn't specify queue, so the program will not submit the job in any way")
+            self.parameters_info.append(f'queue = {self.queue}\n')
+        
 
-        print("\nNote: --------------------")
         # &CONTROL
         if not hasattr(self, "forc_conv_thr"):
             self.forc_conv_thr = "1.0d-6"
@@ -86,23 +84,23 @@ class qe_inputpara(qe_base):
         if not hasattr(self, "lspinorb"):
             self.lspinorb = "false"
         else:
-            print("Please carefully check the bool value of `lspinorb` you just set. Its format must be `false` or `true` without capital")
+            self.parameters_info.append(f'Please carefully check the bool value of `lspinorb` you just set. \nIts format must be `false` or `true` without capital\n')
 
         if self.lspinorb == "true":
             self.noncolin = "true"
-            print("Because lspinorb = true, so the noncolin=true")
+            self.parameters_info.append(f'Because lspinorb = true, so the noncolin=true\n')
         elif not hasattr(self, "noncolin"):
             self.noncolin = "false"
-            print("    You didn't set the `noncolin` ! The program will use default value: noncolin=false")
+            self.parameters_info.append(f"You didn't set the `noncolin` ! The program will use default value: noncolin=false\n")
         else:
-            print("Please carefully check the bool value of `noncolin` you just set. Its format must be `false` or `true` without capital")
+            self.parameters_info.append(f"Please carefully check the bool value of `noncolin` you just set. Its format must be `false` or `true` without capital")
 
         if not hasattr(self, "la2F"):
             self.la2F = "true"
-            print("    You didn't set the `la2F` ! The program will use default value: la2F=true. ")
-            print("    But in relax mode and scf mode, it doesn't exist ! It only exist in scffit mode")
+            self.parameters_info.append("You didn't set the `la2F` ! The program will use default value: la2F=true. ")
+            self.parameters_info.append("But in relax mode and scf mode, it doesn't exist ! It only exist in scffit mode")
         else:
-            print("Please carefully check the bool value of `la2F` you just set. Its format must be `false` or `true` without capital")
+            self.parameters_info.append("Please carefully check the bool value of `la2F` you just set. Its format must be `false` or `true` without capital")
 
         # &ELECTRONS
         if not hasattr(self, "diagonalization"):
@@ -119,7 +117,7 @@ class qe_inputpara(qe_base):
         
         if not hasattr(self, "electron_maxstep"):
             self.electron_maxstep = "200"
-            print("    You didn't set the `electron_maxstep`! The program will use default value: electron_maxstep=200")
+            self.parameters_info.append("You didn't set the `electron_maxstep`! The program will use default value: electron_maxstep=200")
 
         if not hasattr(self, "charge_density_dat"):
             self.charge_density_dat = ""
@@ -132,20 +130,18 @@ class qe_inputpara(qe_base):
             self.press_conv_thr = "0.01"
 
         # &kpoints
-        print("\nNote: --------------------")
-        print("    You have been confirmed that the kpoints_dense, kpoints_sparse, qpoints are all right and consistent with the symmetry")
-        print("    If you not make sure, you had better run 'vaspkit' or 'kmesh.py' to check it!!!")
-        print('    The order for vaspkit is:  (xxxx is corresponding to 1/LATTICE_PARA(i)*KPOINTS(i), (i) represents one axis, such as x_axis, y_axis, z_axis)')
-        print(r'         echo -e "1\n102\n2\nxxxx" | vaspkit')
-        print('    The order for kmesh.py is:  (xxxx is corresponding to the KSPACING in vasp)')
-        print("         kmesh.py xxxx")
+        self.parameters_info.append("You have been confirmed that the kpoints_dense, kpoints_sparse, qpoints are all right and consistent with the symmetry")
+        self.parameters_info.append("If you not make sure, you had better run 'vaspkit' or 'kmesh.py' to check it!!!")
+        self.parameters_info.append('The order for vaspkit is:  (xxxx is corresponding to 1/LATTICE_PARA(i)*KPOINTS(i), (i) represents one axis, such as x_axis, y_axis, z_axis)')
+        self.parameters_info.append(r'echo -e "1\n102\n2\nxxxx" | vaspkit')
+        self.parameters_info.append('The order for kmesh.py is:  (xxxx is corresponding to the KSPACING in vasp)')
+        self.parameters_info.append("kmesh.py xxxx")
         # time.sleep(3)
         if hasattr(self, "kpoints_dense"):
             _kpoints_dense = self.kpoints_dense.split()
             self.kpoints_dense = list(map(int, _kpoints_dense))
         else:
-            self.kpoints_dense = [16, 16, 16]    
-
+            self.kpoints_dense = [16, 16, 16]  
 
         if hasattr(self, "kpoints_sparse"):
             _kpoints_sparse = self.kpoints_sparse.split()
@@ -263,6 +259,7 @@ class qe_inputpara(qe_base):
         print(string_names)
         print(string_coord)
         return path_name_coords 
+
 
     def get_kmesh_justlike_kmesh_pl(self):
         """
@@ -1356,3 +1353,186 @@ class qeprepare_inputpara(qephono_inputpara):
             input_file_path, 
             **kwargs
             )
+
+
+class qeepw_inputpara(qe_base):
+
+    def __init__(
+        self,
+        work_path: str,
+        press: int,
+        submit_job_system: str,
+        input_file_path: str,
+        **kwargs: dict,
+        ):
+        super(qeepw_inputpara, self).__init__(
+            work_path,
+            press,
+            submit_job_system,
+            input_file_path
+        )
+
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+
+        self.parameters_info = []
+
+        if not hasattr(self, "mode"):
+            print("\nNote: --------------------")
+            print("    You must specify mode")
+            sys.exit(1)
+
+        if not hasattr(self, "execmd"):
+            print("\nNote: --------------------")
+            print("    You must specify execute command, such as 'mpirun -np 48', 'bash', 'srun', 'srun --mpi=pmi2'")
+            sys.exit(1)
+
+        if not hasattr(self, "npool"):
+            self.npool = 1
+            self.parameters_info.append(f'npool = {self.npool}\n')
+        print("    You must guarantee that `npool` equal `cores, namly, -np`")
+
+        if not hasattr(self, "queue"):
+            self.queue = None
+            self.parameters_info.append(f'queue = {self.queue}\n')
+        
+        self.path_name_coords_for_EPW = self.get_hspp_for_EPW()
+
+        if not hasattr(self, "dvscf_dir"):
+            print("\nNote: --------------------")
+            print("    You must specify dvscf_dir")
+            sys.exit(1)
+        else:
+            if not self.work_path.joinpath(self.dvscf_dir).exists():
+                print("\nNote: --------------------")
+                print(f"    Specified dvscf_dir: {self.work_path.joinpath(self.dvscf_dir).absolute()} doesn't exist ")
+                sys.exit(1)
+        
+        if not hasattr(self, "etf_mem"):
+            self.etf_mem = 1
+        
+        if not hasattr(self, "nbndsub"):
+            print("\nNote: --------------------")
+            print(f"    You must specify nbndsub!")
+            sys.exit(1)
+        else:
+            self.parameters_info.append(f'nbndsub = {self.nbndsub}\n')
+
+        if not hasattr(self, "bands_skipped"):
+            print("\nNote: --------------------")
+            print(f"    You must specify bands_skipped!")
+            sys.exit(1)
+        else:
+            self.parameters_info.append(f'bands_skipped = {self.bands_skipped}\n')
+     
+        if not hasattr(self, "num_iter"):
+            self.num_iter = 500
+
+        if not hasattr(self, "dis_froz_min"):
+            print("\nNote: --------------------")
+            print(f"    You must specify dis_froz_min !")
+            sys.exit(1)
+        else:
+            self.parameters_info.append(f'dis_froz_min = {self.dis_froz_min}\n')
+
+        if not hasattr(self, "dis_froz_max"):
+            print("\nNote: --------------------")
+            print(f"    You must specify dis_froz_max !")
+            sys.exit(1)
+        else:
+            self.parameters_info.append(f'dis_froz_max = {self.dis_froz_max}\n')
+
+        if not hasattr(self, "proj"):
+            print("\nNote: --------------------")
+            print(f"    You must specify proj! Just like: proj='Nb:d  H:s'  (Attention: No space before or after the equal sign)")
+            sys.exit(1)
+        else:
+            self.proj = self.proj.split()
+            for idx, pj in enumerate(self.proj):
+                self.parameters_info.append(f'proj({idx+1}) = {pj}\n')
+
+
+    @classmethod
+    def init_from_config(cls, config: dict):
+
+        work_path         = config['work_path']            ; del config['work_path']
+        press             = config['press']                ; del config['press']
+        submit_job_system = config['submit_job_system']    ; del config['submit_job_system']
+        input_file_path   = config['input_file_path']      ; del config['input_file_path']
+        
+        self = cls(
+            work_path=work_path,
+            press=press,
+            submit_job_system=submit_job_system,
+            input_file_path=input_file_path,
+            **config,
+        )
+        return self
+    
+    def get_hspp_for_EPW(self):
+        """
+        This method is to get high symmetry paths and points
+        """ 
+        lat     = self.ase_type.cell.get_bravais_lattice()
+        pstring = lat.special_path   # GHNGPH,PN
+
+        # 获得高对称点路径 path_name_list
+        _plist  = [[ p for p in pp if not p.isdigit()] for pp in pstring.split(",")] # [['G', 'H', 'N', 'G', 'P', 'H'], ['P', 'N']]
+
+        high_symmetry_type = np.argmax([len(_plist) for plist in _plist]) # high_symmetry_type = 0 
+        path_name_list = _plist[high_symmetry_type] # ['G', 'H', 'N', 'G', 'P', 'H']
+        # path_name_list = list(chain.from_iterable(_plist)) # ['G', 'H', 'N', 'G', 'P', 'H', 'P', 'N']
+        print(f"the high symmetry points path: \n{path_name_list}")
+
+        # 获得高对称路径相应的坐标
+        special_points   = lat.get_special_points() # {'G': array([0, 0, 0]), 'H': array([ 0.5, -0.5,  0.5]), 'P': array([0.25, 0.25, 0.25]), 'N': array([0. , 0. , 0.5])}
+        path_coords      = [list(special_points[point_name]) for point_name in path_name_list] # [[0,     0,    0], 
+                                                                                               #  [0.5,  -0.5,  0.5],
+                                                                                               #  [0.0,   0.0,  0.5],
+                                                                                               #  [0,     0,    0], 
+                                                                                               #  [0.25,  0.25, 0.25], 
+                                                                                               #  [0.5,  -0.5,  0.5]]
+        path_name_coords = list(zip(path_name_list, path_coords)) # [('G', [0,     0,    0]), 
+                                                                  #  ('H', [0.5,  -0.5,  0.5]), 
+                                                                  #  ('N', [0.0,   0.0,  0.5]), 
+                                                                  #  ('G', [0,     0,    0]), 
+                                                                  #  ('P', [0.25,  0.25, 0.25]), 
+                                                                  #  ('H', [0.5,  -0.5,  0.5])]
+
+        # 输出分数坐标的高对称路径
+        print("Print Fractional Coordinates of Reciprocal Lattice ! ")
+        for name, dirt in path_name_coords:
+            print("{:<10.6f} {:<10.6f} {:<10.6f} {:<4}".format(dirt[0], dirt[1], dirt[2], name))
+
+        # 输出倒格子晶格
+        print("The reciprocal lattice (without multiplating `unit_reciprocal_axis`)")
+        for vector in self.reciprocal_plattice:
+            print("{:<6.3f} {:<6.3f} {:<6.3f} ".format(vector[0], vector[1], vector[2]))
+
+        # 输出高对称路径的二维路径投影 
+        print("Print projected high symmetry path")
+        print("倒格子的单位是 2pi/alat")
+        projected_path_name_coords = [[path_name_coords[0][0], 0]]
+        total_dist = 0
+        for idx in range(1, len(path_name_coords)):
+            current_name   = path_name_coords[idx][0]
+            # current_coords = np.dot(self.reciprocal_plattice, path_name_coords[idx][1])
+            # last_coords    = np.dot(self.reciprocal_plattice, path_name_coords[idx-1][1])
+            current_coords = np.dot(path_name_coords[idx][1],   self.reciprocal_plattice)
+            last_coords    = np.dot(path_name_coords[idx-1][1], self.reciprocal_plattice)
+            dist = np.linalg.norm(current_coords-last_coords, 2)
+            total_dist += dist
+            projected_path_name_coords.append([current_name, total_dist])
+        string_names = ' '.join(coord[0] for coord in projected_path_name_coords)
+        string_coord = ' '.join(str(np.round(coord[1], 6)) for coord in projected_path_name_coords)
+        print(string_names)
+        print(string_coord)
+
+        # 输出分数坐标的高对称路径以EPW或者wannier90可以识别的方式
+        path_name_coords_for_EPW = []
+        for pathname_begin, pathname_end in zip(path_name_coords[:-1], path_name_coords[1:]):
+            hsppinfo = f"{pathname_begin[0]:<2} {pathname_begin[1][0]:<+5.4f} {pathname_begin[1][1]:<+5.4f} {pathname_begin[1][2]:<+5.4f} {pathname_end[0]:<2} {pathname_end[1][0]:<+5.4f} {pathname_end[1][1]:<+5.4f} {pathname_end[1][2]:<+5.4f}"
+            print(hsppinfo) # hsppinfo = G  0.0000 0.0000 0.0000 H  0.5000 -0.5000 0.5000
+            path_name_coords_for_EPW.append(hsppinfo)
+
+        return path_name_coords_for_EPW 

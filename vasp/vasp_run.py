@@ -55,6 +55,7 @@ class vaspbatch_relax:
                 print(f"    The program didn't get any structures from {input_dir_path}")
                 sys.exit(1)
             work_path         = _config['work_path']        ; del _config['work_path']
+            presses           = _config['presses'].split()  ; del _config['presses']
             press             = _config['press']            ; del _config['press']
             submit_job_system = _config['submit_job_system']; del _config['submit_job_system']
             pass                                            ; del _config['input_file_path']
@@ -63,25 +64,26 @@ class vaspbatch_relax:
                 # prepare the POSCAR POTCAR  
                 print("\nNote: --------------------")
                 print(f"    Create directory for {input_file_path} file !!!")
-                self.relax_inputpara  = vaspbatch_inputpara(
-                    work_path=work_path,
-                    press=press,
-                    submit_job_system=submit_job_system,
-                    input_file_path=input_file_path,
-                    mode=mode,
-                    **_config
-                    )
-
-                # init the INCAR
-                self._vasp_writeincar  = vasp_writeincar(self.relax_inputpara)
-                self._vasp_writeincar.writeinput()
-                # init the submit job script
-                _vasp_writesubmit = vasp_writesubmit(self.relax_inputpara)
-                jobname = _vasp_writesubmit.write_submit_scripts()
-                # submit the job
-                _vasp_submitjob   = vasp_submitjob(self.relax_inputpara)
-                if self.relax_inputpara.queue is not None:
-                    _vasp_submitjob.submit_mode1(jobname)
+                for press in presses:
+                    print(press)
+                    self.relax_inputpara  = vaspbatch_inputpara(
+                        work_path=work_path,
+                        press=press,
+                        submit_job_system=submit_job_system,
+                        input_file_path=input_file_path,
+                        mode=mode,
+                        **_config
+                        )
+                    # init the INCAR
+                    self._vasp_writeincar  = vasp_writeincar(self.relax_inputpara)
+                    self._vasp_writeincar.writeinput()
+                    # init the submit job script
+                    _vasp_writesubmit = vasp_writesubmit(self.relax_inputpara)
+                    jobname = _vasp_writesubmit.write_submit_scripts()
+                    # submit the job
+                    _vasp_submitjob = vasp_submitjob(self.relax_inputpara)
+                    if self.relax_inputpara.queue is not None:
+                        _vasp_submitjob.submit_mode1(jobname)
         else:
             print("Note: --------------------")
             print(f"    The {input_dir_path} path doesn't exist!")

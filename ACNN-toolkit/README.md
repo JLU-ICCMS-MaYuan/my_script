@@ -2,6 +2,8 @@
 ```shell
 djob
 dshowjob
+djob -s 504043
+djob -T 504043
 ```
 
 运行任务之前执行：
@@ -25,3 +27,4 @@ python /home/share/jildxwlxyljlstdui/home/lijx/playground/torchdemo/interface/ca
 ```shell
 nohup ./scheduling.sh > log 2>&1 &
 ```
+

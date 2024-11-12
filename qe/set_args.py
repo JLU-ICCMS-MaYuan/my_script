@@ -162,7 +162,7 @@ def set_more_args(parser: ArgumentParser):
         type=str,
         dest='more_args',
         nargs='+',
-        help="输入更多关于结构弛豫的参数\n"
+        help="输入更多关于超导计算的参数\n"
             "mode=q2r\n"
             "mode=McAD\n"
             "   if we choose the McMillan Alen-Dynes method to calculate superconducting transition temperature, you need to set: \n"
@@ -186,13 +186,23 @@ def set_more_args(parser: ArgumentParser):
         type=str,
         dest='more_args',
         nargs='+',
-        help="输入更多关于结构弛豫的参数\n"
+        help="输入更多关于prepare的参数\n"
             "mode=all"
     )
     parser_prepare.set_defaults(qe_workflow=qe_prepare)
 
 
-
+    # EPW计算
+    parser_epw = subparsers.add_parser("epw", formatter_class=RawTextHelpFormatter)
+    parser_epw.add_argument(
+        '-m',
+        '--more-argments-about-epw',
+        type=str,
+        dest='more_args',
+        nargs='+',
+        help="输入更多关于epw的参数\n"
+    )
+    parser_epw.set_defaults(qe_workflow=qe_epw)
 
     args = parser.parse_args()
     return args

@@ -89,7 +89,19 @@ class qe_writeinput:
         if mode == "phonodos":
             inputfilename = self.write_phonodos_in(self.qe_inputpara.work_path)
             return inputfilename
-
+        if mode == "epw_energyband":
+            inputfilename = self.write_epw_energyband_in(self.qe_inputpara.work_path)
+            return inputfilename
+        if mode == "epw_phono":
+            inputfilename = self.write_epw_phono_in(self.qe_inputpara.work_path)
+            return inputfilename
+        if mode == "epw_elph":
+            inputfilename = self.write_epw_elph_in(self.qe_inputpara.work_path)
+            return inputfilename
+        if mode == "epw_aniso_sc":
+            inputfilename = self.write_epw_aniso_sc_in(self.qe_inputpara.work_path)
+            return inputfilename
+        
     def write_relax_in(self, work_directory:Path):
         inputfilename =  "relax.in"
         relax_in = work_directory.joinpath(inputfilename)
@@ -689,4 +701,84 @@ class qe_writeinput:
             awk_order   = '''sed '1,1d' %s | awk '{print $1/6579.684, $%s}' > %s''' %(alpha2F_dat, str(gaussid), alpha2f_out)
             os.system(awk_order)
 
+    def write_epw_energyband_in(self, work_directory:Path):
+        inputfilename = "epw_energyband.in"
+        epw_energyband_in = work_directory.joinpath(inputfilename)
+        with open(epw_energyband_in, "w") as epw:
+            epw.write("&inputepw\n")
+            epw.write(" prefix      ='{}',\n".format(self.qe_inputpara.system_name))
+            for i, species_name in enumerate(self.qe_inputpara.composition.keys()):
+                element      = Element(species_name)
+                species_mass = str(element.atomic_mass).strip("amu")
+                epw.write(" amass({})    ={},\n".format(i+1, species_mass))          
+            epw.write(" outdir      ='./tmp'\n")
+            epw.write(" dvscf_dir   ='{}'".format(self.qe_inputpara.dvscf_dir))
 
+            epw.write(" etf_mem     ={}\n".format(self.qe_inputpara.etf_mem))
+
+            epw.write(" use_ws      = .false.\n")
+            epw.write(" wannierize  = .true.\n")
+            epw.write(" nbndsub     = {}\n".format(self.qe_inputpara.nbndsub))
+            epw.write(" bands_skipped = 'exclude_bands = {}'\n".format(self.qe_inputpara.bands_skipped))
+            epw.write(" num_iter    = {}\n".format(self.qe_inputpara.num_iter))
+            epw.write(" dis_froz_min = {}\n".format(self.qe_inputpara.dis_froz_min))
+            epw.write(" dis_froz_max = {}\n".format(self.qe_inputpara.dis_froz_max))
+            for idx, pj in enumerate(self.qe_inputpara.proj):
+                epw.write(" proj({})     = {}\n".format(idx, pj))
+            epw.write(" wannier_plot= .true.\n")
+            epw.write(" wdata(1)    = 'bands_plot = .true.'\n")
+            epw.write(" wdata(2)    = 'begin kpoint_path'\n")
+            for idx, path_name_coord in enumerate(self.qe_inputpara.path_name_coords_for_EPW):
+                epw.write(f" wdata({idx+3})    = '{path_name_coord}'\n")
+            epw.write(f" wdata({idx+4})    = 'end kpoint_path'\n")
+        
+        return inputfilename
+    
+    def write_epw_phono_in(self, work_directory:Path):
+        inputfilename = "epw_phono.in"
+        epw_phono_in = work_directory.joinpath(inputfilename)
+        with open(epw_phono_in, "w") as epw:
+            epw.write("&inputepw\n")
+            epw.write(" prefix      ='{}',\n".format(self.qe_inputpara.system_name))
+            for i, species_name in enumerate(self.qe_inputpara.composition.keys()):
+                element      = Element(species_name)
+                species_mass = str(element.atomic_mass).strip("amu")
+                epw.write(" amass({})    ={},\n".format(i+1, species_mass))          
+            epw.write(" outdir      ='./tmp'\n")
+            epw.write(" dvscf_dir   ='{}'".format(self.qe_inputpara.dvscf_dir))
+
+            epw.write(" etf_mem     ={}\n".format(self.qe_inputpara.etf_mem))
+            epw.write(" elph        = .true.\n")
+            epw.write(" epbwrite    = .true.\n")
+            epw.write(" epbread     = .false.\n")
+            epw.write(" epwwrite    = .true.\n")
+            epw.write(" epwread     = .false.\n")
+
+            epw.write(" use_ws      = .false.\n")
+            epw.write(" wannierize  = .true.\n")
+            epw.write(" nbndsub     = {}\n".format(self.qe_inputpara.nbndsub))
+            epw.write(" bands_skipped = 'exclude_bands = {}'\n".format(self.qe_inputpara.bands_skipped))
+            epw.write(" num_iter    = {}\n".format(self.qe_inputpara.num_iter))
+            epw.write(" dis_froz_min = {}\n".format(self.qe_inputpara.dis_froz_min))
+            epw.write(" dis_froz_max = {}\n".format(self.qe_inputpara.dis_froz_max))
+            for idx, pj in enumerate(self.qe_inputpara.proj):
+                epw.write(" proj({})     = {}\n".format(idx, pj))
+            epw.write(" wannier_plot= .true.\n")
+            epw.write(" wdata(1)    = 'bands_plot = .true.'\n")
+            epw.write(" wdata(2)    = 'begin kpoint_path'\n")
+            for idx, path_name_coord in enumerate(self.qe_inputpara.path_name_coords_for_EPW):
+                epw.write(f" wdata({idx+3})    = '{path_name_coord}'\n")
+            epw.write(f" wdata({idx+4})    = 'end kpoint_path'\n")
+        return inputfilename
+
+
+
+
+
+            
+
+    def write_epw_elph_in():
+        pass
+
+    def write_epw_aniso_sc_in():
+        pass

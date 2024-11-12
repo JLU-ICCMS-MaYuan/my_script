@@ -441,19 +441,28 @@ class vaspbatch_base(vasp_base):
         self.input_file_path   = input_file_path
         self.mode              = mode
         
-        self.input_file_name   = self.input_file_path.name.split(".")[0]
-        if self.work_path is None:
-            print("\nNote: -------------------")
-            print("    You didn't specify the work_path, and this is parameters that must be set!!! the program will exit")
-            sys.exit(1)
+        if self.input_file_path.name.endswith('.vasp'):
+            self.input_file_name   = self.input_file_path.name.strip('.vasp')
+        elif self.input_file_path.name.endswith('.cif'):
+            self.input_file_name   = self.input_file_path.name.strip('.cif')
         else:
-            self.work_path= Path(self.work_path).joinpath(str(self.press), self.input_file_name)
+            self.input_file_name   = self.input_file_path.name
+            
+        if self.work_path is None:
+            self.work_path = Path.cwd().joinpath(self.input_file_name, str(self.press))
+            if not self.work_path.exists():
+                self.work_path.mkdir(parents=True)
+            print("\nNote: -------------------")
+            print(f"    You didn't specify the work_path, the default work_path is the current path {self.work_path}!")
+        else:
+            self.work_path= Path(self.work_path).joinpath(self.input_file_name, str(self.press))
             if not self.work_path.exists():
                 self.work_path.mkdir(parents=True)
             print("\nNote: --------------------")
             print("    Now {} will be created".format(self.work_path))
 
         self.ase_type          = read(self.input_file_path)
+        print(self.ase_type)
         self.struct_type       = AseAtomsAdaptor.get_structure(self.ase_type)
         self.get_struct_info(self.struct_type, self.work_path)
         

@@ -239,7 +239,6 @@ class qe_base:
             reciprocal_plattice = struct.lattice.reciprocal_lattice.matrix*0.529177 
             return np.array(reciprocal_plattice)
 
-
     def get_cell(self, struct):
         cell_parameters = None
         if self.input_file_path.name == "relax.out" and self.input_file_path.exists():

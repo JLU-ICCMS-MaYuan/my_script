@@ -240,8 +240,8 @@ class qe_eletron:
         eletdos_path = self.eletron_inputpara.work_path.joinpath(self.eletron_inputpara.system_name+".tdos")
         if not eletdos_path.exists():
             print("\nNote: --------------------")
-            print(f"    Sorry, {self.system_name}_phono.dos doesn't exist !")
-            nef_scffi, nef_scf = 0, 0
+            print(f"    Sorry, {self.eletron_inputpara.system_name}_phono.dos doesn't exist !")
+            nef_scffit, nef_scf = 0, 0
             return nef_scffit, nef_scf
         else:
             eletdos = pd.read_table(
@@ -414,3 +414,25 @@ class qe_prepare:
                 self.qe_submitjob.submit_mode1(inputfilename2, jobname)
 
 
+class qe_epw:
+
+    def __init__(self, args: ArgumentParser) -> None:
+
+        # read input para
+        self._config = config(args).read_config()
+
+        # prepare input parameter
+        self.epw_inputpara = qeepw_inputpara.init_from_config(self._config)
+
+        #  # init the input
+        self.epw_writeinput = qe_writeinput(self.epw_inputpara)
+        inputfilename = self.epw_writeinput.writeinput()
+        print(inputfilename)
+        # init the submit job script
+        self.qe_writesubmit = qe_writesubmit(self.epw_inputpara)
+        jobname = self.qe_writesubmit.write_submit_scripts(inputfilename)
+
+        # submit the job
+        self.qe_submitjob = qe_submitjob(self.epw_inputpara)
+        if self.epw_inputpara.queue is not None:
+            self.qe_submitjob.submit_mode1(inputfilename, jobname)

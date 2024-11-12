@@ -1,4 +1,5 @@
 qebin_path = "/work/home/mayuan/software/qe-7.1/bin"
+epwbin_path = "/work/home/mayuan/software/qe-7.1/EPW/bin"
 qe_source_libs = "/work/home/mayuan/POT/qe-pp/all_pbe_UPF_v1.5"
 eliashberg_x_path = "/work/home/mayuan/code/my_script/qe/eliashberg/eliashberg.x"
 
@@ -54,6 +55,12 @@ if __name__ == "__main__":
         print(f"The path {qebin_path} you set rightly !!!")
     else:
         raise FileNotFoundError(f"The path {qebin_path} you set wrong !!!")
+    
+    if Path(epwbin_path).exists():
+        print(f"The path {epwbin_path} you set rightly !!!")
+    else:
+        raise FileNotFoundError(f"The path {epwbin_path} you set wrong !!!")
+
     if Path(qe_source_libs_path).exists():
         print(f"The path {qe_source_libs_path} you set rightly !!!")
     else:
