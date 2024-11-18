@@ -83,7 +83,7 @@ Fock        0.00000     0.00000     0.00000     0.00000     0.00000     0.00000
 -------------------------------------------------------------------------------------
 Total     610.54174   609.29736   616.93349    -4.93693    -1.67605    -4.25620
 in kB    1723.15215  1719.64010  1741.19180   -13.93365    -4.73037   -12.01240
-external pressure =     1727.99 kB  Pullay stress =        0.00 kB                                                                                                                        
+external pressure =     1727.99 kB  Pullay stress =        0.00 kB
 
 kinetic pressure (ideal gas correction) =     26.23 kB
 total pressure  =   1754.22 kB
@@ -91,7 +91,7 @@ Total+kin.  1750.111    1745.427    1767.130     -14.300      -0.345     -13.106
 ```
 
 在解释含义之前，你会发现一些关系：
-external pressure = 1727.99 其实等于 1723.15215 + 1719.64010 + 1741.19180 = 1727.99
+external pressure = 1727.99 其实等于 (1723.15215 + 1719.64010 + 1741.19180)/3 = 1727.99
 total pressure = external pressure + kinetic pressure =  1727.99 + 26.23 =  1754.22
 Total in kB 在 XX, YY, ZZ, XY, YZ, ZX 6个方向上的分量就是一个晶胞感受到的应力，而这个应力的对角项 XX, YY, ZZ的和的平均值，就是我们施加在其上的外压力。
 
@@ -171,7 +171,6 @@ $ grep "external pressure" OUTCAR
 
 ### <span style="color:lightgreen"> external pressure在做分子动力学时的含义
 
-首先明确在做NVT时，我们并不会设置PSTRESS，所以 Pullay stress = 0。
 那么在每次计算完一个离子步后输出的external pressure表示当前晶格感受到的外压是多少。
 按理说，如果你的结构是在100 GPa下优化好的，并且你这个结构在做NVT时保持稳定，那么计算出来的external pressure就会在100GPa附近上下波动。
 但是这里必须要指出：你并不能通过检查external pressure是否在某个压强点附近上下波动来判断你的结构是否稳定，

@@ -1,4 +1,4 @@
-SYSTEM = Si
+SYSTEM = mysystem
 PREC = Normal
 EDIFF = 1e-3
 IBRION = 2

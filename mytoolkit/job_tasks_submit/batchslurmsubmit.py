@@ -31,6 +31,7 @@ run_que = []
 
 def sub_job(pth):
     """提交任务的函数"""
+    os.system(rf'cp {SUBMIT_COMMAND} {pth}')
     os.system(rf'cd {pth} && sbatch {SUBMIT_COMMAND} && cd {cwd}')
 
 def get_que_num():
@@ -41,7 +42,7 @@ def get_que_num():
     command = f"squeue -h --format '%Z' | grep {current_directory}"
     try:
         squeue_output = subprocess.check_output(command, shell=True).decode('utf-8').strip()
-        print(squeue_output)  # 打印当前队列输出，便于调试
+        # print(squeue_output)  # 打印当前队列输出，便于调试
         # 返回匹配的行数（即正在运行的任务数量）
         return len(squeue_output.splitlines()), squeue_output.splitlines()
     except subprocess.CalledProcessError:
@@ -60,7 +61,7 @@ while True:
             
             # 检查路径是否已经在当前的队列中
             if next_dir in queue_path:
-                print(f"Skipping {next_dir} as it is already in the queue.")
+                # print(f"Skipping {next_dir} as it is already in the queue.")
                 start_que.pop(0)  # 从队列中移除该路径，继续检查下一个路径
                 continue
             
@@ -69,7 +70,7 @@ while True:
             pth = run_que[-1]
     
             # 提交任务
-            print(f"Submitting job for directory: {pth}")
+            # print(f"Submitting job for directory: {pth}")
             sub_job(pth)
             
             # 获取当前队列中的作业数目

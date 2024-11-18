@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from pymatgen.core.structure import Structure
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from scipy.spatial.distance import cdist
@@ -166,7 +168,6 @@ class RDF(object):
         else:
             plt.savefig(filename)
             plt.close()
-
 
     def find_supercell(self, crystal, R_max, atom=[0.5, 0.5, 0.5]):
         """

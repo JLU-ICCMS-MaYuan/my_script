@@ -5,7 +5,9 @@ echo "
 vasp_main.py -i CONTCAR -j slurm -p PRESS relax -m mode=rv4 execmd='mpirun -np 48' ismear=0 sigma=0.01 ediff=1e-8 ediffg=-0.001 encut=900 kspacing=0.188 queue=lhy
 
 # 批量计算多个结构的多个压强
-vasp_main.py -i stdlibs -j slurm -ps '100 200' batchrelax -m mode=rv4 sigma=0.01 encut=900 ediff=1e-7 ediffg=-0.01 ismear=0 core=48 kspacing=0.18 queue=lhy execmd='mpirun -np 48'
+vasp_main.py -i stdlibs -j slurm -ps '100 200 300' batchrelax -m mode=rv4 sigma=0.01 encut=900 ediff=1e-7 ediffg=-0.01 ismear=0 core=48 kspacing=0.18 queue=lhy execmd='mpirun -np 48'
+
+vasp_main.py -i stdlibs -j slurm -ps  100          batchrelax -m mode=rv4 sigma=0.01 encut=900 ediff=1e-7 ediffg=-0.01 ismear=0 core=48 kspacing=0.18 queue=lhy execmd='mpirun -np 48'
 
 vasp_main.py -i CONTCAR -j slurm -p PRESS -w 100 relax -m mode=rv4 execmd='mpirun -np 48' ismear=0 sigma=0.01 ediff=1e-8 ediffg=-0.001 encut=900 kspacing=0.188 queue=lhy
 
@@ -78,7 +80,6 @@ for i in {1..18}; do cd \$i; echo \$i; pl \$i; cd ..; done
 for i in {1..18}; do cd \$i; echo \$i; ls elph_dir; cd ..; done
 
 # EPW的wannir90部分计算能带
-qe_main.py -i origin-PPOSCAR -j bash -w . epw -m mode=epw_energyband execmd='mpirun -np 2' dvscf_dir='../phonon/save'  nbndsub=10  bands_skipped=5  dis_froz_min=-5 dis_froz_max=0 proj='S:p  H:s' 
+qe_main.py -i origin-PPOSCAR -j bash -w . epw -m mode=epw_energyband execmd='mpirun -np 2' npool=2 dvscf_dir='../phonon/save'  nbndsub=10  bands_skipped=5  dis_froz_min=-5 dis_froz_max=0 proj='S:p  H:s' 
 
-# 
 "

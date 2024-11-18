@@ -11,3 +11,4 @@ alias gfc='grepfc() { grep "FC gradient modulus" OUT"$1".dat | tail -n 1; }; gre
 alias pl='getfreq() { grep "freq" *.dyn"$1" | head; }; getfreq'
 
 alias scpt='conda activate my_scripts'
+alias getdir='find . -maxdepth 1 -type d ! -name '.' -exec basename {} \; > log'

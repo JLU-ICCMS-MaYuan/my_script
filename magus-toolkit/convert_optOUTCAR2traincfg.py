@@ -2,6 +2,7 @@
 
 import os
 import sys
+import glob
 import time
 import fnmatch
 import subprocess
@@ -17,20 +18,20 @@ none_d = []
     # if system_name.is_dir():
         # ourcar_path = system_name.joinpath("OUTCAR")
 for root, dirs, files in os.walk("."):
-        system_name = Path(root)
-        if "OUTCAR" in files :
-            ourcar_path = system_name.joinpath("OUTCAR")
+    system_name = Path(root)
+    outcar_files = glob.glob(str(system_name.joinpath("OUTCAR*")))
+    if outcar_files:
+        for outcar_path in outcar_files:
             # 抑制错误消息
-            res = os.popen(f'grep -s "reached required accuracy - stopping structural energy minimisation" {ourcar_path}').read() # 如果没有找到指定内容不输出错误结果。
+            res = os.popen(f'grep -s "reached required accuracy - stopping structural energy minimisation" {outcar_path}').read() # 如果没有找到指定内容不输出错误结果。
             if res:
-            #    success_d.append(system_name.__str__())
-                success_d.append(os.path.abspath(system_name))
+                print(outcar_path)
+                success_d.append(os.path.abspath(outcar_path))
             else:
-            #    fail_d.append(system_name.__str__())
-                fail_d.append(os.path.abspath(system_name))
-        elif "INCAR" in files or "POTCAR" in files or "POSCAR" in files:
-            # none_d.append(system_name.__str__())
-            none_d.append(os.path.abspath(system_name))
+                fail_d.append(os.path.abspath(outcar_path))
+    elif "INCAR" in files or "POTCAR" in files or "POSCAR" in files:
+        # none_d.append(system_name.__str__())
+        none_d.append(os.path.abspath(system_name))
 
 
 # def custom_sort(item):
@@ -80,11 +81,9 @@ else:
         print(f"train.cfg has existed in {target_train_cfg}")
 
 # 遍历当前目录下的所有子目录
-for root in success_d:
-    # 切换到包含OUTCAR的目录
-    os.chdir(root)
+for succ in success_d:
     # 执行命令
-    command = ['mlp', 'convert-cfg', 'OUTCAR', 'train.cfg', '--input-format=vasp-outcar']
+    command = ['mlp', 'convert-cfg', succ, 'train.cfg', '--input-format=vasp-outcar']
     subprocess.run(command)
 
     # 读取生成的train.cfg文件内容
@@ -97,3 +96,4 @@ for root in success_d:
 
 # 切换回初始目录
 os.chdir(current_dir)
+

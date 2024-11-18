@@ -26,16 +26,16 @@ echo "$new_doscar_data" | head -n 6 | tail -n 1
 
 echo "NOTE --------------------"
 echo "    Use vaspkit get the Band-Structure"
-echo -e "21\n211" | vaspkit > \dev\null
+echo -e "21\n211" | vaspkit > /dev/null
 
 echo "NOTE --------------------"
 echo "    Use vaspkit get the Projected-Orbits-Band-Structure"
-echo -e "21\n213" | vaspkit > \dev\null
+echo -e "21\n213" | vaspkit > /dev/null
 
 
 echo "NOTE --------------------"
 echo "    Use vaspkit get the Projected-Elements-Band-Structure"
-echo -e "21\n215" | vaspkit > \dev\null
+echo -e "21\n215" | vaspkit > /dev/null
 
 echo "NOTE --------------------"
 echo "    Now you have got PBAND_ELEMENTS.dat, PBAND_*.dat BAND.dat"
