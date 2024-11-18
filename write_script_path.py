@@ -21,6 +21,7 @@ scripts_names = [
     'mytoolkit/structures_characters',
     'mytoolkit/superconductivity',
     'mytoolkit/vasp_toolkit',
+    'mytoolkit/vasp_toolkit/vasp-MD-scripts',
     'mytoolkit/wien2K',
 
     'uspex-toolkit', 
