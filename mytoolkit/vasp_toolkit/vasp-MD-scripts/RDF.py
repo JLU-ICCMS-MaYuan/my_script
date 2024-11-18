@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 from pymatgen.core.structure import Structure
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from scipy.spatial.distance import cdist
