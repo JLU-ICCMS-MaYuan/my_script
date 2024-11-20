@@ -98,7 +98,7 @@ class RDF(object):
         # in essence, it is an optimized for loop.
 
         # see find supercell method
-        rij_dot = self.find_supercell(crystal, R_max)
+        rij_dot = self.find_supercell(crystal, R_max) # 原来晶胞的的
         length = round(R_max/R_bin)  # length of distance array
         # create minimum distance vector and add dimension
         d_min = np.arange(0.5, length+0.5, 1)
@@ -117,14 +117,23 @@ class RDF(object):
                      atoms in the supercell
             """
             # dot product of atomic fractional coordinates and lattice matrix
-            origin = np.dot(atom, crystal.lattice.matrix)
-            origin = origin[np.newaxis, :]  # add dimension to array
+            # print(atom); input("atom")
+            origin = np.dot(atom, crystal.lattice.matrix) # atom = [0.  0.  0.5]  origin = [0.       0.       2.820871]
+            # print(origin); input("origin")
+            origin = origin[np.newaxis, :]  # add dimension to array: origin = [[0.       0.       2.820871]]
+            # print(origin); input("origin np.newaxis")
+            # print(rij_dot, rij_dot.shape); input("rij_dot")
+            # x = cdist(rij_dot, origin)
+            # print(x, len(x)); input("cdist(rij_dot, origin)")
             return cdist(rij_dot, origin)
-
+            # return x
+        
         # loop over fractional coordinates of each atom in the crystal to
         # compute an array of euclidean distances
-        rij_dist = np.apply_along_axis(compute_rij_dist, axis=1,
+        # print(crystal.frac_coords); input("crystal.frac_coords")
+        rij_dist = np.apply_along_axis(compute_rij_dist, axis=1, # 沿着第2个轴（列）应用函数
                                        arr=crystal.frac_coords)
+        # print(rij_dist.shape); input("rij_dist")
 
         def compute_R(span):
             """
@@ -179,16 +188,14 @@ class RDF(object):
         """
 
         def calculateR(vect):
-            return np.linalg.norm(np.dot(vect-atom,
-                                  crystal.lattice.matrix))
+            return np.linalg.norm(np.dot(vect-atom, crystal.lattice.matrix))
 
         # temporary max index
         hkl_max = np.array([1, 1, 1])
 
         # cartesian product of [-1,0,1] with itself returns all possible index
         # configurations with no repeats
-        hkl_index = np.array(np.meshgrid([-1, 0, 1], [-1, 0, 1],
-                             [-1, 0, 1])).T.reshape(-1, 3)
+        hkl_index = np.array(np.meshgrid([-1, 0, 1], [-1, 0, 1], [-1, 0, 1])).T.reshape(-1, 3)
 
         # calculate R value across all rows of an array
         R = np.apply_along_axis(calculateR, axis=1, arr=hkl_index)
@@ -252,7 +259,6 @@ if __name__ == "__main__":
     test = Structure.from_file(options.structure)
     infile=os.popen('cat %s' %(options.structure))
     tag=infile.readline()[:-1]
-    print(tag)
     rdf = RDF(test, R_max=options.Rmax, R_bin=options.delta,
                   sigma=options.sigma)
     #print('-----RDF value-----')

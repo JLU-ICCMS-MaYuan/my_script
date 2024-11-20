@@ -157,6 +157,9 @@ magus summary gen.traj
 
 # 保存结构
 magus summary gen.traj -s -o poscars
+
+# 指定保存的结构数量
+magus summary gen.traj -s -o poscars -n 500
 ```
 
 ### <span style="font-size: 25px; color: red;"> 7. 如何续算magus
