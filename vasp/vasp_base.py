@@ -52,9 +52,9 @@ class vasp_base:
         print("    Create work_path under the work_path.")
         if self.work_path is None:
             self.work_path = Path.cwd()
-            print(f"    You didn't specify the work_path, the default work_path is the current path {self.work_path}!")
+            print(f"    You didn't specify the work_path, the default work_path is the current path {self.work_path}")
         else:
-            print(f"    You specify the work_path, the work_path will be '{self.work_path}' !")
+            print(f"    You specify the work_path, the work_path will be '{self.work_path}' ")
             self.work_path = Path(self.work_path)
             if not self.work_path.exists():
                 self.work_path.mkdir(parents=True)
