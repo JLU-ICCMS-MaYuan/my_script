@@ -1,15 +1,19 @@
 #!/usr/bin/env python3
 
 import os
+import re
 import sys
 import glob
-import time
-import fnmatch
+import argparse
 import subprocess
 
 from pathlib import Path
 from pprint import pprint
 
+parser = argparse.ArgumentParser()
+parser.add_argument('-p', '--path', default='', help='please input where you want to save total_train.cfg.')
+parser.add_argument('-e', '--extract-last-configuration', action="store_true", help='whether or not you only want to save the last configurations')
+args = parser.parse_args()
 
 fail_d = []
 success_d = []
@@ -45,6 +49,23 @@ def custom_sort(item):
     except:
         return (parts[:-1], parts[-1])
 
+def extract_specified_configuration(extract_last_configuration):
+    with open('train.cfg', 'r') as src_file:
+        src_content = src_file.read()
+
+    if extract_last_configuration:
+        #print(src_content); input()
+        pattern = r'BEGIN_CFG.*?END_CFG'
+        matches = re.findall(pattern, src_content, re.DOTALL)
+        
+        # 如果有匹配项，提取最后一个匹配项的内容
+        if matches:
+            last_match = matches[-1]
+            # print(last_match)
+        return src_content
+    else:
+        return src_content
+
 print("\nrelax-succeeded")
 success_d = sorted(success_d, key=custom_sort)
 for line in success_d:
@@ -55,14 +76,8 @@ for line in success_d:
 current_dir = os.getcwd()
 
 # 获取指定目录（如果有）并转换为绝对路径
-if len(sys.argv) > 1:
-    specified_dir = os.path.abspath(sys.argv[1])
-else:
-    specified_dir = ""  # 如果没有指定目录，则保持为空字符串
-
-# 检查是否指定路径
-if specified_dir:
-    total_train_cfg = os.path.join(specified_dir, 'total_train.cfg')
+if args.path:
+    total_train_cfg = os.path.join(args.path, 'total_train.cfg')
 else:
     total_train_cfg = os.path.join(current_dir, 'total_train.cfg')
 
@@ -74,15 +89,12 @@ for succ in success_d:
     # 执行命令
     command = ['mlp', 'convert-cfg', succ, 'train.cfg', '--input-format=vasp-outcar']
     subprocess.run(command)
-
-    # 读取生成的train.cfg文件内容
-    with open('train.cfg', 'r') as src_file:
-        src_content = src_file.read()
     
+    src_content = extract_specified_configuration(args.extract_last_configuration)
+
     # 将内容追加到目标train.cfg文件中
     with open(total_train_cfg, 'a') as dest_file:
         dest_file.write(src_content)
 
 # 切换回初始目录
 os.chdir(current_dir)
-
