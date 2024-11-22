@@ -92,7 +92,7 @@ if __name__ == "__main__":
     
     # 获取当前目录
     if os.path.exists("relax-succeeded"):
-        with open('"relax-succeeded"') as f:
+        with open('relax-succeeded') as f:
             success_d = f.readlines()
         write_train_cfg(success_d, total_train_cfg)
     else:
