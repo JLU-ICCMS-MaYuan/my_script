@@ -87,6 +87,7 @@ if os.path.exists(total_train_cfg):
 
 # 遍历当前目录下的所有子目录
 for succ in success_d:
+    print(succ)
     # 执行命令
     command = ['mlp', 'convert-cfg', succ, 'train.cfg', '--input-format=vasp-outcar']
     subprocess.run(command)
