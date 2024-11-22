@@ -62,23 +62,9 @@ else:
 
 # 检查是否指定路径
 if specified_dir:
-    target_train_cfg = os.path.join(specified_dir, 'train.cfg')
-    # 检查指定路径下的train.cfg是否存在
-    if not os.path.exists(target_train_cfg):
-        target_train_cfg = os.path.join(current_dir, 'train.cfg')
-        print("train.cfg hasn't existed!")
-        open(target_train_cfg, 'a').close()
-    else:
-        print(f"train.cfg has existed in {target_train_cfg}")
+    total_train_cfg = os.path.join(specified_dir, 'total_train.cfg')
 else:
-    target_train_cfg = os.path.join(current_dir, 'train.cfg')
-    # 检查当前路径下的train.cfg是否存在
-    if not os.path.exists(target_train_cfg):
-        target_train_cfg = os.path.join(current_dir, 'train.cfg')
-        print("train.cfg hasn't existed!")
-        open(target_train_cfg, 'a').close()
-    else:
-        print(f"train.cfg has existed in {target_train_cfg}")
+    total_train_cfg = os.path.join(current_dir, 'total_train.cfg')
 
 # 遍历当前目录下的所有子目录
 for succ in success_d:
@@ -91,7 +77,7 @@ for succ in success_d:
         src_content = src_file.read()
     
     # 将内容追加到目标train.cfg文件中
-    with open(target_train_cfg, 'a') as dest_file:
+    with open(total_train_cfg, 'a') as dest_file:
         dest_file.write(src_content)
 
 # 切换回初始目录
