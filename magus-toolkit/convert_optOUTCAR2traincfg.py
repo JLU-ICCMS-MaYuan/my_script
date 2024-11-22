@@ -61,8 +61,7 @@ def extract_specified_configuration(extract_last_configuration):
         # 如果有匹配项，提取最后一个匹配项的内容
         if matches:
             last_match = matches[-1]
-            # print(last_match)
-        return src_content
+        return last_match
     else:
         return src_content
 
