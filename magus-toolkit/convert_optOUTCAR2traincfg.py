@@ -57,11 +57,12 @@ def extract_specified_configuration(extract_last_configuration):
         #print(src_content); input()
         pattern = r'BEGIN_CFG.*?END_CFG'
         matches = re.findall(pattern, src_content, re.DOTALL)
-        
         # 如果有匹配项，提取最后一个匹配项的内容
-        if matches:
+        try:
             last_match = matches[-1]
-        return last_match
+            return last_match
+        except:
+            return src_content
     else:
         return src_content
 
@@ -69,7 +70,8 @@ print("\nrelax-succeeded")
 success_d = sorted(success_d, key=custom_sort)
 for line in success_d:
     print(line)
-
+with open('relax-succeeded', 'w') as f:
+    f.writelines('\n'.join(success_d))
 
 # 获取当前目录
 current_dir = os.getcwd()
@@ -88,9 +90,7 @@ for succ in success_d:
     # 执行命令
     command = ['mlp', 'convert-cfg', succ, 'train.cfg', '--input-format=vasp-outcar']
     subprocess.run(command)
-    
     src_content = extract_specified_configuration(args.extract_last_configuration)
-
     # 将内容追加到目标train.cfg文件中
     with open(total_train_cfg, 'a') as dest_file:
         dest_file.write(src_content)
