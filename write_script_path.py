@@ -25,6 +25,7 @@ scripts_names = [
     'mytoolkit/wien2K',
 
     'uspex-toolkit', 
+    'magus-toolkit',
     ]
 
 
