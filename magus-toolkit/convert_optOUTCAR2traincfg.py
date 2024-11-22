@@ -66,6 +66,9 @@ if specified_dir:
 else:
     total_train_cfg = os.path.join(current_dir, 'total_train.cfg')
 
+if os.path.exists(total_train_cfg):
+    os.system(f"rm -fr {total_train_cfg}")
+
 # 遍历当前目录下的所有子目录
 for succ in success_d:
     # 执行命令
