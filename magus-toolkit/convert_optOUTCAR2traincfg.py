@@ -59,7 +59,7 @@ def extract_specified_configuration(extract_last_configuration):
         matches = re.findall(pattern, src_content, re.DOTALL)
         # 如果有匹配项，提取最后一个匹配项的内容
         try:
-            last_match = matches[-1]
+            last_match = matches[-1] + '\n'
             return last_match
         except:
             return src_content
