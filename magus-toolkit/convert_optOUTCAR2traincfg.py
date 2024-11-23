@@ -8,7 +8,6 @@ import argparse
 import subprocess
 
 from pathlib import Path
-from pprint import pprint
 
 def custom_sort(item):
     parts = item.split("/")
@@ -68,9 +67,12 @@ def write_train_cfg(success_d, total_train_cfg):
 
     # 遍历当前目录下的所有子目录
     for succ in success_d:
-        print(succ)
         # 执行命令
-        command = ['mlp', 'convert-cfg', succ.strip('\n'), 'train.cfg', '--input-format=vasp-outcar']
+        if "OUTCAR" in os.path.basename(succ):
+            command = ['mlp', 'convert-cfg', succ, 'train.cfg', '--input-format=vasp-outcar']
+        else:
+            command = ['mlp', 'convert-cfg', succ.strip('\n')+'/OUTCAR', 'train.cfg', '--input-format=vasp-outcar']
+            print('  '.join(command))
         subprocess.run(command)
         src_content = extract_specified_configuration(args.extract_last_configuration)
         # 将内容追加到目标train.cfg文件中
