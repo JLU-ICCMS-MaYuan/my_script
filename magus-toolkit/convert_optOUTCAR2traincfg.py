@@ -18,6 +18,9 @@ def custom_sort(item):
         return (parts[:-1], parts[-1])
 
 def get_all_succeeded_OUTCAR():
+    fail_d = []
+    none_d = []
+    success_d = []
     for root, dirs, files in os.walk("."):
         system_name = Path(root)
         outcar_files = glob.glob(str(system_name.joinpath("OUTCAR*")))
@@ -80,8 +83,6 @@ if __name__ == "__main__":
     parser.add_argument('-p', '--path', default='', help='please input where you want to save total_train.cfg.')
     parser.add_argument('-e', '--extract-last-configuration', action="store_true", help='whether or not you only want to save the last configurations')
     args = parser.parse_args()
-
-    success_d = []
 
     # 获取指定目录（如果有）并转换为绝对路径
     current_dir = os.getcwd()
