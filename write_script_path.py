@@ -11,6 +11,7 @@ scripts_names = [
     'deepkit-dpgen-toolkit',
     'ELK-toolkit',
     'EPW-toolkit',
+    'lammps-toolkit',
 
     'mytoolkit/convexhull', 
     'mytoolkit/energy_curve_with_pressure', 

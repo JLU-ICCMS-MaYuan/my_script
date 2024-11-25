@@ -22,7 +22,7 @@ def modify(frame: int, data: DataCollection, cutoff = 5.0, sigma = 0.2, use_loca
 
     # Overall particle density:
     global_rho = data.particles.count / data.cell.volume
-  
+
     # Initialize neighbor finder:
     finder = CutoffNeighborFinder(cutoff, data)
 
@@ -31,7 +31,7 @@ def modify(frame: int, data: DataCollection, cutoff = 5.0, sigma = 0.2, use_loca
     
     # Number of bins used for integration:
     nbins = int(cutoff / sigma) + 1
-    
+
     # Table of r values at which the integrand will be computed:
     r = np.linspace(0.0, cutoff, num=nbins)
     rsq = r**2

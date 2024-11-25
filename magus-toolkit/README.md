@@ -54,6 +54,7 @@ magus search -m
 
 ## <span style="font-size: 30px; color: lightgreen;"> 注意事项
 ### <span style="font-size: 25px; color: red;"> 1. 记得准备inputFold/MTP/train.cfg
+
 ### <span style="font-size: 25px; color: red;"> 2. input.yaml的设置注意事项
 <span style="font-size: 18px; color: skyblue;"> **2.1 记得修改input.yaml中的pressure，单位GPa** 
 
@@ -194,7 +195,163 @@ pip uninstall magus-kit
 magus summary  gen.traj -a volume
 ```
 
-### <span style="font-size: 25px; color: red;"> 9. 修改了代码中计算grade的部分，不使用mpirun计算，直接使用穿行计算  (calculators/mtp.py的249行)
+### <span style="font-size: 25px; color: red;"> 9. 修改了代码中并行计算, 有些机器不支持mpirun命令, 支持srun，直接使用穿行计算 或者srun (calculators/mtp.py的249行)
+```python
+def calc_grade(self):
+    # must have: pot.mtp, train.cfg
+    log.info('\tstep 01: calculate grade')
+    #exeCmd = f"{self.mtp_runner} -n 1 {self.mtp_exe} calc-grade pot.mtp train.cfg train.cfg "\
+    #         "temp.cfg --als-filename=A-state.als"
+    exeCmd = f"mlp calc-grade pot.mtp train.cfg train.cfg "\
+            "temp.cfg --als-filename=A-state.als"
+    exitcode = subprocess.call(exeCmd, shell=True)
+    if exitcode != 0:
+        raise RuntimeError('MTP exited with exit code: %d.  ' % exitcode)
+```
+
+```python
+def relax_with_mtp(self):
+    #content = f"{self.mtp_runner} -n {self.num_core} {self.mtp_exe} relax mlip.ini "\
+    #          f"--pressure={self.pressure} --cfg-filename=to_relax.cfg "\
+    #          f"--force-tolerance={self.force_tolerance} --stress-tolerance={self.stress_tolerance} "\
+    #          f"--min-dist={self.min_dist} --log=mtp_relax.log "\
+    #          f"--save-relaxed=relaxed.cfg\n"\
+    #          f"cat relaxed.cfg?* > relaxed.cfg\n"
+    content = f"srun {self.mtp_exe} relax mlip.ini "\
+              f"--pressure={self.pressure} --cfg-filename=to_relax.cfg "\
+              f"--force-tolerance={self.force_tolerance} --stress-tolerance={self.stress_tolerance} "\
+              f"--min-dist={self.min_dist} --log=mtp_relax.log "\
+              f"--save-relaxed=relaxed.cfg\n"\
+              f"cat relaxed.cfg?* > relaxed.cfg\n"
+    if self.mode == 'parallel':
+        self.J.sub(content, name='relax', file='relax.sh', out='relax-out', err='relax-err')
+        self.J.wait_jobs_done(self.wait_time)
+        self.J.clear()
+        time.sleep(10)
+    elif self.mode == 'serial':
+        exitcode = subprocess.call(content, shell=True)
+        if exitcode != 0:
+            raise RuntimeError('MTP exited with exit code: %d.  ' % exitcode)
+```
+
+```python
+def scf_(self, calcPop):
+    calc_dir = self.calc_dir
+    basedir = '{}/epoch{:02d}'.format(calc_dir, 0)
+    if not os.path.exists(basedir):
+        os.makedirs(basedir)
+    shutil.copy("{}/mlip.ini".format(self.input_dir), "{}/pot.mtp".format(basedir))
+    shutil.copy("{}/pot.mtp".format(self.ml_dir), "{}/pot.mtp".format(basedir))
+    shutil.copy("{}/train.cfg".format(self.ml_dir), "{}/train.cfg".format(basedir))
+    dump_cfg(calcPop, "{}/to_scf.cfg".format(basedir), self.symbol_to_type)
+
+    #exeCmd = f"{self.mtp_runner} -n {self.num_core} {self.mtp_exe} calc-efs {basedir}/pot.mtp {basedir}/to_scf.cfg {basedir}/scf_out.cfg"
+    exeCmd = f"srun --mpi=pmi2  {self.mtp_exe} calc-efs {basedir}/pot.mtp {basedir}/to_scf.cfg {basedir}/scf_out.cfg"
+    #exeCmd = f"mlp calc-efs {0}/pot.mtp {0}/to_scf.cfg {0}/scf_out.cfg".format(basedir)
+    exitcode = subprocess.call(exeCmd, shell=True)
+    if exitcode != 0:
+        raise RuntimeError('MTP exited with exit code: %d.  ' % exitcode)
+    scfpop = load_cfg("{}/scf_out.cfg".format(basedir), self.type_to_symbol)
+    for atoms in scfpop:
+        enthalpy = (atoms.info['energy'] + self.pressure * atoms.get_volume() * GPa) / len(atoms)
+        atoms.info['enthalpy'] = round(enthalpy, 6)
+    return scfpop
+```
+
+```python
+def train(self, epoch=None):
+    epoch = epoch or self.n_epoch
+    nowpath = os.getcwd()
+    os.chdir(self.ml_dir)
+    if not self.ignore_weights:
+        self.reweighting()
+    #content = f"{self.mtp_runner} -n {self.num_core} {self.mtp_exe} train "\
+    #          f"pot.mtp train.cfg --trained-pot-name=pot.mtp --max-iter={epoch} "\
+    #          f"--energy-weight={self.weights[0]} --force-weight={self.weights[1]} --stress-weight={self.weights[2]} "\
+    #          f"--scale-by-force={self.scaled_by_force} "\
+    #          f"--weighting=structures "\
+    #          f"--update-mindist "\
+    #          f"--ignore-weights={self.ignore_weights}\n"
+    content = f"srun {self.mtp_exe} train "\
+              f"pot.mtp train.cfg --trained-pot-name=pot.mtp --max-iter={epoch} "\
+              f"--energy-weight={self.weights[0]} --force-weight={self.weights[1]} --stress-weight={self.weights[2]} "\
+              f"--scale-by-force={self.scaled_by_force} "\
+              f"--weighting=structures "\
+              f"--update-mindist "\
+              f"--ignore-weights={self.ignore_weights}\n"
+
+    if self.mode == 'parallel':
+        self.J.sub(content, name='train', file='train.sh', out='train-out', err='train-err')
+        self.J.wait_jobs_done(self.wait_time)
+        self.J.clear()
+    elif self.mode == 'serial':
+        exitcode = subprocess.call(content, shell=True)
+        if exitcode != 0:
+            raise RuntimeError('MTP exited with exit code: %d.  ' % exitcode)
+    os.chdir(nowpath)
+```
+
+```python
+def calc_efs(self, frames):
+    if isinstance(frames, Atoms):
+        frames = [frames]
+    nowpath = os.getcwd()
+    os.chdir(self.ml_dir)
+    dump_cfg(frames, 'tmp.cfg', self.symbol_to_type)
+    #exeCmd = f"{self.mtp_runner} -n {self.num_core} {self.mtp_exe} calc-efs pot.mtp tmp.cfg out.cfg"
+    exeCmd = f"srun --mpi=pmi2 {self.mtp_exe} calc-efs pot.mtp tmp.cfg out.cfg"
+    exitcode = subprocess.call(exeCmd, shell=True)
+    if exitcode != 0:
+        raise RuntimeError('MTP calc-efs exited with exit code: {}.'.format(exitcode))
+    result = load_cfg('out.cfg', self.type_to_symbol)
+    os.remove('tmp.cfg')
+    os.remove('out.cfg')
+    os.chdir(nowpath)
+    return result
+```
+
+```python
+def get_loss(self, frames):
+    nowpath = os.getcwd()
+    os.chdir(self.ml_dir)
+    dump_cfg(frames, 'tmp.cfg', self.symbol_to_type)
+    #exeCmd = f"{self.mtp_runner} -n {self.num_core} {self.mtp_exe} calc-errors pot.mtp tmp.cfg | grep 'Average absolute difference' | awk {{'print $5'}}"
+    exeCmd = f"srun {self.mtp_exe} calc-errors pot.mtp tmp.cfg | grep 'Average absolute difference' | awk {{'print $5'}}"
+    loss = os.popen(exeCmd).readlines()
+    mae_energies, r2_energies = float(loss[1]), 0.
+    mae_forces, r2_forces = float(loss[2]), 0.
+    mae_stress, r2_stress = float(loss[3]), 0.
+    os.remove('tmp.cfg')
+    os.chdir(nowpath)
+    return mae_energies, r2_energies, mae_forces, r2_forces, mae_stress, r2_stress
+```
+
+```python
+def select(self, pop):
+    nowpath = os.getcwd()
+    os.chdir(self.ml_dir)
+    dump_cfg(pop, "new.cfg", self.symbol_to_type)
+    # content = f"{self.mtp_runner} -n 1 {self.mtp_exe} select-add "\
+    #           f"pot.mtp train.cfg new.cfg diff.cfg "\
+    #           f"--weighting=structures\n"
+    content = f"srun --mpi=pmi2 select-add "\
+              f"pot.mtp train.cfg new.cfg diff.cfg "\
+              f"--weighting=structures\n"
+    if self.mode == 'parallel':
+        self.J.sub(content, name='select', file='select.sh', out='select-out', err='select-err')
+        self.J.wait_jobs_done(self.wait_time)
+        self.J.clear()
+        time.sleep(10)
+    elif self.mode == 'serial':
+        exitcode = subprocess.call(content, shell=True)
+        if exitcode != 0:
+            raise RuntimeError('MTP exited with exit code: %d.  ' % exitcode)
+    diff_frames = load_cfg("diff.cfg", self.type_to_symbol)
+    os.chdir(nowpath)
+    if isinstance(pop, Population):
+        return pop.__class__(diff_frames)
+    return diff_frames
+```
 
 ### <span style="font-size: 25px; color: red;"> 10. 修改了代码中slurm提交VASP任务后检查任务是否完成的部分，删了一行alldone=False. (parallel/queuemanage.py的274行)
 
