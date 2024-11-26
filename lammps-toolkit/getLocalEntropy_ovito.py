@@ -3,7 +3,7 @@ from ovito.data import CutoffNeighborFinder, DataCollection
 from ovito.modifiers import ComputePropertyModifier
 import numpy as np
 from ovito.io import import_file, export_file
-
+import argparse
 
 def modify(frame: int, data: DataCollection, cutoff = 5.0, sigma = 0.2, use_local_density = True, compute_average = True, average_cutoff = 5.0):
     # Validate input parameters:
@@ -77,11 +77,18 @@ def modify(frame: int, data: DataCollection, cutoff = 5.0, sigma = 0.2, use_loca
             neighbor_expressions = ['Entropy / (NumNeighbors + 1)']))
         
 
-pipeline = import_file("XDATCAR")
+# pipeline = import_file("XDATCAR")
+parser = argparse.ArgumentParser(description="Extract a specific frame from XDATCAR and save as POSCAR.")
+
+parser.add_argument("-i", "--filename", default="XDATCAR", help="Path to the XDATCAR file (default: 'XDATCAR').")
+args = parser.parse_args()
+
+pipeline = import_file(args.filename)
 pipeline.modifiers.append(modify)
 pipeline.compute()
 print(pipeline.compute().particles) # output content {'Position': Property('Position'), 'Particle Type': Property('Particle Type'), 'Entropy': Property('Entropy')}
 print(pipeline.compute().particles['Entropy'])
 for idx, e in enumerate(pipeline.compute().particles['Entropy']):
     print(idx+1, e)
-# export_file(pipeline, "entropy.dat", "txt/attr", key="Entropy")
+export_file(pipeline, "entropy.dat", "txt/attr", key="Entropy")
+# print(pipeline.compute().particles['Entropy / (NumNeighbors + 1)'])
