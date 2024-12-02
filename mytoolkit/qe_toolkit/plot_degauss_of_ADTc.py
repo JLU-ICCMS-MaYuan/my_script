@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 
 def get_eliashberg_Tc(eliashberg_x_path, idx):
-
+    pass
 
 def eliashberg_Tc(eliashberg_x_path, idx):
     mu_tc = {}

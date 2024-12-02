@@ -58,6 +58,8 @@ numb_steps / 200 = decay_steps
 # 最普通的开始训练
 dp train input.json > dp.log 2>&1
 
+
+# 下面的内容都是关于如何需算deepkit
 # Initialize the training from the frozen model.
 dp train input.json --init-frz-model graph.pb > dp.log 2>&1
 
@@ -75,7 +77,7 @@ dp train --restart model.ckpt input.json > dp.log 2>&1
 ###  <span style="color:yellow"> 冻结模型的命令
 
 ```shell
-deep freeze -o graph.pb 
+dp freeze -o graph.pb 
 ```
 
 ###  <span style="color:yellow"> 测试模型
@@ -161,4 +163,3 @@ export TF_INTER_OP_PARALLELISM_THREADS=3 # 设置 TensorFlow 内部操作（Intr
 export TF_INTER_OP_PARALLELISM_THREADS=2 # 设置 TensorFlow 操作之间（Inter-Op）并行计算的线程数。
 ```
 
-### 一个报错点：

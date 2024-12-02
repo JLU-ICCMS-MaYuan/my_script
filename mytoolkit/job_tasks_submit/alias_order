@@ -4,6 +4,7 @@ alias lj='getcwd() { ll /proc/"$1" | grep cwd; }; getcwd'
 alias gt='grep TITEL POTCAR'
 alias gp='grep PSTRESS INCAR*'
 alias gv='grep volume OUTCAR | tail -n 1'
+alias gc='getconf() { grep configuration "$1" | wc -l; }; getconf'
 alias lt="ls -ltr"
 alias pl='getfreq() { grep "freq" *.dyn"$1" | head; }; getfreq'
 alias gstress='grepstress() { grep -A3 stress OUT"$1".dat | tail -n 4; grep -A3 "STRESS TENSOR \[GPa\]" OUT"$1".dat | tail -n 4; }; grepstress'

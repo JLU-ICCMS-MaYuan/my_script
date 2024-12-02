@@ -1,9 +1,14 @@
 #!/usr/bin/env python3
+import os
+import argparse
+import numpy as np
+
+import matplotlib.pyplot as plt
+
 from ovito.data import CutoffNeighborFinder, DataCollection
 from ovito.modifiers import ComputePropertyModifier
-import numpy as np
 from ovito.io import import_file, export_file
-import argparse
+
 
 def modify(frame: int, data: DataCollection, cutoff = 5.0, sigma = 0.2, use_local_density = True, compute_average = True, average_cutoff = 5.0):
     # Validate input parameters:
@@ -86,9 +91,27 @@ args = parser.parse_args()
 pipeline = import_file(args.filename)
 pipeline.modifiers.append(modify)
 pipeline.compute()
-print(pipeline.compute().particles) # output content {'Position': Property('Position'), 'Particle Type': Property('Particle Type'), 'Entropy': Property('Entropy')}
-print(pipeline.compute().particles['Entropy'])
-for idx, e in enumerate(pipeline.compute().particles['Entropy']):
-    print(idx+1, e)
-export_file(pipeline, "entropy.dat", "txt/attr", key="Entropy")
+# print(pipeline.compute().particles) # output content {'Position': Property('Position'), 'Particle Type': Property('Particle Type'), 'Entropy': Property('Entropy')}
+# print(list(pipeline.compute().particles['Entropy']))
+
+
+# 假设 'Entropy' 数据已经提取为列表 entropy_data
+entropy_data = list(pipeline.compute().particles['Entropy'])
+
+# 绘制直方图
+plt.figure(figsize=(8, 6))
+plt.hist(entropy_data, bins=100, density=True, color='skyblue', edgecolor='black', alpha=0.7)
+
+# 设置标题和标签
+plt.title('Entropy Distribution', fontsize=16)
+plt.xlabel('Entropy', fontsize=14)
+plt.ylabel('Frequency', fontsize=14)
+
+# 网格和显示
+plt.grid(axis='y', linestyle='--', alpha=0.7)
+# plt.tight_layout()
+plt.savefig(os.path.basename(args.filename)+'.png')
+# for idx, e in enumerate(pipeline.compute().particles['Entropy']):
+#     print(idx+1, e)
+# export_file(pipeline, "entropy.dat", "txt/attr", key="Entropy")
 # print(pipeline.compute().particles['Entropy / (NumNeighbors + 1)'])
