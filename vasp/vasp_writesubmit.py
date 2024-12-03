@@ -15,7 +15,7 @@ class vasp_writesubmit:
         self.vasp_inputpara = vasp_inputpara
 
         if self.vasp_inputpara.submit_job_system == "slurm":
-            self.jobtitle = self.update_slurmPartition(slurmtitle)
+            self.jobtitle = self.update_slurmPartition(slurmtitle, vasp_inputpara.queue)
         elif self.vasp_inputpara.submit_job_system == "pbs":
             self.jobtitle = pbstitle
         elif self.vasp_inputpara.submit_job_system == "bash":
