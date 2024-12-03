@@ -1,6 +1,6 @@
 #!/bin/bash
-
+  
 #datetime=$(date +"%Y-%m-%d %H:%M:%S")
-datetime=$(date +"%Y-%m-%d")
+datetime=$(date +"%Y_%m_%d")
 
 magus summary results/good.traj -sb ehull -a ehull -s -o poscars_${datetime} -n 400 > extended_convex_hull_${datetime}
