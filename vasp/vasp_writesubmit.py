@@ -1,4 +1,5 @@
 import os
+import re
 
 from vasp.vasp_inputpara import vasp_inputpara
 from vasp.vaspbin import vaspstd_path, vaspgam_path, bashtitle, slurmtitle, pbstitle
@@ -14,13 +15,38 @@ class vasp_writesubmit:
         self.vasp_inputpara = vasp_inputpara
 
         if self.vasp_inputpara.submit_job_system == "slurm":
-            self.jobtitle =  slurmtitle
+            self.jobtitle = self.update_slurmPartition(slurmtitle)
         elif self.vasp_inputpara.submit_job_system == "pbs":
             self.jobtitle = pbstitle
         elif self.vasp_inputpara.submit_job_system == "bash":
             self.jobtitle = bashtitle
         else:
             self.jobtitle = ''
+
+    def update_slurmPartition(self, title:str, new_partition:str):
+        if self.check_partition_exists(new_partition):
+            # 使用正则表达式替换 --partition 后面的内容
+            updated_title = re.sub(r'--partition=\S+', f'--partition={new_partition}', title)
+            print(f"Partition exist! {new_partition}")
+            return updated_title
+        else:
+            print(f"{new_partition} doesn't exist! Keep partition name in ~/.my_scripts.py")
+            return title
+        
+    def check_partition_exists(self, new_partition: str) -> bool:
+        """检查队列是否存在"""
+        try:
+            # 使用 sinfo 命令检查队列是否存在
+            partitions = os.popen('sinfo -h --format=%P').read().splitlines()
+            
+            # 判断队列是否在返回的队列列表中
+            if new_partition in partitions:
+                return True
+            else:
+                return False
+        except Exception as e:
+            print(f"Error throws up when run `sinfo -h --format=%P`: {e}")
+            return False
 
     def write_submit_scripts(self, mode=None, submitjob_path=None):
 
