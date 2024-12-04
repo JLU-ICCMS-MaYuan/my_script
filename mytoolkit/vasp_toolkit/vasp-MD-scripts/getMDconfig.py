@@ -17,8 +17,8 @@ args = parser.parse_args()
 if args.begin == args.end:
     frames = read_vasp_xdatcar(args.filename, index=args.end)
     # 写入 POSCAR 文件
-    write_vasp(f"poscar_{args.begin}_{args.end}.vasp", frames)
+    write_vasp(f"poscar_{args.begin}_{args.end}", frames)
 else:
     frames = read_vasp_xdatcar(args.filename, slice(args.begin, args.end))
     # 写入 POSCAR 文件
-    write_vasp_xdatcar(f"xdatcar_{args.begin}_{args.end}.vasp", frames)
+    write_vasp_xdatcar(f"xdatcar_{args.begin}_{args.end}", frames)

@@ -5,7 +5,7 @@ from ovito.io import import_file, export_file
 from ovito.modifiers import CoordinationAnalysisModifier,TimeAveragingModifier
 
 parser = argparse.ArgumentParser(description="calculate RDF by Ovito python")
-parser.add_argument("-i", "--filename", default="XDATCAR", help="Path to the XDATCAR file (default: 'XDATCAR').")
+parser.add_argument("-i", "--filename", default="XDATCAR", help="Path to the XDATCAR file (default: 'XDATCAR'). If you use vasp-format XDATCAR, the name can only be XDATCAR. ")
 parser.add_argument("-c", "--cutoff", default=5.0, type=float, help="cutoff radius")
 parser.add_argument("-n", "--num_of_bins", default=100, type=int, help="number of bins")
 parser.add_argument("-o", "--outputname", default='rdf.txt', type=str, help="output filename")
