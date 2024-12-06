@@ -204,7 +204,7 @@ tmp/_ph0/La1Ce1Th2Be4H32.phsave/patterns.1.xml
 ```
 
 ```shell
-# 这是1/tmp的内容
+# 这是2/tmp的内容
 ├── Nb4H14.a2Fsave
 ├── Nb4H14.save
 │   ├── charge-density.dat

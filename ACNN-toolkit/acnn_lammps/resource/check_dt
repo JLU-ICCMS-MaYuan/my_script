@@ -1,0 +1,81 @@
+#!/usr/bin/env python3
+# Check whether force in dt/*.xsf < thr
+#
+# USAGE:
+#       python "this_script" "thr" "check_path"
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+import os
+from sys import argv
+import numpy as np
+
+
+def read_my_xsf(a_xsf_dir):
+    with open(a_xsf_dir, 'r') as file:
+        energy = None
+        force = None
+        position = None
+        lattice = []
+        elements = None
+
+        lines = file.readlines()
+
+        # energy
+        for i in lines:
+            if 'energy' in i:
+                energy = np.array(i.split(' ')[-2], float)
+        """print(energy)"""
+
+        # lattice
+        for i in lines:
+            temp = i.split()
+            if len(temp) == 3:
+                lattice.append(temp)
+        lattice = np.array(lattice, float).reshape(3, 3)
+        """print(lattice)"""
+
+        # coordinate & force
+        ele_c_f = []
+        for i in lines:
+            temp = i.split()
+            if len(temp) == 7:
+                ele_c_f.append(temp)
+        ele_c_f = np.array(ele_c_f)
+        elements = ele_c_f[:, 0]
+        position = ele_c_f[:, 1:4].astype(float)
+        force = ele_c_f[:, 4:].astype(float)
+        """
+        print(elements)
+        print(position)
+        print(force)
+        """
+        return energy, lattice, elements, position, force
+
+
+if __name__ == '__main__':
+    check_dir = "."
+    thr = 200  # force
+
+    try:
+        assert argv[1]
+        thr = float(argv[1])
+    except:
+        pass
+    try:
+        assert argv[2]
+        check_dir = argv[2]
+    except:
+        pass
+
+    print(f"Checking ...    {os.path.abspath(check_dir)}")
+    print(f"Thr             {thr}")
+
+    xsfs = os.listdir(check_dir)
+    xsfs = [i for i in xsfs if i[-4:] == ".xsf"]
+
+    for i in xsfs:
+        file_path = os.path.join(check_dir, i)
+        energy, lattice, elements, position, force = read_my_xsf(file_path)
+        if np.any(np.abs(force) > thr):
+            print(f"Unreasonable structure, eliminate.    {file_path}")
+            os.rename(file_path, file_path[:-4])
