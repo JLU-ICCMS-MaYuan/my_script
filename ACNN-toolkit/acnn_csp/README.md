@@ -1,38 +1,92 @@
 # ACNN
 
-#### 安装教程
+##  <span style="font-size: 30px; color: lightgreen;"> 安装教程
 
-I. 离线下载
+可能需要的安装包准备： gcc(9以上版本)， ase，  pymatgen，  cmake (3以上版本)， qhull  openblas airss  xmgrace  libtorch torchdemo(ACNN) lammps(安装到torchdemo的interface里)
 
-1.  安装包准备： gcc(9以上版本)， ase，  pymatgen，  cmake (3以上版本)， qhull  openblas airss  xmgrace  libtorch torchdemo(ACNN) lammps(安装到torchdemo的interface里)
-
-(https://www.mtg.msm.cam.ac.uk/Codes/AIRSS; https://plasma-gate.weizmann.ac.il/pub/grace/src/; https://www.openblas.net)
+1. https://www.mtg.msm.cam.ac.uk/Codes/AIRSS;
+2. https://plasma-gate.weizmann.ac.il/pub/grace/src/; 
+3. https://www.openblas.net
  
-2.  编译流程：
+###  <span style="font-size: 30px; color: red;">  编译流程：
 
-(1) 编译openblas
+####  <span style="font-size: 25px; color: blue;">  编译openblas
 ```shell
-OpenBlas：make -j8 USE_OPENMP=1; make; make install PREFIX=/...
+make -j8 USE_OPENMP=1
+make install PREFIX=/...
+```
+
+如果在make的时候报错，比如缺少：
+
+就写一个叫env_gcc.sh的脚本，内容包含：如何source你的gcc以及相应的lib库, 这里给出一个例子
+```shell
+source /public/env/gcc-9.2.0
+
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/public/software/gmp-6.1.2/lib
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/public/software/mpfr-4.0.1/lib
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/public/software/mpc-1.1.0/lib
 ```
 
 如果报错：`error while loading shared libraries: libmpfr.so.6: cannot open shared object file: No such file or directory`
 要么你按照这个帖子自己安装一个gcc.9.2: https://www.zhihu.com/people/ma-yuan-94-83/posts. 要么你自己安装一个mpfr.
 
-(2). 安装airss
-1. 手动下载spglib、symbol的压缩包到external文件夹中，
-2. lib要弄来三个静态库（libblas.a  liblapack.a  libsymspg.a），make -j8就行了
+####  <span style="font-size: 25px; color: blue;">  安装airss
 
-(3). xmgrace: ./configure --prefix=... ; make -j8 ; make install
+<span style="font-size: 20px; color: lightblue;"> 解压
+```shell
+$ tar -xzvf airss-v0.9.4.tgz
 
-(4). libtorch: PyTorch官网下载: https://pytorch.org/
+$ ls
+bin  CONTRIBUTORS  examples  external  include  lib  LICENCE  makefile  README.md  src  test  VERSION.md
+```
+<span style="font-size: 20px; color: lightblue;"> 安装
+```shell
+make
+
+# 必须install， 不然会报出没有cable这个命令
+make install
+```
+<span style="font-size: 20px; color: lightblue;">  意外
+
+1. 如果没有网络, 手动下载spglib、symbol的压缩包并拷贝到external文件夹中, 注意对spglib、symbol的版本有着极其严苛的要求
+你最好在一个有网络的机器上, 执行make，搞到这两个安装包，然后把它拷贝到你要安装的机器上
+2. 有时候安装报错是因为没有找到关于lpack和blas的两个静态库。我也不知道怎么安装，但是聪明的师弟已经搞好了，发给我了。
+你只需要把他们拷贝到lib目录下即可。（libblas.a  liblapack.a  libsymspg.a）
+
+
+####  <span style="font-size: 25px; color: blue;"> 安装grace
+
+```shell
+xmgrace: ./configure --prefix=... ; make -j8 ; make install
+```
+
+####  <span style="font-size: 25px; color: blue;"> 安装libtorch
+
+PyTorch官网下载: https://pytorch.org/
     
 ![Download libtorch](picture/libtorch.jpg)
         
         解压后export即可
+####  <span style="font-size: 25px; color: blue;"> 安装acnn
 
-    (5). torchdemo: 上述软件包安装配置之后，解压进入，修改prefix.cmake(除前五行需要修改，后面的全注释)，创建文件夹build进入，../cmake
+<span style="font-size: 20px; color: lightblue;"> 解压进入torchdemo
 
-    (6). lmp_mpi: 进入torchdemo的interface/lammps，自己下载个压缩包(lammps-2Aug2023.tar.gz)，更改build_lammps_interface.sh中的压缩文件名之后，激活intel进行编译（sh build_lammps_interface.sh build 核数），lmp_mpi在文件夹lammps-acnn/build里
+<span style="font-size: 20px; color: lightblue;"> 修改prefix.cmake
+
+(除前五行需要修改，后面的全注释)，创建文件夹build，进入后cmake
+```shell
+cmake ..
+
+make
+```
+
+
+####  <span style="font-size: 25px; color: blue;">  安装acnn和lmp_mpi的接口
+<span style="font-size: 20px; color: lightblue;"> 进入torchdemo的interface/lammps
+
+<span style="font-size: 20px; color: lightblue;"> 安装
+
+自己下载个压缩包(lammps-2Aug2023.tar.gz)，更改build_lammps_interface.sh中的压缩文件名之后，激活intel进行编译（sh build_lammps_interface.sh build 核数），lmp_mpi在文件夹lammps-acnn/build里
 
 #### 使用说明
 
