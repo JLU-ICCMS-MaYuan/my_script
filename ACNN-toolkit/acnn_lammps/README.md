@@ -154,7 +154,7 @@ ldd $(which acnn)
 emodel model-restart/model-10000  train_dt> ss 2>&1
 ```
 
-然后直接用命令，例如slurm系统中，提交即可
+然后直接用命令，例如slurm系统中，提交即可。 **注意你可能需要修改`model-restart/model-10000`的模型的名称**
 ```shell
 sbatch sub-eval.sh
 ```
@@ -187,6 +187,8 @@ python $(which evalan.py) $EVAL_FILE | sort -gk 4
 
 rm in.acnn.tmp
 ```
+如果最终没有画出图，可以手动执行绘图：`python $(which evalan.py) $EVAL_FILE | sort -gk 4`
+
 
 ### <span style="font-size: 20px; color: red;"> 4. 分析数据集，从中筛选出坏结构
 

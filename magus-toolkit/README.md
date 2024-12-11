@@ -148,7 +148,7 @@ mpirun -n 1 mlp calc-grade pot.mtp train.cfg train.cfg temp.cfg --als-filename=A
 ```
 
 
-### <span style="font-size: 25px; color: red;">  6. magus生成结构： 
+### <span style="font-size: 25px; color: red;">  5. magus生成结构： 
 ```
 # 读取输入文件生成10个结构
 magus generate -i input.yaml -n 10
@@ -163,7 +163,7 @@ magus summary gen.traj -s -o poscars
 magus summary gen.traj -s -o poscars -n 500
 ```
 
-### <span style="font-size: 25px; color: red;"> 7. 如何续算magus
+### <span style="font-size: 25px; color: red;"> 6. 如何续算magus
 
 一般来说，magus分为`Initialize`, `Generation 1`, `Generation 2`....这么几步。要想续算，必须保证Initialize完成才能续算，不然它永远会从Initialize开始
 
@@ -184,18 +184,18 @@ nohup magus search -i input.yaml -m -r > tem.log 2>&1 &
 echo $! > taskids
 ```
 
-### <span style="font-size: 25px; color: red;"> 7.magus的卸载
+### <span style="font-size: 25px; color: red;"> 8.magus的卸载
 ```shell
 pip uninstall magus-kit
 ```
 
-### <span style="font-size: 25px; color: red;"> 8. 在用summary模式时技巧
+### <span style="font-size: 25px; color: red;"> 9. 在用summary模式时技巧
 ```shell
 # 可以手动添加信息，例如额外添加体积信息
 magus summary  gen.traj -a volume
 ```
 
-### <span style="font-size: 25px; color: red;"> 9. 修改了代码中并行计算, 有些机器不支持mpirun命令, 支持srun，直接使用穿行计算 或者srun (calculators/mtp.py的249行)
+### <span style="font-size: 25px; color: red;"> 10. 修改了代码中并行计算, 有些机器不支持mpirun命令, 支持srun，直接使用穿行计算 或者srun (calculators/mtp.py的249行)
 ```python
 def calc_grade(self):
     # must have: pot.mtp, train.cfg
@@ -353,11 +353,17 @@ def select(self, pop):
     return diff_frames
 ```
 
-### <span style="font-size: 25px; color: red;"> 10. 修改了代码中slurm提交VASP任务后检查任务是否完成的部分，删了一行alldone=False. (parallel/queuemanage.py的274行)
+### <span style="font-size: 25px; color: red;"> 10. 修改了代码中slurm提交VASP任务后检查任务是否完成的部分
 
-### <span style="font-size: 25px; color: red;"> 11. 种子文件制作：创建一个叫做Seeds的文件，然后在其中起名POSCARS_m, 代表在第m代读入种子文件。
+删了一行alldone=False. (parallel/queuemanage.py的274行)
 
-### <span style="font-size: 25px; color: red;"> 12. pot.mtp 是机器学习的初始势函数，这个势函数不能乱选，如果你之前没有训练好的势能，那么就用mlip给的未训练的势函数， 他们存放在这里：
+### <span style="font-size: 25px; color: red;"> 11. 种子文件制作
+
+创建一个叫做Seeds的文件，然后在其中起名POSCARS_m, 代表在第m代读入种子文件。
+
+### <span style="font-size: 25px; color: red;"> 12. pot.mtp 是机器学习的初始势函数
+
+`pot.mtp`这个势函数不能乱选，如果你之前没有训练好的势能，那么就用mlip给的未训练的势函数， 他们存放在这里。三元体系一般选择`20.mtp`
 ```shell
 
 cd mlip-2-master/untrained_mtps
@@ -369,9 +375,18 @@ cp ~/code/mlip-2/untrained_mtps/20.mtp inputFold/MTP/pot.mtp
 
 # 然后依照input.yaml中的mindist，修改inputFold/MTP/pot.mtp中的min_dist和species_count即可，species_count代表元素个数，min_dist是最小的合理距离。
 ```
-通过多次计算发现，似乎不论input.yaml中min_dist怎么调整，最小原子间距离一直都是0.5左右。
-然后我通过查看源码发现，min_dist似乎在默认值那里设置了0.5，没有读入input.yaml中关于min_dist的设置
-所以我就在`magus/mtp.py`中修改关于`min_dist`的默认值为0.85
+min_dist在默认值那里设置了0.5，但是mugs会根据实际体系自动调整. 
+
+MTP中给出的在relax时关于min_dist的含义解释为：`--min-dist=<num>: terminate relaxation if atoms come closer than <num>`，当原子间距离小于0.5Angstrom时停止优化. 你可以通过`mlp help relax`查看。
+
+1. 在`mlFold/MTP/train.sh`中设置了关于自动调整最小距离的参数：
+```shell
+mpirun -n 48 mlp train pot.mtp train.cfg --trained-pot-name=pot.mtp --max-iter=200 --energy-weight=1.0 --force-weight=0.01 --stress-weight=0.001 --scale-by-force=0.0 --weighting=structures --update-mindist --ignore-weights=True
+```
+2. 但是比较奇怪的是，在`calcFold/MTP/epoch**/relax.sh`中却没有让其自动调整`min-dist`
+```shell
+mpirun -n 48 mlp relax mlip.ini --pressure=200 --cfg-filename=to_relax.cfg --force-tolerance=0.001 --stress-tolerance=0.01 --min-dist=0.5 --log=mtp_relax.log --save-relaxed=relaxed.cfg
+```
 
 ### <span style="font-size: 25px; color: red;"> 13. magus-master/magus/parallel/queuemanage.py中新增加了这样的代码用于slurm系统检测任务运行状态。
 
@@ -385,3 +400,16 @@ wait_command = f"salloc {wait_condition} {self.wait_params} -p {self.queue_name}
 wait_command = f"salloc {wait_condition} {self.wait_params} -p {self.queue_name} --account=hp240139 sleep 10"
 ```
 
+### <span style="font-size: 25px; color: red;"> 14. 很多时候报错是因为MTP结构优化出现问题。
+
+在做Ce-Sr-H体系的结构预测时，发现它经常连第一代都不能完整跑完。于是我想检查第一代每一次主动学习结构优化Ce-Sr-H的结构优化情况。
+```shell
+# 这是用来结构话的命令，存储在calcFold/MTP/epoch*/relax.sh中
+mpirun -n 48 mlp relax mlip.ini --pressure=200 --cfg-filename=to_relax.cfg --force-tolerance=0.001 --stress-tolerance=0.01 --min-dist=0.5 --log=mtp_relax.log --save-relaxed=relaxed.cfg
+# mlip.ini 结构优化设置文件
+# --cfg-filename=<str>: Read initial configurations from <str>
+# --log=<str>: Write relaxation log to <str>
+# --min-dist=<num>: terminate relaxation if atoms come closer than <num>
+# --save-relaxed=<str>: Save the relaxed configurations to <str>
+```
+所以我们只要对比`to_relax.cfg`和`relaxed.cfg`两个文件中结构的数量差距就可以知道`to_relax.cfg`中有多少结构被优化好了。

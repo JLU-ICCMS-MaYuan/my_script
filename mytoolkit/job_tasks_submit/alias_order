@@ -11,3 +11,5 @@ alias gstress='grepstress() { grep -A3 stress OUT"$1".dat | tail -n 4; grep -A3 
 alias gfc='grepfc() { grep "FC gradient modulus" OUT"$1".dat | tail -n 1; }; grepfc'
 alias lcu='tail */lcurve.out' 
 
+
+alias getfromriken='getfromriken() { scp -r -i ~/.ssh/riken_id_rsa.pub h240012@hokusai.riken.jp:"$1" "$2"; }; getfromriken'

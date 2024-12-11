@@ -1,6 +1,4 @@
 import os
-import sys
-from pathlib import Path
 from setuptools import setup
 
 def parse_requirements():
@@ -17,21 +15,6 @@ def parse_requirements():
 def pip_install_git(link):
     os.system('pip install --upgrade {}'.format(link))
     return
-
-#def Write_Tobin(qebin_path, vaspbin_path, my_scriptrc_ini):
-#    with open(my_scriptrc_ini, "r") as f:
-#        content = f.read()
-#
-#    with open(qebin_path, "w") as qe:
-#        qe.writelines(content)
-#
-#    with open(vaspbin_path, "w") as vasp:
-#        vasp.write(content)
-#
-#my_scriptrc_ini = Path.home().joinpath(".my_scriptrc.py")
-#qebin_path      = Path("qe").joinpath("qebin.py")
-#vaspbin_path    = Path("vasp").joinpath("vaspbin.py")
-#Write_Tobin(qebin_path, vaspbin_path, my_scriptrc_ini)
 
 setup(
     name="my_script",
