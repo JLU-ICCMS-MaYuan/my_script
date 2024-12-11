@@ -412,4 +412,7 @@ mpirun -n 48 mlp relax mlip.ini --pressure=200 --cfg-filename=to_relax.cfg --for
 # --min-dist=<num>: terminate relaxation if atoms come closer than <num>
 # --save-relaxed=<str>: Save the relaxed configurations to <str>
 ```
-所以我们只要对比`to_relax.cfg`和`relaxed.cfg`两个文件中结构的数量差距就可以知道`to_relax.cfg`中有多少结构被优化好了。
+所以我们只要对比`to_relax.cfg`和`relaxed.cfg`两个文件中结构的数量差距就可以知道`to_relax.cfg`中有多少结构被优化好了。直接进入`calcFold/MTP/`目录后，执行下面的命令即可
+```shell
+check_epoch_relaxcfg.sh
+```
