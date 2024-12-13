@@ -10,6 +10,4 @@ alias pl='getfreq() { grep "freq" *.dyn"$1" | head; }; getfreq'
 alias gstress='grepstress() { grep -A3 stress OUT"$1".dat | tail -n 4; grep -A3 "STRESS TENSOR \[GPa\]" OUT"$1".dat | tail -n 4; }; grepstress'
 alias gfc='grepfc() { grep "FC gradient modulus" OUT"$1".dat | tail -n 1; }; grepfc'
 alias lcu='tail */lcurve.out' 
-
-
 alias getfromriken='getfromriken() { scp -r -i ~/.ssh/riken_id_rsa.pub h240012@hokusai.riken.jp:"$1" "$2"; }; getfromriken'

@@ -183,7 +183,7 @@ class vasp_eletron:
         self.eletron_inputpara = vasp_eletronpara.init_from_config1(_config)
 
         # 准备输入文件
-        self._vasp_writeincar  = vasp_writeincar.init_from_eletron(self.eletron_inputpara)
+        self._vasp_writeincar  = vasp_writeincar(self.eletron_inputpara)
         if 'scf'    in self.eletron_inputpara.mode:
             # 准备输入文件
             scf_path = self.scf(self.eletron_inputpara.kspacing)
