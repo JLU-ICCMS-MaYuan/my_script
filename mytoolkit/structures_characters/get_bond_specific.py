@@ -20,7 +20,10 @@ print(info)
 species_custom1 = sys.argv[1]
 species_custom2 = sys.argv[2]
 
-struct = Structure.from_file("POSCAR")
+try:
+    struct = Structure.from_file(sys.argv[3])
+except:
+    struct = Structure.from_file("POSCAR")
 
 # 获得指定的两组元素的坐标
 frac_custom1 = [site.frac_coords for site in struct.sites if site.species_string == species_custom1] 

@@ -2,7 +2,7 @@
 
 # 网络热帖:
 1. https://zhuanlan.zhihu.com/p/427794442 如何安装qe
-2. 
+2. https://zhuanlan.zhihu.com/p/547184583 如何安装vasp
 
 # 介绍
 该软件是一个计算qe，vasp的小程序。也可以用来产生结构
