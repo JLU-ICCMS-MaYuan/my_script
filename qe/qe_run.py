@@ -383,14 +383,14 @@ class qe_prepare:
             self.qe_writeinput  = qe_writeinput(self.prepare_inputpara)
             inputfilename1 = self.qe_writeinput.writeinput(mode="relax-vc")
 
-            self.qe_writeinput  = qe_writeinput.init_from_scfinput(self.prepare_inputpara)
+            self.qe_writeinput  = qe_writeinput(self.prepare_inputpara)
             inputfilename2 = self.qe_writeinput.writeinput(mode="scffit")
             
-            self.qe_writeinput  = qe_writeinput.init_from_scfinput(self.prepare_inputpara)
+            self.qe_writeinput  = qe_writeinput(self.prepare_inputpara)
             inputfilename3 = self.qe_writeinput.writeinput(mode="scf")
         
             # init the submit job script
-            self.qe_writesubmit = qe_writesubmit.init_from_prepareinput(self.prepare_inputpara)
+            self.qe_writesubmit = qe_writesubmit(self.prepare_inputpara)
             jobname = self.qe_writesubmit.write_submit_scripts([inputfilename1, inputfilename2, inputfilename3])
             # submit the job
             self.qe_submitjob   = qe_submitjob(self.prepare_inputpara)
@@ -399,14 +399,14 @@ class qe_prepare:
 
         elif self.prepare_inputpara.mode == "preparescf":
 
-            self.qe_writeinput  = qe_writeinput.init_from_scfinput(self.prepare_inputpara)
+            self.qe_writeinput  = qe_writeinput(self.prepare_inputpara)
             inputfilename2 = self.qe_writeinput.writeinput(mode="scffit")
             
-            self.qe_writeinput  = qe_writeinput.init_from_scfinput(self.prepare_inputpara)
+            self.qe_writeinput  = qe_writeinput(self.prepare_inputpara)
             inputfilename3 = self.qe_writeinput.writeinput(mode="scf")
         
             # init the submit job script
-            self.qe_writesubmit = qe_writesubmit.init_from_prepareinput(self.prepare_inputpara)
+            self.qe_writesubmit = qe_writesubmit(self.prepare_inputpara)
             jobname = self.qe_writesubmit.write_submit_scripts([inputfilename2, inputfilename3])
             # submit the job
             self.qe_submitjob   = qe_submitjob(self.prepare_inputpara)
