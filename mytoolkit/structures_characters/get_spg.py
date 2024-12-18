@@ -17,8 +17,8 @@ try:
     spgnum = spgaly.get_space_group_number()
     conv_cell = spgaly.get_conventional_standard_structure()
     prim_cell = spgaly.get_primitive_standard_structure()
-    Poscar(prim_cell).write_file("PPOSCAR")
-    Poscar(conv_cell).write_file("BPOSCAR")
+    Poscar(prim_cell).write_file("prim_"+filename)
+    Poscar(conv_cell).write_file("conv_"+filename)
     print("{:<10} {:<10} {:<10}".format("symprec", "symbol", "spgnum"))
     print("{:<10.9f} {:<10} {:<10}".format(symprec, symbol, spgnum))
 except:
