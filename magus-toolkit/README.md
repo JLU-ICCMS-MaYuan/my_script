@@ -190,10 +190,35 @@ pip uninstall magus-kit
 ```
 
 ### <span style="font-size: 25px; color: red;"> 9. 在用summary模式时技巧
+
+summary如何执行？`~/magus-master/magus/entrypoints/summary.py`代码位置
+```python
+class Summary:
+    ...
+    ...
+    def summary(self, filenames, show_number=20, need_sorted=True, sorted_by='Default', reverse=True, save=False, outdir=None):
+        filenames = convert_glob(filenames)
+        self.prepare_data(filenames)
+        show_number = min(len(self.all_frames), show_number)
+        self.show_features_table(show_number, reverse, need_sorted, sorted_by)
+        if save:
+            self.save_atoms(show_number, outdir)
+        if self.formula_type == 'var':
+            self.plot_phase_diagram()
+```
+
+
 ```shell
 # 可以手动添加信息，例如额外添加体积信息
 magus summary  gen.traj -a volume
+
+# -b 设置边界
+# -v 设置是否编组分，只有设置了-v才能画图
+# -p 设置被保存结构寻找对称性时的精度
+magus summary results/good.traj -sb ehull -a ehull  -b CeH4 CaH2 H2 -v -p 0.00001
 ```
+
+
 
 ### <span style="font-size: 25px; color: red;"> 10. 修改了代码中并行计算, 有些机器不支持mpirun命令, 支持srun，直接使用穿行计算 或者srun (calculators/mtp.py的249行)
 ```python
@@ -359,7 +384,31 @@ def select(self, pop):
 
 ### <span style="font-size: 25px; color: red;"> 11. 种子文件制作
 
-创建一个叫做Seeds的文件，然后在其中起名POSCARS_m, 代表在第m代读入种子文件。
+#### 11.1 <span style="font-size: 20px; color: lightyellow;">  magus 是如何读入种子文件的呢? 
+
+在`~/magus-master/magus/search/search.py`文件中
+```python
+class Magus
+    ...
+    ...
+    def read_seeds(self):
+        log.info("Reading Seeds ...")
+        seed_frames = read_seeds('{}/POSCARS_{}'.format(self.seed_dir, self.curgen))
+        seed_frames.extend(read_seeds('{}/seeds_{}.traj'.format(self.seed_dir, self.curgen)))
+        seed_pop = self.Population(seed_frames, 'seed', self.curgen)
+        for i in range(len(seed_pop)):
+            seed_pop[i].info['gen'] = self.curgen
+        return seed_pop
+```
+#### 11.2 <span style="font-size: 20px; color: lightred;">  magus 什么时候开始读取种子文件，这决定了你怎么使用该程序?
+1. 首先你可以在log.txt和tmp.log中grep Reading Seeds, 来判断是否读入了Seeds
+2. 目前还不知道什么时候读取种子文件. 目前还不知道在程序运行过程中是否可以读取种子文件
+
+#### 11.3 <span style="font-size: 20px; color: lightred;"> 如何读取种子文件?
+
+1. 创建一个叫做Seeds的目录
+2. 然后在其中起名POSCARS_m, 代表在第m代读入种子文件
+3. 或者也可以起名seeds_m.traj, 代表在第m代读入种子文件
 
 ### <span style="font-size: 25px; color: red;"> 12. pot.mtp 是机器学习的初始势函数
 
