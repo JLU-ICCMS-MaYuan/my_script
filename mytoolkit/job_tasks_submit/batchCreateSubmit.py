@@ -43,7 +43,7 @@ export MPIR_CVAR_COLL_ALIAS_CHECK=0
 
 header_forRiken = """#!/bin/sh                           
 #------ slurm option --------#
-#SBATCH --partition=mpc_l
+#SBATCH --partition=mpc
 #SBATCH --account=hp240139
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=40
@@ -129,7 +129,7 @@ def get_groups(input_file:str, max_running_jobs:int) -> list[list[str]] :
 
     # 将任务分成max_running_jobs组
     groups = [directories[i:i + max_running_jobs] for i in range(0, len(directories), max_running_jobs)]
-    
+
     print(f"Each group contains {len(groups[0])} tasks")
     return groups
 
