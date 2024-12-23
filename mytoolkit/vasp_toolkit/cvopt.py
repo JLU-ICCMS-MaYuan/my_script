@@ -38,9 +38,9 @@ for root, dirs, files in os.walk("."):
 def custom_sort(item):
     parts = item.split("/")
     try:
-        return (parts[:-1], eval(parts[-1]))
+        return (parts[:-1], str(eval(parts[-1])))  # 将最后一部分强制转换为字符串
     except:
-        return (parts[:-1], parts[-1])
+        return (parts[:-1], parts[-1])  # 如果转换失败，直接返回字符串部分
 
 print("\nrelax-none")
 for line in none_d:
