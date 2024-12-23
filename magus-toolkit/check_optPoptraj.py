@@ -6,7 +6,7 @@ from ase.io import read, write
 # 设置命令行参数解析器
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Merge multiple TRAJ files into a single TRAJ file.")
-    parser.add_argument('-i', '--input_files', nargs='+', help="List of input TRAJ files to merge")
+    parser.add_argument('-i', '--input_files', nargs='+', help="List of input TRAJ files to merge, support wildcards, just like `-i */optPop.traj`")
     parser.add_argument('-o', '--output', required=True, help="Output file name (e.g., merged.traj)")
     return parser.parse_args()
 
@@ -18,10 +18,11 @@ def main():
 
     atoms_list = []
     for filename in input_files:
-        # 读取每个traj文件的所有帧
-        traj_frames = read(filename, format='traj', index=':')
-        print('filename:{}\nframes found={}\nframes read={}'.format(filename, len(traj_frames), len(traj_frames)))
-        atoms_list.extend(traj_frames)
+        try:
+            traj_frames = read(filename, format='traj', index=':')
+            atoms_list.extend(traj_frames)
+        except:
+            print("ERROR in read results {}".format(filename))
 
     print('Total frames: {}'.format(len(atoms_list)))
 
