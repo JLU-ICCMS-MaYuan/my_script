@@ -340,6 +340,7 @@ def parseStruct():
             bandgap = 100.
             xrddiff=610612509.
             nstruct = int(date[i].split('=')[1].strip()) # abtain the 
+            print(f"nstruct={nstruct}")
             # print 'ns', nstruct
             gtype = 1
             # for j in range(i+1, ldate):
