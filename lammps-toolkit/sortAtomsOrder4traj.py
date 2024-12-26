@@ -20,17 +20,22 @@ def write_lammps_dump_text(
         prismobj: Prism = None,
         ):
     symbols = images[0].get_chemical_symbols()
-    if specorder is None:
-        # This way it is assured that LAMMPS atom types are always
-        # assigned predictably according to the alphabetic order
-        species = sorted(set(symbols))
-    else:
-        # To index elements in the LAMMPS data file
-        # (indices must correspond to order in the potential file)
-        species = specorder
+    totalatomsnum = len(images[0])
         
     with open(filename, 'w') as fd:
         for idx, image in enumerate(images):
+            if specorder is None:
+                # This way it is assured that LAMMPS atom types are always
+                # assigned predictably according to the alphabetic order
+                species = sorted(set(symbols))
+            else:
+                # To index elements in the LAMMPS data file
+                # (indices must correspond to order in the potential file)
+                species = specorder
+                species2index = {element: idx for idx, element in enumerate(specorder)}
+                sorted_indices = sorted(range(totalatomsnum), key=lambda i: species2index[image.get_chemical_symbols()[i]])
+                image = image[sorted_indices]
+
             fd.write("ITEM: TIMESTEP\n")
             fd.write(f"{idx}\n")
             fd.write("ITEM: NUMBER OF ATOMS\n")

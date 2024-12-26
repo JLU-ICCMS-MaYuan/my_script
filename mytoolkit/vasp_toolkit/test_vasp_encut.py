@@ -77,13 +77,30 @@ export MKL_DEBUG_CPU_TYPE=5
 
 mpirun -n 64 /public/software/apps/vasp/intelmpi/5.4.4/bin/vasp_std > vasp.log 2>&1
 """
+    riken_slurm="""#!/bin/sh                           
+#------ slurm option --------#
+#SBATCH --partition=mpc
+#SBATCH --account=hp240139
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=40
+#SBATCH --time=24:00:00
 
+ulimit -s unlimited
+
+#------- Program execution -------#
+module load intelmpi/impi_23.2.0
+module load intel/23.02.1
+
+srun /lustre/home/h240012/soft/vasp.6.1.0/bin/vasp_std > vasp.log 2>&1
+"""
     if jobtype == "chaoyin_pbs":
         jobsystem = chaoyin_pbs
     elif jobtype == "tangB_slurm":
         jobsystem = tangB_slurm
     elif jobtype == "coshare_slurm":
         jobsystem = coshare_slurm
+    elif jobtype == "riken_slurm":
+        jobsystem = riken_slurm
     else:
         print("其它机器的任务系统, 你没有准备这个机器的提作业脚本. 程序退出. ")
         sys.exit(1)
@@ -127,16 +144,14 @@ def get_info_per_atom(outcar_path):
 
 if __name__ == "__main__":
     
-    # jobsystem = "chaoyin_pbs"
-    jobsystem = "tangB_slurm"
-    # jobsystem = "coshare_slurm"
+    jobsystem = sys.argv[1]
     print("Note: --------------------")
     print("    你需要在当前目录下准备好: POSCAR, POTCAR, INCAR")
     print("    测试的ENCUT值分别是: 400, 500, 600, 700, 800, 900, 1000  1100 1200 1300 1400")
     print("    该脚本不提供自动提任务的命令: 你可以用以下命令提供命令:")
 
     print("Note: --------------------")
-    start, stop, step = sys.argv[1:]
+    start, stop, step = sys.argv[2:]
     print("    python test_vasp_encut.py 400 1100 10")
     print("    python test_vasp_encut.py 1000 300 -10")
     print("    以上两种都是产生40到100， 间隔为10的截断能")
@@ -187,4 +202,3 @@ if __name__ == "__main__":
             print("{:<12.3f},{:<14.8f},{:<14.8f},{:<14.8f}".format(kmeshes, delta_E*1000, np.nanmax(delta_F)*1000, np.nanmax(delta_V)*1000))
         else:
             print("If all OUTCARs are OK, encut_dE.csv will be wroten in current position")
-

@@ -26,11 +26,4 @@ elif ".lammpstrj" in args.input:
     print(f"读取到 {len(atoms)} 帧轨迹")
     print("get last frame of trajectory")
     new_frame = atoms[-1]
-
-# 按照指定的元素顺序排序
-element_to_index = {element: idx for idx, element in enumerate(args.order)}
-# 获取排序后的索引
-sorted_indices = sorted(range(len(new_frame)), key=lambda i: element_to_index[new_frame.get_chemical_symbols()[i]])
-# 根据指定顺序排列原子
-new_frame = new_frame[sorted_indices]
-write_lammps_data('data.lammps', new_frame)
+    write_lammps_data('data.lammps', new_frame, specorder=args.order)

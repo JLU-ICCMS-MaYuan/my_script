@@ -77,6 +77,23 @@ export MKL_DEBUG_CPU_TYPE=5
 
 mpirun -n 64 /public/software/apps/vasp/intelmpi/5.4.4/bin/vasp_std > vasp.log 2>&1
 """
+    riken_slurm = """#!/bin/sh                           
+#------ slurm option --------#
+#SBATCH --partition=mpc
+#SBATCH --account=hp240139
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=40
+#SBATCH --time=24:00:00
+
+ulimit -s unlimited
+
+#------- Program execution -------#
+module load intelmpi/impi_23.2.0
+module load intel/23.02.1
+
+srun /lustre/home/h240012/soft/vasp.6.1.0/bin/vasp_std > vasp.log 2>&1
+    
+"""
 
     if jobtype == "chaoyin_pbs":
         jobsystem = chaoyin_pbs
@@ -84,6 +101,8 @@ mpirun -n 64 /public/software/apps/vasp/intelmpi/5.4.4/bin/vasp_std > vasp.log 2
         jobsystem = tangB_slurm
     elif jobtype == "coshare_slurm":
         jobsystem = coshare_slurm
+    elif jobtype == "riken_slurm":
+        jobsystem = riken_slurm
     else:
         print("其它机器的任务系统, 你没有准备这个机器的提作业脚本. 程序退出. ")
         sys.exit(1)
@@ -127,17 +146,15 @@ def get_info_per_atom(outcar_path):
 
 if __name__ == "__main__":
     
-    # jobsystem = "chaoyin_pbs"
-    jobsystem = "tangB_slurm"
-    # jobsystem = "coshare_slurm"
+    jobsystem = sys.argv[1]
     print("Note: --------------------")
     print("    你需要在当前目录下准备好: POSCAR, POTCAR, INCAR")
     print("Note: --------------------")
-    start, stop, step = sys.argv[1:]
+    start, stop, step = sys.argv[2:]
     print("    python test_vasp_kspacing.py 0.2 1.2 0.2")
     print("    python test_vasp_kspacing.py 1.0 0.0 -0.2")
     print("    以上两种都是产生0.2到1.0， 间隔为0.2的kspacing")
-    kspacings = list(np.round(np.arange(eval(start), eval(stop), eval(step)), decimals=2))
+    kspacings = list(np.round(np.arange(eval(start), eval(stop), eval(step)), decimals=3))
 #    except:
 #        print("你设置的有问题，采用一下的k点密度")
 #        kresolutions = [0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.19, 0.18, 0.17, 0.16, 0.15, 0.14, 0.13, 0.12, 0.1, 0.05]
@@ -187,3 +204,4 @@ if __name__ == "__main__":
             print("{:<12.3f},{:<14.8f},{:<14.8f},{:<14.8f}".format(kmeshes, delta_E*1000, np.nanmax(delta_F)*1000, np.nanmax(delta_V)*1000))
         else:
             print("If all OUTCARs are OK, kspacing_dE.csv will be wroten in current position")
+
