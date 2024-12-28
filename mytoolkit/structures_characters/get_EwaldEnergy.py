@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import os
 import argparse
-import fnmatch
 from pymatgen.core import Structure
 from pymatgen.analysis.energy_models import EwaldSummation
 
@@ -72,13 +71,22 @@ def main():
     # 获取符合条件的文件路径
     files = get_files(input_file_or_directory, detailed_conditions)
 
+    # 用来存储文件和计算出来的静电能
+    energy_results = []
+
     # 遍历所有文件并计算静电能
-    print(f"file Electrostatic Energy(eV)")
     for file in files:
         energy = calculate_electric_energy(file, oxidation_data)
         if energy is not None:
-            print(f"{file:<}   {energy:>.6f} eV")
+            energy_results.append((file, energy))
 
+    # 按照静电能从小到大排序
+    sorted_energy_results = sorted(energy_results, key=lambda x: x[1])
+
+    # 输出结果
+    print(f"file Electrostatic Energy(eV)")
+    for file, energy in sorted_energy_results:
+        print(f"{file:<}   {energy:>.6f} eV")
 
 if __name__ == '__main__':
     main()
