@@ -16,12 +16,12 @@ def append_to_record(content):
         if file.tell() == 0:  # 检查文件是否为空
             writer.writerow(["Date", "Time", "Content"])
         # 写入当前日期、时间和内容
-        writer.writerow([current_date, current_time_str, content])
+        writer.writerow([current_date, current_time_str, ' '.join(content)])
 
 def main():
     # 使用 argparse 解析命令行输入
     parser = argparse.ArgumentParser(description="Append content to EXP.RECORD with timestamp.")
-    parser.add_argument("content", type=str, help="The content to append to the EXP.RECORD file.")
+    parser.add_argument("content", type=str, nargs='+', help="The content to append to the EXP.RECORD file.")
     
     # 解析命令行参数
     args = parser.parse_args()
