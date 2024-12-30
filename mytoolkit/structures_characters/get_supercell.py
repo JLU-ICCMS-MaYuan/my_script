@@ -5,7 +5,6 @@ import argparse
 import numpy as np
 from ase.io import read, write
 from ase.build import make_supercell
-from ase.build.tools import sort
 
 def sort_by_custom_order(atoms, preferred_order=None):
     """
@@ -23,10 +22,17 @@ def sort_by_custom_order(atoms, preferred_order=None):
     """
     if preferred_order:
         symbols = atoms.get_chemical_symbols()
-        tags = [preferred_order.index(symbol) if symbol in preferred_order else len(preferred_order) for symbol in symbols]
-        return sort(atoms, tags)
+        old_indices = [[idx, preferred_order.index(symbol)] for idx, symbol in enumerate(symbols)]
+        new_indices = sorted(old_indices, key=lambda x: x[1])
+        final_indices = [idx for idx, symbol_idx in new_indices]
+        atomscopy = atoms[final_indices].copy()
+        return atomscopy
     else:
-        return sort(atoms)
+        tags = atoms.get_chemical_symbols()
+        deco = sorted([(tag, i) for i, tag in enumerate(tags)])
+        indices = [i for tag, i in deco]
+        atomscopy = atoms[indices].copy()
+        return atomscopy
 
 # 扩胞并按元素顺序排序
 def expand_cell(input_structure, expansion_matrix, preferred_order=None):
