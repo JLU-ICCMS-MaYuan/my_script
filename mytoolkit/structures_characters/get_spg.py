@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 import os
-import glob
 import argparse
 import spglib
 from ase.io import read, write
 from ase import Atoms
-import fnmatch
 
 # 设置命令行参数解析器
 def parse_arguments():
