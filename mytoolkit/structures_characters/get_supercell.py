@@ -7,8 +7,7 @@ from ase.io import read, write
 from ase.build import make_supercell
 from ase.build.tools import sort
 
-# 自定义排序函数，按照指定顺序排序元素
-def sort_by_custom_order(atoms, preferred_order):
+def sort_by_custom_order(atoms, preferred_order=None):
     """
     Sort atoms according to a custom preferred order of elements.
 
@@ -22,9 +21,12 @@ def sort_by_custom_order(atoms, preferred_order):
     ASE Atoms object
         The sorted atomic structure.
     """
-    symbols = atoms.get_chemical_symbols()
-    tags = [preferred_order.index(symbol) if symbol in preferred_order else len(preferred_order) for symbol in symbols]
-    return sort(atoms, tags)
+    if preferred_order:
+        symbols = atoms.get_chemical_symbols()
+        tags = [preferred_order.index(symbol) if symbol in preferred_order else len(preferred_order) for symbol in symbols]
+        return sort(atoms, tags)
+    else:
+        return sort(atoms)
 
 # 扩胞并按元素顺序排序
 def expand_cell(input_structure, expansion_matrix, preferred_order=None):
@@ -32,12 +34,7 @@ def expand_cell(input_structure, expansion_matrix, preferred_order=None):
     
     # 生成扩胞结构
     supercell = make_supercell(atoms, expansion_matrix)
-    
-    # 按照用户指定的顺序进行排序（如果提供了顺序）
-    if preferred_order:
-        sorted_supercell = sort_by_custom_order(supercell, preferred_order)
-    else:
-        sorted_supercell = sort(supercell)  # 默认排序
+    sorted_supercell = sort_by_custom_order(supercell, preferred_order)
     
     return sorted_supercell
 

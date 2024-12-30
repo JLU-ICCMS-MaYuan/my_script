@@ -88,7 +88,7 @@ def main():
     sorted_enthalpy_results = sorted(enthalpy_results, key=lambda x: x[2])
 
     # 输出结果
-    print(f"file    TotalatomsNumber    Enthalpy (eV/atom)")
+    print(f"file    TotalatomsNumber    Enthalpy(eV/atom)")
     for file, natom, enthalpy in sorted_enthalpy_results:
         print(f"{file:<}    {natom:>3d}    {enthalpy:>.6f}")
 

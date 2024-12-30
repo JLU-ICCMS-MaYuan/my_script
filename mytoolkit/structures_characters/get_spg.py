@@ -4,6 +4,8 @@ import argparse
 import spglib
 from ase.io import read, write
 from ase import Atoms
+from ase.build.tools import sort
+
 
 # 设置命令行参数解析器
 def parse_arguments():
@@ -13,11 +15,35 @@ def parse_arguments():
                         help="Symmetry precision (default is None, use default precision values)")
     parser.add_argument('-c', '--detailed-conditions', type=str, nargs='+', default=[], 
                         help="List of subdirectories or patterns for detailed selection")
+    parser.add_argument('-o', '--order', nargs='+', type=str, default=None,
+                        help='Custom element order for sorting, e.g., O C H for ordering oxygen first, followed by carbon and hydrogen')
 
     return parser.parse_args()
 
-def get_atom_info(atoms, prec):
-    total_atoms = len(atoms)
+def sort_by_custom_order(atoms, preferred_order=None):
+    """
+    Sort atoms according to a custom preferred order of elements.
+
+    Parameters:
+    atoms: ASE Atoms object
+        The atomic structure to be sorted.
+    preferred_order: list of str
+        The desired order of elements, e.g., ['O', 'C', 'H'].
+
+    Returns:
+    ASE Atoms object
+        The sorted atomic structure.
+    """
+    if preferred_order:
+        symbols = atoms.get_chemical_symbols()
+        tags = [preferred_order.index(symbol) if symbol in preferred_order else len(preferred_order) for symbol in symbols]
+        return sort(atoms, tags)
+    else:
+        return sort(atoms)
+
+
+def get_atom_info(atoms, prec, order=None):
+
     # 获取空间群对称性
     lattice = atoms.get_cell()
     positions = atoms.get_scaled_positions()
@@ -33,10 +59,11 @@ def get_atom_info(atoms, prec):
     
     lattice, scaled_positions, numbers = spglib.standardize_cell(cell, symprec=prec)
     std_atoms = Atoms(cell=lattice, scaled_positions=scaled_positions, numbers=numbers)
+
     
     return pri_atoms, std_atoms, spacegroup
 
-def process_files(input_file_or_directory, detailed_conditions, prec):
+def process_files(input_file_or_directory, detailed_conditions, prec=1e-2, order=None):
 
     if os.path.isdir(input_file_or_directory):
         
@@ -55,7 +82,7 @@ def process_files(input_file_or_directory, detailed_conditions, prec):
                 # print(filepath, pattern)
                 # print(all(pattern in filepath for pattern in detailed_conditions))
                 if all(pattern in filepath for pattern in detailed_conditions):
-                    atoms = read(filepath)
+                    atoms = sort_by_custom_order(read(filepath), preferred_order=order)
                     if prec:
                         # 如果指定了精度，使用指定的精度进行分析
                         pri_atoms, std_atoms, spacegroup = get_atom_info(atoms, prec)
@@ -73,7 +100,7 @@ def process_files(input_file_or_directory, detailed_conditions, prec):
     
     elif os.path.isfile(input_file_or_directory):
         # 如果是文件，直接处理该文件
-        atoms = read(input_file_or_directory)
+        atoms = sort_by_custom_order(read(input_file_or_directory), preferred_order=order)
         
         if prec:
             # 如果指定了精度，使用指定的精度进行分析
@@ -98,14 +125,15 @@ def main():
     input_file_or_directory = args.input_file_or_directory
     prec = args.prec
     detailed_conditions = args.detailed_conditions  # 获取详细的筛选条件
-
+    order = args.order
+    
     if prec:
         print("{:<10} {:<3}   {:<15}".format("symbols", "Num", str(prec)))
     else:
         print("{:<10} {:<3}   {:<15}   {:<15}   {:<15}   {:<15}   {:<15}".format("symbols", "Num", "1e-1", "1e-2", "1e-3", "1e-5", "1e-9"))
         
     try:
-        process_files(input_file_or_directory, detailed_conditions, prec)
+        process_files(input_file_or_directory, detailed_conditions, prec, order)
     except Exception as e:
         print(f"Error occurred: {e}")
 
