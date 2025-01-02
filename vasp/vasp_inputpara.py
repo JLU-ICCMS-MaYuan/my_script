@@ -80,9 +80,6 @@ class vasp_inputpara(vasp_base):
         if not hasattr(self, "nelm"):
             self.nelm = 200
 
-        if not hasattr(self, "ncore"):
-            self.ncore = 4
-
         if not hasattr(self, "lreal"):
             self.lreal = "Auto"
         
@@ -103,18 +100,22 @@ class vasp_inputpara(vasp_base):
             sys.exit(1)
 
         if not hasattr(self, "nbands"):
-            self.nbands = 100
+            self.nbands = None
             print("Warning: --------------------")
             print("    NBANDS had better to specify when you do eletronic properties calculation!!!")
             print("    Therefore, the default value,  NBANDS = 100")
             print("-----------------------------")
 
         # 关于并行计算的参数
+        
+        if not hasattr(self, "ncore"):
+            self.ncore = None
+            
         if not hasattr(self, "npar"):
-            self.npar=4
+            self.npar=None
         
         if not hasattr(self, "kpar"):
-            self.kpar=1
+            self.kpar=None
 
         # 关于磁性的参数设置：
         if not hasattr(self, "isym"):

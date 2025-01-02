@@ -137,7 +137,12 @@ class vasp_writeincar:
             incar.write("PREC     = A    \n")
             incar.write("SYMPREC  = {}   \n".format(str(self.vasp_inputpara.symprec)))
 
-            incar.write("NCORE    = {}   \n".format(str(self.vasp_inputpara.ncore)))         
+            if self.vasp_inputpara.npar is not None:
+                incar.write("NPAR   = {}           \n".format(self.vasp_inputpara.npar))
+            if self.vasp_inputpara.ncore is not None:
+                incar.write("NCORE  = {}           \n".format(self.vasp_inputpara.ncore))
+            if self.vasp_inputpara.kpar is not None:
+                incar.write("KPAR   = {}           \n".format(self.vasp_inputpara.kpar))       
             incar.write("KSPACING = {}   \n".format(str(self.vasp_inputpara.kspacing))) 
             incar.write("ISMEAR   = {}   \n".format(str(self.vasp_inputpara.ismear)))   
             incar.write("SIGMA    = {}   \n".format(str(self.vasp_inputpara.sigma)))   
@@ -164,7 +169,12 @@ class vasp_writeincar:
             incar.write("PREC     = A    \n")
             incar.write("SYMPREC  = {}   \n".format(str(self.vasp_inputpara.symprec)))
 
-            incar.write("NCORE    = {}   \n".format(str(self.vasp_inputpara.ncore)))         
+            if self.vasp_inputpara.npar is not None:
+                incar.write("NPAR   = {}           \n".format(self.vasp_inputpara.npar))
+            if self.vasp_inputpara.ncore is not None:
+                incar.write("NCORE  = {}           \n".format(self.vasp_inputpara.ncore))
+            if self.vasp_inputpara.kpar is not None:
+                incar.write("KPAR   = {}           \n".format(self.vasp_inputpara.kpar))        
             incar.write("KSPACING = {}   \n".format(str(self.vasp_inputpara.kspacing))) 
             incar.write("ISMEAR   = {}   \n".format(str(self.vasp_inputpara.ismear)))   
             incar.write("SIGMA    = {}   \n".format(str(self.vasp_inputpara.sigma)))   
@@ -198,7 +208,12 @@ class vasp_writeincar:
             incar.write("IBRION   = -1   \n")   
             incar.write("IALGO    = 38   \n")
 
-            incar.write("NCORE    = {}    \n".format(str(self.vasp_inputpara.ncore)))         
+            if self.vasp_inputpara.npar is not None:
+                incar.write("NPAR   = {}           \n".format(self.vasp_inputpara.npar))
+            if self.vasp_inputpara.ncore is not None:
+                incar.write("NCORE  = {}           \n".format(self.vasp_inputpara.ncore))
+            if self.vasp_inputpara.kpar is not None:
+                incar.write("KPAR   = {}           \n".format(self.vasp_inputpara.kpar))       
             incar.write("LREAL    = {}    \n".format(str(self.vasp_inputpara.lreal)))
             incar.write("LWAVE    =.FALSE.\n")
             incar.write("LCHARG   =.FALSE.\n")
@@ -225,7 +240,12 @@ class vasp_writeincar:
             incar.write("IALGO    = 38     \n")
             incar.write("POTIM    = 0.01   \n") 
 
-            incar.write("NCORE    = {}    \n".format(str(self.vasp_inputpara.ncore)))         
+            if self.vasp_inputpara.npar is not None:
+                incar.write("NPAR   = {}           \n".format(self.vasp_inputpara.npar))
+            if self.vasp_inputpara.ncore is not None:
+                incar.write("NCORE  = {}           \n".format(self.vasp_inputpara.ncore))
+            if self.vasp_inputpara.kpar is not None:
+                incar.write("KPAR   = {}           \n".format(self.vasp_inputpara.kpar))       
             incar.write("LREAL    = {}    \n".format(str(self.vasp_inputpara.lreal)))
             incar.write("LWAVE    = .FALSE.\n")  
             incar.write("LCHARG   = .FALSE.\n") 
@@ -241,6 +261,7 @@ class vasp_writeincar:
             incar.write("ICHARG   = 2      \n")
             incar.write("ISYM     = {}     \n".format(str(self.vasp_inputpara.isym)))
             incar.write("SYMPREC  = {}     \n".format(self.vasp_inputpara.symprec))
+            incar.write("ALGO     = Normal \n")
             incar.write("ENCUT    = {}     \n".format(self.vasp_inputpara.encut))       
             incar.write("PREC     = Accurate\n")
             incar.write("ISMEAR   = {}     \n".format(self.vasp_inputpara.ismear))
@@ -256,17 +277,22 @@ class vasp_writeincar:
             # incar.write("VOSKOWN  = 1      \n")
             # incar.write("NBLOCK   = 1      \n")
             # incar.write("NWRITE   = 1      \n")
-            incar.write("ALGO     = Normal \n")
             # incar.write("ISPIN    = 1      \n")
             # incar.write("INIWAV   = 1      \n")
-            incar.write("NBANDS   = {}     \n".format(self.vasp_inputpara.nbands))
+            if self.vasp_inputpara.nbands is not None:
+                incar.write("NBANDS   = {}     \n".format(self.vasp_inputpara.nbands))
             #incar.write("NCORE    = {}    \n".format(str(self.vasp_inputpara.ncore)))         
             incar.write("LREAL  = {}       \n".format(self.vasp_inputpara.lreal))
             incar.write("LWAVE    = .TRUE.  \n")  
             incar.write("ADDGRID  = .TRUE.  \n")
             # incar.write("#RWIGS   = 1.54 0.82\n")
             # incar.write("LHYPERFINE = .FALSE.\n")
-            incar.write("NPAR   = {}         \n".format(self.vasp_inputpara.npar))          
+            if self.vasp_inputpara.npar is not None:
+                incar.write("NPAR   = {}           \n".format(self.vasp_inputpara.npar))
+            if self.vasp_inputpara.ncore is not None:
+                incar.write("NCORE  = {}           \n".format(self.vasp_inputpara.ncore))
+            if self.vasp_inputpara.kpar is not None:
+                incar.write("KPAR   = {}           \n".format(self.vasp_inputpara.kpar))        
             incar.write("\n")
             incar.write("LCHARG  =.TRUE.    # For Bader  \n") # 能带计算需要将其打开  确保这个是TRUE            
             incar.write("LAECHG  =.TRUE.    # For Bader  \n")   
@@ -280,6 +306,7 @@ class vasp_writeincar:
             incar.write("ICHARG = 11           \n")
             incar.write("ISYM   = {}           \n".format(str(self.vasp_inputpara.isym)))
             incar.write("SYMPREC= {}           \n".format(self.vasp_inputpara.symprec)) 
+            incar.write("ALGO   = Normal       \n")     
             incar.write("ENCUT  = {}           \n".format(self.vasp_inputpara.encut))       
             incar.write("PREC   = Accurate     \n") 
             incar.write("NELM   = {}           \n".format(self.vasp_inputpara.nelm))
@@ -290,18 +317,23 @@ class vasp_writeincar:
             incar.write("IBRION = -1           \n")             
             incar.write("NSW    = 0            \n")                         
             incar.write("VOSKOWN= 1            \n")       
-            incar.write("NWRITE = 3            \n")            
-            incar.write("ALGO   = Normal       \n")                                  
+            incar.write("NWRITE = 3            \n")                                         
             # incar.write("ISPIN  = 1            \n")           
             # incar.write("INIWAV = 1            \n")            
             incar.write("LREAL  = {}           \n".format(self.vasp_inputpara.lreal))
-            incar.write("NBANDS = {}           \n".format(self.vasp_inputpara.nbands))
-            incar.write("LWAVE  = .TRUE.      \n")                 
-            incar.write("LCHARG = .FALSE.      \n")           
+            if self.vasp_inputpara.nbands is not None:
+                incar.write("NBANDS   = {}     \n".format(self.vasp_inputpara.nbands))
+            incar.write("LWAVE  = .TRUE.       \n")
+            incar.write("LCHARG = .FALSE.      \n")
             incar.write("ADDGRID= .TRUE.       \n")   
-            # incar.write("#RWIGS = 1.54 0.82    \n")     
-            # incar.write("LHYPERFINE = .FALSE.  \n")                      
-            incar.write("NPAR   = {}           \n".format(self.vasp_inputpara.npar))          
+            # incar.write("#RWIGS = 1.54 0.82    \n")
+            # incar.write("LHYPERFINE = .FALSE.  \n")
+            if self.vasp_inputpara.npar is not None:
+                incar.write("NPAR   = {}           \n".format(self.vasp_inputpara.npar))
+            if self.vasp_inputpara.ncore is not None:
+                incar.write("NCORE  = {}           \n".format(self.vasp_inputpara.ncore))
+            if self.vasp_inputpara.kpar is not None:
+                incar.write("KPAR   = {}           \n".format(self.vasp_inputpara.kpar))
             incar.write("LORBIT = 11           \n") # 算投影能带有用
         return incar_filepath
 
@@ -324,15 +356,21 @@ class vasp_writeincar:
             incar.write("VOSKOWN = 1            \n")       
             incar.write("NWRITE  = 3            \n")            
             incar.write("ALGO    = Normal       \n")                                  
-            incar.write("ISPIN   = 1            \n")           
-            incar.write("INIWAV  = 1            \n")            
+            # incar.write("ISPIN   = 1            \n")           
+            # incar.write("INIWAV  = 1            \n")            
             incar.write("LREAL   = {}           \n".format(self.vasp_inputpara.lreal))
-            incar.write("NBANDS  = {}           \n".format(self.vasp_inputpara.nbands))
+            if self.vasp_inputpara.nbands is not None:
+                incar.write("NBANDS   = {}     \n".format(self.vasp_inputpara.nbands))
             incar.write("LWAVE   = .FALSE.      \n")                 
             incar.write("ADDGRID = .TRUE.       \n")   
-            incar.write("#RWIGS  = 1.54 0.82    \n")     
-            incar.write("LHYPERFINE = .FALSE.   \n")                      
-            incar.write("NPAR    = {}           \n".format(self.vasp_inputpara.npar))          
+            # incar.write("#RWIGS  = 1.54 0.82    \n")     
+            # incar.write("LHYPERFINE = .FALSE.   \n")                      
+            if self.vasp_inputpara.npar is not None:
+                incar.write("NPAR   = {}           \n".format(self.vasp_inputpara.npar))
+            if self.vasp_inputpara.ncore is not None:
+                incar.write("NCORE  = {}           \n".format(self.vasp_inputpara.ncore))
+            if self.vasp_inputpara.kpar is not None:
+                incar.write("KPAR   = {}           \n".format(self.vasp_inputpara.kpar))        
             incar.write("NEDOS   = {}           \n".format(self.vasp_inputpara.nedos)) # NEDOS指定DOS被评估的网格点的数量
             incar.write("LORBIT  = 11           \n") # 输出分波态密度信息
             incar.write("#EMIN   = -10          \n") # 此为DOS图的能量范围，根据能带的能量范围来决定min和max是多少。
@@ -357,8 +395,14 @@ class vasp_writeincar:
             incar.write("NSW     = 0            \n")
             incar.write("ISPIN   = 1            \n")
             incar.write("LREAL   = .FALSE.      \n")
-            incar.write("NBANDS  = {}           \n".format(self.vasp_inputpara.nbands))
-            incar.write("NPAR    = {}           \n".format(self.vasp_inputpara.npar))          
+            if self.vasp_inputpara.nbands is not None:
+                incar.write("NBANDS   = {}     \n".format(self.vasp_inputpara.nbands))
+            if self.vasp_inputpara.npar is not None:
+                incar.write("NPAR   = {}           \n".format(self.vasp_inputpara.npar))
+            if self.vasp_inputpara.ncore is not None:
+                incar.write("NCORE  = {}           \n".format(self.vasp_inputpara.ncore))
+            if self.vasp_inputpara.kpar is not None:
+                incar.write("KPAR   = {}           \n".format(self.vasp_inputpara.kpar))       
             incar.write("NEDOS   = {}           \n".format(self.vasp_inputpara.nedos)) # NEDOS指定DOS被评估的网格点的数量
             incar.write("LORBIT  = 12           \n") # 输出分波态密度信息
             incar.write("#EMIN   = -10          \n") # 此为DOS图的能量范围，根据能带的能量范围来决定min和max是多少。
@@ -382,7 +426,8 @@ class vasp_writeincar:
             incar.write("NELMIN  = 6            \n")
             incar.write("EDIFF   = {}           \n".format(self.vasp_inputpara.ediff))
             incar.write("LREAL   = {}           \n".format(self.vasp_inputpara.lreal))
-            incar.write("NBANDS  = {}           \n".format(self.vasp_inputpara.nbands))
+            if self.vasp_inputpara.nbands is not None:
+                incar.write("NBANDS   = {}     \n".format(self.vasp_inputpara.nbands))
 
             # NVT
             incar.write("IBRION  = {}           \n".format(self.vasp_inputpara.ibrion))
@@ -394,8 +439,12 @@ class vasp_writeincar:
             incar.write("TEBEG   = {}           \n".format(self.vasp_inputpara.tebeg))
             incar.write("TEEND   = {}           \n".format(self.vasp_inputpara.teend))
 
-            incar.write("NPAR    = {}           \n".format(self.vasp_inputpara.npar))          
-            incar.write("KPAR    = {}           \n".format(self.vasp_inputpara.kpar)) 
+            if self.vasp_inputpara.npar is not None:
+                incar.write("NPAR   = {}           \n".format(self.vasp_inputpara.npar))
+            if self.vasp_inputpara.ncore is not None:
+                incar.write("NCORE  = {}           \n".format(self.vasp_inputpara.ncore))
+            if self.vasp_inputpara.kpar is not None:
+                incar.write("KPAR   = {}           \n".format(self.vasp_inputpara.kpar))
 
             incar.write("# Help for converging  \n")   
             incar.write("# AMIX    = 0.2        \n")
@@ -418,7 +467,8 @@ class vasp_writeincar:
             incar.write("NELMIN  = 6            \n")
             incar.write("EDIFF   = {}           \n".format(self.vasp_inputpara.ediff))
             incar.write("LREAL   = {}           \n".format(self.vasp_inputpara.lreal))
-            incar.write("NBANDS  = {}           \n".format(self.vasp_inputpara.nbands))
+            if self.vasp_inputpara.nbands is not None:
+                incar.write("NBANDS   = {}     \n".format(self.vasp_inputpara.nbands))
 
             # NPT
             incar.write("IBRION  = {}           \n".format(self.vasp_inputpara.ibrion))
@@ -433,8 +483,12 @@ class vasp_writeincar:
             incar.write("LANGEVIN_GAMMA_L = {}  \n".format(self.vasp_inputpara.langevin_gamms_l))
 
 
-            incar.write("NPAR    = {}           \n".format(self.vasp_inputpara.npar))          
-            incar.write("KPAR    = {}           \n".format(self.vasp_inputpara.kpar)) 
+            if self.vasp_inputpara.npar is not None:
+                incar.write("NPAR   = {}           \n".format(self.vasp_inputpara.npar))
+            if self.vasp_inputpara.ncore is not None:
+                incar.write("NCORE  = {}           \n".format(self.vasp_inputpara.ncore))
+            if self.vasp_inputpara.kpar is not None:
+                incar.write("KPAR   = {}           \n".format(self.vasp_inputpara.kpar))
 
             incar.write("# Help for converging  \n")   
             incar.write("# AMIX    = 0.2        \n")
@@ -457,7 +511,8 @@ class vasp_writeincar:
             incar.write("NELMIN  = 6            \n")
             incar.write("EDIFF   = {}           \n".format(self.vasp_inputpara.ediff))
             incar.write("LREAL   = {}           \n".format(self.vasp_inputpara.lreal))
-            incar.write("NBANDS  = {}           \n".format(self.vasp_inputpara.nbands))
+            if self.vasp_inputpara.nbands is not None:
+                incar.write("NBANDS   = {}     \n".format(self.vasp_inputpara.nbands))
 
             # NVE
             incar.write("IBRION  = {}           \n".format(self.vasp_inputpara.ibrion))
@@ -469,8 +524,12 @@ class vasp_writeincar:
             incar.write("TEBEG   = {}           \n".format(self.vasp_inputpara.tebeg))
             incar.write("ANDERSEN_PROB = {}     \n".format(self.vasp_inputpara.andersen_prob))
 
-            incar.write("NPAR    = {}           \n".format(self.vasp_inputpara.npar))          
-            incar.write("KPAR    = {}           \n".format(self.vasp_inputpara.kpar)) 
+            if self.vasp_inputpara.npar is not None:
+                incar.write("NPAR   = {}           \n".format(self.vasp_inputpara.npar))
+            if self.vasp_inputpara.ncore is not None:
+                incar.write("NCORE  = {}           \n".format(self.vasp_inputpara.ncore))
+            if self.vasp_inputpara.kpar is not None:
+                incar.write("KPAR   = {}           \n".format(self.vasp_inputpara.kpar))
 
             incar.write("# Help for converging  \n")   
             incar.write("# AMIX    = 0.2        \n")
