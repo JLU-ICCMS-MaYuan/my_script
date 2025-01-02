@@ -103,7 +103,7 @@ class vasp_inputpara(vasp_base):
             self.nbands = None
             print("Warning: --------------------")
             print("    NBANDS had better to specify when you do eletronic properties calculation!!!")
-            print("    Therefore, the default value,  NBANDS = 100")
+            print("    Therefore, the default value will be determined by VASP automatically")
             print("-----------------------------")
 
         # 关于并行计算的参数

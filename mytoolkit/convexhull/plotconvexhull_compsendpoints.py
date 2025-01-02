@@ -144,7 +144,7 @@ try:
     # Number  formula     enthalpy
     # 1       Ax1By1Cz1   -1.34343
     # 2       Ax2By2C2z   -2.324324
-    convexhull_data = pd.read_table(input_csv_path, header=0, sep='\s+') #  header表示第一行为标题行
+    convexhull_data = pd.read_table(input_csv_path, header=0, sep=',') #  header表示第一行为标题行 sep='\s+'表示使用多个空格作为分隔符
     ini_entries = []
     for idx, row in convexhull_data.iterrows():
         comp = Composition(row['formula'])
