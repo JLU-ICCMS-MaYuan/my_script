@@ -1,61 +1,103 @@
 #!/usr/bin/env python3
 
-import sys
+import argparse
 import pandas as pd
-
 from ase.io import read
 
+# 设置命令行参数解析器
+def parse_arguments():
+    parser = argparse.ArgumentParser(description="Process PDOS data for multiple elements")
+    parser.add_argument('-e', '--elements', type=str, nargs='+', 
+                        help="List of elements with their orbitals, e.g., 'La:s,p,d,f' or 'H:s,p'.")
+    return parser.parse_args()
 
-def plus_spdf(e):
-    t_s_orb, t_p_orb, t_d_orb, t_f_orb, tot = [0,0,0,0,0]
+def plus_spdf(e, orbitals_to_read):
+    t_s_orb, t_p_orb, t_d_orb, t_f_orb, tot = [0, 0, 0, 0, 0]
     df = pd.read_table(f"PDOS_{e}.dat", sep='\s+')
-    s_orb = df['s'] 
-    p_orb = df['py'] + df['pz'] + df['px']
-    d_orb = df['dxy'] + df['dyz'] + df['dz2'] + df['dxz'] + df['dx2']
-    f_orb = df['fy3x2'] + df['fxyz'] + df['fyz2'] + df['fz3'] + df['fxz2'] + df['fzx2'] + df['fx3'] 
-    t_s_orb += s_orb
-    t_p_orb += p_orb
-    t_d_orb += d_orb
-    t_f_orb += f_orb
+    
+    # 动态判断读取哪些轨道
+    if 's' in orbitals_to_read:
+        s_orb = df['s']
+        t_s_orb += s_orb
+    else:
+        s_orb = None
+
+    if 'p' in orbitals_to_read:
+        p_orb = df['py'] + df['pz'] + df['px']
+        t_p_orb += p_orb
+    else:
+        p_orb = None
+
+    if 'd' in orbitals_to_read:
+        d_orb = df['dxy'] + df['dyz'] + df['dz2'] + df['dxz'] + df['dx2']
+        t_d_orb += d_orb
+    else:
+        d_orb = None
+
+    if 'f' in orbitals_to_read:
+        f_orb = df['fy3x2'] + df['fxyz'] + df['fyz2'] + df['fz3'] + df['fxz2'] + df['fzx2'] + df['fx3']
+        t_f_orb += f_orb
+    else:
+        f_orb = None
+    
     tot = df['tot']
     return t_s_orb, t_p_orb, t_d_orb, t_f_orb, tot
 
-atoms = read('POSCAR')
-vol = atoms.get_volume()
-print('vol=', vol)
+def main():
+    # 解析命令行参数
+    args = parse_arguments()
 
-eles = sys.argv[1:]
+    # 创建一个字典，存储元素与轨道类型的映射
+    orbitals_dict = {}
+    for element_info in args.elements:
+        element, orbitals = element_info.split(':')
+        orbitals_dict[element] = orbitals.split(',')
 
-# 选择一个元素来获取 'Energy' 列
-sample_element = eles[0]
-sample_df = pd.read_table(f"PDOS_{sample_element}.dat", sep='\s+')
-energy = sample_df['#Energy']
-# 创建一个空 DataFrame 用于存储结果，并添加 'Energy' 列
-result_df = pd.DataFrame({'Energy(eV)': energy})
+    # 读取POSCAR文件并计算体积
+    atoms = read('POSCAR')
+    vol = atoms.get_volume()
+    print('vol=', vol)
 
+    eles = list(orbitals_dict.keys())  # 从字典中获取元素列表
 
-# 遍历元素
-for e in eles:
-    df = pd.read_table(f"PDOS_{e}.dat", sep='\s+')
-    s_orb, p_orb, d_orb, f_orb, tot = plus_spdf(e)
+    # 选择一个元素来获取 'Energy' 列
+    sample_element = eles[0]
+    sample_df = pd.read_table(f"PDOS_{sample_element}.dat", sep='\s+')
+    energy = sample_df['#Energy']
     
-    # 将每个元素的 spdf 轨道和 tot 轨道添加到结果 DataFrame 中
-    result_df[f'{e}_s'] = s_orb/vol
-    result_df[f'{e}_p'] = p_orb/vol
-    result_df[f'{e}_d'] = d_orb/vol
-    result_df[f'{e}_f'] = f_orb/vol
-    result_df[f'{e}'] = tot/vol
+    # 创建一个空 DataFrame 用于存储结果，并添加 'Energy' 列
+    result_df = pd.DataFrame({'Energy(eV)': energy})
 
-# 将结果写入文件
-result_df.to_csv('spdf_tot_result.csv', index=False)
+    # 遍历元素
+    for e in eles:
+        orbitals_to_read = orbitals_dict[e]  # 获取该元素的轨道类型
+        s_orb, p_orb, d_orb, f_orb, tot = plus_spdf(e, orbitals_to_read)
+        
+        # 将每个元素的 spdf 轨道和 tot 轨道添加到结果 DataFrame 中
+        if s_orb is not None:
+            result_df[f'{e}_s'] = s_orb / vol
+        if p_orb is not None:
+            result_df[f'{e}_p'] = p_orb / vol
+        if d_orb is not None:
+            result_df[f'{e}_d'] = d_orb / vol
+        if f_orb is not None:
+            result_df[f'{e}_f'] = f_orb / vol
+        result_df[f'{e}'] = tot / vol
 
-nearest_to_zero_index = result_df['Energy(eV)'].abs().idxmin()
-# 获取最接近0的行的上下5行索引范围
-start_index = max(0, nearest_to_zero_index - 3)
-end_index = min(len(result_df), nearest_to_zero_index + 3)
+    # 将结果写入文件
+    result_df.to_csv('spdf_tot_result.csv', index=False)
 
-# 输出选取的行
-print("上下5行数据:")
-print(result_df.iloc[start_index:end_index])
+    nearest_to_zero_index = result_df['Energy(eV)'].abs().idxmin()
+    # 获取最接近0的行的上下5行索引范围
+    start_index = max(0, nearest_to_zero_index - 3)
+    end_index = min(len(result_df), nearest_to_zero_index + 3)
 
-result_df.to_csv('final.csv',index=False)
+    # 输出选取的行
+    print("上下5行数据:")
+    print(result_df.iloc[start_index:end_index])
+
+    # 将最终结果写入文件
+    result_df.to_csv('final.csv', index=False)
+
+if __name__ == "__main__":
+    main()

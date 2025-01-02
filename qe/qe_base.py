@@ -284,7 +284,7 @@ class qe_base:
             # 检查该POSCAR是否是分数坐标
             sed_order3 = "sed -n '8p' " + f" {self.input_file_path.absolute()} "
             coordstype = os.popen(sed_order3).read().strip('\n')
-            assert coordstype[0] == 'D' or coordstype[0] == 'd'
+            assert coordstype[0] == 'D' or coordstype[0] == 'd' or coordstype[0] == 'Direct'
             # 将元素按照原子个数重复写进列表elementlist里
             sed_order4 = "sed -n '9,$p' " + f" {self.input_file_path.absolute()} "
             coordnates = os.popen(sed_order4).readlines()
