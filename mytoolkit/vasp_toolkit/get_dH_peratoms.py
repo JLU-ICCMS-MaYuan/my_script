@@ -3,6 +3,7 @@ import os
 import re
 import argparse
 import subprocess
+from ase.io import read
 
 # 设置命令行参数解析器
 def parse_arguments():
@@ -11,26 +12,6 @@ def parse_arguments():
     parser.add_argument('-c', '--detailed-conditions', type=str, nargs='+', default=[], 
                         help="List of subdirectories or patterns for detailed selection")
     return parser.parse_args()
-
-
-def get_num_atoms(outcar_path):
-    try:
-        result = subprocess.run(f'grep -n -s "position of ions in cartesian coordinates" {outcar_path}', 
-                            shell=True, capture_output=True, text=True)
-        begin_id = int(result.stdout.split(":")[0])
-
-        N = 0
-        with open(outcar_path, 'r') as f:
-            for i, line in enumerate(f, start=1):
-                if i > begin_id:
-                    coords = re.findall(r"[-+]?\d+\.\d+", line.strip())
-                    if len(coords) == 3:
-                        N += 1
-                    else:
-                        break
-        return N
-    except Exception:
-        return None
 
 # 设置需要计算的文件类型，假设所有结构文件都为 .vasp 文件
 def calculate_enthalpy(outcar_path):
@@ -41,7 +22,7 @@ def calculate_enthalpy(outcar_path):
         dH = result.stdout.strip()
         return float(dH)
    except Exception:
-        return None
+        return 6666666666666666666
 
 
 def get_files(input_file_or_directory, detailed_conditions):
@@ -64,6 +45,17 @@ def get_files(input_file_or_directory, detailed_conditions):
 
     return file_paths
 
+def get_info(f):
+    
+    try:
+        atom = read(f, format="vasp-out")
+    except:
+        atom = None
+        return None
+    
+    atom.info['enthalpy'] = calculate_enthalpy(f)
+    return atom
+
 def main():
     # 解析命令行参数
     args = parse_arguments()
@@ -78,19 +70,20 @@ def main():
 
     # 遍历所有文件并计算焓值
     for f in files:
-        dH = calculate_enthalpy(f)
-        N = get_num_atoms(f)
-        if dH is not None and N is not None:
-            enthalpy_results.append((f, N, dH/N))
+        atom = get_info(f)
+        if atom is not None:
+            enthalpy_results.append((f, str(atom.symbols), len(atom), atom.info['enthalpy']/len(atom)))
         else:
-            enthalpy_results.append((199511199706, 199511199706, 199511199706))
+ 
+            enthalpy_results.append((f, "None", 6666666666666666666, 6666666666666666666))
     # 按照焓值从小到大排序
-    sorted_enthalpy_results = sorted(enthalpy_results, key=lambda x: x[2])
+    sorted_enthalpy_results = sorted(enthalpy_results, key=lambda x: x[3])
 
     # 输出结果
-    print(f"file    TotalatomsNumber    Enthalpy(eV/atom)")
-    for file, natom, enthalpy in sorted_enthalpy_results:
-        print(f"{file:<}    {natom:>3d}    {enthalpy:>.6f}")
+    print(f"file    symbol,    TotalatomsNumber    Enthalpy(eV/atom)")
+    for file, symbol, natom, enthalpy in sorted_enthalpy_results:
+        print(f"{file:<}  {symbol:>10}  {natom:>3d}    {enthalpy:>.6f}")
 
 if __name__ == '__main__':
     main()
+
