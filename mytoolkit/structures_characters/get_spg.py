@@ -14,7 +14,7 @@ def parse_arguments():
                         help="Symmetry precision (default is None, use default precision values)")
     parser.add_argument('-c', '--detailed-conditions', type=str, nargs='+', default=[], 
                         help="List of subdirectories or patterns for detailed selection")
-    parser.add_argument('-o', '--preferred-order', nargs='+', type=str, default=None,
+    parser.add_argument('-od', '--preferred-order', nargs='+', type=str, default=None,
                         help='Custom element preferred_order for sorting, e.g., O C H for ordering oxygen first, followed by carbon and hydrogen')
 
     return parser.parse_args()

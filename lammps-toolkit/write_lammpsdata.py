@@ -11,7 +11,7 @@ parser.add_argument('-i', '--input', type=str, default='POSCAR',
                         help='Input structure file (default: POSCAR)')
 
 # 元素排序顺序
-parser.add_argument('-o', '--order', nargs='+', type=str,
+parser.add_argument('-od', '--order', nargs='+', type=str,
                     help='Custom element order for sorting, e.g., O C H for ordering oxygen first, followed by carbon and hydrogen, You have to make sure the order you specified is consistant with the order of input files')
 
 args = parser.parse_args()

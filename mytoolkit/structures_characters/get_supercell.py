@@ -61,7 +61,7 @@ def parse_arguments():
                         help='Non-diagonal supercell expansion matrix, e.g., 2 1 0 0 2 1 0 0 3 for a 3x3 non-diagonal supercell')
 
     # 元素排序顺序
-    parser.add_argument('-o', '--order', nargs='+', type=str,
+    parser.add_argument('-od', '--order', nargs='+', type=str,
                         help='Custom element order for sorting, e.g., O C H for ordering oxygen first, followed by carbon and hydrogen')
 
     return parser.parse_args()

@@ -4,6 +4,35 @@ import glob
 import argparse
 from ase.io import read, write
 
+def sort_by_custom_order(atoms, preferred_order=None):
+    """
+    Sort atoms according to a custom preferred preferred_order of elements.
+
+    Parameters:
+    atoms: ASE Atoms object
+        The atomic structure to be sorted.
+    preferred_order: list of str
+        The desired preferred_order of elements, e.g., ['O', 'C', 'H'].
+
+    Returns:
+    ASE Atoms object
+        The sorted atomic structure.
+    """
+
+    if preferred_order:
+        symbols = atoms.get_chemical_symbols()
+        old_indices = [[idx, preferred_order.index(symbol)] for idx, symbol in enumerate(symbols)]
+        new_indices = sorted(old_indices, key=lambda x: x[1])
+        final_indices = [idx for idx, symbol_idx in new_indices]
+        atomscopy = atoms[final_indices].copy()
+        return atomscopy
+    else:
+        tags = atoms.get_chemical_symbols()
+        deco = sorted([(tag, i) for i, tag in enumerate(tags)])
+        indices = [i for tag, i in deco]
+        atomscopy = atoms[indices].copy()
+        return atomscopy
+
 # 设置命令行参数解析器
 def parse_arguments():
     parser = argparse.ArgumentParser(
@@ -18,6 +47,8 @@ def parse_arguments():
     parser.add_argument('-c', '--detailed-conditions',type=str, nargs='+', required=True, help='List of subdirectories or patterns for detailed selection')
     parser.add_argument('-o', '--output-file',        type=str, required=True, help='Output traj file name')
     parser.add_argument('-t', '--file-types',          type=str, nargs='+', default=['POSCAR*'], help='List of type of file types, default=[POSCAR*], more situations is *vasp ')
+    parser.add_argument('-od', '--preferred-order', nargs='+', type=str, default=None,
+                        help='Custom element preferred_order for sorting, e.g., O C H for ordering oxygen first, followed by carbon and hydrogen')
     return parser.parse_args()
 
 
@@ -52,6 +83,7 @@ def main():
     output_file = args.output_file
     detailed_conditions = args.detailed_conditions
     file_types = args.file_types
+    preferred_order = args.preferred_order
     
     # 使用glob模块来匹配文件类型，支持递归查找
     # 遍历多个用户指定的子目录或模式
@@ -64,7 +96,7 @@ def main():
     # 读取每个文件并添加到atoms_list
     for file in dst_files:
         print(file)
-        atoms = read(file)
+        atoms = sort_by_custom_order(read(file), preferred_order=preferred_order)
         atoms_list.append(atoms)
 
     # 将所有结构写入一个traj文件

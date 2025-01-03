@@ -12,3 +12,8 @@ alias gfc='grepfc() { grep "FC gradient modulus" OUT"$1".dat | tail -n 1; }; gre
 alias lcu='tail */lcurve.out' 
 alias getfromriken='getfromriken() { scp -r -i ~/.ssh/riken_id_rsa.pub h240012@hokusai.riken.jp:"$1" "$2"; }; getfromriken'
 alias sendtoriken='sendtoriken() { scp -r -i  ~/.ssh/riken_id_rsa.pub "$1" h240012@hokusai.riken.jp:"$2"; }; sendtoriken'
+alias sendtohpwsl='sendtohpwsl() { scp -r -i  ~/.ssh/hp_wsl_rsa.pub "$1" may@172.28.252.248:"$2"; }; sendtohpwsl'
+
+
+alias sqlhy='/bin/squeue -p liuhanyu'
+alias sqmayuan='/bin/squeue -u mayuan'

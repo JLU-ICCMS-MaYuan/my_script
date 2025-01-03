@@ -10,7 +10,7 @@ parser.add_argument("-i", "--filename", default="XDATCAR", help="Path to the XDA
 parser.add_argument("-b", "--begin", type=int, help="Step begin number to extract the frame from XDATCAR.")
 parser.add_argument("-e", "--end", type=int, help="Step end number to extract the frame from XDATCAR.")
 # 元素排序顺序
-parser.add_argument('-o', '--order', nargs='+', type=str, default=None,
+parser.add_argument('-od', '--order', nargs='+', type=str, default=None,
                     help='Custom element order for sorting, e.g., O C H for ordering oxygen first, followed by carbon and hydrogen, You have to make sure the order you specified is consistant with the order of input files')
 
 # 解析命令行参数
