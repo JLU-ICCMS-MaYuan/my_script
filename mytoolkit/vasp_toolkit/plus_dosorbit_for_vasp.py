@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-
-import argparse
+import numpy as np
 import pandas as pd
 from ase.io import read
+import argparse
+from scipy import interpolate
 
 # 设置命令行参数解析器
 def parse_arguments():
@@ -43,6 +44,11 @@ def plus_spdf(e, orbitals_to_read):
     tot = df['tot']
     return t_s_orb, t_p_orb, t_d_orb, t_f_orb, tot
 
+# 拟合并返回能量为0时的预测值，使用插值函数
+def interpolate_and_predict(energy, pdos):
+    tck = interpolate.make_interp_spline(x=energy, y=pdos, k=1)  # k=1 for linear spline
+    return tck(0)  # 计算能量为0时的值
+
 def main():
     # 解析命令行参数
     args = parse_arguments()
@@ -68,6 +74,9 @@ def main():
     # 创建一个空 DataFrame 用于存储结果，并添加 'Energy' 列
     result_df = pd.DataFrame({'Energy(eV)': energy})
 
+    # 用于存储能量为0时的PDOS值，初始化时使用 'Energy(eV)' 作为行索引
+    pdos_at_ef = {'Energy(eV)': [0]}  # 初始化为能量列
+
     # 遍历元素
     for e in eles:
         orbitals_to_read = orbitals_dict[e]  # 获取该元素的轨道类型
@@ -76,16 +85,22 @@ def main():
         # 将每个元素的 spdf 轨道和 tot 轨道添加到结果 DataFrame 中
         if s_orb is not None:
             result_df[f'{e}_s'] = s_orb / vol
+            pdos_at_ef[f'{e}_s'] = [interpolate_and_predict(result_df['Energy(eV)'], result_df[f'{e}_s'])]
+
         if p_orb is not None:
             result_df[f'{e}_p'] = p_orb / vol
+            pdos_at_ef[f'{e}_p'] = [interpolate_and_predict(result_df['Energy(eV)'], result_df[f'{e}_p'])]
+
         if d_orb is not None:
             result_df[f'{e}_d'] = d_orb / vol
+            pdos_at_ef[f'{e}_d'] = [interpolate_and_predict(result_df['Energy(eV)'], result_df[f'{e}_d'])]
+
         if f_orb is not None:
             result_df[f'{e}_f'] = f_orb / vol
-        result_df[f'{e}'] = tot / vol
+            pdos_at_ef[f'{e}_f'] = [interpolate_and_predict(result_df['Energy(eV)'], result_df[f'{e}_f'])]
 
-    # 将结果写入文件
-    result_df.to_csv('spdf_tot_result.csv', index=False)
+        result_df[f'{e}'] = tot / vol
+        pdos_at_ef[f'{e}'] = [interpolate_and_predict(result_df['Energy(eV)'], result_df[f'{e}'])]
 
     nearest_to_zero_index = result_df['Energy(eV)'].abs().idxmin()
     # 获取最接近0的行的上下5行索引范围
@@ -96,8 +111,9 @@ def main():
     print("上下5行数据:")
     print(result_df.iloc[start_index:end_index])
 
-    # 将最终结果写入文件
-    result_df.to_csv('final.csv', index=False)
+    # 将能量为0时的PDOS值写入文件
+    pdos_at_ef_df = pd.DataFrame(pdos_at_ef)
+    pdos_at_ef_df.to_csv('PDOS_atEf.csv', index=False)
 
 if __name__ == "__main__":
     main()
