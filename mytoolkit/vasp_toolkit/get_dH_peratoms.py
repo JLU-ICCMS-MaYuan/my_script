@@ -72,17 +72,17 @@ def main():
     for f in files:
         atom = get_info(f)
         if atom is not None:
-            enthalpy_results.append((f, str(atom.symbols), len(atom), atom.info['enthalpy']/len(atom)))
+            enthalpy_results.append((f, str(atom.symbols), len(atom), atom.info['enthalpy']/len(atom), atom.get_volume()/len(atom)))
         else:
  
-            enthalpy_results.append((f, "None", 6666666666666666666, 6666666666666666666))
+            enthalpy_results.append((f, "None", 6666666666666666666, 6666666666666666666, 6666666666666666666))
     # 按照焓值从小到大排序
     sorted_enthalpy_results = sorted(enthalpy_results, key=lambda x: x[3])
 
     # 输出结果
-    print(f"file    symbol,    TotalatomsNumber    Enthalpy(eV/atom)")
-    for file, symbol, natom, enthalpy in sorted_enthalpy_results:
-        print(f"{file:<}  {symbol:>10}  {natom:>3d}    {enthalpy:>.6f}")
+    print(f"file    symbol    TotalatomsNumber    Enthalpy(eV/atom)    volume")
+    for file, symbol, natom, enthalpy, volume in sorted_enthalpy_results:
+        print(f"{file:<}    {symbol:>10}    {natom:>3d}    {enthalpy:>.6f}    {volume:>.6f}")
 
 if __name__ == '__main__':
     main()
