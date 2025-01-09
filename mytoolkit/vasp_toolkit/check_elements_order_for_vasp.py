@@ -19,25 +19,35 @@ def get_poscar_elements(poscar_file):
 def compare_elements(potcar_elements, poscar_elements):
     return potcar_elements == poscar_elements
 
+# 判断文件是否为空
+def is_file_not_empty(file_path):
+    return os.path.getsize(file_path) > 0
+
 # 遍历目录并对每个子目录中的POTCAR和POSCAR进行比较
 def compare_in_directory(root_dir):
+    ele_file = open('elements_order.dat', 'w')
     root_dir = os.path.abspath(root_dir)  # 获取绝对路径
     for root, dirs, files in os.walk(root_dir):
-        # 判断是否存在POTCAR和POSCAR文件
+        # 判断是否存在POTCAR和POSCAR文件且文件不为空
+        potcar_file = os.path.join(root, 'POTCAR')
+        poscar_file = os.path.join(root, 'POSCAR')
+        
         if 'POTCAR' in files and 'POSCAR' in files:
-            potcar_file = os.path.join(root, 'POTCAR')
-            poscar_file = os.path.join(root, 'POSCAR')
+            if is_file_not_empty(potcar_file) and is_file_not_empty(poscar_file):
+                # 提取POTCAR和POSCAR中的元素顺序
+                potcar_elements = get_potcar_elements(potcar_file)
+                poscar_elements = get_poscar_elements(poscar_file)
 
-            # 提取POTCAR和POSCAR中的元素顺序
-            potcar_elements = get_potcar_elements(potcar_file)
-            poscar_elements = get_poscar_elements(poscar_file)
-
-            # 比较元素顺序
-            if compare_elements(potcar_elements, poscar_elements):
-                print(f"{os.path.abspath(root)}: consistent")
+                # 比较元素顺序
+                if not compare_elements(potcar_elements, poscar_elements):
+                    # print(f"{os.path.abspath(root)}: consistent", file=ele_file)
+                    print(f"{os.path.abspath(root)}: not consistent", file=ele_file)
             else:
-                print(f"{os.path.abspath(root)}: not consistent")
+                print(f"{os.path.abspath(root)}: POTCAR or POSCAR is blank")
 
+    ele_file.close()
+
+    
 # 主程序
 if __name__ == "__main__":
     # 设置命令行参数解析器
