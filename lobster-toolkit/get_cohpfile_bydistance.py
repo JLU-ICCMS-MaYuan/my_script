@@ -9,7 +9,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="生成LOBSTER输入文件")
     parser.add_argument('-e', '--COHPEnergy', nargs="+", type=float, help="COHP起始终止能量")
     parser.add_argument('-s', '--species_custom', nargs="+", type=str, help="元素1, 2")
-    parser.add_argument('-z', '--zvalances', nargs="+", type=str, help="元素1, 2 及其价电子轨道, 例如 Nb:'4s 4p 4d 5s'  H:'1s'")
+    parser.add_argument('-z', '--zvalances', nargs="+", type=str, help="元素1, 2 及其价电子轨道, 例如 -z Nb:4s,4p,4d,5s H:1s")
     parser.add_argument('-d', '--d_limit', nargs="+", type=float, help="原子间最小最大距离")
     parser.add_argument('-m', '--mode', type=int, required=True, help="选择生成的输入文件版本: 5 或 0")
     return parser.parse_args()
