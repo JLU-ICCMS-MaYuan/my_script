@@ -16,5 +16,6 @@ alias sendtohpwsl='sendtohpwsl() { scp -r -i  ~/.ssh/hp_wsl_rsa.pub "$1" may@172
 
 alias sqlhy='/bin/squeue -p liuhanyu'
 alias sqmayuan='/bin/squeue -u mayuan'
+alias geticohp="awk '\$1 == 0.00000 {print \$1, \$3; exit}' COHPCAR.lobster"
 
 sacctmgr show user mayuan withassoc

@@ -27,7 +27,9 @@ def create_directory(directory):
 def get_vasp_files():
     """Get all VASP files in the current directory."""
     vaspfiles = list(Path.cwd().glob("*.vasp"))
-    return sorted(vaspfiles)
+    ciffiles = list(Path.cwd().glob("*.cif"))
+    allfiles = vaspfiles + ciffiles
+    return sorted(allfiles)
 
 def generate_new_filename(old_filepath, current_id, way_of_naming, symbols, spacegroup):
     """Generate the new filename based on the naming convention."""
