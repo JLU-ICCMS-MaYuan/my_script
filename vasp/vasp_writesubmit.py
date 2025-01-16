@@ -2,7 +2,7 @@ import os
 import re
 
 from vasp.vasp_inputpara import vasp_inputpara
-from vasp.vaspbin import vaspstd_path, vaspgam_path, bashtitle, slurmtitle, pbstitle
+from vasp.vaspbin import vaspstd_path, vaspgam_path, bashtitle, slurmtitle, pbstitle, lsftitle
 
 
 class vasp_writesubmit:
@@ -18,6 +18,8 @@ class vasp_writesubmit:
             self.jobtitle = self.update_slurmPartition(slurmtitle, vasp_inputpara.queue)
         elif self.vasp_inputpara.submit_job_system == "pbs":
             self.jobtitle = pbstitle
+        elif self.vasp_inputpara.submit_job_system == "lsf":
+            self.jobtitle = lsftitle
         elif self.vasp_inputpara.submit_job_system == "bash":
             self.jobtitle = bashtitle
         else:

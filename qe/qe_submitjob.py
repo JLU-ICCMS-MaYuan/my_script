@@ -25,6 +25,8 @@ class qe_submitjob:
             self.submit_order = "sbatch"
         elif self.qe_inputpara.submit_job_system == "pbs":
             self.submit_order = "qsub"
+        elif self.qe_inputpara.submit_job_system == "lsf":
+            self.submit_order = "bsub <"
         elif self.qe_inputpara.submit_job_system == "bash":
             self.submit_order = "bash"
         else:

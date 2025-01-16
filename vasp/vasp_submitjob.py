@@ -23,6 +23,8 @@ class vasp_submitjob:
             self.submit_order = "sbatch"
         elif self.vasp_inputpara.submit_job_system == "pbs":
             self.submit_order = "qsub"
+        elif self.vasp_inputpara.submit_job_system == "lsf":
+            self.submit_order = "bsub <"
         elif self.vasp_inputpara.submit_job_system == "bash":
             self.submit_order = "bash"
         else:

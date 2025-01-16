@@ -90,8 +90,8 @@ def process_files(input_file_or_directory, detailed_conditions, prec=1e-2, prefe
                         # 如果指定了精度，使用指定的精度进行分析
                         pri_atoms, std_atoms, spacegroup = get_atom_info(atoms, prec, preferred_order=preferred_order)
                         print("{:<10} {:<3}   {:<15}".format(str(atoms.symbols), len(atoms), spacegroup))
-                        new_filename = os.path.join(prim_dir, f"{num}.{str(atoms.symbols)}_{spacegroup.replace(' (', '_').replace(')', '_').replace('/', '_')}.vasp"); write(new_filename, pri_atoms)
-                        new_filename = os.path.join(std_dir, f"{num}.{str(atoms.symbols)}_{spacegroup.replace(' (', '_').replace(')', '_').replace('/', '_')}.vasp"); write(new_filename, std_atoms)
+                        new_filename = os.path.join(prim_dir, f"{num}.{str(atoms.symbols)}_{spacegroup.replace(' (', '_').replace(')', '_').replace('/', '_')}.vasp"); write(new_filename, pri_atoms, direct=True)
+                        new_filename = os.path.join(std_dir, f"{num}.{str(atoms.symbols)}_{spacegroup.replace(' (', '_').replace(')', '_').replace('/', '_')}.vasp"); write(new_filename, std_atoms, direct=True)
                         num += 1
                     else:
                         # 如果没有指定精度，使用默认精度值列表进行分析
@@ -107,8 +107,8 @@ def process_files(input_file_or_directory, detailed_conditions, prec=1e-2, prefe
         if prec:
             # 如果指定了精度，使用指定的精度进行分析
             pri_atoms, std_atoms, spacegroup = get_atom_info(atoms, prec, preferred_order=preferred_order)
-            new_filename = os.path.join(f"prim_{str(atoms.symbols)}_{spacegroup.replace(' (', '_').replace(')', '_').replace('/', '_')}.vasp"); write(new_filename, pri_atoms)
-            new_filename = os.path.join(f"std_{str(atoms.symbols)}_{spacegroup.replace(' (', '_').replace(')', '_').replace('/', '_')}.vasp"); write(new_filename, std_atoms)
+            new_filename = os.path.join(f"prim_{str(atoms.symbols)}_{spacegroup.replace(' (', '_').replace(')', '_').replace('/', '_')}.vasp"); write(new_filename, pri_atoms, direct=True)
+            new_filename = os.path.join(f"std_{str(atoms.symbols)}_{spacegroup.replace(' (', '_').replace(')', '_').replace('/', '_')}.vasp"); write(new_filename, std_atoms, direct=True)
             print("{:<10} {:<3}   {:<10}".format(str(atoms.symbols), len(atoms), spacegroup))
         else:
             # 如果没有指定精度，使用默认精度值列表进行分析

@@ -3,7 +3,7 @@ import re
 import logging
 from pathlib import Path
 from qe.qe_inputpara import qe_inputpara
-from qe.qebin import qebin_path, epwbin_path, eliashberg_x_path, bashtitle, slurmtitle, pbstitle
+from qe.qebin import qebin_path, epwbin_path, eliashberg_x_path, bashtitle, slurmtitle, pbstitle, lsftitle
 
 logger = logging.getLogger("qe_writesubmit")
 
@@ -20,6 +20,8 @@ class qe_writesubmit:
             self.jobtitle = self.update_slurmPartition(slurmtitle, qe_inputpara.queue)
         elif self.qe_inputpara.submit_job_system == "pbs":
             self.jobtitle = pbstitle
+        elif self.qe_inputpara.submit_job_system == "lsf":
+            self.jobtitle = lsftitle
         elif self.qe_inputpara.submit_job_system == "bash":
             self.jobtitle = bashtitle
         else:
