@@ -43,6 +43,18 @@ cd $PBS_O_WORKDIR
 #killall -9 pw.x ph.x
 '''
 
+lsftitle = '''#!/bin/bash
+#BSUB -n 56
+#BSUB -q normal
+#BSUB -J myjob
+#BSUB -R 'span[ptile=56]'
+#BSUB -o operation.log
+
+source /data/env/inteloneapi2021
+ulimit -s unlimited        
+
+'''
+
 if __name__ == "__main__":
     
     from pathlib import Path
