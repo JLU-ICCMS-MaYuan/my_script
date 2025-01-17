@@ -81,9 +81,9 @@ def write_train_cfg(success_d, total_train_cfg):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('-i', '--input-directory', type=str, help="The structure file (e.g., POSCAR, CONTCAR) or a directory")
-    parser.add_argument('-c', '--detailed-conditions', type=str, nargs='+', default=[], help="List of subdirectories or patterns for detailed selection")
-    parser.add_argument('-n', '--filename',  required=True, default='total_train.cfg', help='please input where you want to save total_train.cfg.')
+    parser.add_argument('-i', '--input-directory', default='.', type=str, help="The structure file (e.g., POSCAR, CONTCAR) or a directory")
+    parser.add_argument('-c', '--detailed-conditions', default='OUTCAR', type=str, nargs='+', default=[], help="List of subdirectories or patterns for detailed selection")
+    parser.add_argument('-n', '--filename',  default='total_train.cfg', help='please input where you want to save total_train.cfg.')
     parser.add_argument('-p', '--pressures',  required=True, default=[], nargs='+', type=str, help='please input the pressure, which is named as filename')
     parser.add_argument('-l', '--extract-last-configuration',action="store_true", help='whether or not you only want to save the last configurations')
 
