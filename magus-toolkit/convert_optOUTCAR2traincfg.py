@@ -2,12 +2,8 @@
 
 import os
 import re
-import sys
-import glob
 import argparse
 import subprocess
-
-from pathlib import Path
 
 def custom_sort(item):
     parts = item.split("/")
@@ -16,26 +12,25 @@ def custom_sort(item):
     except:
         return (parts[:-1], parts[-1])
 
-def get_all_succeeded_OUTCAR(pressures):
+def get_all_succeeded_OUTCAR(input_directory, pressures, detailed_conditions):
     fail_d = []
     none_d = []
     success_d = []
-    for root, dirs, files in os.walk("."):
-        system_name = Path(root)
-        outcar_files = glob.glob(str(system_name.joinpath("OUTCAR*")))
-        if outcar_files:
-            for outcar_path in outcar_files:
-                res = os.popen(f'grep -s "reached required accuracy - stopping structural energy minimisation" {outcar_path}').read()
+    for root, dirs, files_in_dir in os.walk(input_directory):
+        for filename in files_in_dir:
+            filepath = os.path.join(root, filename)
+            if all(pattern in filepath for pattern in detailed_conditions):
+                res = os.popen(f'grep -s "reached required accuracy - stopping structural energy minimisation" {filepath}').read()
                 if res:
-                    pressure = str(int(float(os.popen(f'grep -s "PSTRESS="  {outcar_path} |  ' + "awk '{print $2}'").read().strip()) / 10))
+                    print(filepath)
+                    pressure = str(int(float(os.popen(f'grep -s "PSTRESS="  {filepath} |  ' + "awk '{print $2}'").read().strip()) / 10))
                     if pressure in pressures:
-                        print(outcar_path)
-                        success_d.append(os.path.abspath(outcar_path))
+                        success_d.append(os.path.abspath(filepath))
                 else:
-                    fail_d.append(os.path.abspath(outcar_path))
-        elif "INCAR" in files or "POTCAR" in files or "POSCAR" in files:
-            # none_d.append(system_name.__str__())
-            none_d.append(os.path.abspath(system_name))
+                    fail_d.append(os.path.abspath(filepath))
+            elif "INCAR" in files_in_dir or "POTCAR" in files_in_dir or "POSCAR" in files_in_dir:
+                # none_d.append(system_name.__str__())
+                none_d.append(os.path.abspath(filepath))
 
     print("\n relaxed-succeeded")
     success_d = sorted(success_d, key=custom_sort)
@@ -86,6 +81,8 @@ def write_train_cfg(success_d, total_train_cfg):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+    parser.add_argument('-i', '--input-directory', type=str, help="The structure file (e.g., POSCAR, CONTCAR) or a directory")
+    parser.add_argument('-c', '--detailed-conditions', type=str, nargs='+', default=[], help="List of subdirectories or patterns for detailed selection")
     parser.add_argument('-n', '--filename',  required=True, default='total_train.cfg', help='please input where you want to save total_train.cfg.')
     parser.add_argument('-p', '--pressures',  required=True, default=[], nargs='+', type=str, help='please input the pressure, which is named as filename')
     parser.add_argument('-l', '--extract-last-configuration',action="store_true", help='whether or not you only want to save the last configurations')
@@ -100,9 +97,7 @@ if __name__ == "__main__":
     # 获取当前目录
     if os.path.exists("relaxed-succeeded"):
         os.system("rm relaxed-succeeded")
-        success_d = get_all_succeeded_OUTCAR(args.pressures)
-    else:
-        success_d = get_all_succeeded_OUTCAR(args.pressures)
+    success_d = get_all_succeeded_OUTCAR(args.input_directory, args.pressures, args.detailed_conditions)
 
     write_train_cfg(success_d, total_train_cfg)
     # 切换回初始目录

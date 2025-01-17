@@ -52,7 +52,7 @@ setup(
     # 安装时需要安装的依赖包
     install_requires= parse_requirements(),
     # 指定可执行脚本,安装时脚本会被安装到系统 PATH 路径下
-    scripts = ['qe/qe_main.py', 'vasp/vasp_main.py', 'structuregenerator/generator_main.py', "mytoolkit/tool_main.py"],
+    scripts = ['qe/qe_main.py', 'vasp/vasp_main.py', 'structuregenerator/generator_main.py'],
     python_requires='>=3',
 )
 
