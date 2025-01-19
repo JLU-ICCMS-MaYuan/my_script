@@ -231,7 +231,7 @@ def readmyini(input_ini):
     XRD  = False
     TS   = False
     num_neb = False
-    specifywps = True
+    specifywps = False
     return (SystemName, nameofatoms, Npop, Mol, Hard, VSC, VSCE, D2, CL, HM, LSUR, BG, XRD, TS, num_neb, specifywps)
 
 def parseStruct_old():
@@ -1525,7 +1525,8 @@ def run():
     if options.is_plot:
         plot(struct, npop)
 
-    if vsc or specifywps:
+    # if vsc or specifywps:
+    if vsc:
         vsckit(structure, vsce, name_ele, options, prec_pool, is_refine, is_prim, hard, cl, norefine, hm, bg, xrd)
     elif ts:
         structure.sort(key=lambda x:x[0])

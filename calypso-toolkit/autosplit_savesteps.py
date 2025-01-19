@@ -404,7 +404,7 @@ if __name__ == '__main__':
         delete = 'yhcancel'
         a = Autocalypso(submit,stat,rstat,delete,machine = 'yh')
     elif 'slurm' in sys.argv[1].lower():
-        submit = 'sbatch -N 1 -n 24 -p hxl vasp.slurm'
+        submit = 'sbatch vasp.slurm'
         stat = 'squeue'
         rstat = 'squeue | grep   "\<R\>" '
         delete = 'scancel'

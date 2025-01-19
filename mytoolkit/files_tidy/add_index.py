@@ -6,10 +6,42 @@ from ase.io import read
 import spglib
 import argparse
 
+
+def sort_by_custom_order(atoms, preferred_order=None):
+    """
+    Sort atoms according to a custom preferred preferred_order of elements.
+
+    Parameters:
+    atoms: ASE Atoms object
+        The atomic structure to be sorted.
+    preferred_order: list of str
+        The desired preferred_order of elements, e.g., ['O', 'C', 'H'].
+
+    Returns:
+    ASE Atoms object
+        The sorted atomic structure.
+    """
+
+    if preferred_order:
+        symbols = atoms.get_chemical_symbols()
+        old_indices = [[idx, preferred_order.index(symbol)] for idx, symbol in enumerate(symbols)]
+        new_indices = sorted(old_indices, key=lambda x: x[1])
+        final_indices = [idx for idx, symbol_idx in new_indices]
+        atomscopy = atoms[final_indices].copy()
+        return atomscopy
+    else:
+        tags = atoms.get_chemical_symbols()
+        deco = sorted([(tag, i) for i, tag in enumerate(tags)])
+        indices = [i for tag, i in deco]
+        atomscopy = atoms[indices].copy()
+        return atomscopy
+    
+    
 def parse_arguments():
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(description="Rename and move VASP files.")
-    parser.add_argument("-b", "--begin_id", type=int, required=True, help="Starting index for naming")
+    parser.add_argument("-b", "--begin_id", type=int, required=True, 
+        help="Starting index for naming")
     parser.add_argument(
         "-w", "--way_of_naming", choices=["retain_old_name", "formula_symmetry",], 
         default="retain_old_name", 
@@ -17,6 +49,13 @@ def parse_arguments():
     )
     parser.add_argument('-p', '--prec',  type=float, nargs='?', default=0.01, 
         help="Symmetry precision (default is 0.01, use default precision values)")
+    parser.add_argument('-i', '--input-file-or-directory', default='.', type=str, nargs='+',
+        help="The structure file (e.g., POSCAR, CONTCAR) or a directory")
+    parser.add_argument('-c', '--detailed-conditions', default=['OUTCAR'], type=str, nargs='+', 
+        help="List of subdirectories or patterns for detailed selection")
+    parser.add_argument('-od', '--preferred-order', nargs='+', type=str, default=None,
+                        help='Custom element preferred_order for sorting, e.g., O C H for ordering oxygen first, followed by carbon and hydrogen')
+
     return parser.parse_args()
 
 def create_directory(directory):
@@ -24,12 +63,18 @@ def create_directory(directory):
     if not directory.exists():
         os.mkdir(directory)
 
-def get_vasp_files():
-    """Get all VASP files in the current directory."""
-    vaspfiles = list(Path.cwd().glob("*.vasp"))
-    ciffiles = list(Path.cwd().glob("*.cif"))
-    allfiles = vaspfiles + ciffiles
-    return sorted(allfiles)
+def get_vasp_files(input_file_or_directory, detailed_conditions):
+    allfiles = []
+    for dst_fileordir in input_file_or_directory:
+        if os.path.isdir(dst_fileordir):
+            for root, dirs, files_in_dir in os.walk(dst_fileordir):
+                for filename in files_in_dir:
+                    filepath = os.path.join(root, filename)
+                    if all(pattern in filepath for pattern in detailed_conditions):
+                        allfiles.append(Path(filepath))
+        elif os.path.isfile(dst_fileordir):
+            allfiles.append(Path(dst_fileordir))
+    return allfiles
 
 def generate_new_filename(old_filepath, current_id, way_of_naming, symbols, spacegroup):
     """Generate the new filename based on the naming convention."""
@@ -64,7 +109,7 @@ def main():
     args = parse_arguments()
     
     # Get VASP files
-    vaspfiles = get_vasp_files()
+    vaspfiles = get_vasp_files(args.input_file_or_directory, args.detailed_conditions)
 
     # Create the indexed_dirs directory if it doesn't exist
     indexed_dirs = Path.cwd().joinpath("stdlibs")

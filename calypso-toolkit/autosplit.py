@@ -353,7 +353,7 @@ class Autocalypso(object):
         f.write('#SBATCH  --job-name=ll1118\n')
         f.write('#SBATCH  --output=log.out.%j\n')
         f.write('#SBATCH  --error=log.err.%j\n')
-        f.write('#SBATCH  --partition=hxl\n')
+        f.write('#SBATCH  --partition=public\n')
         f.write('#SBATCH  --nodes=1\n')
         f.write('#SBATCH  --ntasks=24\n')
         f.write('#SBATCH  --ntasks-per-node=24\n')
@@ -395,7 +395,7 @@ if __name__ == '__main__':
         delete = 'yhcancel'
         a = Autocalypso(submit,stat,rstat,delete,machine = 'yh')
     elif 'slurm' in sys.argv[1].lower():
-        submit = 'sbatch -N 1 -n 24 -p hxl vasp.slurm'
+        submit = 'sbatch vasp.slurm'
         stat = 'squeue'
         rstat = 'squeue | grep   "\<R\>" '
         delete = 'scancel'
