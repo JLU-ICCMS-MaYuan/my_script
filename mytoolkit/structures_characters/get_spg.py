@@ -66,15 +66,15 @@ def get_atom_info(atoms, prec, preferred_order=None):
     std_atoms = sort_by_custom_order(Atoms(cell=lattice, scaled_positions=scaled_positions, numbers=numbers), preferred_order=preferred_order)
     return pri_atoms, std_atoms, spacegroup
 
-def process_files(input_file_or_directory, detailed_conditions, prec=1e-2, preferred_order=None):
+def process_files(input_file_or_directory, detailed_conditions, prec=None, preferred_order=None):
 
     if os.path.isdir(input_file_or_directory):
         
         prim_dir = "prim"
         std_dir  = "std"
-        if not os.path.exists(prim_dir):
+        if not os.path.exists(prim_dir) and prec!=None:
             os.makedirs(prim_dir)
-        if not os.path.exists(std_dir):
+        if not os.path.exists(std_dir) and prec!=None:
             os.makedirs(std_dir)
         # 如果是目录，遍历所有文件
         

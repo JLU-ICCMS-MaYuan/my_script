@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 import os
 import shutil
-from pathlib import Path
-from ase.io import read
-import spglib
 import argparse
+from pathlib import Path
 
+import spglib
+from ase.io import read, write
+from ase import Atoms
 
 def sort_by_custom_order(atoms, preferred_order=None):
     """
@@ -55,7 +56,8 @@ def parse_arguments():
         help="List of subdirectories or patterns for detailed selection")
     parser.add_argument('-od', '--preferred-order', nargs='+', type=str, default=None,
                         help='Custom element preferred_order for sorting, e.g., O C H for ordering oxygen first, followed by carbon and hydrogen')
-
+    parser.add_argument('-t', '--type-of-crystal', type=str, default="prim",
+                        help='Custom what type of struct will be output, prim, std, none. none represents the action that the program copy original files to new position')
     return parser.parse_args()
 
 def create_directory(directory):
@@ -85,7 +87,7 @@ def generate_new_filename(old_filepath, current_id, way_of_naming, symbols, spac
         new_file_name = f"{current_id}.{str(symbols)}_{spacegroup.replace(' (', '_').replace(')', '_').replace('/', '_')}.vasp"
     return new_file_name
 
-def rename_and_copy_files(vaspfiles, begin_id, way_of_naming, indexed_dirs, prec):
+def rename_and_copy_files(vaspfiles, begin_id, way_of_naming, indexed_dirs, prec, preferred_order, type_of_crystal):
     """Rename and copy the files to the new directory."""
     for idx, old_filepath in enumerate(vaspfiles):
         atoms = read(old_filepath)
@@ -102,7 +104,18 @@ def rename_and_copy_files(vaspfiles, begin_id, way_of_naming, indexed_dirs, prec
         new_file_name = generate_new_filename(old_filepath, current_id, way_of_naming, symbols, spacegroup)
         new_filepath = indexed_dirs.joinpath(new_file_name)
         print(f"{old_filepath.name} -> {new_file_name}")
-        shutil.copy(old_filepath, new_filepath)
+
+        if type_of_crystal == 'std':
+            lattice, scaled_positions, numbers = spglib.standardize_cell(cell, symprec=prec)
+            std_atoms = sort_by_custom_order(Atoms(cell=lattice, scaled_positions=scaled_positions, numbers=numbers), preferred_order=preferred_order)
+            write(new_filepath, std_atoms, direct=True)
+        elif type_of_crystal == 'prim':
+            lattice, scaled_positions, numbers = spglib.find_primitive(cell, symprec=prec)
+            std_atoms = sort_by_custom_order(Atoms(cell=lattice, scaled_positions=scaled_positions, numbers=numbers), preferred_order=preferred_order)
+            write(new_filepath, std_atoms, direct=True)
+        else:
+            shutil.copy(old_filepath, new_filepath)
+
 
 def main():
     # Parse arguments
@@ -116,7 +129,7 @@ def main():
     create_directory(indexed_dirs)
 
     # Rename and copy the files
-    rename_and_copy_files(vaspfiles, args.begin_id, args.way_of_naming, indexed_dirs, args.prec)
+    rename_and_copy_files(vaspfiles, args.begin_id, args.way_of_naming, indexed_dirs, args.prec, args.preferred_order, args.type_of_crystal)
 
 if __name__ == "__main__":
     main()

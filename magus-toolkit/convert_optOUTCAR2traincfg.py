@@ -32,11 +32,11 @@ def get_all_succeeded_OUTCAR(input_directory, pressures, detailed_conditions):
                 # none_d.append(system_name.__str__())
                 none_d.append(os.path.abspath(filepath))
 
-    print("\n relaxed-succeeded")
+    print("\n relax-succeeded")
     success_d = sorted(success_d, key=custom_sort)
     for line in success_d:
         print(line)
-    with open('relaxed-succeeded', 'w') as f:
+    with open('relax-succeeded', 'w') as f:
         f.writelines('\n'.join(success_d))
     return success_d
 

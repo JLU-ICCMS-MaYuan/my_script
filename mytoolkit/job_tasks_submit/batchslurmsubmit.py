@@ -16,8 +16,8 @@ args = parser.parse_args()
 
 # 获取命令行参数
 MAX_RUNNING_JOBS = args.max_running_jobs  # 最大并行任务数
-SUBMIT_COMMAND = args.submit_command      # 提交任务的命令
-INPUT_FILE = args.input_file             # 任务目录列表文件
+SUBMIT_COMMAND = args.submit_command      # 提交任务的脚本
+INPUT_FILE = args.input_file              # 任务目录列表文件
 
 # 获取当前工作目录
 cwd = os.getcwd()
