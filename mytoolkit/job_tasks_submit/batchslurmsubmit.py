@@ -77,9 +77,10 @@ while True:
         # 提交任务
         # print(f"Submitting job for directory: {pth}")
         sub_job(pth)
+    else:
+        # 每20秒检查一次
+        time.sleep(60)
         
     if start_que == 0:
         break
 
-    # 每20秒检查一次
-    time.sleep(20)
