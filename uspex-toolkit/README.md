@@ -132,7 +132,7 @@ export MKL_DEBUG_CPU_TYPE=5
 ```shell
 安装python3.5版本，更高版本都会报错~
 
-conda create -n uspex python=3.9.13
+conda create -n uspex python=3.5
 
 conda activate uspex
 

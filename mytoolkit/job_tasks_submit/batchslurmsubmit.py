@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import time
 import os
+import sys
 import subprocess
 import argparse
 
@@ -44,39 +45,41 @@ def get_que_num():
         squeue_output = subprocess.check_output(command, shell=True).decode('utf-8').strip()
         # print(squeue_output)  # 打印当前队列输出，便于调试
         # 返回匹配的行数（即正在运行的任务数量）
+        print(len(squeue_output.splitlines()), squeue_output.splitlines())
         return len(squeue_output.splitlines()), squeue_output.splitlines()
     except subprocess.CalledProcessError:
         #print('Error fetching queue data')  # 错误处理
         return 0, []  # 如果 squeue 没有输出或其他错误，返回 0
 
-# 获取当前正在运行的作业数量
-que_num, queue_path = get_que_num()
+if len(start_que) == 0:
+    sys.exit(1)
 
 # 检查是否还可以提交新的任务
 while True:
-    while que_num < MAX_RUNNING_JOBS:
-        if len(start_que) != 0:
-            # 从任务队列中取出下一个任务目录
-            next_dir = start_que[0]
-            
-            # 检查路径是否已经在当前的队列中
-            if next_dir in queue_path:
-                # print(f"Skipping {next_dir} as it is already in the queue.")
-                start_que.pop(0)  # 从队列中移除该路径，继续检查下一个路径
-                continue
-            
-            # 将任务目录添加到运行队列
-            run_que.append(start_que.pop(0))
-            pth = run_que[-1]
-    
-            # 提交任务
-            # print(f"Submitting job for directory: {pth}")
-            sub_job(pth)
-            
-            # 获取当前队列中的作业数目
-            que_num, queue_path = get_que_num()
-        else:
-            break  # 如果没有更多任务，跳出循环
-    
+    # 获取当前队列中的作业数目
+    que_num, queue_path = get_que_num()
+
+    if que_num < MAX_RUNNING_JOBS:
+
+        # 从任务队列中取出下一个任务目录
+        next_dir = start_que[0]
+        
+        # 检查路径是否已经在当前的队列中
+        if next_dir in queue_path:
+            # print(f"Skipping {next_dir} as it is already in the queue.")
+            start_que.pop(0)  # 从队列中移除该路径，继续检查下一个路径
+            continue
+        
+        # 将任务目录添加到运行队列
+        run_que.append(start_que.pop(0))
+        pth = run_que[-1]
+
+        # 提交任务
+        # print(f"Submitting job for directory: {pth}")
+        sub_job(pth)
+        
+    if start_que == 0:
+        break
+
     # 每20秒检查一次
     time.sleep(20)
