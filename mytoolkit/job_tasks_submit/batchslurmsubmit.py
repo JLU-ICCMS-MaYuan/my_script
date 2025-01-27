@@ -75,12 +75,12 @@ while True:
         pth = run_que[-1]
 
         # 提交任务
-        # print(f"Submitting job for directory: {pth}")
+        print(f"Submitting job for directory: {pth}, the left tasks is {len(start_que)}.")
         sub_job(pth)
     else:
         # 每20秒检查一次
         time.sleep(60)
         
     if start_que == 0:
-        break
+        sys.exit(1)
 
