@@ -49,13 +49,6 @@ def interpolate_and_predict(energy, pdos):
     tck = interpolate.make_interp_spline(x=energy, y=pdos, k=1)  # k=1 for linear spline
     return tck(0)  # 计算能量为0时的值
 
-# 读取 TDOS.dat 文件并获取费米能级处的 TDOS 值
-def get_tdos_at_fermi():
-    tdos_df = pd.read_table("TDOS.dat", sep='\s+')
-    energy = tdos_df['#Energy']
-    tdos = tdos_df['TDOS']
-    return interpolate_and_predict(energy, tdos)
-
 def main():
     # 解析命令行参数
     args = parse_arguments()
@@ -109,29 +102,39 @@ def main():
         result_df[f'{e}'] = tot / vol
         pdos_at_ef[f'{e}'] = [interpolate_and_predict(result_df['Energy(eV)'], result_df[f'{e}'])]
 
-    nearest_to_zero_index = result_df['Energy(eV)'].abs().idxmin()
-    # 获取最接近0的行的上下5行索引范围
-    start_index = max(0, nearest_to_zero_index - 3)
-    end_index = min(len(result_df), nearest_to_zero_index + 3)
-
-    # 输出选取的行
-    print("上下5行数据:")
-    print(result_df.iloc[start_index:end_index])
 
     # 将能量为0时的PDOS值写入文件
     pdos_at_ef_df = pd.DataFrame(pdos_at_ef)
     pdos_at_ef_df.to_csv('PDOS_atEf.csv', index=False)
 
     # 获取费米能级处的 TDOS 值
-    tdos_at_fermi = get_tdos_at_fermi()/vol
+    tdos_df = pd.read_table("TDOS.dat", sep='\s+')
+    energy_tdos = tdos_df['#Energy']
+    tdos = tdos_df['TDOS']
+    # 使用插值函数插值计算能量为0时的 TDOS
+    tdos_at_fermi = interpolate_and_predict(energy_tdos, tdos) / vol
     print(f"TDOS at Fermi level: {tdos_at_fermi}")
-
+    
+    # 将 TDOS 数据添加到 result_df 最后一列
+    result_df['TDOS'] = tdos/vol
+    # 保存结果到 spdf_orbit.csv
+    result_df.to_csv('spdf_orbit.csv', index=False)
+    print("Result saved to spdf_orbit.csv")
+    nearest_to_zero_index = result_df['Energy(eV)'].abs().idxmin()
+    # 获取最接近0的行的上下5行索引范围
+    start_index = max(0, nearest_to_zero_index - 3)
+    end_index = min(len(result_df), nearest_to_zero_index + 3)
+    # 输出选取的行
+    print("上下5行数据:")
+    print(result_df.iloc[start_index:end_index])
+    
     # 计算所有元素的 PDOS 值之和
     total_pdos_at_fermi = sum([pdos_at_ef_df[ele] for ele in eles])
-    print(f"Sum of PDOS at Fermi level: {total_pdos_at_fermi}")
+    print(f"Sum of PDOS at Fermi level: {total_pdos_at_fermi.item()}")
 
     # 比较 TDOS 和 PDOS 之和
-    print(f"Difference between TDOS and sum of PDOS: {tdos_at_fermi - total_pdos_at_fermi}")
+    diff = tdos_at_fermi - total_pdos_at_fermi
+    print(f"Difference between TDOS and sum of PDOS: {diff.item()}")
 
 if __name__ == "__main__":
     main()
