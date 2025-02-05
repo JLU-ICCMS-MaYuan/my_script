@@ -49,6 +49,13 @@ def interpolate_and_predict(energy, pdos):
     tck = interpolate.make_interp_spline(x=energy, y=pdos, k=1)  # k=1 for linear spline
     return tck(0)  # 计算能量为0时的值
 
+# 读取 TDOS.dat 文件并获取费米能级处的 TDOS 值
+def get_tdos_at_fermi():
+    tdos_df = pd.read_table("TDOS.dat", sep='\s+')
+    energy = tdos_df['#Energy']
+    tdos = tdos_df['TDOS']
+    return interpolate_and_predict(energy, tdos)
+
 def main():
     # 解析命令行参数
     args = parse_arguments()
@@ -76,7 +83,7 @@ def main():
 
     # 用于存储能量为0时的PDOS值，初始化时使用 'Energy(eV)' 作为行索引
     pdos_at_ef = {'Energy(eV)': [0]}  # 初始化为能量列
-
+    
     # 遍历元素
     for e in eles:
         orbitals_to_read = orbitals_dict[e]  # 获取该元素的轨道类型
@@ -114,6 +121,17 @@ def main():
     # 将能量为0时的PDOS值写入文件
     pdos_at_ef_df = pd.DataFrame(pdos_at_ef)
     pdos_at_ef_df.to_csv('PDOS_atEf.csv', index=False)
+
+    # 获取费米能级处的 TDOS 值
+    tdos_at_fermi = get_tdos_at_fermi()/vol
+    print(f"TDOS at Fermi level: {tdos_at_fermi}")
+
+    # 计算所有元素的 PDOS 值之和
+    total_pdos_at_fermi = sum([pdos_at_ef_df[ele] for ele in eles])
+    print(f"Sum of PDOS at Fermi level: {total_pdos_at_fermi}")
+
+    # 比较 TDOS 和 PDOS 之和
+    print(f"Difference between TDOS and sum of PDOS: {tdos_at_fermi - total_pdos_at_fermi}")
 
 if __name__ == "__main__":
     main()
