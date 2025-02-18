@@ -82,6 +82,9 @@ class qe_writesubmit:
         if mode =="nosplit":
             jobname = self.s4_PhNoSplit(self.qe_inputpara.work_path, inpufilename)
             return jobname
+        if mode == "sctk_epmat":
+            jobname = self.s4_epmatNoSplit(self.qe_inputpara.work_path, inpufilename)
+            return jobname
         if mode =="split_dyn0":
             jobnames = []
             for i, inname in enumerate(inpufilename):
@@ -147,7 +150,7 @@ class qe_writesubmit:
         if mode == "epw_aniso_sc":
             jobname = self.j4_epw_aniso_sc(self.qe_inputpara.work_path, inpufilename)
             return jobname
-        
+
 
     #  job scripts
     def s1_relax(self, _dirpath, inpufilename):
@@ -242,6 +245,16 @@ class qe_writesubmit:
         _inpufilename = inputfilename
         _outputfilename = _inpufilename.split(".")[0] + ".out"
         jobname = "s4_PhNoSplit.sh"
+        _script_filepath = os.path.join(_dirpath, jobname)
+        with open(_script_filepath, "w") as j:
+            j.writelines(self.jobtitle)
+            j.write('{} {}/ph.x -npool {} <{}> {} \n'.format(self.qe_inputpara.execmd, qebin_path,  self.qe_inputpara.npool, _inpufilename, _outputfilename))
+        return jobname
+    
+    def s4_epmatNoSplit(self, _dirpath, inputfilename):
+        _inpufilename = inputfilename
+        _outputfilename = _inpufilename.split(".")[0] + ".out"
+        jobname = "s4_epmatNoSplit.sh"
         _script_filepath = os.path.join(_dirpath, jobname)
         with open(_script_filepath, "w") as j:
             j.writelines(self.jobtitle)

@@ -57,7 +57,8 @@ class vasp_writeincar:
             incar.write("ICHARG   = 2    \n")
             incar.write("ISYM     = {}   \n".format(str(self.vasp_inputpara.isym))) 
             incar.write("ENCUT    = 350  \n")
-            incar.write("PREC     = LOW  \n") 
+            incar.write("PREC     = LOW  \n")
+            incar.write("SYMPREC  = {}   \n".format(str(self.vasp_inputpara.symprec)))
             incar.write("NCORE    = 4    \n")         
             incar.write("KSPACING = 0.8  \n")            
             incar.write("ISMEAR   = 0    \n")   
@@ -83,6 +84,7 @@ class vasp_writeincar:
             incar.write("ISYM     = {}   \n".format(str(self.vasp_inputpara.isym))) 
             incar.write("ENCUT    = 400  \n")        
             incar.write("PREC     = Normal\n") 
+            incar.write("SYMPREC  = {}   \n".format(str(self.vasp_inputpara.symprec)))
             incar.write("NCORE    = 4    \n")         
             incar.write("KSPACING = 0.5  \n")
             incar.write("ISMEAR   = 0    \n")   
@@ -138,11 +140,11 @@ class vasp_writeincar:
             incar.write("SYMPREC  = {}   \n".format(str(self.vasp_inputpara.symprec)))
 
             if self.vasp_inputpara.npar is not None:
-                incar.write("NPAR   = {}           \n".format(self.vasp_inputpara.npar))
+                incar.write("NPAR   = {} \n".format(self.vasp_inputpara.npar))
             if self.vasp_inputpara.ncore is not None:
-                incar.write("NCORE  = {}           \n".format(self.vasp_inputpara.ncore))
+                incar.write("NCORE  = {} \n".format(self.vasp_inputpara.ncore))
             if self.vasp_inputpara.kpar is not None:
-                incar.write("KPAR   = {}           \n".format(self.vasp_inputpara.kpar))       
+                incar.write("KPAR   = {} \n".format(self.vasp_inputpara.kpar))       
             incar.write("KSPACING = {}   \n".format(str(self.vasp_inputpara.kspacing))) 
             incar.write("ISMEAR   = {}   \n".format(str(self.vasp_inputpara.ismear)))   
             incar.write("SIGMA    = {}   \n".format(str(self.vasp_inputpara.sigma)))   

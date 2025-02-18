@@ -21,7 +21,7 @@ vasp_main.py -i POSCAR -j bash data -m mode=dispband supercell='2 2 2'
 
 qe_main.py -i CONTCAR -j slurm -p PRESS -w . relax -m mode=relax-vc kpoints_dense="l m n" conv_thr=1.0d-8 execmd='mpirun -np 48' ecutwfc=80 ecutrho=960 degauss=0.02 npool=4 queue=lhy
 
-qe_main.py -i CONTCAR -j slurm -p PRESS prepare -m mode=preparescf ecutwfc=80 ecutrho=960 degauss=0.02 qpoints='l m n' execmd='mpirun -np 48' npool=4 queue=lhy
+qe_main.py -i CONTCAR -j slurm -p PRESS prepare -m mode=preparescf ecutwfc=80 ecutrho=960 degauss=0.02               qpoints='l m n' execmd='mpirun -np 48' npool=4 queue=lhy
 
 qe_main.py -i CONTCAR -j slurm -p PRESS prepare -m mode=prepareall ecutwfc=80 ecutrho=960 qpoints='l m n'  degauss=0.02 execmd='mpirun -np 48' npool=4 queue=lhy
 
@@ -29,11 +29,11 @@ qe_main.py -i CONTCAR -j slurm -p PRESS scf -m mode=scffit ecutwfc=80 ecutrho=96
 
 qe_main.py -i CONTCAR -j slurm -p PRESS scf -m mode=scf ecutwfc=80 ecutrho=960 kpoints_sparse='10 10 8'  degauss=0.02 execmd='mpirun -np 48' npool=4 queue=lhy
 
-qe_main.py -i CONTCAR -j bash phono -m mode=nosplit dyn0_flag=True execmd='' queue=lhy qpoints='l m n'
+qe_main.py -i CONTCAR -j bash phono -m mode=nosplit EPC_flag=True dyn0_flag=True execmd='' queue=lhy qpoints='l m n'
 
-qe_main.py -i CONTCAR -j slurm phono -m mode=split_assignQ degauss=0.02 ecutwfc=80 ecutrho=960  execmd='mpirun -np 48' npool=4
+qe_main.py -i CONTCAR -j slurm phono -m mode=split_assignQ EPC_flag=True degauss=0.02 ecutwfc=80 ecutrho=960  execmd='mpirun -np 48' npool=4
 
-qe_main.py -i CONTCAR -j slurm phono -m mode=split_dyn0    degauss=0.02 ecutwfc=80 ecutrho=960  execmd='mpirun -np 48' npool=4
+qe_main.py -i CONTCAR -j slurm phono -m mode=split_dyn0 EPC_flag=True degauss=0.02 ecutwfc=80 ecutrho=960  execmd='mpirun -np 48' npool=4
 
 qe_main.py -i CONTCAR -j bash phono -m mode=q2r execmd='' el_ph_nsigma=10 queue=lhy
 
@@ -81,5 +81,14 @@ for i in {1..18}; do cd \$i; echo \$i; ls elph_dir; cd ..; done
 
 # EPW的wannir90部分计算能带
 qe_main.py -i origin-PPOSCAR -j bash -w . epw -m mode=epw_energyband execmd='mpirun -np 2' npool=2 dvscf_dir='../phonon/save'  nbndsub=10  bands_skipped=5  dis_froz_min=-5 dis_froz_max=0 proj='S:p  H:s' 
+
+
+# SCTK计算超导
+
+qe_main.py -i relax.out -j bash prepare -m mode=preparescf ecutwfc=80 ecutrho=960 occupations=tetrahedra_opt qpoints='4 4 4' execmd='mpirun -np 8' npool=2 queue=lhy
+
+qe_main.py -i relax.out -j bash phono   -m mode=nosplit    dyn0_flag=False EPC_flag=False SCTK_flag=True search_sym=.false. execmd='mpirun -np 8'  qpoints='4 4 4' queue=lhy
+
+qe_main.py -i relax.out -j bash phono   -m mode=sctk_epmat search_sym=.false. elph_nbnd_min=2 elph_nbnd_max=6 execmd='mpirun -np 8' npool=8  qpoints='4 4 4' queue=lhy  
 
 "

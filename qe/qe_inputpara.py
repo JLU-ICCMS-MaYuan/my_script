@@ -344,6 +344,27 @@ class qephono_inputpara(qe_inputpara):
             self.kpoints_sparse= [kp*2 for kp in self.qpoints]
             self.kpoints_dense = [kp*4 for kp in self.qpoints]
 
+        if not hasattr(self, "EPC_flag"):
+            self.EPC_flag = True
+        else:
+            self.EPC_flag = eval(self.dyn0_flag)
+
+        # 针对SCTK计算的参数----------------------------
+        if not hasattr(self, "SCTK_flag"):
+            self.SCTK_flag = False
+        else:
+            self.SCTK_flag = eval(self.SCTK_flag)
+
+        if not hasattr(self, "elph_nbnd_min"):
+            self.elph_nbnd_min = 0
+        
+        if not hasattr(self, "elph_nbnd_max"):
+            self.elph_nbnd_max = 0
+
+        if not hasattr(self, "search_sym"):
+            self.search_sym = ".true." # 当计算SCTK时一般会设置为false
+        # 针对SCTK计算的参数----------------------------
+        
         if not hasattr(self, "tr2_ph"):
             self.tr2_ph = "1.0d-14"
 
@@ -713,7 +734,6 @@ class qephono_inputpara(qe_inputpara):
         string_coord = ' '.join(str(np.round(coord[1], 6)) for coord in projected_path_name_coords)
         print(string_names)
         print(string_coord)
-
 
     def get_phono_freq(self):
         """获得可以在origin中作图的数据"""

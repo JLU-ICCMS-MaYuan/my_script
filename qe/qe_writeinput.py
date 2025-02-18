@@ -101,6 +101,9 @@ class qe_writeinput:
         if mode == "epw_aniso_sc":
             inputfilename = self.write_epw_aniso_sc_in(self.qe_inputpara.work_path)
             return inputfilename
+        if mode == "sctk_epmat":
+            inputfilename = self.write_epmat_no_split_in(self.qe_inputpara.work_path)
+            return inputfilename
         
     def write_relax_in(self, work_directory:Path):
         inputfilename =  "relax.in"
@@ -125,10 +128,12 @@ class qe_writeinput:
             qe.write(" ibrav=0,                        \n")  # 设置ibrav=0，这时需要在输入文件中写入CELL_PARAMETERS，即CELL的基矢量. alat bohr angstrom alat 由 celldm(1)或A定义的晶格常数单位
             qe.write(" nat={},                         \n".format(self.qe_inputpara.all_atoms_quantity))
             qe.write(" ntyp={},                        \n".format(self.qe_inputpara.species_quantity))
-            qe.write(" occupations = '{}',             \n".format(self.qe_inputpara.occupations))
-            # qe.write(" smearing = 'methfessel-paxton'  \n")
-            qe.write(" smearing = '{}',                \n".format(self.qe_inputpara.smearing))
-            qe.write(" degauss = {},                   \n".format(self.qe_inputpara.degauss))
+            if self.qe_inputpara.occupations == 'smearing':
+                qe.write(" occupations = '{}',         \n".format(self.qe_inputpara.occupations)) 
+                qe.write(" smearing = '{}',            \n".format(self.qe_inputpara.smearing))
+                qe.write(" degauss = {},               \n".format(self.qe_inputpara.degauss))
+            elif self.qe_inputpara.occupations == 'tetrahedra' or self.qe_inputpara.occupations == 'tetrahedra_opt':
+                qe.write(" occupations = '{}',         \n".format(self.qe_inputpara.occupations)) 
             qe.write(" ecutwfc = {},                   \n".format(self.qe_inputpara.ecutwfc))
             qe.write(" ecutrho = {},                   \n".format(self.qe_inputpara.ecutrho))
             qe.write(" lspinorb = .{}.,                \n".format(self.qe_inputpara.lspinorb))
@@ -198,9 +203,12 @@ class qe_writeinput:
             qe.write(" ibrav=0,                        \n")  # 设置ibrav=0，这时需要在输入文件中写入CELL_PARAMETERS，即CELL的基矢量. alat bohr angstrom alat 由 celldm(1)或A定义的晶格常数单位
             qe.write(" nat={},                         \n".format(self.qe_inputpara.all_atoms_quantity))
             qe.write(" ntyp={},                        \n".format(self.qe_inputpara.species_quantity))
-            qe.write(" occupations = '{}',             \n".format(self.qe_inputpara.occupations))
-            qe.write(" smearing = '{}',                \n".format(self.qe_inputpara.smearing))
-            qe.write(" degauss = {},                   \n".format(self.qe_inputpara.degauss))
+            if self.qe_inputpara.occupations == 'smearing':
+                qe.write(" occupations = '{}',         \n".format(self.qe_inputpara.occupations)) 
+                qe.write(" smearing = '{}',            \n".format(self.qe_inputpara.smearing))
+                qe.write(" degauss = {},               \n".format(self.qe_inputpara.degauss))
+            elif self.qe_inputpara.occupations == 'tetrahedra' or self.qe_inputpara.occupations == 'tetrahedra_opt':
+                qe.write(" occupations = '{}',         \n".format(self.qe_inputpara.occupations))             
             qe.write(" ecutwfc = {},                   \n".format(self.qe_inputpara.ecutwfc))
             qe.write(" ecutrho = {},                   \n".format(self.qe_inputpara.ecutrho))
             qe.write(" lspinorb = .{}.,                \n".format(self.qe_inputpara.lspinorb))
@@ -259,9 +267,12 @@ class qe_writeinput:
             qe.write(" ibrav=0,                        \n")  # 设置ibrav=0，这时需要在输入文件中写入CELL_PARAMETERS，即CELL的基矢量. alat bohr angstrom alat 由 celldm(1)或A定义的晶格常数单位
             qe.write(" nat={},                         \n".format(self.qe_inputpara.all_atoms_quantity))
             qe.write(" ntyp={},                        \n".format(self.qe_inputpara.species_quantity))
-            qe.write(" occupations = '{}',               \n".format(self.qe_inputpara.occupations)) 
-            qe.write(" smearing = '{}',                \n".format(self.qe_inputpara.smearing))
-            qe.write(" degauss = {},                   \n".format(self.qe_inputpara.degauss))
+            if self.qe_inputpara.occupations == 'smearing':
+                qe.write(" occupations = '{}',         \n".format(self.qe_inputpara.occupations)) 
+                qe.write(" smearing = '{}',            \n".format(self.qe_inputpara.smearing))
+                qe.write(" degauss = {},               \n".format(self.qe_inputpara.degauss))
+            elif self.qe_inputpara.occupations == 'tetrahedra' or self.qe_inputpara.occupations == 'tetrahedra_opt':
+                qe.write(" occupations = '{}',         \n".format(self.qe_inputpara.occupations))             
             qe.write(" ecutwfc = {},                   \n".format(self.qe_inputpara.ecutwfc))
             qe.write(" ecutrho = {},                   \n".format(self.qe_inputpara.ecutrho))
             qe.write(" lspinorb = .{}.,                \n".format(self.qe_inputpara.lspinorb))
@@ -319,12 +330,12 @@ class qe_writeinput:
             qe.write(" ibrav=0,                        \n")  # 设置ibrav=0，这时需要在输入文件中写入CELL_PARAMETERS，即CELL的基矢量. alat bohr angstrom alat 由 celldm(1)或A定义的晶格常数单位
             qe.write(" nat={},                         \n".format(self.qe_inputpara.all_atoms_quantity))
             qe.write(" ntyp={},                        \n".format(self.qe_inputpara.species_quantity))
-            if self.qe_inputpara.occupations == 'tetrahedra':
-                qe.write(" occupations = '{}',         \n".format(self.qe_inputpara.occupations)) 
-            elif self.qe_inputpara.occupations == 'smearing':
+            if self.qe_inputpara.occupations == 'smearing':
                 qe.write(" occupations = '{}',         \n".format(self.qe_inputpara.occupations)) 
                 qe.write(" smearing = '{}',            \n".format(self.qe_inputpara.smearing))
                 qe.write(" degauss = {},               \n".format(self.qe_inputpara.degauss))
+            elif self.qe_inputpara.occupations == 'tetrahedra' or self.qe_inputpara.occupations == 'tetrahedra_opt':
+                qe.write(" occupations = '{}',         \n".format(self.qe_inputpara.occupations)) 
             qe.write(" ecutwfc = {},                   \n".format(self.qe_inputpara.ecutwfc))
             qe.write(" ecutrho = {},                   \n".format(self.qe_inputpara.ecutrho))
             qe.write(" lspinorb = .{}.,                \n".format(self.qe_inputpara.lspinorb))
@@ -379,9 +390,11 @@ class qe_writeinput:
             qe.write("  prefix='{}',                                     \n".format(self.qe_inputpara.system_name))                
             # qe.write("  fildvscf='{}.dv',                                \n".format(self.qe_inputpara.system_name))       
             qe.write("  fildvscf='dvscf',                                \n")
-            qe.write("  electron_phonon='{}',                            \n".format(self.qe_inputpara.electron_phonon))                              
-            qe.write("  el_ph_sigma={},                                  \n".format(str(self.qe_inputpara.el_ph_sigma)))                
-            qe.write("  el_ph_nsigma={},                                 \n".format(str(self.qe_inputpara.el_ph_nsigma)))
+            if self.qe_inputpara.EPC_flag == True:
+                qe.write("  electron_phonon='{}',                            \n".format(self.qe_inputpara.electron_phonon))                              
+                qe.write("  el_ph_sigma={},                                  \n".format(str(self.qe_inputpara.el_ph_sigma)))                
+                qe.write("  el_ph_nsigma={},                                 \n".format(str(self.qe_inputpara.el_ph_nsigma)))
+                qe.write("  trans=.true.,                                    \n")            
             qe.write("  alpha_mix(1)={},                                 \n".format(str(self.qe_inputpara.alpha_mix)))  # 可以修改的更小一些, 如果用vasp计算声子谱稳定, 可以修改为0.3
             for i, species_name in enumerate(self.qe_inputpara.composition.keys()):
                 element      = Element(species_name)
@@ -389,12 +402,35 @@ class qe_writeinput:
                 qe.write("  amass({})={},                                \n".format(i+1, species_mass))             
             qe.write("  outdir='./tmp',                                  \n")               
             qe.write("  fildyn='{}.dyn',                                 \n".format(self.qe_inputpara.system_name))                    
-            qe.write("  trans=.true.,                                    \n")            
-            qe.write("  ldisp=.true.,                                    \n")            
+            qe.write("  ldisp=.true.,                                    \n")
+            qe.write("  search_sym = {}                                  \n".format(self.qe_inputpara.search_sym))  # 如果是SCTK计算，最好用.false.         
+            if self.qe_inputpara.SCTK_flag == True:
+                qe.write("  lshift_q = .true.                            \n") # 移动q网格以避免Γ点的奇点。SCTK软件要求用四面体方法计算声子，这个是必须加的。
+                qe.write("  nk1={},nk2={},nk3={},                        \n".format(self.qe_inputpara.kpoints_sparse[0], self.qe_inputpara.kpoints_sparse[1], self.qe_inputpara.kpoints_sparse[2]))                 
             qe.write("  nq1={},nq2={},nq3={},                            \n".format(self.qe_inputpara.qpoints[0], self.qe_inputpara.qpoints[1], self.qe_inputpara.qpoints[2]))                 
             qe.write("/                                                  \n")
         return inputfilename
     
+    def write_epmat_no_split_in(self, work_directory:Path):
+        inputfilename = "epmat_no_split_in.in"
+        epmat_in = work_directory.joinpath(inputfilename)
+        with open(epmat_in, "w") as qe:
+            qe.write("Electron-phonon matrix                             \n")
+            qe.write("&INPUTPH                                           \n")
+            qe.write("  prefix='{}',                                     \n".format(self.qe_inputpara.system_name))
+            qe.write("  outdir='./tmp',                                  \n")               
+            qe.write("  fildvscf='dvscf',                                \n")
+            qe.write("  electron_phonon = 'scdft_input'                  \n")
+            qe.write("  lshift_q = .true.                                \n") # 移动q网格以避免Γ点的奇点。SCTK软件要求用四面体方法计算声子，这个是必须加的。
+            qe.write("  ldisp = .true.                                   \n")
+            qe.write("  elph_nbnd_min = {}                               \n".format(self.qe_inputpara.elph_nbnd_min))
+            qe.write("  elph_nbnd_max = {}                               \n".format(self.qe_inputpara.elph_nbnd_max))
+            qe.write("  search_sym = {}                                  \n".format(self.qe_inputpara.search_sym))  # 如果是SCTK计算，最好用.false.         
+            qe.write("  nq1={},nq2={},nq3={},                            \n".format(self.qe_inputpara.qpoints[0], self.qe_inputpara.qpoints[1], self.qe_inputpara.qpoints[2]))                 
+            qe.write("  nk1={},nk2={},nk3={},                            \n".format(self.qe_inputpara.qpoints[0], self.qe_inputpara.qpoints[1], self.qe_inputpara.qpoints[2]))                 
+            qe.write("/                                                  \n")
+        return inputfilename
+
     def write_dyn0(self, work_directory:Path):
         inputfilename = self.qe_inputpara.system_name+".dyn0"
         dyn0_path = work_directory.joinpath(inputfilename)
@@ -416,9 +452,11 @@ class qe_writeinput:
             qe.write("  prefix='{}',                                     \n".format(self.qe_inputpara.system_name))                
             # qe.write("  fildvscf='{}.dv',                                \n".format(self.qe_inputpara.system_name))                     
             qe.write("  fildvscf='dvscf',                                \n")
-            qe.write("  electron_phonon='{}',                            \n".format(self.qe_inputpara.electron_phonon))                              
-            qe.write("  el_ph_sigma={},                                  \n".format(str(self.qe_inputpara.el_ph_sigma)))                
-            qe.write("  el_ph_nsigma={},                                 \n".format(str(self.qe_inputpara.el_ph_nsigma)))
+            if self.qe_inputpara.EPC_flag == True:
+                qe.write("  electron_phonon='{}',                            \n".format(self.qe_inputpara.electron_phonon))                              
+                qe.write("  el_ph_sigma={},                                  \n".format(str(self.qe_inputpara.el_ph_sigma)))                
+                qe.write("  el_ph_nsigma={},                                 \n".format(str(self.qe_inputpara.el_ph_nsigma)))
+                qe.write("  trans=.true.,                                    \n")            
             qe.write("  alpha_mix(1)={},                                 \n".format(str(self.qe_inputpara.alpha_mix)))  # 可以修改的更小一些, 如果用vasp计算声子谱稳定, 可以修改为0.3
             for i, species_name in enumerate(self.qe_inputpara.composition.keys()):
                 element      = Element(species_name)
@@ -426,8 +464,11 @@ class qe_writeinput:
                 qe.write("  amass({})={},                                \n".format(i+1, species_mass))             
             qe.write("  outdir='./tmp',                                  \n")               
             qe.write("  fildyn='{}.dyn',                                 \n".format(self.qe_inputpara.system_name))                    
-            qe.write("  trans=.true.,                                    \n")            
-            qe.write("  ldisp=.false.,                                   \n")            
+            qe.write("  ldisp=.false.,                                   \n")
+            qe.write("  search_sym = {}                                  \n".format(self.qe_inputpara.search_sym))  # 如果是SCTK计算，最好用.false.         
+            if self.qe_inputpara.SCTK_flag == True:
+                qe.write("  lshift_q = .true.                            \n") # 移动q网格以避免Γ点的奇点。SCTK软件要求用四面体方法计算声子，这个是必须加的。
+                qe.write("  nk1={},nk2={},nk3={},                        \n".format(self.qe_inputpara.kpoints_sparse[0], self.qe_inputpara.kpoints_sparse[1], self.qe_inputpara.kpoints_sparse[2]))                 
             qe.write("/                                                  \n")
             qe.write(" {:<30} {:<30} {:<30}                              \n".format(q3[0], q3[1], q3[2]))
         return inputfilename
@@ -442,22 +483,27 @@ class qe_writeinput:
             qe.write("  tr2_ph={},                                       \n".format(str(self.qe_inputpara.tr2_ph)))              
             qe.write("  prefix='{}',                                     \n".format(self.qe_inputpara.system_name))                
             # qe.write("  fildvscf='{}.dv',                                \n".format(self.qe_inputpara.system_name))  
-            qe.write("  fildvscf='dvscf',                                \n")                  
-            qe.write("  electron_phonon='{}',                            \n".format(self.qe_inputpara.electron_phonon))                              
-            qe.write("  el_ph_sigma={},                                  \n".format(str(self.qe_inputpara.el_ph_sigma)))                
-            qe.write("  el_ph_nsigma={},                                 \n".format(str(self.qe_inputpara.el_ph_nsigma)))
-            qe.write("  alpha_mix(1)={},                                 \n".format(str(self.qe_inputpara.alpha_mix)))  # 可以修改的更小一些, 如果用vasp计算声子谱稳定, 可以修改为0.3
+            qe.write("  fildvscf='dvscf',                                \n")
+            if self.qe_inputpara.EPC_flag == True:                  
+                qe.write("  electron_phonon='{}',                         \n".format(self.qe_inputpara.electron_phonon))                              
+                qe.write("  el_ph_sigma={},                               \n".format(str(self.qe_inputpara.el_ph_sigma)))                
+                qe.write("  el_ph_nsigma={},                              \n".format(str(self.qe_inputpara.el_ph_nsigma)))
+                qe.write("  trans=.true.,                                 \n")   # If .false. the phonons are not computed.         
+            qe.write("  alpha_mix(1)={},                                  \n".format(str(self.qe_inputpara.alpha_mix)))  # 可以修改的更小一些, 如果用vasp计算声子谱稳定, 可以修改为0.3
             for i, species_name in enumerate(self.qe_inputpara.composition.keys()):
                 element      = Element(species_name)
                 species_mass = str(element.atomic_mass).strip("amu")
                 qe.write("  amass({})={},                                \n".format(i+1, species_mass))             
-            qe.write("  outdir='./tmp',                                 \n")               
+            qe.write("  outdir='./tmp',                                  \n")               
             qe.write("  fildyn='{}.dyn',                                 \n".format(self.qe_inputpara.system_name))                    
-            qe.write("  trans=.true.,                                    \n")            
             qe.write("  ldisp=.true.,                                    \n")
             qe.write("  nq1={},nq2={},nq3={},                            \n".format(self.qe_inputpara.qpoints[0], self.qe_inputpara.qpoints[1], self.qe_inputpara.qpoints[2]))                 
             qe.write("  start_q={}                                       \n".format(start_q)) 
-            qe.write("  last_q={}                                        \n".format(last_q)) 
+            qe.write("  last_q={}                                        \n".format(last_q))
+            qe.write("  search_sym = {}                                  \n".format(self.qe_inputpara.search_sym))  # 如果是SCTK计算，最好用.false.         
+            if self.qe_inputpara.SCTK_flag == True:
+                qe.write("  lshift_q = .true.                            \n") # 移动q网格以避免Γ点的奇点。SCTK软件要求用四面体方法计算声子，这个是必须加的。
+                qe.write("  nk1={},nk2={},nk3={},                        \n".format(self.qe_inputpara.kpoints_sparse[0], self.qe_inputpara.kpoints_sparse[1], self.qe_inputpara.kpoints_sparse[2]))                 
             qe.write("/                                                  \n")
         return inputfilename
 
@@ -469,8 +515,11 @@ class qe_writeinput:
             qe.write("  la2F = .true.,            \n")                       
             qe.write("  zasr = 'simple',          \n")                         
             qe.write("  fildyn = '{}.dyn'         \n".format(self.qe_inputpara.system_name))                               
-            qe.write("  flfrc = '{}.fc',          \n".format(self.qe_inputpara.system_name))  
-            qe.write("  el_ph_nsigma={},          \n".format(str(self.qe_inputpara.el_ph_nsigma)))
+            qe.write("  flfrc = '{}.fc',          \n".format(self.qe_inputpara.system_name))
+            if self.qe_inputpara.EPC_flag == True:                    
+                qe.write("  el_ph_nsigma={},      \n".format(str(self.qe_inputpara.el_ph_nsigma)))
+            if self.qe_inputpara.SCTK_flag == True:
+                qe.write("  lshift_q = .true.     \n") # 移动q网格以避免Γ点的奇点。SCTK软件要求用四面体方法计算声子，这个是必须加的。
             qe.write("/                           \n")        
         return inputfilename
 
@@ -492,7 +541,10 @@ class qe_writeinput:
             qe.write(" dos=.false.,                                     \n")                     
             qe.write(" q_in_band_form=.true.,                           \n")                                 
             qe.write(" q_in_cryst_coord=.true.,                         \n")
-            qe.write(" el_ph_nsigma={},                                 \n".format(str(self.qe_inputpara.el_ph_nsigma)))
+            if self.qe_inputpara.EPC_flag == True:                  
+                qe.write(" el_ph_nsigma={},                                 \n".format(str(self.qe_inputpara.el_ph_nsigma)))
+            if self.qe_inputpara.SCTK_flag == True:
+                qe.write("  lshift_q = .true.                            \n") # 移动q网格以避免Γ点的奇点。SCTK软件要求用四面体方法计算声子，这个是必须加的。
             qe.write("/                                                  \n")          
             qe.write("{}                                                 \n".format(special_qpoints_number))            
             for name, coord in self.qe_inputpara.path_name_coords:
