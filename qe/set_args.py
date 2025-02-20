@@ -212,6 +212,17 @@ def set_more_args(parser: ArgumentParser):
         help="输入更多关于epw的参数\n"
     )
     parser_epw.set_defaults(qe_workflow=qe_epw)
-
+    
+    # SCTK计算
+    parser_sctk = subparsers.add_parser("sctk", formatter_class=RawTextHelpFormatter)
+    parser_sctk.add_argument(
+        '-m',
+        '--more-argments-about-sctk',
+        type=str,
+        dest='more_args',
+        nargs='+',
+        help="输入更多关于sctk的参数\n"
+    )
+    parser_sctk.set_defaults(qe_workflow=qe_sctk)
     args = parser.parse_args()
     return args

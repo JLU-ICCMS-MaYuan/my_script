@@ -67,13 +67,13 @@ class qe_writesubmit:
         if mode==None:
             mode=self.qe_inputpara.mode
 
-        if mode == "relax-vc":
+        if mode =="relax-vc":
             jobname = self.s1_relax(self.qe_inputpara.work_path, inpufilename)
             return jobname
-        if mode == "scffit":
+        if mode =="scffit":
             jobname = self.s2_scffit(self.qe_inputpara.work_path, inpufilename)
             return jobname
-        if mode == "scf":
+        if mode =="scf":
             jobname = self.s3_scf(self.qe_inputpara.work_path, inpufilename)
             return jobname
         if mode =="prepareall":
@@ -123,7 +123,7 @@ class qe_writesubmit:
         if mode =="elebanddata":
             jobname = self.s8_elebanddata(self.qe_inputpara.work_path, inpufilename)
             return jobname
-        if mode == "phonodos":
+        if mode =="phonodos":
             jobname = self.s8_phonodos(self.qe_inputpara.work_path, inpufilename)
             return jobname
         if mode =="McAD":
@@ -134,6 +134,15 @@ class qe_writesubmit:
             return jobname
         if mode =="nscf":
             jobname = self.s10_nscf(self.qe_inputpara.work_path, inpufilename)
+            return jobname
+        if mode =="twin":
+            jobname = self.s12_twin(self.qe_inputpara.work_path, inpufilename)
+            return jobname
+        if mode =="coulomp":
+            jobname = self.s13_coulomp(self.qe_inputpara.work_path, inpufilename)
+            return jobname
+        if mode =="sctk":
+            jobname = self.s14_sctk(self.qe_inputpara.work_path, inpufilename)
             return jobname
         if mode =="eleproperties":
             jobname = self.s11_eleproperties(self.qe_inputpara.work_path, inpufilename)
@@ -394,6 +403,36 @@ class qe_writesubmit:
             j.writelines("cp {}    tmp/{}.save/    \n".format(Path(self.qe_inputpara.charge_density_dat).absolute(), self.qe_inputpara.system_name))
             j.writelines("cp {}    tmp/{}.save/    \n".format(Path(self.qe_inputpara.data_file_schema_xml).absolute(), self.qe_inputpara.system_name))
             j.write('{} {}/pw.x  -npool {} <{}> {}  \n'.format(self.qe_inputpara.execmd, qebin_path, self.qe_inputpara.npool, _inpufilename, _outputfilename))
+        return jobname
+
+    def s12_twin(self, _dirpath, inputfilename):
+        _inpufilename = inputfilename
+        _outputfilename = _inpufilename.split(".")[0] + ".out"
+        jobname = "s12_twin.sh"
+        _script_filepath = os.path.join(_dirpath, jobname)
+        with open(_script_filepath, "w") as j:
+            j.writelines(self.jobtitle)
+            j.write('{} {}/pw.x  -npool {} <{}> {}  \n'.format(self.qe_inputpara.execmd, qebin_path, self.qe_inputpara.npool, _inpufilename, _outputfilename))
+        return jobname
+
+    def s13_coulomp(self, _dirpath, inputfilename):
+        _inpufilename = inputfilename
+        _outputfilename = _inpufilename.split(".")[0] + ".out"
+        jobname = "s13_coulomp.sh"
+        _script_filepath = os.path.join(_dirpath, jobname)
+        with open(_script_filepath, "w") as j:
+            j.writelines(self.jobtitle)
+            j.write('{} {}/sctk.x  -npool {} <{}> {}  \n'.format(self.qe_inputpara.execmd, qebin_path, self.qe_inputpara.npool, _inpufilename, _outputfilename))
+        return jobname
+
+    def s14_sctk(self, _dirpath, inputfilename):
+        _inpufilename = inputfilename
+        _outputfilename = _inpufilename.split(".")[0] + ".out"
+        jobname = "s14_sctk.sh"
+        _script_filepath = os.path.join(_dirpath, jobname)
+        with open(_script_filepath, "w") as j:
+            j.writelines(self.jobtitle)
+            j.write('{} {}/sctk.x  -npool {} <{}> {}  \n'.format(self.qe_inputpara.execmd, qebin_path, self.qe_inputpara.npool, _inpufilename, _outputfilename))
         return jobname
 
     def s11_eleproperties(self, _dirpath, inputfilenames):

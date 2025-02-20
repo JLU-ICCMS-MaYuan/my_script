@@ -48,9 +48,9 @@ class qe_base:
         self.submit_job_system = submit_job_system
         self.input_file_path   = Path(input_file_path)
 
-        if ("relax.out" in self.input_file_path.name) or ("scf.out" in self.input_file_path.name) or ("scffit.out" in self.input_file_path.name):
-            self.work_path = Path(self.input_file_path).parent
-        elif self.work_path is None:
+        # if ("relax.out" in self.input_file_path.name) or ("scf.out" in self.input_file_path.name) or ("scffit.out" in self.input_file_path.name):
+            # self.work_path = Path(self.input_file_path).parent
+        if self.work_path is None:
             self.work_path = Path.cwd()
         else:
             self.work_path = Path(self.work_path)

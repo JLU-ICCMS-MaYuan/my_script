@@ -11,7 +11,8 @@ class qe_logging:
         console_handler.setLevel(logging_level)  # 设置处理器的日志级别
 
         # 设置日志格式
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        # formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        formatter = logging.Formatter('%(levelname)s-[%(filename)s:%(lineno)d]: %(message)s')
         console_handler.setFormatter(formatter)
 
         # 添加处理器到根日志记录器

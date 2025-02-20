@@ -38,6 +38,12 @@ class qe_writeinput:
         if mode == "nscf":
             inputfilename = self.write_nscf_in(self.qe_inputpara.work_path)
             return inputfilename
+        if mode == "twin":
+            inputfilename = self.write_twin_in(self.qe_inputpara.work_path)
+            return inputfilename
+        if mode == "coulomp":
+            inputfilename = self.write_coulomp_in(self.qe_inputpara.work_path)
+            return inputfilename
         if mode == "nosplit":
             inputfilename = self.write_ph_no_split_in(self.qe_inputpara.work_path)
             return inputfilename
@@ -210,7 +216,7 @@ class qe_writeinput:
             qe.write(" ecutrho = {},                   \n".format(self.qe_inputpara.ecutrho))
             qe.write(" lspinorb = .{}.,                \n".format(self.qe_inputpara.lspinorb))
             qe.write(" noncolin = .{}.,                \n".format(self.qe_inputpara.noncolin))
-            qe.write(" la2F = .{}.,                    \n".format(self.qe_inputpara.la2F))
+            qe.write(" la2F = {},                      \n".format(self.qe_inputpara.la2F))
             if self.qe_inputpara.nbnd is not None:
                 qe.write(" nbnd = {},                \n".format(self.qe_inputpara.nbnd))
             qe.write("/\n")
@@ -335,6 +341,7 @@ class qe_writeinput:
                 qe.write(" occupations = '{}',         \n".format(self.qe_inputpara.occupations)) 
             qe.write(" ecutwfc = {},                   \n".format(self.qe_inputpara.ecutwfc))
             qe.write(" ecutrho = {},                   \n".format(self.qe_inputpara.ecutrho))
+            qe.write(" la2F = {},                      \n".format(self.qe_inputpara.la2F))
             qe.write(" lspinorb = .{}.,                \n".format(self.qe_inputpara.lspinorb))
             qe.write(" noncolin = .{}.,                \n".format(self.qe_inputpara.noncolin))
             if self.qe_inputpara.nbnd is not None:
@@ -376,6 +383,105 @@ class qe_writeinput:
                     qe.write(" {}    \n".format(kinfo))
         return inputfilename
 
+    def write_twin_in(self, work_directory:Path):
+        inputfilename = "twin.in"
+        twin_in = work_directory.joinpath(inputfilename)
+        with open(twin_in, "w") as qe:
+            qe.write("&CONTROL\n")
+            qe.write(" calculation='bands',             \n")
+            qe.write(" prefix='{}',                    \n".format(self.qe_inputpara.system_name))
+            qe.write(" pseudo_dir='{}',                \n".format(str(self.qe_inputpara.workpath_pppath.absolute())))
+            qe.write(" verbosity = 'high',             \n")  
+            qe.write(" outdir='./tmp',                 \n")
+            qe.write(" etot_conv_thr = {},             \n".format(self.qe_inputpara.etot_conv_thr))
+            qe.write("/\n")
+
+            qe.write("&SYSTEM\n")
+            qe.write(" ibrav=0,                        \n")  # 设置ibrav=0，这时需要在输入文件中写入CELL_PARAMETERS，即CELL的基矢量. alat bohr angstrom alat 由 celldm(1)或A定义的晶格常数单位
+            qe.write(" nat={},                         \n".format(self.qe_inputpara.all_atoms_quantity))
+            qe.write(" ntyp={},                        \n".format(self.qe_inputpara.species_quantity))
+            qe.write(" ecutwfc = {},                   \n".format(self.qe_inputpara.ecutwfc))
+            qe.write(" ecutrho = {},                   \n".format(self.qe_inputpara.ecutrho))
+            if self.qe_inputpara.nbnd is not None:
+                qe.write(" nbnd = {},                \n".format(self.qe_inputpara.nbnd))
+            qe.write("/\n")
+
+            qe.write("&ELECTRONS\n")
+            qe.write("/\n")
+
+            qe.write("ATOMIC_SPECIES                   \n")
+            for species_name in self.qe_inputpara.composition.keys():
+                species_pseudo = get_pps_for_a_element(species_name, self.qe_inputpara.final_choosed_pp)
+                if len(species_pseudo)==1:
+                    print(f"write USPP for species in relax.in: {species_pseudo[0]}") 
+                    element      = Element(species_name)
+                    species_mass = str(element.atomic_mass).strip("amu")
+                    qe.write(" {:<5}  {:<10}  {:<50} \n".format(species_name, species_mass, species_pseudo[0]))
+                else:
+                    print("\nNote: --------------------")
+                    print("    When write pseudo-potentional information, something wrong. Maybe methdo `get_pps_for_a_element` is problematic !")
+                    sys.exit(1)
+            qe.write("CELL_PARAMETERS {angstrom}        \n")  # 如果选择angstrom单未，原子坐标选择分数坐标，即，ATOMIC_POSITIONS (crystal), 且不设置celldm(1). 这时alat和celldm(1)设置成v1的长度
+            for cell_p in self.qe_inputpara.cell_parameters:
+                qe.write("{}\n".format(cell_p))
+            qe.write("ATOMIC_POSITIONS (crystal)       \n")
+            for site in self.qe_inputpara.fractional_sites:
+                qe.write("{}\n".format(site))
+            if self.qe_inputpara.k_automatic:
+                qe.write("K_POINTS {automatic}             \n")
+                qe.write(" {} {} {} 0 0 0                  \n".format(self.qe_inputpara.kpoints_dense[0], self.qe_inputpara.kpoints_dense[1], self.qe_inputpara.kpoints_dense[2]))
+            else:
+                qe.write("K_POINTS crystal                 \n")
+                qe.write("{}\n".format(self.qe_inputpara.totpts_for_Twin))
+                for kinfo in self.qe_inputpara.kpoints_coords_for_Twin:
+                    qe.write(" {}    \n".format(kinfo))
+        return inputfilename
+
+    def write_coulomp_in(self, work_directory:Path):
+        inputfilename = "coulomp.in"
+        coulomp_in = work_directory.joinpath(inputfilename)
+        with open(coulomp_in, "w") as qe:
+            qe.write("&CONTROL\n")
+            qe.write(" calculation='kel'            \n")
+            qe.write(" prefix='{}',                 \n".format(self.qe_inputpara.system_name))                
+            qe.write(" outdir='./tmp',              \n")               
+            qe.write("/\n")
+            qe.write("&Kel                          \n")
+            qe.write(" nci=5                        \n")   
+            qe.write(" laddxc=0                     \n")      
+            qe.write(" lsf=1                        \n")   
+            qe.write(" ecutfock=70.0                \n")
+            qe.write(" nq1={}                       \n".format(self.qe_inputpara.kpoints_dense[0]))
+            qe.write(" nq2={}                       \n".format(self.qe_inputpara.kpoints_dense[1]))
+            qe.write(" nq3={}                       \n".format(self.qe_inputpara.kpoints_dense[2]))
+            qe.write("/\n")
+        return inputfilename
+    
+    def write_sctk_in(self, work_directory:Path):
+        inputfilename = "sctk.in"
+        sctk_in = work_directory.joinpath(inputfilename)
+        with open(sctk_in, "w") as qe:
+            qe.write("&CONTROL\n")
+            qe.write(" calculation='scdft_tc',      \n")
+            qe.write(" prefix='{}',                 \n".format(self.qe_inputpara.system_name))                
+            qe.write(" outdir='./tmp',              \n")               
+            qe.write("/\n")
+            qe.write("SCDFT\n")
+            qe.write(" temp = -0.1                  \n")   
+            qe.write(" fbee = 1                     \n")
+            qe.write(" lbee = 15                    \n") 
+            qe.write(" xic = -1.0                   \n")  
+            qe.write(" nmf = 10                     \n")
+            qe.write(" nx = 100                     \n")
+            qe.write(" ne = 50                      \n")
+            qe.write(" emin = 1.0e-7                \n")     
+            qe.write(" emax = 5.0                   \n")  
+            qe.write(" electron_maxstep = 100       \n")              
+            qe.write(" conv_thr = 1.0e-15           \n")          
+            qe.write(" spin_fluc =.true.            \n")  
+            qe.write("/\n")      
+        return inputfilename
+    
     # not split mode
     def write_ph_no_split_in(self, work_directory:Path):
         inputfilename = "ph_no_split.in"
@@ -536,7 +642,7 @@ class qe_writeinput:
         q2r_in = work_directory.joinpath(inputfilename)
         with open(q2r_in, "w") as qe:
             qe.write("&input                      \n")             
-            qe.write("  la2F = .true.,            \n")                       
+            qe.write("  la2F = {},                \n".format(self.qe_inputpara.la2F))
             qe.write("  zasr = 'simple',          \n")                         
             qe.write("  fildyn = '{}.dyn'         \n".format(self.qe_inputpara.system_name))                               
             qe.write("  flfrc = '{}.fc',          \n".format(self.qe_inputpara.system_name))
@@ -561,7 +667,7 @@ class qe_writeinput:
                 qe.write(" amass({})={},                                 \n".format(i+1, species_mass))                                   
             qe.write(" flfrc = '{}.fc',                                 \n".format(self.qe_inputpara.system_name))                              
             qe.write(" flfrq='{}.freq',                                 \n".format(self.qe_inputpara.system_name))                              
-            qe.write(" la2F=.true.,                                     \n")                     
+            qe.write(" la2F = {},                                       \n".format(self.qe_inputpara.la2F))
             qe.write(" dos=.false.,                                     \n")                     
             qe.write(" q_in_band_form=.true.,                           \n")                                 
             qe.write(" q_in_cryst_coord=.true.,                         \n")
@@ -701,7 +807,7 @@ class qe_writeinput:
                 qe.write("   amass({})={},                               \n".format(i+1, species_mass))                                    
             qe.write("   flfrc = '{}.fc',         \n".format(self.qe_inputpara.system_name))
             qe.write("   flfrq = '{}.freq',       \n".format(self.qe_inputpara.system_name))                                         
-            qe.write("   la2F = .true.,           \n")                                
+            qe.write("   la2F = {},               \n".format(self.qe_inputpara.la2F))
             qe.write("   dos = .true.,            \n")  # 计算声子态密度,dos必须设置为.true.                           
             qe.write("   fldos = '{}.dos',        \n".format(self.qe_inputpara.system_name+"_phono"))                                       
             qe.write("   nk1={}, nk2={}, nk3={},  \n".format(self.qe_inputpara.qpoints[0], self.qe_inputpara.qpoints[1], self.qe_inputpara.qpoints[2]))  # 计算态密度时要用更密的q点网格，这需设置nk1, nk2, nk3

@@ -116,21 +116,17 @@ class qe_phono:
             qpoints_freqs, q_number, freq_number = self.phono_inputpara.get_phono_freq()
             phononwidth = self.phono_inputpara.get_gam_lines(gauss, q_number, freq_number)
             self.phono_inputpara.merge_qp_freq_width(qpoints_freqs, phononwidth)
-            print("\nNote: --------------------")
-            print("    You can use `qp_freq_width.csv` to plot phonon-band")
+            logger.info("You can use `qp_freq_width.csv` to plot phonon-band")
         elif self.phono_inputpara.mode == "phonodosdata":
             self.phono_inputpara.get_phonodos()
-            print("\nNote: --------------------")
-            print("    You can use `phdos_proj2eles.csv` to plot phonon-DOS")
+            logger.info("You can use `phdos_proj2eles.csv` to plot phonon-DOS")
         elif self.phono_inputpara.mode == "gibbsvb":
             self.phono_inputpara.get_gibbs_from_phtdos()
             self.phono_inputpara.get_gibbs_from_freq()
         elif self.phono_inputpara.mode == "hspp":
-            print("\nNote: --------------------")
-            print("    Get hspp from matdyn")
+            logger.info("Get hspp from matdyn")
             self.phono_inputpara.read_hspp_in_matdyn()
-            print("\nNote: --------------------")
-            print("    Get hspp from ASE package")
+            logger.info("Get hspp from ASE package")
             self.phono_inputpara.get_hspp()
         else:
             # init the input
@@ -149,10 +145,9 @@ class qe_phono:
                 elif self.phono_inputpara.mode == "split_dyn0" or self.phono_inputpara.mode == "split_assignQ":
                     self.qe_submitjob.submit_mode3(inputfilename, jobnames)
                 else:
-                    print("\nNote: --------------------")
-                    print("    If mode=matdyn, please remerber process phono spectrum after finish matdyn.x computation")
-                    print("    The reason is `systemname`.freq, `systemname`.freq.gq and gam.lines will be rewrited when you calcuate phonodos")
-                    print("    In most cases, the number of q-points is different between matdyn.in(high symmetry path qpoints sample) and phonondos.in(even qpoints sample)")
+                    logger.debug("If mode=matdyn, please remerber process phono spectrum after finish matdyn.x computation")
+                    logger.debug("The reason is `systemname`.freq, `systemname`.freq.gq and gam.lines will be rewrited when you calcuate phonodos")
+                    logger.debug("In most cases, the number of q-points is different between matdyn.in(high symmetry path qpoints sample) and phonondos.in(even qpoints sample)")
                     self.qe_submitjob.submit_mode1(inputfilename, jobnames)
         
 
@@ -171,17 +166,15 @@ class qe_eletron:
             eV_To_Ry = 0.0734986443513116
             ef_scffit,  ef_scf  = self.get_fermi_energy()
             nef_scffit, nef_scf = self.get_Nef(ef_scffit, ef_scf)
-            print("\nNote: --------------------")
-            print("    fermi_energy = {:<8.4f} eV in scffit.out, N(Ef) = {:<8.4f} states/eV/(Unit Cell) = {:<10.6f} states/spin/Ry/(Unit Cell)".format(ef_scffit, nef_scffit, nef_scffit/2/eV_To_Ry))
-            print("    fermi_energy = {:<8.4f} eV in scf.out,    N(Ef) = {:<8.4f} states/eV/(Unit Cell) = {:<10.6f} states/spin/Ry/(Unit Cell)".format(ef_scf, nef_scf, nef_scf/2/eV_To_Ry))
+            logger.info("    fermi_energy = {:<8.4f} eV in scffit.out, N(Ef) = {:<8.4f} states/eV/(Unit Cell) = {:<10.6f} states/spin/Ry/(Unit Cell)".format(ef_scffit, nef_scffit, nef_scffit/2/eV_To_Ry))
+            logger.info("    fermi_energy = {:<8.4f} eV in scf.out,    N(Ef) = {:<8.4f} states/eV/(Unit Cell) = {:<10.6f} states/spin/Ry/(Unit Cell)".format(ef_scf, nef_scf, nef_scf/2/eV_To_Ry))
         elif self.eletron_inputpara.mode == "elebanddata": 
             self.qe_writeinput = qe_writeinput(self.eletron_inputpara)
             self.qe_writesubmit = qe_writesubmit(self.eletron_inputpara)
             self.qe_submitjob  = qe_submitjob(self.eletron_inputpara)
-            print("\nNote: --------------------")
-            print("    !!!!!!!!!! Remember to run pw.x to get eleband.out before you run bands.x") 
-            print("    Run bands.x to get eleband.dat and  eleband.dat.gnu")
-            print("    eleband.dat.gnu can be used in origin to plot-eletronband")
+            logger.debug("    !!!!!!!!!! Remember to run pw.x to get eleband.out before you run bands.x") 
+            logger.debug("    Run bands.x to get eleband.dat and  eleband.dat.gnu")
+            logger.debug("    eleband.dat.gnu can be used in origin to plot-eletronband")
             inputfilename = self.qe_writeinput.writeinput(mode="elebanddata")
             if self.eletron_inputpara.queue is not None:
                 self.qe_submitjob.submit_mode0(inputfilename, dotx_file="bands.x")
@@ -193,9 +186,8 @@ class qe_eletron:
             self.qe_writeinput = qe_writeinput(self.eletron_inputpara)
             self.qe_submitjob  = qe_submitjob(self.eletron_inputpara)
             self.qe_writesubmit = qe_writesubmit(self.eletron_inputpara)
-            print("\nNote: --------------------")
-            print("    !!!!!!!!!! Remember to run pw.x to get nscf.out before you run dos.x and projwfc.x") 
-            print("    Run dos.x to get tdos and and run projwfc.x to get pdos")
+            logger.debug("!!!!!!!!!! Remember to run pw.x to get nscf.out before you run dos.x and projwfc.x") 
+            logger.debug("Run dos.x to get tdos and and run projwfc.x to get pdos")
             inputfilename = self.qe_writeinput.writeinput(mode="eletdos")
             if self.eletron_inputpara.queue is not None:
                 self.qe_submitjob.submit_mode0(inputfilename, dotx_file="dos.x")
@@ -245,8 +237,7 @@ class qe_eletron:
     def get_Nef(self, ef_scffit, ef_scf):
         eletdos_path = self.eletron_inputpara.work_path.joinpath(self.eletron_inputpara.system_name+".tdos")
         if not eletdos_path.exists():
-            print("\nNote: --------------------")
-            print(f"    Sorry, {self.eletron_inputpara.system_name}_phono.dos doesn't exist !")
+            logger.warning(f"Sorry, {self.eletron_inputpara.system_name}_phono.dos doesn't exist !")
             nef_scffit, nef_scf = 0, 0
             return nef_scffit, nef_scf
         else:
@@ -345,7 +336,7 @@ class qe_superconduct:
         self.printinfo(results)
 
     def printinfo(self, results):
-        print("\nNote: --------------------")
+        logger.info("\nNote: --------------------")
         for res in results:
             print(f'    screen_constant = {res["screen_constant"]}')
             print(f'    Converged gaussid = {res["gaussid"]}')
@@ -370,9 +361,9 @@ class qe_superconduct:
                     self.sc_inputpara.work_path.joinpath(file), 
                     self.sc_inputpara.work_path.joinpath(str(mu)+'-'+file)
                     )
-                print(f"    {file} backuping finish")
+                print(f"{file} backuping finish")
             else:
-                print(f"    {file} doesn't exist!")
+                print(f"{file} doesn't exist!")
 
 
 class qe_prepare:
@@ -433,7 +424,8 @@ class qe_epw:
         #  # init the input
         self.epw_writeinput = qe_writeinput(self.epw_inputpara)
         inputfilename = self.epw_writeinput.writeinput()
-        print(inputfilename)
+        logger.info(inputfilename)
+        
         # init the submit job script
         self.qe_writesubmit = qe_writesubmit(self.epw_inputpara)
         jobname = self.qe_writesubmit.write_submit_scripts(inputfilename)
@@ -441,4 +433,28 @@ class qe_epw:
         # submit the job
         self.qe_submitjob = qe_submitjob(self.epw_inputpara)
         if self.epw_inputpara.queue is not None:
+            self.qe_submitjob.submit_mode1(inputfilename, jobname)
+            
+class qe_sctk:
+    
+    def __init__(self, args: ArgumentParser) -> None:
+
+        # read input para
+        self._config = config(args).read_config()
+
+        # prepare input parameter
+        self.sctk_inputpara = qesctk_inputpara.init_from_config(self._config)
+
+        #  # init the input
+        self.sctk_writeinput = qe_writeinput(self.sctk_inputpara)
+        inputfilename = self.sctk_writeinput.writeinput()
+        logger.info(inputfilename)
+        
+        # init the submit job script
+        self.qe_writesubmit = qe_writesubmit(self.sctk_inputpara)
+        jobname = self.qe_writesubmit.write_submit_scripts(inputfilename)
+
+        # submit the job
+        self.qe_submitjob = qe_submitjob(self.sctk_inputpara)
+        if self.sctk_inputpara.queue is not None:
             self.qe_submitjob.submit_mode1(inputfilename, jobname)

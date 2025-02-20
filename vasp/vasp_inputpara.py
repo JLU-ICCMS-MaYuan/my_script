@@ -99,7 +99,7 @@ class vasp_inputpara(vasp_base):
 
         if not hasattr(self, "nbands"):
             self.nbands = None
-            logger.warning("NBANDS had better to specify when you do eletronic properties calculation!!!")
+            logger.warning("NBANDS had better to specify when you do eletronic calculation, espscially for COHP")
             logger.warning("Therefore, the default value will be determined by VASP automatically")
 
         # 关于并行计算的参数
@@ -112,6 +112,8 @@ class vasp_inputpara(vasp_base):
         
         if not hasattr(self, "kpar"):
             self.kpar=None
+            
+        logger.debug(f"ncore = {self.ncore}  npar = {self.npar} kpar = {self.kpar}")
 
         # 关于磁性的参数设置：
         if not hasattr(self, "isym"):

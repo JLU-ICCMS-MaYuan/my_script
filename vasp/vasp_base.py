@@ -63,12 +63,12 @@ class vasp_base:
         self.get_struct_info(self.struct_type, self.work_path)
 
         logger.info("Prepare the directory of `potcar_lib` and merge POTCARs ")
-        logger.info(f"Pick up POTCARs from: \n        {potcar_source_libs}")
+        logger.info(f"Pick up POTCARs from: {potcar_source_libs}")
         self.workpath_pppath = Path(self.work_path).joinpath("potcar_lib")
         if not self.workpath_pppath.exists():
             self.workpath_pppath.mkdir() 
         self.get_potcar(self.work_path)
-        logger.info(f"potcar_lib is in \n {self.workpath_pppath}")
+        logger.info(f"potcar_lib is in {self.workpath_pppath}")
 
 
     def get_struct_info(self, struct, output_poscar):
@@ -195,7 +195,7 @@ class vasp_base:
         if self.work_path.joinpath("POSCAR").exists():
             src_poscar = self.work_path.joinpath("POSCAR") 
             elements = open(src_poscar, "r").readlines()[5].split()
-            print("Merge POTCAR of element {}".format(elements))
+            logger.info("Merge POTCAR of element {}".format(elements))
             src_potcar_path_list = []
             for ele in elements:
                 for pot in final_choosed_potcar:

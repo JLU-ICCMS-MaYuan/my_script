@@ -34,7 +34,6 @@ class qe_inputpara(qe_base):
         for key, value in kwargs.items():
             setattr(self, key, value)
         
-        self.parameters_info = []
         if not hasattr(self, "mode"):
             logger.error("You must specify mode")
             sys.exit(1)
@@ -45,12 +44,12 @@ class qe_inputpara(qe_base):
 
         if not hasattr(self, "npool"):
             self.npool = 1
-            self.parameters_info.append(f'npool = {self.npool}\n')
+            logger.debug(f'npool = {self.npool}\n')
             logger.warning("You must specify npool, when you do SCTK and EPW calculations, you have to make sure npool = np")
 
         if not hasattr(self, "queue"):
             self.queue = None
-            self.parameters_info.append(f'queue = {self.queue}\n')
+            logger.debug(f'queue = {self.queue}\n')
         
 
         # &CONTROL
@@ -83,23 +82,24 @@ class qe_inputpara(qe_base):
         if not hasattr(self, "lspinorb"):
             self.lspinorb = "false"
         else:
-            self.parameters_info.append(f'Please carefully check the bool value of `lspinorb` you just set. \nIts format must be `false` or `true` without capital\n')
+            logger.debug(f'Please carefully check the bool value of `lspinorb` you just set. \nIts format must be `false` or `true` without capital\n')
 
         if self.lspinorb == "true":
             self.noncolin = "true"
-            self.parameters_info.append(f'Because lspinorb = true, so the noncolin=true\n')
+            logger.debug(f'Because lspinorb = true, so the noncolin=true\n')
         elif not hasattr(self, "noncolin"):
             self.noncolin = "false"
-            self.parameters_info.append(f"You didn't set the `noncolin` ! The program will use default value: noncolin=false\n")
+            logger.debug(f"You didn't set the `noncolin` ! The program will use default value: noncolin=false\n")
         else:
-            self.parameters_info.append(f"Please carefully check the bool value of `noncolin` you just set. Its format must be `false` or `true` without capital")
+            logger.debug(f"Please carefully check the bool value of `noncolin` you just set. Its format must be `false` or `true` without capital")
 
         if not hasattr(self, "la2F"):
-            self.la2F = "true"
-            self.parameters_info.append("You didn't set the `la2F` ! The program will use default value: la2F=true. ")
-            self.parameters_info.append("But in relax mode and scf mode, it doesn't exist ! It only exist in scffit mode")
+            self.la2F = ".true."
+            logger.debug("You didn't set the `la2F` ! The SCRIPTS4QE will use default value: la2F = .true. ")
+            logger.debug("if you do nscf for SCTK, you have to set la2F = .true. But other nscf calculation, la2F = .false.")
+            logger.debug("But in relax mode and scf mode, it doesn't exist ! It only exist in scffit mode")
         else:
-            self.parameters_info.append("Please carefully check the bool value of `la2F` you just set. Its format must be `false` or `true` without capital")
+            logger.debug("Please carefully check the bool value of `la2F` you just set. Its format must be `false` or `true` without capital")
 
         # &ELECTRONS
         if not hasattr(self, "diagonalization"):
@@ -116,7 +116,7 @@ class qe_inputpara(qe_base):
         
         if not hasattr(self, "electron_maxstep"):
             self.electron_maxstep = "200"
-            self.parameters_info.append("You didn't set the `electron_maxstep`! The program will use default value: electron_maxstep=200")
+            logger.debug("You didn't set the `electron_maxstep`! The program will use default value: electron_maxstep=200")
 
         if not hasattr(self, "charge_density_dat"):
             self.charge_density_dat = ""
@@ -129,12 +129,12 @@ class qe_inputpara(qe_base):
             self.press_conv_thr = "0.01"
 
         # &kpoints
-        self.parameters_info.append("You have been confirmed that the kpoints_dense, kpoints_sparse, qpoints are all right and consistent with the symmetry")
-        self.parameters_info.append("If you not make sure, you had better run 'vaspkit' or 'kmesh.py' to check it!!!")
-        self.parameters_info.append('The order for vaspkit is:  (xxxx is corresponding to 1/LATTICE_PARA(i)*KPOINTS(i), (i) represents one axis, such as x_axis, y_axis, z_axis)')
-        self.parameters_info.append(r'echo -e "1\n102\n2\nxxxx" | vaspkit')
-        self.parameters_info.append('The order for kmesh.py is:  (xxxx is corresponding to the KSPACING in vasp)')
-        self.parameters_info.append("kmesh.py xxxx")
+        logger.debug("You have been confirmed that the kpoints_dense, kpoints_sparse, qpoints are all right and consistent with the symmetry")
+        logger.debug("If you not make sure, you had better run 'vaspkit' or 'kmesh.py' to check it!!!")
+        logger.debug('The order for vaspkit is:  (xxxx is corresponding to 1/LATTICE_PARA(i)*KPOINTS(i), (i) represents one axis, such as x_axis, y_axis, z_axis)')
+        logger.debug(r'echo -e "1\n102\n2\nxxxx" | vaspkit')
+        logger.debug('The order for kmesh.py is:  (xxxx is corresponding to the KSPACING in vasp)')
+        logger.debug("kmesh.py xxxx")
         # time.sleep(3)
         if hasattr(self, "kpoints_dense"):
             _kpoints_dense = self.kpoints_dense.split()
@@ -157,12 +157,19 @@ class qe_inputpara(qe_base):
             self.k_automatic = True
             self.kpoints_coords = None
             self.totpts = 0
+            self.kpoints_coords_for_Twin = None
+            self.totpts_for_Twin = 0
+            logger.debug("Do not set k_automatic, default k_automatic = True")
         else:
             if eval(self.k_automatic):
-                self.k_automatic = True; self.totpts = 0
+                self.k_automatic = True; self.totpts = 0; self.totpts_for_Twin = 0
+                logger.debug("Set k_automatic = True by custom. Therefore, self.totpts = 0")
             else:
-                self.k_automatic = False;
+                self.k_automatic = False
                 self.kpoints_coords, self.totpts = self.get_kmesh_justlike_kmesh_pl()
+                self.kpoints_coords_for_Twin, self.totpts_for_Twin = self.get_kmesh_justlike_twingrid_x()
+                logger.debug("Set k_automatic = False by custom. Therefore, self.totpts was gotten by program")
+
 
     @classmethod
     def init_from_config(cls, config: dict):
@@ -300,7 +307,49 @@ class qe_inputpara(qe_base):
                         kpoints_coords.append(f"{x/n1:12.8f}{y/n2:12.8f}{z/n3:12.8f}")
         return kpoints_coords, totpts
 
+    def get_kmesh_justlike_twingrid_x(self):
+        # Print the header
+        print("K_POINTS crystal")
+        
+        n1, n2, n3 = self.kpoints_dense
+        totpts = n1 * n2 * n3 * 2
 
+        kpoints_coords = []
+        # First loop (original points)
+        for i1 in range(n1):
+            kv1 = i1 / n1
+            if (i1 * 2) >= n1:
+                kv1 -= 1.0
+            for i2 in range(n2):
+                kv2 = i2 / n2
+                if (i2 * 2) >= n2:
+                    kv2 -= 1.0
+                for i3 in range(n3):
+                    kv3 = i3 / n3
+                    if (i3 * 2) >= n3:
+                        kv3 -= 1.0
+                    # print(f"{kv1:20.15f} {kv2:20.15f} {kv3:20.15f}   1.0")
+                    kpoints_coords.append(f"{kv1:20.15f} {kv2:20.15f} {kv3:20.15f}   1.0")
+
+        # Second loop (special k-points)
+        for i1 in range(n1):
+            kv1 = (2 * i1 + 1) / (2 * n1)
+            if (i1 * 2 + 1) >= n1:
+                kv1 -= 1.0
+            for i2 in range(n2):
+                kv2 = (2 * i2 + 1) / (2 * n2)
+                if (i2 * 2 + 1) >= n2:
+                    kv2 -= 1.0
+                for i3 in range(n3):
+                    kv3 = (2 * i3 + 1) / (2 * n3)
+                    if (i3 * 2 + 1) >= n3:
+                        kv3 -= 1.0
+                    # print(f"{kv1:20.15f} {kv2:20.15f} {kv3:20.15f}   1.0")
+                    kpoints_coords.append(f"{kv1:20.15f} {kv2:20.15f} {kv3:20.15f}   1.0")
+                    
+        return kpoints_coords, totpts
+    
+    
 class qephono_inputpara(qe_inputpara):
 
     def __init__(
@@ -1375,8 +1424,6 @@ class qeepw_inputpara(qe_base):
         for key, value in kwargs.items():
             setattr(self, key, value)
 
-        self.parameters_info = []
-
         if not hasattr(self, "mode"):
             logger.debug("You must specify mode")
             sys.exit(1)
@@ -1387,12 +1434,12 @@ class qeepw_inputpara(qe_base):
 
         if not hasattr(self, "npool"):
             self.npool = 1
-            self.parameters_info.append(f'npool = {self.npool}\n')
+            logger.debug(f'npool = {self.npool}\n')
         logger.debug("You must guarantee that `npool` equal `cores, namly, -np`")
 
         if not hasattr(self, "queue"):
             self.queue = None
-            self.parameters_info.append(f'queue = {self.queue}\n')
+            logger.debug(f'queue = {self.queue}\n')
         
         self.path_name_coords_for_EPW = self.get_hspp_for_EPW()
 
@@ -1411,13 +1458,13 @@ class qeepw_inputpara(qe_base):
             logger.error(f"You must specify nbndsub!")
             sys.exit(1)
         else:
-            self.parameters_info.append(f'nbndsub = {self.nbndsub}\n')
+            logger.debug(f'nbndsub = {self.nbndsub}\n')
 
         if not hasattr(self, "bands_skipped"):
             logger.error(f"You must specify bands_skipped!")
             sys.exit(1)
         else:
-            self.parameters_info.append(f'bands_skipped = {self.bands_skipped}\n')
+            logger.debug(f'bands_skipped = {self.bands_skipped}\n')
      
         if not hasattr(self, "num_iter"):
             self.num_iter = 500
@@ -1426,13 +1473,13 @@ class qeepw_inputpara(qe_base):
             logger.error(f"You must specify dis_froz_min !")
             sys.exit(1)
         else:
-            self.parameters_info.append(f'dis_froz_min = {self.dis_froz_min}\n')
+            logger.debug(f'dis_froz_min = {self.dis_froz_min}\n')
 
         if not hasattr(self, "dis_froz_max"):
             logger.error(f"You must specify dis_froz_max !")
             sys.exit(1)
         else:
-            self.parameters_info.append(f'dis_froz_max = {self.dis_froz_max}\n')
+            logger.debug(f'dis_froz_max = {self.dis_froz_max}\n')
 
         if not hasattr(self, "proj"):
             logger.error(f"You must specify proj! Just like: proj='Nb:d  H:s'  (Attention: No space before or after the equal sign)")
@@ -1440,7 +1487,7 @@ class qeepw_inputpara(qe_base):
         else:
             self.proj = self.proj.split()
             for idx, pj in enumerate(self.proj):
-                self.parameters_info.append(f'proj({idx+1}) = {pj}\n')
+                logger.debug(f'proj({idx+1}) = {pj}\n')
 
 
     @classmethod
@@ -1527,3 +1574,45 @@ class qeepw_inputpara(qe_base):
             path_name_coords_for_EPW.append(hsppinfo)
 
         return path_name_coords_for_EPW 
+
+
+class qesctk_inputpara(qe_base):
+    def __init__(
+    self,
+    work_path: str,
+    press: int,
+    submit_job_system: str,
+    input_file_path: str,
+    **kwargs: dict,
+    ):
+        super(qesctk_inputpara, self).__init__(
+            work_path,
+            press,
+            submit_job_system,
+            input_file_path
+        )
+        logger.info("run `SCTK`")
+        
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+            
+        if not hasattr(self, "mode"):
+            logger.debug("You must specify mode")
+            sys.exit(1)
+            
+    @classmethod
+    def init_from_config(cls, config: dict):
+
+        work_path         = config['work_path']            ; del config['work_path']
+        press             = config['press']                ; del config['press']
+        submit_job_system = config['submit_job_system']    ; del config['submit_job_system']
+        input_file_path   = config['input_file_path']      ; del config['input_file_path']
+
+        self = cls(
+            work_path=work_path,
+            press=press,
+            submit_job_system=submit_job_system,
+            input_file_path=input_file_path,
+            **config,
+        )
+        return self
