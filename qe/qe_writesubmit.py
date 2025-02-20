@@ -5,7 +5,8 @@ from pathlib import Path
 from qe.qe_inputpara import qe_inputpara
 from qe.qebin import qebin_path, epwbin_path, eliashberg_x_path, bashtitle, slurmtitle, pbstitle, lsftitle
 
-logger = logging.getLogger("qe_writesubmit")
+
+logger = logging.getLogger(__name__)
 
 class qe_writesubmit:
 
@@ -81,9 +82,6 @@ class qe_writesubmit:
             return jobname
         if mode =="nosplit":
             jobname = self.s4_PhNoSplit(self.qe_inputpara.work_path, inpufilename)
-            return jobname
-        if mode == "sctk_epmat":
-            jobname = self.s4_epmatNoSplit(self.qe_inputpara.work_path, inpufilename)
             return jobname
         if mode =="split_dyn0":
             jobnames = []
@@ -251,16 +249,6 @@ class qe_writesubmit:
             j.write('{} {}/ph.x -npool {} <{}> {} \n'.format(self.qe_inputpara.execmd, qebin_path,  self.qe_inputpara.npool, _inpufilename, _outputfilename))
         return jobname
     
-    def s4_epmatNoSplit(self, _dirpath, inputfilename):
-        _inpufilename = inputfilename
-        _outputfilename = _inpufilename.split(".")[0] + ".out"
-        jobname = "s4_epmatNoSplit.sh"
-        _script_filepath = os.path.join(_dirpath, jobname)
-        with open(_script_filepath, "w") as j:
-            j.writelines(self.jobtitle)
-            j.write('{} {}/ph.x -npool {} <{}> {} \n'.format(self.qe_inputpara.execmd, qebin_path,  self.qe_inputpara.npool, _inpufilename, _outputfilename))
-        return jobname
-
     def s5_PhSplitDyn0(self, _dirpath, inputfilename):
         _inputscffit_name, _inputscf_name, _inputsplitph_name = inputfilename
         _outputscffit_name  = _inputscffit_name.split(".")[0] + ".out"

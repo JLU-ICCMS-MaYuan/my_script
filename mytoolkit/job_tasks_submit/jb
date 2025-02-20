@@ -89,6 +89,5 @@ qe_main.py -i relax.out -j bash prepare -m mode=preparescf ecutwfc=80 ecutrho=96
 
 qe_main.py -i relax.out -j bash phono   -m mode=nosplit    dyn0_flag=False EPC_flag=False SCTK_flag=True search_sym=.false. execmd='mpirun -np 8'  qpoints='4 4 4' queue=lhy
 
-qe_main.py -i relax.out -j bash phono   -m mode=sctk_epmat search_sym=.false. elph_nbnd_min=2 elph_nbnd_max=6 execmd='mpirun -np 8' npool=8  qpoints='4 4 4' queue=lhy  
-
+qe_main.py -i relax.out -j bash phono   -m mode=nosplit    dyn0_flag=False EPC_flag=True  SCTK_flag=True search_sym=.false. elph_nbnd_min=2 elph_nbnd_max=6 execmd='mpirun -np 8' npool=8  qpoints='4 4 4' queue=lhy
 "

@@ -1,5 +1,4 @@
 import os
-import time
 from argparse import ArgumentParser
 
 from qe.config import config
@@ -48,7 +47,7 @@ def check_pid_jobid(ids: list, submit_job_system):
 class qe_relax:
 
     def __init__(self, args: ArgumentParser) -> None:
-
+        
         # read input para
         self._config = config(args).read_config()
 

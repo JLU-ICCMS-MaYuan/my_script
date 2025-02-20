@@ -241,6 +241,10 @@ IO_freq.SetupSaving("12_freqs")
 sbatch R7_SubRelax.sh
 ```
 
+<span style="color:lightblue"> 1.11.2.6  在完成迭代计算之后可以用以下脚本来绘制收敛情况的总结图：
+```shell
+sscha-plot-data.py 1_freqs 2_freqs 3_freqs 4_freqs 5_freqs 6_freqs 7_freqs 8_freqs 9_freqs 10_freqs 11_freqs 12_freqs 13_freqs 14_freqs 15_freqs 16_freqs 17_freqs 18_freqs 19_freqs 20_freqs 21_freqs 22_freqs 23_freqs 24_freqs
+```
 
 ## <span style="color:red"> 2. 使用受力收敛的动力学矩阵去计算三阶HESSIAN矩阵
 

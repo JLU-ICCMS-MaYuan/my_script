@@ -1,8 +1,7 @@
 import os
-import io
 import re
 import sys
-import time
+import logging
 import shutil
 from pathlib import Path
 from itertools import chain
@@ -347,9 +346,9 @@ class qephono_inputpara(qe_inputpara):
         if not hasattr(self, "EPC_flag"):
             self.EPC_flag = True
         else:
-            self.EPC_flag = eval(self.dyn0_flag)
+            self.EPC_flag = eval(self.EPC_flag)
 
-        # 针对SCTK计算的参数----------------------------
+        logger.debug("# 针对SCTK计算的参数----------------------------")
         if not hasattr(self, "SCTK_flag"):
             self.SCTK_flag = False
         else:
@@ -379,6 +378,9 @@ class qephono_inputpara(qe_inputpara):
         
         if not hasattr(self, "alpha_mix"):
             self.alpha_mix = "0.3"
+        
+        if not hasattr(self, "trans"):
+            self.trans = ".true."
         
         if not hasattr(self, "dyn0_flag"):
             self.dyn0_flag = False
