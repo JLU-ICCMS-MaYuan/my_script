@@ -12,6 +12,7 @@ import pandas as pd
 
 from qe.qe_base import qe_base
 
+logger = logging.getLogger(__name__)
 
 class qe_inputpara(qe_base):
 
@@ -35,18 +36,17 @@ class qe_inputpara(qe_base):
         
         self.parameters_info = []
         if not hasattr(self, "mode"):
-            print("\nNote: --------------------")
-            print("    You must specify mode")
+            logger.error("You must specify mode")
             sys.exit(1)
 
         if not hasattr(self, "execmd"):
-            print("\nNote: --------------------")
-            print("    You must specify execute command, such as 'mpirun -np 48', 'bash', 'srun', 'srun --mpi=pmi2'")
+            logger.warning("You must specify execute command, such as 'mpirun -np 48', 'bash', 'srun', 'srun --mpi=pmi2'")
             sys.exit(1)
 
         if not hasattr(self, "npool"):
             self.npool = 1
             self.parameters_info.append(f'npool = {self.npool}\n')
+            logger.warning("You must specify npool, when you do SCTK and EPW calculations, you have to make sure npool = np")
 
         if not hasattr(self, "queue"):
             self.queue = None
@@ -190,7 +190,7 @@ class qe_inputpara(qe_base):
 
         # 获得高对称点路径
         _plist  = [[ p for p in pp if not p.isdigit()] for pp in pstring.split(",")]
-        print(f"the high symmetry points path: \n{_plist}")
+        logger.info(f"the high symmetry points path: \n{_plist}")
 
         print(
             "please input the mode you want, just even input Number like 1 or 2\n",
@@ -205,19 +205,19 @@ class qe_inputpara(qe_base):
         try:
             high_symmetry_type = list(map(int, input().split())) #将输入的整数字符串按照空格划分成列表并分别转化为整数类型并再转化为列表
         except:
-            print("what you input is not an integer number, So use the `0:  all_points`")
+            logger.error("what you input is not an integer number, So use the `0:  all_points`")
             high_symmetry_type = [0]
 
         path_name_list = []
         if "," in pstring:
             if 0 in high_symmetry_type:
                 path_name_list = list(chain.from_iterable(_plist))
-                print(f"the choosed high symmetry points path is \n {path_name_list}")
+                logger.info(f"the choosed high symmetry points path is \n {path_name_list}")
             elif 0 not in high_symmetry_type:
                 # path_name_list = max(_plist, key=len)
                 for hst in high_symmetry_type:
                     path_name_list.extend(_plist[hst-1])
-                print(f"the choosed high symmetry points path is \n {path_name_list}")
+                logger.info(f"the choosed high symmetry points path is \n {path_name_list}")
         else:
             path_name_list = [ pp for pp in pstring]
 
@@ -227,20 +227,20 @@ class qe_inputpara(qe_base):
 
 
         # 处理高对称点路径
-        print("Print Fractional Coordinates of Reciprocal Lattice ! ")
+        logger.info("Print Fractional Coordinates of Reciprocal Lattice ! ")
         for name, dirt in path_name_coords:
             print("{:<10.6f} {:<10.6f} {:<10.6f} {:<4}".format(dirt[0], dirt[1], dirt[2], name))
         
         
 
-        print("The reciprocal lattice (without multiplating `unit_reciprocal_axis`)")
+        logger.info("The reciprocal lattice (without multiplating `unit_reciprocal_axis`)")
         for vector in self.reciprocal_plattice:
             print("{:<6.3f} {:<6.3f} {:<6.3f} ".format(vector[0], vector[1], vector[2]))
                 
         
 
-        print("Print projected high symmetry path")
-        print("倒格子的单位是 2pi/alat")
+        logger.info("Print projected high symmetry path")
+        logger.info("倒格子的单位是 2pi/alat")
         #projected_path_name_coords = [[path_name_coords[0][0], path_name_coords[0][1][0]]]
         projected_path_name_coords = [[path_name_coords[0][0], 0]]
         total_dist = 0
@@ -255,8 +255,8 @@ class qe_inputpara(qe_base):
             projected_path_name_coords.append([current_name, total_dist])
         string_names = ' '.join(coord[0] for coord in projected_path_name_coords)
         string_coord = ' '.join(str(np.round(coord[1], 6)) for coord in projected_path_name_coords)
-        print(string_names)
-        print(string_coord)
+        logger.info(string_names)
+        logger.info(string_coord)
         return path_name_coords 
 
 
@@ -319,8 +319,7 @@ class qephono_inputpara(qe_inputpara):
             **kwargs
             )
         
-        print("\nNote: --------------------")
-        print("If you want to run `phono`, you had better set these values!")
+        logger.info("Run `phono`")
         dyn0_names = Path(self.work_path).joinpath(f"{self.system_name}.dyn0")
         if hasattr(self, "qpoints"):
             _qpoints = self.qpoints.split()
@@ -328,17 +327,16 @@ class qephono_inputpara(qe_inputpara):
             self.kpoints_sparse= [kp*2 for kp in self.qpoints]
             self.kpoints_dense = [kp*4 for kp in self.qpoints]
         elif dyn0_names.exists():
-            print("\nNote: --------------------")
-            print(f"    You didn't set the `qpoints` ! The program will qpoints in read {self.system_name}.dyn0 file")
-            print("    If you want to calculate phonodos, you had better set `qpoints`! Its `qpoints` had better be set more densely than `qpoints` in `ph.in`")
-            print("    For example, In ph.in, qpoints='8 8 8', then in phono_dos.in, qpoints='16 16 16' ")
+            logger.debug(f"You didn't set the `qpoints` ! The program will qpoints in read {self.system_name}.dyn0 file")
+            logger.debug("If you want to calculate phonodos, you had better set `qpoints`! Its `qpoints` had better be set more densely than `qpoints` in `ph.in`")
+            logger.debug("For example, In ph.in, qpoints='8 8 8', then in phono_dos.in, qpoints='16 16 16' ")
             self.qpoints = self.get_qpoints(dyn0_path=dyn0_names)
             self.kpoints_sparse= [kp*2 for kp in self.qpoints]
             self.kpoints_dense = [kp*4 for kp in self.qpoints] 
         else:
-            print(f"    You didn't set the `qpoints` ! And The program can't get qpoints in {self.system_name}.dyn0 file")
-            print("    If you want to calculate phonodos, you had better set `qpoints`! Its `qpoints` had better be set more densely than `qpoints` in `ph.in`")
-            print("    For example, In ph.in, qpoints='8 8 8', then in phono_dos.in, qpoints='16 16 16' ")
+            logger.debug(f"You didn't set the `qpoints` ! And The program can't get qpoints in {self.system_name}.dyn0 file")
+            logger.debug("If you want to calculate phonodos, you had better set `qpoints`! Its `qpoints` had better be set more densely than `qpoints` in `ph.in`")
+            logger.debug("For example, In ph.in, qpoints='8 8 8', then in phono_dos.in, qpoints='16 16 16' ")
             self.qpoints = [4,4,4]
             self.kpoints_sparse= [kp*2 for kp in self.qpoints]
             self.kpoints_dense = [kp*4 for kp in self.qpoints]
@@ -390,23 +388,23 @@ class qephono_inputpara(qe_inputpara):
         dyn0_names = Path(self.work_path).joinpath(f"{self.system_name}.dyn0")
         if dyn0_names.exists():
             self.qtot, self.qirreduced, self.qirreduced_coords= self.get_q_from_dyn0(dyn0_path=dyn0_names) 
-            print("    qtot from No.1 line in {}.dyn0 = {}".format(self.system_name, self.qtot))
-            print("    qirreduced from No.2 line in  {}.dyn0 = {}".format(self.system_name, self.qirreduced))
-            print("    qirreduced_coords from the rest lines in {}.dyn0, the number = {}".format(self.system_name, len(self.qirreduced_coords)))
+            logger.debug("qtot from No.1 line in {}.dyn0 = {}".format(self.system_name, self.qtot))
+            logger.debug("qirreduced from No.2 line in  {}.dyn0 = {}".format(self.system_name, self.qirreduced))
+            logger.debug("qirreduced_coords from the rest lines in {}.dyn0, the number = {}".format(self.system_name, len(self.qirreduced_coords)))
             # time.sleep(3)
             # 获得 self.qtot, self.qirreduced, self.qirreduced_coords, self.qweights 
         else:
-            print(f"{self.system_name}.dyn0 doesn't exist in {self.work_path}. The qtot, qirreduced, qirreduced_coords will not get values.")
+            logger.error(f"{self.system_name}.dyn0 doesn't exist in {self.work_path}. The qtot, qirreduced, qirreduced_coords will not get values.")
 
         if not hasattr(self, "qtot"):
             self.qtot = None
         else:
-            print(f"    You didn't set the `qtot` ! Of course you don't need to set it! The program will get from {self.system_name}.dyn0. qtot={self.qtot}")
+            logger.debug(f"You didn't set the `qtot` ! Of course you don't need to set it! The program will get from {self.system_name}.dyn0. qtot={self.qtot}")
         
         if not hasattr(self, "qirreduced"):
             self.qirreduced = None
         else:
-            print(f"    You didn't set the `qirreduced` ! Of course you don't need to set it! The program will get from {self.system_name}.dyn0. qirreduced={self.qirreduced}")
+            logger.debug(f"You didn't set the `qirreduced` ! Of course you don't need to set it! The program will get from {self.system_name}.dyn0. qirreduced={self.qirreduced}")
 
         if not hasattr(self, "qinserted"):
             self.qinserted = 50
@@ -416,7 +414,7 @@ class qephono_inputpara(qe_inputpara):
         if not hasattr(self, "qirreduced_coords"):
             self.qirreduced_coords = None
         else:
-            print(f"    You didn't set the `qirreduced_coords` ! Of course you don't need to set it! The program will get from {self.system_name}.dyn0.")
+            logger.debug(f"You didn't set the `qirreduced_coords` ! Of course you don't need to set it! The program will get from {self.system_name}.dyn0.")
         
         # phonodos计算
         if not hasattr(self, "ndos"):
@@ -511,11 +509,11 @@ class qephono_inputpara(qe_inputpara):
             dst_split_out  = os.path.join(directory, "split_ph.out."+str(i+1))
             if os.path.exists(src_split_in) and os.path.exists(src_split_out):
                 shutil.copy(src_split_in, dst_split_in)
-                print(f"split_ph.in copy finished \n {src_split_in}")
+                logger.debug(f"split_ph.in copy finished \n {src_split_in}")
                 shutil.copy(src_split_out, dst_split_out)
-                print(f"split_ph.out copy finished \n {src_split_in}")
+                logger.debug(f"split_ph.out copy finished \n {src_split_in}")
             else:
-                print(f"In {str(i+1)}, split_ph.in or split_ph.out doesn't exist ! Exit the program!")
+                logger.error(f"In {str(i+1)}, split_ph.in or split_ph.out doesn't exist ! Exit the program!")
                 sys.exit(1)
 
             src_elph_NoNum = os.path.join(directory, str(i+1), "elph_dir", "elph.inp_lambda.1")
@@ -526,10 +524,10 @@ class qephono_inputpara(qe_inputpara):
             elif  os.path.exists(src_elph_Num):
                 src_elph = src_elph_Num
             else:
-                print(f"In {str(i+1)}, elph.inp_lambda-file doesn't exist ! Exit the program!")
+                logger.error(f"In {str(i+1)}, elph.inp_lambda-file doesn't exist ! Exit the program!")
                 sys.exit(1)
             shutil.copy(src_elph, dst_elph)
-            print(f"elph.inp_.1 copy finished \n {dst_elph}")
+            logger.debug(f"elph.inp_.1 copy finished \n {dst_elph}")
             
 
 
@@ -540,11 +538,11 @@ class qephono_inputpara(qe_inputpara):
             elif  os.path.exists(src_dyn_Num):
                 src_dyn = src_dyn_Num
             else:
-                print(f"In {str(i+1)}, dyn-file doesn't exist ! Exit the program!")
+                logger.error(f"In {str(i+1)}, dyn-file doesn't exist ! Exit the program!")
                 sys.exit(1)
             dst_dyn    = os.path.join(directory, self.system_name+".dyn"+str(i+1))
             shutil.copy(src_dyn, dst_dyn)
-            print(f"{self.system_name}.dyn copy finished {dst_dyn}")
+            logger.debug(f"{self.system_name}.dyn copy finished {dst_dyn}")
 
 
             for j in range(51, 51+int(self.el_ph_nsigma)):
@@ -556,10 +554,10 @@ class qephono_inputpara(qe_inputpara):
                 elif  os.path.exists(src_a2Fq2r_Num):
                     src_a2Fq2r = src_a2Fq2r_Num
                 else:
-                    print(f"{src_a2Fq2r} doesn't exist ! Exit the program!")
+                    logger.error(f"{src_a2Fq2r} doesn't exist ! Exit the program!")
                     sys.exit(1)
                 shutil.copy(src_a2Fq2r, dst_a2Fq2r)
-                print(f"a2Fq2r.{str(j)}.1 copy finished  {dst_a2Fq2r}")
+                logger.debug(f"a2Fq2r.{str(j)}.1 copy finished  {dst_a2Fq2r}")
 
     def get_top_freq(self, dosfile):
         phonon_dos = open(dosfile, "r").readlines()
@@ -590,16 +588,14 @@ class qephono_inputpara(qe_inputpara):
             el_ph_nsigma = int(self.el_ph_nsigma)
             gaussian0 = [el_ph_sigma*(1+i) for i in range(0, el_ph_nsigma)]
         else:
-            print("\nNote: --------------------")
-            print("     The program didn't get `ph_no_split.in`. So you need input it by yourself.")
+            logger.info("The program didn't get `ph_no_split.in`. So you need input it by yourself.")
             el_ph_sigma = float(input("Input el_ph_sigma, it has to be a float number\n"))
             el_ph_nsigma= int(input("Input el_ph_nsigma, it has to be a integer number\n"))
             gaussian0 = [el_ph_sigma*(1+i) for i in range(0, el_ph_nsigma)]
 
         # 校验输入文件获得的gaussian和输出文件获得的gaussian是否一致
         if not self.work_path.joinpath('elph_dir', 'elph.inp_lambda.1').exists():
-            print("\nNote: --------------------")
-            print("    elph_dir/elph.inp_lambda.1 doesn't exist !!! The program will exit!!!")
+            logger.error("    elph_dir/elph.inp_lambda.1 doesn't exist !!! The program will exit!!!")
             sys.exit(1)
         greporder = f"grep Gaussian {self.work_path.joinpath('elph_dir', 'elph.inp_lambda.1')}" + "| awk '{print $3}'"
         gaussian1 = [float(num.strip("\n")) for num in os.popen(greporder).readlines()]
@@ -613,14 +609,12 @@ class qephono_inputpara(qe_inputpara):
         shlorder = f"grep DOS {self.work_path.joinpath('elph_dir', 'elph.inp_lambda.1')}" + "| awk '{print $3}'"
         dos = os.popen(shlorder).readlines()
         if not dos:
-            print("\nNote: --------------------")
-            print("    grep DOS elph_dir/elph.inp_lambda.1 failes !!! The progam will exit !!! Maybe calculation in elph get something wrong!!!")
+            logger.error("grep DOS elph_dir/elph.inp_lambda.1 failes !!! The progam will exit !!! Maybe calculation in elph get something wrong!!!")
             sys.exit(1)
         
         dos = [float(i.strip('\n')) for i in dos]
         if efermi_dos is None:
-            print("\nNote: --------------------")
-            print("    You didn't set efermi_dos, so the program will use its own method to get converged gauss value.")
+            logger.debug("You didn't set efermi_dos, so the program will use its own method to get converged gauss value.")
             delta_dos = [np.abs(dos[i + 1] - dos[i]) for i in range(len(dos) - 1)]
             idx = np.argmin(delta_dos) # 收敛Gaussian的索引
             gauss = gaussian0[idx]
@@ -628,8 +622,7 @@ class qephono_inputpara(qe_inputpara):
             delta_dos = [np.abs(idos-float(efermi_dos)) for idos in dos]
             idx = np.argmin(delta_dos) # 收敛Gaussian的索引
             gauss = gaussian0[idx]
-        print("\nNote: --------------------")
-        print(f'    Converged gaussid = {idx+1}, corresponding gaussian value={gaussian1[idx]}')
+        logger.info(f'Converged gaussid = {idx+1}, corresponding gaussian value={gaussian1[idx]}')
         # time.sleep(3)
         return idx+1, gauss  # 因为python都是从0开始
 
@@ -644,13 +637,11 @@ class qephono_inputpara(qe_inputpara):
         # 从gam.lines文件中获得指定Gaussian展宽对应的所有的声子线宽
         gam_lines_path = self.work_path.joinpath("gam.lines")
         if not gam_lines_path.exists():
-            print("\nNote: --------------------")
-            print("    Sorry, The gam.lines doesn't exist !")
+            logger.error("Sorry, The gam.lines doesn't exist !")
         tmp_gam1_path = self.work_path.joinpath("temp_gam1")
         tmp_gam2_path = self.work_path.joinpath("temp_gam2")
-        print("\nNote: --------------------")
-        print("    Two temporary files named `temp_gam1` ad `temp_gam2` will be created, which are based on gam.lines ")
-        print("    They will be removed after obtaining the phonon-line-width of the corresponding Gaussian")
+        logger.debug("Two temporary files named `temp_gam1` ad `temp_gam2` will be created, which are based on gam.lines ")
+        logger.debug("They will be removed after obtaining the phonon-line-width of the corresponding Gaussian")
         os.system(f"""sed -n '/Broadening   {gauss}/,/Broadening/p' {gam_lines_path} > {tmp_gam1_path}""")
         # \w：匹配一个单词字符，包括字母、数字、下划线。
         # \+：匹配前面的字符或字符集至少一次或多次。
@@ -666,10 +657,9 @@ class qephono_inputpara(qe_inputpara):
                     for pw in line.strip("\n").split():
                         phononwidth.append(pw)
         if len(phononwidth) != (q_number*freq_number):
-            print("\nNote: --------------------")
-            print("    The number of phonon-width is not equal to the number of `q_number*freq_number`")
-            print(f"    phonon-width = {phononwidth}")
-            print(f"    q_number * freq_number = {q_number} * {freq_number} = {q_number*freq_number}")
+            logger.debug("The number of phonon-width is not equal to the number of `q_number*freq_number`")
+            logger.debug(f"phonon-width = {phononwidth}")
+            logger.debug(f"q_number * freq_number = {q_number} * {freq_number} = {q_number*freq_number}")
             sys.exit(1)
         # phononwidth 是一个一维数组，大小为 q点个数 * 每个q点的振动模式数
         phononwidth = np.array(phononwidth)
@@ -682,7 +672,7 @@ class qephono_inputpara(qe_inputpara):
     def read_hspp_in_matdyn(self):
 
         if not self.work_path.joinpath("matdyn.in").exists():
-            print(f"There is no matdyn.in in {self.work_path}")
+            logger.warning(f"There is no matdyn.in in {self.work_path}")
             return None
         
         # 都当前目录下的matdyn.in
@@ -695,7 +685,7 @@ class qephono_inputpara(qe_inputpara):
                     slash_line_number = i
                     break
             else:
-                print("There is non '/' in matdyn.in")
+                logger.warning("There is non '/' in matdyn.in")
                 return None
 
         # 获得高对称点路径
@@ -706,20 +696,20 @@ class qephono_inputpara(qe_inputpara):
             path_name_coords.append([name, coords])
 
         # 获得倒格子
-        print("Print projected high symmetry path")
-        print("倒格子的单位是 2pi/alat")
-        print("The reciprocal lattice (without multiplating `unit_reciprocal_axis`)")
+        logger.debug("Print projected high symmetry path")
+        logger.debug("倒格子的单位是 2pi/alat")
+        logger.debug("The reciprocal lattice (without multiplating `unit_reciprocal_axis`)")
         for vector in self.reciprocal_plattice:
             print("{:<6.3f} {:<6.3f} {:<6.3f} ".format(vector[0], vector[1], vector[2]))
         
         # 处理高对称点路径
-        print("Print Fractional Coordinates of Reciprocal Lattice ! ")
+        logger.debug("Print Fractional Coordinates of Reciprocal Lattice ! ")
         for name, dirt in path_name_coords:
             print("{:<10.6f} {:<10.6f} {:<10.6f} {:<4}".format(dirt[0], dirt[1], dirt[2], name))
         
         
-        print("Print projected high symmetry path")
-        print("倒格子的单位是 2pi/alat")
+        logger.info("Print projected high symmetry path")
+        logger.info("倒格子的单位是 2pi/alat")
         #projected_path_name_coords = [[path_name_coords[0][0], path_name_coords[0][1][0]]]
         projected_path_name_coords = [[path_name_coords[0][0], 0]]
         total_dist = 0
@@ -734,15 +724,14 @@ class qephono_inputpara(qe_inputpara):
             projected_path_name_coords.append([current_name, total_dist])
         string_names = ' '.join(coord[0] for coord in projected_path_name_coords)
         string_coord = ' '.join(str(np.round(coord[1], 6)) for coord in projected_path_name_coords)
-        print(string_names)
-        print(string_coord)
+        logger.info(string_names)
+        logger.info(string_coord)
 
     def get_phono_freq(self):
         """获得可以在origin中作图的数据"""
         freq_gp_path = self.work_path.joinpath(self.system_name+".freq.gp")
         if not freq_gp_path.exists():
-            print("\nNote: --------------------")
-            print(f"    Sorry, {self.system_name}.freq.gp doesn't exist !")
+            logger.warning(f"Sorry, {self.system_name}.freq.gp doesn't exist !")
         qpoints_freq = np.loadtxt(freq_gp_path)  # qpoints_freq 是一个 二维数组，第一列是q点坐标，其余列是振动频率
         q_number     = qpoints_freq.shape[0]     # q 点个数,          
         freq_number  = qpoints_freq.shape[1]-1   # 每个q点的振动模式数  -1是因为第一列是q点坐标，其余列是振动频率，所以要把第一列减去
@@ -786,18 +775,16 @@ class qephono_inputpara(qe_inputpara):
         # 获得phonodos计算的输出文件
         phonon_dos_path = self.work_path.joinpath(self.system_name+"_phono.dos")
         if not phonon_dos_path.exists():
-            print("\nNote: --------------------")
-            print(f"    Sorry, {self.system_name}_phono.dos doesn't exist !")
+            logger.error(f"Sorry, {self.system_name}_phono.dos doesn't exist !")
             sys.exit(1)
 
         # 获得元素的顺序 以及 每种元素的原子个数
-        print("\nNote: --------------------")
-        print("    Get the order of elements by the order of atomic coords in `scffit.in`")
-        print("    The order of elements in `***_phono.dos` is consistent with the order of `ATOMIC_SPECIES` in `scffit.in`")
-        print("    So, for guaranteeing the consistency of order,  the order of atomic coords in `scffit.in` has to be same as the order of `ATOMIC_SPECIES` in `scffit.in`")
+        logger.debug("Get the order of elements by the order of atomic coords in `scffit.in`")
+        logger.debug("The order of elements in `***_phono.dos` is consistent with the order of `ATOMIC_SPECIES` in `scffit.in`")
+        logger.debug("So, for guaranteeing the consistency of order,  the order of atomic coords in `scffit.in` has to be same as the order of `ATOMIC_SPECIES` in `scffit.in`")
         scffitin_path = self.work_path.joinpath("scffit.in")
         if not scffitin_path.exists():
-            print(f"    Sorry, scffit.in doesn't exist !")
+            logger.error(f"Sorry, scffit.in doesn't exist !")
             sys.exit(1) 
         shlorder = "sed -n '/ATOMIC_POSITIONS/,/K_POINTS/ {//!p}' " + f"{scffitin_path}"        
         elements_coords = os.popen(shlorder).readlines()
@@ -836,13 +823,13 @@ class qephono_inputpara(qe_inputpara):
         freqs = freqs * 2.997924E+10 # convert unit cm-1 to Hz
 
         # 这种归一化方式非常有趣，可以避免乘以频率步长d_freq
-        print("检验是否将声子态密度归一化到3N") 
+        logger.debug("检验是否将声子态密度归一化到3N") 
         sumdos = freq_phtdos_phpdos['tdos'].sum()
         freq_phtdos_phpdos['tdos'] = freq_phtdos_phpdos['tdos']/sumdos*3*self.all_atoms_quantity
         # 定义积分步长
         d_freq = np.round(0.333564E-10*(freqs[-1] - freqs[0])/(len(freqs) -1), decimals=6)  # conserve unit is cm-1
-        print("归一化至3N前:", d_freq*sumdos)
-        print("归一化至3N后:", freq_phtdos_phpdos['tdos'].sum())
+        logger.debug("归一化至3N前:", d_freq*sumdos)
+        logger.debug("归一化至3N后:", freq_phtdos_phpdos['tdos'].sum())
 
         tdos   = freq_phtdos_phpdos['tdos'].values  # conserve unit is states/cm-1 = states·cm
         temperature = np.array([i for i in range(0,5100,100)])
@@ -905,7 +892,7 @@ class qephono_inputpara(qe_inputpara):
                 )        
         full_dyns_paths = sorted([os.path.join(self.work_path, dyn_path) for dyn_path in dyn_paths])
         if not full_dyns_paths:
-            print(f'WARNING: Unable to detect *dyn* files in {self.__path}. The program will exit')
+            logger.warning(f'Unable to detect *dyn* files in {self.__path}. The program will exit')
             sys.exit(1)
         
         dyns  = [Dyn(path) for path in full_dyns_paths]
@@ -1006,27 +993,25 @@ class qeeletron_inputpara(qe_inputpara):
             **kwargs
             )
 
-        print("\nNote: --------------------")
-        print("if you want to run `electron-dos`, you had better set these values!")
-        
+        logger.info("Run `eletron`")
         # 电子态密度设置
         if not hasattr(self, "DeltaE"):
             self.DeltaE = 0.01
-            print("    You didn't set `DeltaE` for eledos.in, the program will use default value: DeltaE=0.01")
+            logger.debug("You didn't set `DeltaE` for eledos.in, the program will use default value: DeltaE=0.01")
         if not hasattr(self, "emin"):
             self.emin = -10
-            print("    You didn't set `emin`   for eledos.in, the program will use default value: emin=-10")
+            logger.debug("You didn't set `emin`   for eledos.in, the program will use default value: emin=-10")
         if not hasattr(self, "emax"):
             self.emax = 30
-            print("    You didn't set `emax`   for eledos.in, the program will use default value: emax=30. ")
-            print("        The reason is to avoid E-fermi bigger than then max-energy. ")
-            print("        For example, E-fermi=16eV, the upper energy you set is 10eV, then you can't get positive energys.")
+            logger.debug("You didn't set `emax`   for eledos.in, the program will use default value: emax=30. ")
+            logger.debug("The reason is to avoid E-fermi bigger than then max-energy. ")
+            logger.debug("For example, E-fermi=16eV, the upper energy you set is 10eV, then you can't get positive energys.")
         if not hasattr(self, "ngauss"):
             self.ngauss = 0
-            print("    You didn't set `emax`   for eledos.in, the program will use default value: ngauss=0 ")
+            logger.debug("You didn't set `emax`   for eledos.in, the program will use default value: ngauss=0 ")
         if not hasattr(self, "pdosdegauss"):
             self.pdosdegauss = 0
-            print("    You didn't set `emax`   for eledos.in, the program will use default value: pdosdegauss=0 ")
+            logger.debug("You didn't set `emax`   for eledos.in, the program will use default value: pdosdegauss=0 ")
         # 电子能带计算
         if self.mode == "eleband" or self.mode == "eleproperties":
             self.path_name_coords = self.get_hspp()
@@ -1039,13 +1024,11 @@ class qeeletron_inputpara(qe_inputpara):
             self.kinserted = int(self.kinserted)
             
         if not hasattr(self, "nbnd"):
-            print("\nNote: --------------------")
-            print("    You didn't set nbnd, the default value nbnd=100")
+            logger.debug("You didn't set nbnd, the default value nbnd=100")
             self.nbnd = 100
 
         if not hasattr(self, "lsym"):
-            print("\nNote: --------------------")
-            print("    You didn't set lsym, the default value lsym=.false.")
+            logger.debug("You didn't set lsym, the default value lsym=.false.")
             self.lsym = 'false'
 
 
@@ -1066,8 +1049,7 @@ class qesc_inputpara(qephono_inputpara):
             input_file_path, 
             **kwargs
             )
-        print("\nNote: --------------------")
-        print("If you want to run `superconduct`, you had better set these values!")
+        logger.info("run `superconduct`")
         # Mc-A-D and Eliashberg
         self.screen_constant = [0.10, 0.13, 0.16]
 
@@ -1076,10 +1058,10 @@ class qesc_inputpara(qephono_inputpara):
         if len(q2r_names)==1:
             q2r_path = q2r_names[0]
             self.qweights = self.get_q_from_q2r(q2r_path=q2r_path)
-            print("    The number of qweights = {}".format(len(self.qweights)))
+            logger.debug("The number of qweights = {}".format(len(self.qweights)))
             # 获得 self.qtot, self.qirreduced, self.qirreduced_coords, self.qweights 
         else:
-            print("    No exist q2r.out ! The program will exit !!!")
+            logger.error("No exist q2r.out ! The program will exit !!!")
             sys.exit(1)
         
         # Mc
@@ -1087,56 +1069,54 @@ class qesc_inputpara(qephono_inputpara):
         if phonodos_file.exists():
             self.top_freq = self.get_top_freq(dosfile=phonodos_file)
         else:
-            print(f"    There is no {self.system_name}+'_phono.dos'")
+            logger.error(f"There is no {self.system_name}+'_phono.dos'")
             sys.exit(1)
         
         # Mc
         if not hasattr(self, "broaden"):
             self.broaden = 0.5
-            print("    You didn't set the `broaden` ! ")
-            print("    The program will use default value: broaden=0.5")
-            print("    ***** Don't change easily the parameter of broaden, 0.5 is good enough !!!! ***** ")
+            logger.debug("You didn't set the `broaden` ! ")
+            logger.debug("The program will use default value: broaden=0.5")
+            logger.debug("***** Don't change easily the parameter of broaden, 0.5 is good enough !!!! ***** ")
 
         # Mc
         if not hasattr(self, "smearing_method"):
             self.smearing_method = 1
-            print("    You didn't set the `smearing_method`!  The program will use default value: smearing_method=1")
+            logger.debug("You didn't set the `smearing_method`!  The program will use default value: smearing_method=1")
 
         # Eliashberg
-        print("    If you use Eliashberg method, you have to specify the temperature_steps, a2fdos*(alpha2fdat*)!")
-        print("    If you set both a2fdos* and alpha2fdat*, the program will run in the way of `a2fdos*`")
+        logger.debug("If you use Eliashberg method, you have to specify the temperature_steps, a2fdos*(alpha2fdat*)!")
+        logger.debug("If you set both a2fdos* and alpha2fdat*, the program will run in the way of `a2fdos*`")
         if not hasattr(self, "temperature_steps"):
             self.temperature_steps = 500
-            print("    You didn't set the `temperature_steps`.The program will use default value: temperature_steps=5000")
+            logger.debug("You didn't set the `temperature_steps`.The program will use default value: temperature_steps=5000")
 
-        print("\nNote: --------------------")
         if hasattr(self, "a2fdos") and eval(self.a2fdos) == True:
             self.a2fdos = True
             self.alpha2fdat = False
-            print("    The omegas-alpha2F values will be getted from a2F.dos{}".format("xxx"))
-            print("    The shell order used is:")
-            print("    sed '1,5d' a2F.dos%s | sed '/lambda/d' | awk '{print $1/2, $2}' > ALPHA2F.OUT"%("xxx"))
+            logger.debug("The omegas-alpha2F values will be getted from a2F.dos{}".format("xxx"))
+            logger.debug("The shell order used is:")
+            logger.debug("sed '1,5d' a2F.dos%s | sed '/lambda/d' | awk '{print $1/2, $2}' > ALPHA2F.OUT"%("xxx"))
         elif hasattr(self, "alpha2fdat") and eval(self.alpha2fdat) == True:
             self.a2fdos = False
             self.alpha2fdat = True
-            print("    The omegas-alpha2F values will be getted from alpha2F.dat{}".format("xxx"))
-            print("    The shell order used is:")
-            print("    sed '1,1d' alpha2F.dat | awk '{print $1/6579.684, $%s}' > ALPHA2F.OUT "%("xxx"))
+            logger.debug("The omegas-alpha2F values will be getted from alpha2F.dat{}".format("xxx"))
+            logger.debug("The shell order used is:")
+            logger.debug("sed '1,1d' alpha2F.dat | awk '{print $1/6579.684, $%s}' > ALPHA2F.OUT "%("xxx"))
         else:
             self.a2fdos = True
             self.alpha2fdat = False
-            print("    You didn't specify the either `a2fdos` or `alpha2fdat`")
-            print("    The omegas-alpha2F values willbe getted from a2F.dos")
-            print("    Because alpha2f.dat usually get something wrong")
-            print("    The shell order used is:")
-            print("    sed '1,5d' a2F.dos%s | sed '/lambda/d' | awk '{print $1/2, $2}' > ALPHA2F.OUT"%("xxx"))
+            logger.debug("You didn't specify the either `a2fdos` or `alpha2fdat`")
+            logger.debug("The omegas-alpha2F values willbe getted from a2F.dos")
+            logger.debug("Because alpha2f.dat usually get something wrong")
+            logger.debug("The shell order used is:")
+            logger.debug("sed '1,5d' a2F.dos%s | sed '/lambda/d' | awk '{print $1/2, $2}' > ALPHA2F.OUT"%("xxx"))
 
 
     def get_a2Fdos_data(self, gauss_idx):
         a2Fdos_path = self.work_path.joinpath("a2F.dos"+str(gauss_idx))
         if not a2Fdos_path.exists():
-            print("\nNote: --------------------")
-            print(f"    `a2F.dos+{str(gauss_idx)}` file doesn't exist!!!")
+            logger.error(f"    `a2F.dos+{str(gauss_idx)}` file doesn't exist!!!")
             sys.exit(1)
         # 这里简单说明一下a2F.dos*的文件结构
         # 频率             总a2F   剩下的列是N*3列，是N个原子，每个原子3个振动模式。
@@ -1149,8 +1129,7 @@ class qesc_inputpara(qephono_inputpara):
     def get_alpha2Fdat_data(self, gauss_idx, gauss):
         alpha2F_dat_path = self.work_path.joinpath("alpha2F.dat")
         if not alpha2F_dat_path.exists():
-            print("\nNote: --------------------")
-            print("    `alpha2F.dat` file doesn't exist!!!")
+            logger.error("`alpha2F.dat` file doesn't exist!!!")
             sys.exit(1)
 
         # 判断el_ph_nsigma是否大于10, 如果大于10,  alpha2F.dat文件折叠出2行来记录数据，巨恶心
@@ -1183,9 +1162,8 @@ class qesc_inputpara(qephono_inputpara):
             sep='\s+',
             )
 
-        print("\nNote: --------------------")
-        print(f"    Converged gauss index inputed = {gauss_idx}, its value = {gauss}")
-        print(f"    So in alpha2F.dat, corresponding gauss value = {alpha2F_data.columns[gauss_idx]} ") # alpha2F_data.columns[gauss_idx]获取列的名称, 第0列是E(Thz)列, 第1列是0.005列. 由于我们输入的gauss_idx是从1开始的, 所以要获得正确的列不需要对gauss_idx做任何处理
+        logger.debug(f"Converged gauss index inputed = {gauss_idx}, its value = {gauss}")
+        logger.debug(f"So in alpha2F.dat, corresponding gauss value = {alpha2F_data.columns[gauss_idx]} ") # alpha2F_data.columns[gauss_idx]获取列的名称, 第0列是E(Thz)列, 第1列是0.005列. 由于我们输入的gauss_idx是从1开始的, 所以要获得正确的列不需要对gauss_idx做任何处理
         
         return alpha2F_data
 
@@ -1293,13 +1271,12 @@ class qesc_inputpara(qephono_inputpara):
         
         # 获得eliashberg方法计算得到的Tc
         # 运行可能报错, 建议仔细检查ELIASHBERG_GAP_T.OUT文件的第二列, 有些数据本来应该是0.1666489645E-265, 但是实际可能为0.1666489645-265, 导致numpy无法将其转化为数字
-        print("\nNote: --------------------")
-        print("    It is recommended to carefully check the second column of the ELIASHBERG_GAP_T.OUT file. ")
-        print("    Some data should be 0.1666489645E-265, but it may actually be 0.1666489645-265, causing numpy to fail to turn it into a number.")
+        logger.debug("It is recommended to carefully check the second column of the ELIASHBERG_GAP_T.OUT file. ")
+        logger.debug("Some data should be 0.1666489645E-265, but it may actually be 0.1666489645-265, causing numpy to fail to turn it into a number.")
         eliashberg_gap_t_out = Path(self.work_path).joinpath("ELIASHBERG_GAP_T.OUT")
         process_eliashberg_gap_t_out = Path(self.work_path).joinpath("process_ELIASHBERG_GAP_T.OUT")
         if not eliashberg_gap_t_out.exists():
-            print(f"ELIASHBERG_GAP_T.OUT doesn't exist !!! The program will exit")
+            logger.error(f"ELIASHBERG_GAP_T.OUT doesn't exist !!! The program will exit")
             sys.exit(1)
         os.system(f"sed '/E/!d' {eliashberg_gap_t_out} > {process_eliashberg_gap_t_out}") # 将不包含字符串E的行都删掉
         gap_t   = np.loadtxt(process_eliashberg_gap_t_out)
@@ -1313,7 +1290,7 @@ class qesc_inputpara(qephono_inputpara):
             Tc = Tc[Tc_id[0]]
             return Tc
         except:
-            print("    Maybe the imaginary frequency of phono leads to NAN in ELIASHBERG_GAP_T.OUT. So The program will exit.")
+            logger.error("    Maybe the imaginary frequency of phono leads to NAN in ELIASHBERG_GAP_T.OUT. So The program will exit.")
             sys.exit(1)
 
     def getTc_McM_byqe(self, gauss_idx):
@@ -1324,8 +1301,7 @@ class qesc_inputpara(qephono_inputpara):
         """
         lambda_out_path = self.work_path.joinpath("lambda.out")
         if not lambda_out_path.exists():
-            print("\nNote: --------------------")
-            print("    `lambda.out` file doesn't exist!!!")
+            logger.error("`lambda.out` file doesn't exist!!!")
             sys.exit(1)
         shlorder = "sed -n '/^lambda/,$ {/^lambda/!p}'" + f"  {lambda_out_path}" # -n 选项表示只打印匹配的行
         content  = [line.strip('\n').split() for line in os.popen(shlorder).readlines()]
@@ -1375,6 +1351,7 @@ class qeprepare_inputpara(qephono_inputpara):
             input_file_path, 
             **kwargs
             )
+        logger.info("run `prepare`")
 
 
 class qeepw_inputpara(qe_base):
@@ -1393,26 +1370,25 @@ class qeepw_inputpara(qe_base):
             submit_job_system,
             input_file_path
         )
-
+        logger.info("run `EPW`")
+        
         for key, value in kwargs.items():
             setattr(self, key, value)
 
         self.parameters_info = []
 
         if not hasattr(self, "mode"):
-            print("\nNote: --------------------")
-            print("    You must specify mode")
+            logger.debug("You must specify mode")
             sys.exit(1)
 
         if not hasattr(self, "execmd"):
-            print("\nNote: --------------------")
-            print("    You must specify execute command, such as 'mpirun -np 48', 'bash', 'srun', 'srun --mpi=pmi2'")
+            logger.debug("You must specify execute command, such as 'mpirun -np 48', 'bash', 'srun', 'srun --mpi=pmi2'")
             sys.exit(1)
 
         if not hasattr(self, "npool"):
             self.npool = 1
             self.parameters_info.append(f'npool = {self.npool}\n')
-        print("    You must guarantee that `npool` equal `cores, namly, -np`")
+        logger.debug("You must guarantee that `npool` equal `cores, namly, -np`")
 
         if not hasattr(self, "queue"):
             self.queue = None
@@ -1421,28 +1397,24 @@ class qeepw_inputpara(qe_base):
         self.path_name_coords_for_EPW = self.get_hspp_for_EPW()
 
         if not hasattr(self, "dvscf_dir"):
-            print("\nNote: --------------------")
-            print("    You must specify dvscf_dir")
+            logger.error("You must specify dvscf_dir")
             sys.exit(1)
         else:
             if not self.work_path.joinpath(self.dvscf_dir).exists():
-                print("\nNote: --------------------")
-                print(f"    Specified dvscf_dir: {self.work_path.joinpath(self.dvscf_dir).absolute()} doesn't exist ")
+                logger.error(f"Specified dvscf_dir: {self.work_path.joinpath(self.dvscf_dir).absolute()} doesn't exist ")
                 sys.exit(1)
         
         if not hasattr(self, "etf_mem"):
             self.etf_mem = 1
         
         if not hasattr(self, "nbndsub"):
-            print("\nNote: --------------------")
-            print(f"    You must specify nbndsub!")
+            logger.error(f"You must specify nbndsub!")
             sys.exit(1)
         else:
             self.parameters_info.append(f'nbndsub = {self.nbndsub}\n')
 
         if not hasattr(self, "bands_skipped"):
-            print("\nNote: --------------------")
-            print(f"    You must specify bands_skipped!")
+            logger.error(f"You must specify bands_skipped!")
             sys.exit(1)
         else:
             self.parameters_info.append(f'bands_skipped = {self.bands_skipped}\n')
@@ -1451,22 +1423,19 @@ class qeepw_inputpara(qe_base):
             self.num_iter = 500
 
         if not hasattr(self, "dis_froz_min"):
-            print("\nNote: --------------------")
-            print(f"    You must specify dis_froz_min !")
+            logger.error(f"You must specify dis_froz_min !")
             sys.exit(1)
         else:
             self.parameters_info.append(f'dis_froz_min = {self.dis_froz_min}\n')
 
         if not hasattr(self, "dis_froz_max"):
-            print("\nNote: --------------------")
-            print(f"    You must specify dis_froz_max !")
+            logger.error(f"You must specify dis_froz_max !")
             sys.exit(1)
         else:
             self.parameters_info.append(f'dis_froz_max = {self.dis_froz_max}\n')
 
         if not hasattr(self, "proj"):
-            print("\nNote: --------------------")
-            print(f"    You must specify proj! Just like: proj='Nb:d  H:s'  (Attention: No space before or after the equal sign)")
+            logger.error(f"You must specify proj! Just like: proj='Nb:d  H:s'  (Attention: No space before or after the equal sign)")
             sys.exit(1)
         else:
             self.proj = self.proj.split()

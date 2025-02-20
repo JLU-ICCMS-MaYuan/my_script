@@ -32,10 +32,10 @@ class qe_writesubmit:
         if self.check_partition_exists(new_partition):
             # 使用正则表达式替换 --partition 后面的内容
             updated_title = re.sub(r'--partition=\S+', f'--partition={new_partition}', title)
-            print(f"Partition exist! {new_partition}")
+            logger.info(f"Partition exist! {new_partition}")
             return updated_title
         else:
-            print(f"{new_partition} doesn't exist! Keep partition name in ~/.my_scripts.py")
+            logger.info(f"{new_partition} doesn't exist! Keep partition name in ~/.my_scripts.py")
             return title
         
     def check_partition_exists(self, new_partition: str) -> bool:
@@ -50,17 +50,19 @@ class qe_writesubmit:
             else:
                 return False
         except Exception as e:
-            print(f"Error throws up when run `sinfo -h --format=%P`: {e}")
+            logger.warning(f"Error throws up when run `sinfo -h --format=%P`: {e}")
             return False
 
     def write_submit_scripts(self, inpufilename, mode=None):
 
-        print("\nNote: -------------------")
-        print("You can use the modes, please carefully compare your input mode is one of the above modes")
-        print("{:<20} {:<20} {:<20} {:<20}".format("relax-vc", "scffit", "scf", "prepare", "nscf"))
-        print("{:<20} {:<20} {:<20} {:<20}".format("nosplit", "split_dyn0", "split_assignQ", "q2r"))
-        print("{:<20} {:<20} {:<20} {:<20}".format("matdyn", "eletdos", "phonodos", "nscf"))
-        print("{:<20} {:<20}".format("McAD", "eliashberg"))
+        info = '''You can use the modes, please carefully compare your input mode is one of the above modes
+        {:<20} {:<20} {:<20} {:<20}
+        {:<20} {:<20} {:<20} {:<20}
+        {:<20} {:<20} {:<20} {:<20}
+        {:<20} {:<20}
+        '''.format("relax-vc", "scffit", "scf", "prepare", "nscf", "nosplit", "split_dyn0", "split_assignQ", "q2r", "matdyn", "eletdos", "phonodos", "nscf", "McAD", "eliashberg")
+        logger.debug(info)
+
 
         if mode==None:
             mode=self.qe_inputpara.mode
@@ -91,7 +93,7 @@ class qe_writesubmit:
                     raise FileExistsError (f"There is no {split_ph_dir}")
                 jobname = self.s5_PhSplitDyn0(split_ph_dir, inname)
                 jobnames.append(jobname)
-                print(f"finish writing submit job script in {i+1}")
+                logger.debug(f"finish writing submit job script in {i+1}")
             return jobnames
         if mode =="split_assignQ":
             jobnames = []
@@ -101,7 +103,7 @@ class qe_writesubmit:
                     raise FileExistsError (f"There is no {split_ph_dir}")
                 jobname = self.s5_PhSplitAssignQ(split_ph_dir, inname)
                 jobnames.append(jobname)
-                print(f"finish writing submit job script in {i+1}")
+                logger.debug(f"finish writing submit job script in {i+1}")
             return jobnames
         if mode =="q2r":
             jobname = self.s6_q2r(self.qe_inputpara.work_path, inpufilename)

@@ -4,4 +4,5 @@ matplotlib
 f90wrap
 Cython
 scikit-learn
-spglib
+spglib==2.5.0
+pyfiglet==1.0.2

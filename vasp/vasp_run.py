@@ -51,8 +51,7 @@ class vaspbatch_relax:
         if input_dir_path.is_dir():
             input_files_path  = [input_dir_path.joinpath(pathname) for pathname in os.listdir(input_dir_path) if input_dir_path.joinpath(pathname).suffix == ".cif" or input_dir_path.joinpath(pathname).suffix == ".vasp"]
             if not input_files_path:
-                print("Note: --------------------")
-                print(f"    The program didn't get any structures from {input_dir_path}")
+                logger.error(f"The program didn't get any structures from {input_dir_path}")
                 sys.exit(1)
             work_path         = _config['work_path']        ; del _config['work_path']
             presses           = _config['presses'].split()  ; del _config['presses']
@@ -62,10 +61,9 @@ class vaspbatch_relax:
             mode              = _config['mode']             ; del _config['mode']
             for input_file_path in input_files_path:
                 # prepare the POSCAR POTCAR  
-                print("\nNote: --------------------")
-                print(f"    Create directory for {input_file_path} file !!!")
+                logger.info(f"Create directory for {input_file_path} file !!!")
                 for press in presses:
-                    print(press)
+                    logger.debug(press)
                     self.relax_inputpara  = vaspbatch_inputpara(
                         work_path=work_path,
                         press=press,
@@ -85,8 +83,7 @@ class vaspbatch_relax:
                     if self.relax_inputpara.queue is not None:
                         _vasp_submitjob.submit_mode1(jobname)
         else:
-            print("Note: --------------------")
-            print(f"    The {input_dir_path} path doesn't exist!")
+            logger.error(f"The {input_dir_path} path doesn't exist!")
             sys.exit(1)
 
 
@@ -244,8 +241,8 @@ class vasp_eletron:
                 mode="eband-eledos")
             chgcar_src = self.eletron_inputpara.work_path.joinpath("scf", "CHGCAR")
             if not chgcar_src.exists():
-                print(f"The CHGCAR is not found in path \n{chgcar_src.absolute()}")
-                print("So The program will exit")
+                logger.error(f"The CHGCAR is not found in path \n{chgcar_src.absolute()}")
+                logger.error("So The program will exit")
                 sys.exit(1)
             # 提交任务
             _vasp_submitjob = vasp_submitjob(self.eletron_inputpara)
@@ -280,8 +277,8 @@ class vasp_eletron:
             chgcar_src = self.eletron_inputpara.work_path.joinpath("scf", "CHGCAR")
             chgcar_dst = self.eletron_inputpara.work_path.joinpath("eband", "CHGCAR")
             if not chgcar_src.exists():
-                print(f"The CHGCAR is not found in path \n{chgcar_src.absolute()}")
-                print("So The program will exit")
+                logger.error(f"The CHGCAR is not found in path \n{chgcar_src.absolute()}")
+                logger.error("So The program will exit")
                 sys.exit(1)
             else:
                 shutil.copy(chgcar_src, chgcar_dst)
@@ -301,8 +298,8 @@ class vasp_eletron:
             chgcar_src = self.eletron_inputpara.work_path.joinpath("scf", "CHGCAR")
             chgcar_dst = self.eletron_inputpara.work_path.joinpath("eledos", "CHGCAR")
             if not chgcar_src.exists():
-                print(f"The CHGCAR is not found in path \n{chgcar_src.absolute()}")
-                print("So The program will exit")
+                logger.error(f"The CHGCAR is not found in path \n{chgcar_src.absolute()}")
+                logger.error("So The program will exit")
                 sys.exit(1)
             else:
                 shutil.copy(chgcar_src, chgcar_dst)
@@ -371,8 +368,7 @@ class vasp_eletron:
         return eband_path
         
     def eledos(self, kspacing):
-        print("NOTES:  ------------------------------ ")
-        print("    KSPACING in `eledos` have to be twice than that in `scf` ")
+        logger.debug("KSPACING in `eledos` have to be twice than that in `scf` ")
         scf_path    = self.eletron_inputpara.work_path.joinpath("scf")
         eledos_path = self.eletron_inputpara.work_path.joinpath('eledos')
         if not scf_path.exists():
@@ -483,32 +479,28 @@ class vasp_processdata(vasp_base):
             _supercell = self._config['supercell'].split()
             self.supercell = list(map(int, _supercell))
         else:
-            print("WARNING: ----------------------------- ")
-            raise ValueError("    you have to specify the supercell=[?,?,?]. If you didn't specify it, maybe somthing wrong will occur !")
-
+            logger.error("    you have to specify the supercell=[?,?,?]. If you didn't specify it, maybe somthing wrong will occur !")
+            sys.exit(1)
+            
         if "mp" in self._config:
             _mp = self._config['mp'].split()
             self.mp = list(map(int, _mp))
         else:
             self.mp = [20, 20, 20]
-            print("NOTES: ------------------------------ ")
-            print("    you didn't specify the mp='? ? ?', the program will set default mp=[8,8,8]")
+            logger.debug("you didn't specify the mp='? ? ?', the program will set default mp=[8,8,8]")
 
         if self.mode == "dispband":
-            print("NOTES: ------------------------------ ")
-            print("    Run disp-band-post-progress-module")
+            logger.debug("Run disp-band-post-progress-module")
             _disp_num = len(list(Path(self.work_path).glob("disp-*")))
             disp_num  = str(_disp_num).rjust(3, '0')
             cwd = os.getcwd()
             os.chdir(self.work_path)
-            print("NOTES: ------------------------------ ")
-            print("    Run the order `phonopy -f disp-{001..%s}/vasprun.xml`" %(disp_num))
-            print("    Please confirm  disp-{001..%s} are all correctively computed !!!" %(disp_num))
+            logger.debug("Run the order `phonopy -f disp-{001..%s}/vasprun.xml`" %(disp_num))
+            logger.debug("Please confirm  disp-{001..%s} are all correctively computed !!!" %(disp_num))
             os.system("phonopy -f disp-{001..%s}/vasprun.xml" %(disp_num))
             os.chdir(cwd) 
 
 
-            print("\nNote: --------------------------------")
             vaspkitflag = input("If you have installed vaspkit and you want to use it, input: Yes\n")
             if vaspkitflag:
                 cwd = os.getcwd()
@@ -534,26 +526,22 @@ class vasp_processdata(vasp_base):
             cwd = os.getcwd()
             os.chdir(self.work_path)
             # traditional method
-            print("NOTES: ------------------------------ ")
-            print("    Run the order `phonopy -p -s band.conf -c POSCAR-init`")
-            print("    Please confirm the POSCAR-init exist !!!")
+            logger.debug("Run the order `phonopy -p -s band.conf -c POSCAR-init`")
+            logger.debug("Please confirm the POSCAR-init exist !!!")
             os.system("phonopy -p -s band.conf -c POSCAR-init")
-            print("NOTES: ------------------------------ ")
-            print("    Run the order `phonopy-bandplot  --gnuplot> band.dat`")
-            print("    band.dat is the data for plot phononband in Origin")
+            logger.debug("Run the order `phonopy-bandplot  --gnuplot> band.dat`")
+            logger.debug("band.dat is the data for plot phononband in Origin")
             os.system("phonopy-bandplot  --gnuplot> band.dat")
             os.chdir(cwd)
 
         elif self.mode == "dfptband":
-            print("NOTES: ------------------------------ ")
-            print("    Run dfpt-band-post-progress-module")
+            logger.debug("Run dfpt-band-post-progress-module")
             cwd = os.getcwd()
             os.chdir(self.work_path)
             os.system("phonopy --fc vasprun.xml")
             os.chdir(cwd)
 
 
-            print("\nNote: --------------------------------")
             vaspkitflag = input("If you have installed vaspkit and you want to use it, input: Yes\n")
             if vaspkitflag:
                 cwd = os.getcwd()
@@ -593,16 +581,15 @@ class vasp_processdata(vasp_base):
             self.mp = list(map(int, _mp))
         else:
             self.mp = [20, 20, 20]
-            print("NOTES: ------------------------------ ")
-            print("    you didn't specify the mp='? ? ?', the program will set default mp=[8,8,8]")
+            logger.debug("you didn't specify the mp='? ? ?', the program will set default mp=[8,8,8]")
 
         if "supercell" in self._config:
             _supercell = self._config['supercell'].split()
             self.supercell = list(map(int, _supercell))
         else:
-            print("WARNING: ----------------------------- ")
-            raise ValueError("    you have to specify the supercell=[?,?,?]. If you didn't specify it, maybe somthing wrong will occur !")
-
+            logger.error("    you have to specify the supercell=[?,?,?]. If you didn't specify it, maybe somthing wrong will occur !")
+            sys.exit(1)
+            
         if "tmin" in self._config:
             self.tmin =  self._config['tmin']
         else:
@@ -691,8 +678,7 @@ class vasp_processdata(vasp_base):
         self.check_efermi_energy(vasprunxml_path)
         vasprun = Vasprun(vasprunxml_path)
         e_fermi_fromband  = vasprun.efermi
-        print("NOTES: ------------------------------ ")
-        print("    Check the E-fermi( {} ) is equal to e_fermi_fromscf whether or not at last time !".format(e_fermi_fromband))
+        logger.debug("Check the E-fermi( {} ) is equal to e_fermi_fromscf whether or not at last time !".format(e_fermi_fromband))
 
         eband = vasprun.get_band_structure(line_mode=True)
 
@@ -721,39 +707,33 @@ class vasp_processdata(vasp_base):
         self.check_efermi_energy(vasprunxml_path)
         vasprun = Vasprun(vasprunxml_path)
         e_fermi_fromdos  = vasprun.efermi
-        print("NOTES: ------------------------------ ")
-        print("    Check the E-fermi( {} ) is equal to e_fermi_fromscf whether or not at last time !".format(e_fermi_fromdos))
+        logger.debug("Check the E-fermi( {} ) is equal to e_fermi_fromscf whether or not at last time !".format(e_fermi_fromdos))
         
         # 获得dos的数据
         try:
             eledos = vasprun.complete_dos_normalized
-            print("NOTES: ------------------------------ ")
-            print("    Success getting the complete_dos_normalized")        
+            logger.debug("Success getting the complete_dos_normalized")        
         except:
             eledos = vasprun.complete_dos
-            print("NOTES: ------------------------------ ")
-            print("    Success getting the complete_dos")        
+            logger.debug("Success getting the complete_dos")        
 
 
         # 处理dos的数据，并决定
         dosplotter = DosPlotter()
         self.pdostype   = self._config.get('pdostype', None)
         if self.pdostype == "ele":
-            print("NOTES: ------------------------------ ")
             dosplotter.add_dos_dict(eledos.get_element_dos())
-            print("    Success getting the dos projected to elements")        
+            logger.debug("Success getting the dos projected to elements")        
         elif self.pdostype == "spd":
-            print("NOTES: ------------------------------ ")
             dosplotter.add_dos_dict(eledos.get_spd_dos())
-            print("    Success getting the dos projected to spd-orbits")        
+            logger.debug("Success getting the dos projected to spd-orbits")        
         elif self.pdostype == "elespd":
-            print("NOTES: ------------------------------ ")
             dosplotter.add_dos_dict(eledos.get_element_spd_dos())
-            print("    Success getting the dos projected to elements and spd-orbits")        
+            logger.debug("Success getting the dos projected to elements and spd-orbits")        
         else:
-            print("NOTES: You set nothing for pdostype --")
+            logger.debug("NOTES: You set nothing for pdostype")
             dosplotter.add_dos_dict(eledos.get_element_dos())
-            print("    Default value is projected to element. Success getting the dos projected to elements")        
+            logger.debug("Default value is projected to element. Success getting the dos projected to elements")        
         dosplotter.get_plot()
         eledospng_path = self.work_path.joinpath('eledos.png')
         dosplotter.save_plot(
@@ -908,12 +888,11 @@ class vasp_processdata(vasp_base):
         # 检查费米能级
         e_fermi_fromscf  = os.popen(f"grep E-fermi {scfoutcar_path} | tail -n 1 " + "| awk '{print $3}' ").read().strip("\n")
         e_fermi_dos_band = os.popen(f"grep efermi  {vasprunxml_path}" + "| awk '{print $3}' ").read().strip("\n")
-        print("NOTES: ------------------------------ ")
-        print("    You have to confirm that the Fermi energy is from scf/OUTCAR. Because the Fermi energy in dos/DOSCAR is not accurate")
-        print("    You can use 'grep E-fermi scf/OUTCAR' to check the Fermi energy by yourself !")
-        print("    E-fermi in scf is {}".format(e_fermi_fromscf))
-        print("    E-fermi in dos is {}".format(e_fermi_dos_band))
-        print("    The program will use `e_fermi_fromscf` to cover the `e_fermi_dos_band`")
+        logger.debug("You have to confirm that the Fermi energy is from scf/OUTCAR. Because the Fermi energy in dos/DOSCAR is not accurate")
+        logger.debug("You can use 'grep E-fermi scf/OUTCAR' to check the Fermi energy by yourself !")
+        logger.debug("E-fermi in scf is {}".format(e_fermi_fromscf))
+        logger.debug("E-fermi in dos is {}".format(e_fermi_dos_band))
+        logger.debug("The program will use `e_fermi_fromscf` to cover the `e_fermi_dos_band`")
         if abs(float(e_fermi_fromscf) - float(e_fermi_dos_band)) > 0.0001:
             replace_efermi_in_vasprunxml = """ sed -E -i.bak """ + \
                                            """ 's/<i name="efermi">\s*[0-9]+\.[0-9]+\s*<\/i>/<i name="efermi">    {} <\/i>/' """.format(e_fermi_fromscf) + \
@@ -922,8 +901,7 @@ class vasp_processdata(vasp_base):
             os.chdir(self.work_path)
             os.system(replace_efermi_in_vasprunxml)
             os.chdir(cwd)
-        print("NOTES: ------------------------------ ")
-        print("    If you wanna plot band or dos by yourself, you'd better replace efermi in DOSCAR with that in scf/OUTCAR")
+        logger.debug("logger.debugIf you wanna plot band or dos by yourself, you'd better replace efermi in DOSCAR with that in scf/OUTCAR")
 
 
 class vasp_clear:

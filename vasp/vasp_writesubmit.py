@@ -1,9 +1,11 @@
 import os
 import re
+import logging
 
 from vasp.vasp_inputpara import vasp_inputpara
 from vasp.vaspbin import vaspstd_path, vaspgam_path, bashtitle, slurmtitle, pbstitle, lsftitle
 
+logger = logging.getLogger(__name__)
 
 class vasp_writesubmit:
     
@@ -29,10 +31,10 @@ class vasp_writesubmit:
         if self.check_partition_exists(new_partition):
             # 使用正则表达式替换 --partition 后面的内容
             updated_title = re.sub(r'--partition=\S+', f'--partition={new_partition}', title)
-            print(f"Partition exist! {new_partition}")
+            logging.warning(f"Partition exist! {new_partition}")
             return updated_title
         else:
-            print(f"{new_partition} doesn't exist! Keep partition name in ~/.my_scripts.py")
+            logging.debug(f"{new_partition} doesn't exist! Keep partition name in ~/.my_scripts.py")
             return title
         
     def check_partition_exists(self, new_partition: str) -> bool:
@@ -47,7 +49,7 @@ class vasp_writesubmit:
             else:
                 return False
         except Exception as e:
-            print(f"Error throws up when run `sinfo -h --format=%P`: {e}")
+            logging.warning(f"Error throws up when run `sinfo -h --format=%P`: {e}")
             return False
 
     def write_submit_scripts(self, mode=None, submitjob_path=None):
@@ -176,7 +178,7 @@ class vasp_writesubmit:
     def disp(self, submit_dirpath):
         jobname = "disp.sh"
         submit_script_filepath = os.path.join(submit_dirpath, jobname)
-        print(submit_script_filepath)
+        logging.debug(submit_script_filepath)
         with open(submit_script_filepath, "w") as submit:
             submit.writelines(self.jobtitle)
             submit.write('echo "run Displacement" && pwd      \n')

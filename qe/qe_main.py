@@ -1,22 +1,17 @@
 #!/usr/bin/env python
-
+import logging
 from argparse import ArgumentParser
 from argparse import RawTextHelpFormatter
 
 from qe.set_args import set_more_args
-from qe.qe_log import qe_log
+from qe.qe_logging import qe_logging
+from qe.qe_logo import qe_logo
 
 def pre_words():
-    print("--------------------")
-    print("--------------------")
-    print("--------------------")
-    print("--------------------")
+    qe_logo("SCRIPTS 4 QE")
     print("Start qe calculate")
-    print("This code writed by Ma Yuan, and his e-mail is 1157421359@qq.com")
-    print("--------------------")
-    print("--------------------")
-    print("--------------------")
-    print("--------------------")
+    print("This code writed by Ma Yuan, and his e-mail is mayuan@calypso.org.cn\n\n")
+
 
 if __name__ == "__main__":
     
@@ -24,6 +19,6 @@ if __name__ == "__main__":
 
     parser = ArgumentParser(prog="run_qe", formatter_class=RawTextHelpFormatter)
     args = set_more_args(parser)
-    qe_log(args.logging_level)
+    qe_logging(getattr(logging, args.logging_level.upper()))
     
     qe = args.qe_workflow(args)

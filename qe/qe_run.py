@@ -1,4 +1,5 @@
 import os
+import logging
 from argparse import ArgumentParser
 
 from qe.config import config
@@ -7,6 +8,12 @@ from qe.qe_writeinput import qe_writeinput
 from qe.qe_writesubmit import qe_writesubmit
 from qe.qe_submitjob import qe_submitjob
 
+
+
+logger = logging.getLogger(__name__)
+
+logger.info("This is an info message")
+logger.debug("This is a debug message")
 
 def check_pid_jobid(ids: list, submit_job_system):
     if submit_job_system == "bash":

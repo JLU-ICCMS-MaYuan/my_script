@@ -91,20 +91,16 @@ class vasp_inputpara(vasp_base):
         
         if not hasattr(self, "queue"):
             self.queue = None
-            print("    You didn't specify queue, so the program will not submit the job in any way")
+            logger.debug("You didn't specify queue, so the program will not submit the job in any way")
 
         if not hasattr(self, "execmd"):
-            print("Error: ----------------------")
-            print("    You must specify execute command, such as 'mpirun -np 48', 'bash', 'srun', 'srun --mpi=pmi2'")
-            print("-----------------------------")
+            logger.error("You must specify execute command, such as 'mpirun -np 48', 'bash', 'srun', 'srun --mpi=pmi2'")
             sys.exit(1)
 
         if not hasattr(self, "nbands"):
             self.nbands = None
-            print("Warning: --------------------")
-            print("    NBANDS had better to specify when you do eletronic properties calculation!!!")
-            print("    Therefore, the default value will be determined by VASP automatically")
-            print("-----------------------------")
+            logger.warning("NBANDS had better to specify when you do eletronic properties calculation!!!")
+            logger.warning("Therefore, the default value will be determined by VASP automatically")
 
         # 关于并行计算的参数
         
@@ -223,7 +219,7 @@ class vasp_phonopara(vasp_inputpara):
             _supercell = re.findall(r"\d+", kwargs['supercell'])
             self.supercell = list(map(int, _supercell))
         else:
-            print("If you didn't set supercell, the default will be `supercell='1 1 1'` ")
+            logger.debug("If you didn't set supercell, the default will be `supercell='1 1 1'` ")
             self.supercell = [1, 1, 1]
 
         if hasattr(self, "kdensity"):
@@ -234,7 +230,7 @@ class vasp_phonopara(vasp_inputpara):
             self.kdensity = None
             self.kspacing = kwargs["kspacing"]
         else:
-            print("You didn't specify any information of k-mesh, so the program will set kdensity='40 40 40'")
+            logger.debug("You didn't specify any information of k-mesh, so the program will set kdensity='40 40 40'")
             self.kdensity = [40, 40, 40]
             self.kspacing = None
         
@@ -254,11 +250,11 @@ class vasp_phonopara(vasp_inputpara):
             self.sposcar_ase_type    = read(sposcar_file)
             self.sposcar_struct_type = AseAtomsAdaptor.get_structure(self.sposcar_ase_type) 
             if self.mode == 'dfpt':
-                print("When mode=dfpt, the program will rename POSCAR to POSCAR-unit and copy SPOSCAR to POSCAR")
+                logger.debug("When mode=dfpt, the program will rename POSCAR to POSCAR-unit and copy SPOSCAR to POSCAR")
                 shutil.move(poscar_file, poscar_init) 
                 shutil.copy(sposcar_file, poscar_file)
             elif self.mode == 'disp':
-                print("When mode=disp, the program will copy POSCAR to POSCAR-init and note that SPOSCAR won't be copied to POSCAR")
+                logger.debug("When mode=disp, the program will copy POSCAR to POSCAR-init and note that SPOSCAR won't be copied to POSCAR")
                 shutil.copy(poscar_file, poscar_init)
 
 
@@ -285,7 +281,7 @@ class vasp_eletronpara(vasp_inputpara):
         try:
             self.mode = self.mode.split()
         except:
-            print("You are using `vasp eletron module`, what you use mode is:")
+            logger.debug("You are using `vasp eletron module`, what you use mode is:")
             print(f"{self.mode}")
             
 

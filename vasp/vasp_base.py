@@ -2,6 +2,7 @@ import os
 import re
 import sys
 import shutil
+import logging
 from pathlib import Path
 from typing import List
 
@@ -13,6 +14,7 @@ from pymatgen.io.vasp import Poscar
 
 from vasp.vaspbin import potcar_source_libs
 
+logger = logging.getLogger(__name__)
 
 class vasp_base:
     """
@@ -44,33 +46,29 @@ class vasp_base:
         try:
             self.struct_type       = AseAtomsAdaptor.get_structure(self.ase_type)
         except:
-            print("\nNote: ------------------------------")
-            print("    Read inputfile {} occurs something wrong!".format(self.input_file_name))
+            logger.error("    Read inputfile {} occurs something wrong!".format(self.input_file_name))
             sys.exit(1)
             
-        print("Step 1 ------------------------------")
-        print("    Create work_path under the work_path.")
         if self.work_path is None:
             self.work_path = Path.cwd()
-            print(f"    You didn't specify the work_path, the default work_path is the current path {self.work_path}")
+            logger.debug(f"You didn't specify the work_path, the default work_path is the current path {self.work_path}")
         else:
-            print(f"    You specify the work_path, the work_path will be '{self.work_path}' ")
+            logger.debug(f"You specify the work_path, the work_path will be '{self.work_path}' ")
             self.work_path = Path(self.work_path)
             if not self.work_path.exists():
                 self.work_path.mkdir(parents=True)
-
-        print("Step 2 ------------------------------")
-        print("    Prepare the POSCAR and its coresponding primitive and conventional cell.")
+        logger.info(f"work_path: {self.work_path.absolute()}")
+        
+        logger.info("Prepare the POSCAR and its coresponding primitive and conventional cell.")
         self.get_struct_info(self.struct_type, self.work_path)
 
-        print("Step 3 ------------------------------")
-        print("    Prepare the directory of `potcar_lib` and merge POTCARs ")
-        print(f"   Pick up POTCARs from: \n        {potcar_source_libs}")
+        logger.info("Prepare the directory of `potcar_lib` and merge POTCARs ")
+        logger.info(f"Pick up POTCARs from: \n        {potcar_source_libs}")
         self.workpath_pppath = Path(self.work_path).joinpath("potcar_lib")
         if not self.workpath_pppath.exists():
             self.workpath_pppath.mkdir() 
         self.get_potcar(self.work_path)
-        print(f"potcar_lib is in \n {self.workpath_pppath}")
+        logger.info(f"potcar_lib is in \n {self.workpath_pppath}")
 
 
     def get_struct_info(self, struct, output_poscar):
@@ -87,7 +85,7 @@ class vasp_base:
         Poscar(pstruct).write_file(output_poscar.joinpath("cell-primitive.vasp"))
         Poscar(bstruct).write_file(output_poscar.joinpath("cell-conventional.vasp"))
         Poscar(struct).write_file(output_poscar.joinpath("POSCAR"))
-        print("    You really confirm the inputfile, such as POSCAR, ***.vasp,  is what you want !")
+        logger.debug("You really confirm the inputfile, such as POSCAR, ***.vasp,  is what you want !")
         # 处理PPOSCAR的pymatgen对象
         # 获得元素名称 和 每种元素的原子个数
         self.composition        = struct.composition.get_el_amt_dict()
@@ -261,27 +259,27 @@ class vasp_base:
         所以用户需要根据超胞的大小, 合理估计一个k点密度, 然后得到该方向的k点数
         """
         from pymatgen.io.vasp import Kpoints
-        print("creat KPOINTS by `automatic_density_by_length`")
+        logger.info("creat KPOINTS by `automatic_density_by_length`")
         kpoints = Kpoints.automatic_density_by_lengths(
             structure=pmg_struct, 
             length_densities=kdensity,
             force_gamma=True)
         kpoints.write_file(output_kpoints)
-        print(kpoints)
+        logger.info(kpoints)
 
     def get_hspp(self, ase_type):
 
         from itertools import chain
 
         ltype   = ase_type.cell.get_bravais_lattice()
-        print(f"lattice type: \n{ltype}")
+        logger.debug(f"lattice type: \n{ltype}")
         pstring = ltype.special_path
-        print(f"the high symmetry points path: \n{pstring}")
+        logger.debug(f"the high symmetry points path: \n{pstring}")
 
         _plist  = [[ p for p in pp if not p.isdigit()] for pp in pstring.split(",")]
-        print(f"the high symmetry points path: \n{_plist}")
+        logger.debug(f"the high symmetry points path: \n{_plist}")
 
-        print(
+        logger.debug(
             "please input the mode you want, just even input Number like 1 or 2\n",
             "0:  all_points:\n",
             "1:  first_group_points\n",
@@ -294,19 +292,19 @@ class vasp_base:
         try:
             high_symmetry_type = list(map(int, input().split())) #将输入的整数字符串按照空格划分成列表并分别转化为整数类型并再转化为列表
         except:
-            print("what you input is not an integer number, So use the `0:  all_points`")
+            logger.debug("what you input is not an integer number, So use the `0:  all_points`")
             high_symmetry_type = [0]
 
         path_name_list = []
         if "," in pstring:
             if 0 in high_symmetry_type:
                 path_name_list = list(chain.from_iterable(_plist))
-                print(f"the choosed high symmetry points path is \n {path_name_list}")
+                logger.debug(f"the choosed high symmetry points path is \n {path_name_list}")
             elif 0 not in high_symmetry_type:
                 # path_name_list = max(_plist, key=len)
                 for hst in high_symmetry_type:
                     path_name_list.extend(_plist[hst-1])
-                print(f"the choosed high symmetry points path is \n {path_name_list}")
+                logger.debug(f"the choosed high symmetry points path is \n {path_name_list}")
         else:
             path_name_list = [ pp for pp in pstring]
         
@@ -318,21 +316,21 @@ class vasp_base:
 
 
         # 处理高对称点路径
-        print("Print Fractional Coordinates of Reciprocal Lattice ! ")
+        logger.debug("Print Fractional Coordinates of Reciprocal Lattice ! ")
         for name, coord in zip(path_name_list, path_coords):
-            print("{}      {:<8.6f} {:<8.6f} {:<8.6f}".format(name, coord[0], coord[1], coord[2]))
+            logger.debug("{}      {:<8.6f} {:<8.6f} {:<8.6f}".format(name, coord[0], coord[1], coord[2]))
             # < 表示左对齐，8.6f 表示留出8个位置并保留小数点后6位。
 
 
 
-        print("The reciprocal lattice (without multiplating `unit_reciprocal_axis`)")
+        logger.debug("The reciprocal lattice (without multiplating `unit_reciprocal_axis`)")
         for vector in self.reciprocal_plattice:
-            print("{:<6.3f} {:<6.3f} {:<6.3f} ".format(vector[0], vector[1], vector[2]))
+            logger.debug("{:<6.3f} {:<6.3f} {:<6.3f} ".format(vector[0], vector[1], vector[2]))
 
 
 
-        print("Print projected high symmetry path")
-        print("倒格子的单位是: 2pi/埃")
+        logger.info("Print projected high symmetry path")
+        logger.info("倒格子的单位是: 2pi/埃")
         path_name_coords = list(zip(path_name_list, path_coords))
         #projected_path_name_coords = [[path_name_coords[0][0], path_name_coords[0][1][0]]]
         projected_path_name_coords = [[path_name_coords[0][0], 0]]
@@ -346,15 +344,15 @@ class vasp_base:
             projected_path_name_coords.append([current_name, total_dist])
         string_names = '  '.join(coord[0] for coord in projected_path_name_coords)
         string_coord = '  '.join(str(np.round(coord[1], 6)) for coord in projected_path_name_coords)
-        print(string_names)
-        print(string_coord)
+        logger.info(string_names)
+        logger.info(string_coord)
 
         
         return path_name_list, path_coords
 
     def read_hspp(self, hsppfile_path):
         
-        print("The reciprocal lattice")
+        logger.info("The reciprocal lattice")
         for vector in self.reciprocal_plattice:
             print("{:<6.3f} {:<6.3f} {:<6.3f} ".format(vector[0], vector[1], vector[2]))
 
@@ -364,7 +362,7 @@ class vasp_base:
         hspplist         = [line.strip() for line in lines[4:] if line.strip()] # 只读取第四行开始的内容
         path_name_coords = [hspplist[i] for i in range(0, len(hspplist), 2)] + [hspplist[-1]] # 每隔一个高对称点读取一次，并且附加最后一个高对称点
 
-        print("Print path coords and names")
+        logger.info("Print path coords and names")
         for idx in range(0, len(path_name_coords)):
             print(path_name_coords[idx])
         
@@ -401,7 +399,6 @@ class vasp_base:
     def write_highsymmetry_kpoints(self, ase_type, kpoints_path):
 
         kpoints_filepath = kpoints_path.joinpath("KPOINTS")
-        print("\nNote: --------------------------------")
         vaspkitflag = input("If you have installed vaspkit and you want to use it, input: Yes\n")
         if vaspkitflag:
             cwd = os.getcwd()
@@ -452,14 +449,12 @@ class vaspbatch_base(vasp_base):
             self.work_path = Path.cwd().joinpath(self.input_file_name, str(self.press))
             if not self.work_path.exists():
                 self.work_path.mkdir(parents=True)
-            print("\nNote: -------------------")
-            print(f"    You didn't specify the work_path, the default work_path is the current path {self.work_path}!")
+            logger.info(f"You didn't specify the work_path, the default work_path is the current path {self.work_path}!")
         else:
             self.work_path= Path(self.work_path).joinpath(self.input_file_name, str(self.press))
             if not self.work_path.exists():
                 self.work_path.mkdir(parents=True)
-            print("\nNote: --------------------")
-            print("    Now {} will be created".format(self.work_path))
+            logger.info("Now {} will be created".format(self.work_path))
 
         self.ase_type          = read(self.input_file_path)
         self.struct_type       = AseAtomsAdaptor.get_structure(self.ase_type)
@@ -467,8 +462,7 @@ class vaspbatch_base(vasp_base):
         
         ############################ prepare pp directory #########################
         self.workpath_pppath = Path(self.work_path).parent.parent.joinpath("potcar_lib")
-        print(f"\nNote: --------------------")
-        print(f"   To create potcar dir in \n {self.workpath_pppath}, it's convenient for you to choose POTCARs once.")
+        logger.info(f"To create potcar dir in \n {self.workpath_pppath}, it's convenient for you to choose POTCARs once.")
         if not self.workpath_pppath.exists():
             self.workpath_pppath.mkdir()
         # 准备赝势 

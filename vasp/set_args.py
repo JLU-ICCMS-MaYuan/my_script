@@ -60,7 +60,16 @@ def set_more_args(parser: ArgumentParser):
         dest='submit_job_system',
         help="please tell me your job submition system, eg: slurm, pbs, or bash",
     )
-
+    
+    parser.add_argument(
+        '-l',
+        '-logging-level',
+        type=str,
+        default="INFO",
+        dest='logging_level',
+        help="please tell me the output infomation level \n"
+             "such as, DEBUG, INFO, WARNING, ERROR, CRITICAL\n"
+    ) 
     subparsers = parser.add_subparsers(help="subparsers")
     
     # 结构弛豫

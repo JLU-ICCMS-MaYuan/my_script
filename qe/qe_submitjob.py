@@ -38,8 +38,7 @@ class qe_submitjob:
         if not input_file.exists():
             raise FileExistsError(f" {inputfilename} doesn't exist")
         outputfilename = inputfilename.split(".")[0] + ".out"
-        print("\nNote: --------------------")
-        print("    !!!!!!!! Please Attention, You have been source your Intel Compiler !!!!!!!!")
+        logger.warning("    !!!!!!!! Please Attention, You have been source your Intel Compiler !!!!!!!!")
         # 这种模式是专门为qe的其它模块设计，非阻塞式单核运行，
         # 只有一个目的，将ph.x任务提交到后台后，进行不可约q点产生计算。
         # 一旦检测到dyn0文件出现，就杀掉这个ph.x任务，
@@ -47,14 +46,14 @@ class qe_submitjob:
             cwd_path = os.getcwd()
             os.chdir(self.qe_inputpara.work_path)
             jobids = os.popen(f"nohup {qebin_path}/{dotx_file} <{inputfilename}> {outputfilename} 2>&1 & echo $!").read()
-            print(f"{dotx_file} is running. pid or jobids = {jobids}")
+            logger.info(f"{dotx_file} is running. pid or jobids = {jobids}")
             os.chdir(cwd_path)
             return jobids, outputfilename
         # 这个是专门为eliashberg方程求解提供的提交任务模式
         elif dotx_file == "eliashberg.x":
             cwd_path = os.getcwd()
             os.chdir(self.qe_inputpara.work_path)
-            print(f"    {eliashberg_x_path} > eliashberg.log")
+            logger.debug(f"    {eliashberg_x_path} > eliashberg.log")
             os.system(f"{eliashberg_x_path} > eliashberg.log")
             os.chdir(cwd_path)
         # 这种模式是专门为qe设计，阻塞式单核运行, 可以用于所有的任务计算，这里提供了核数设置。
@@ -62,14 +61,12 @@ class qe_submitjob:
         else: 
             cwd_path = os.getcwd()
             os.chdir(self.qe_inputpara.work_path)
-            print("\nNote: --------------------")
-            print(f"    killall -9 {dotx_file} > /dev/null")
-            print(f"    {qebin_path}/{dotx_file} <{inputfilename} > {outputfilename}")
+            logger.debug(f"    killall -9 {dotx_file} > /dev/null")
+            logger.debug(f"    {qebin_path}/{dotx_file} <{inputfilename} > {outputfilename}")
             os.system(f"killall -9 {dotx_file} > /dev/null")
             os.system(f"{qebin_path}/{dotx_file} <{inputfilename} > {outputfilename}")
             os.chdir(cwd_path)
 
-        
     def submit_mode1(self, inputfilename, jobname):
         """
         submit_mode1 can be used to submit job by job-system, 
@@ -85,15 +82,15 @@ class qe_submitjob:
         dst_dir = input_file.parent.absolute()
         os.chdir(dst_dir)
         if self.qe_inputpara.submit_job_system == "bash":
-            print(f"nohup {self.submit_order} {jobname} > bash.log 2>&1 &")
+            logger.debug(f"nohup {self.submit_order} {jobname} > bash.log 2>&1 &")
             res = os.popen(f"nohup {self.submit_order} {jobname} > bash.log 2>&1 &").read()
             jobids = self.getpid()
         else:
-            print(f"{self.submit_order} {jobname}")
+            logger.debug(f"{self.submit_order} {jobname}")
             res = os.popen(f"{self.submit_order} {jobname}").read()
             jobids = re.findall(r"\d+", res)
 
-        print(f"{jobname} is running. pid or jobids = {jobids}")
+        logger.info(f"{jobname} is running. pid or jobids = {jobids}")
         os.chdir(cwd)
         # 检查任务是否成功提交，成功提交的话，应该会有进程号或者任务号返回。
         # 如果没有成功提交任务就跳出程序
@@ -110,13 +107,12 @@ class qe_submitjob:
         # 检查是否只是为了获得dyn0文件
         if self.qe_inputpara.dyn0_flag:
             # 检查是否只是为了获得dyn0文件，如果是：
-            print(f"You set dyn0_flag = {self.qe_inputpara.dyn0_flag}. So When the dyn0 appears, the program will kill ph.x")
+            logger.debug(f"You set dyn0_flag = {self.qe_inputpara.dyn0_flag}. So When the dyn0 appears, the program will kill ph.x")
             # 在运行ph.x之前，检查dyn0文件是否已经存在
             if self.checksuffix(self.qe_inputpara.work_path, ".dyn0"):
                 # 在运行ph.x之前，如果dyn0文件已经存在， 那么就直接退出程序
-                print("\nNote: ------------------------")
-                print("    Before running the ph.x, the program will check the *.dyn0 exists whether or not !")
-                print("    It seems that dyn0 is not create by you!! Please check it carefully!!! The program will exit!!!")
+                logger.error("Before running the ph.x, the program will check the *.dyn0 exists whether or not !")
+                logger.error("It seems that dyn0 is not create by you!! Please check it carefully!!! The program will exit!!!")
                 sys.exit(0)
             else:
                 # 在运行ph.x之前，如果dyn0文件不存在， 那么就执行ph.x的运行
@@ -126,15 +122,15 @@ class qe_submitjob:
                     # 然后检查dyn0文件是否存在，一旦产生就退出ph.x的运行。
                     # time.sleep(3)
                     if self.checksuffix(self.qe_inputpara.work_path, ".dyn0"):
-                        print("The *.dyn0 has been created just now !!! The program will run `killall -9 ph.x`")
+                        logger.error("The *.dyn0 has been created just now !!! The program will run `killall -9 ph.x`")
                         os.system("killall -9 ph.x")
                         sys.exit(0)
                     if self.checkerror(self.qe_inputpara.work_path, outputfilename):
-                        print("The {outputfilename} has ERROR !!! The program will exit")
+                        logger.error("The {outputfilename} has ERROR !!! The program will exit")
                         sys.exit(1)
         else:
             # 检查是否只是为了获得dyn0文件，如果否：
-            print(f"You set dyn0_flag = {self.qe_inputpara.dyn0_flag}. The program will just simply run ph.x ")
+            logger.debug(f"You set dyn0_flag = {self.qe_inputpara.dyn0_flag}. The program will just simply run ph.x ")
             jobids = self.submit_mode1(inputfilename, jobname)
 
     def submit_mode3(self, inputfilename, jobnames):
@@ -144,21 +140,21 @@ class qe_submitjob:
             cwd = os.getcwd()
             os.chdir(self.qe_inputpara.work_path.joinpath(str(i+1)))
             if self.qe_inputpara.submit_job_system == "bash":
-                print(f"nohup {self.submit_order} {jobname} > phbash{i+1}.log 2>&1 &")
+                logger.debug(f"nohup {self.submit_order} {jobname} > phbash{i+1}.log 2>&1 &")
                 res = os.popen(f"nohup {self.submit_order} {jobname} > bash.log 2>&1 &").read()
                 jobids = self.getpid()
             else:
-                print(f"{self.submit_order} {jobname}")
+                logger.debug(f"{self.submit_order} {jobname}")
                 res = os.popen(f"{self.submit_order} {jobname}").read()
                 jobids = re.findall(r"\d+", res)
-            print(f"finish submit {jobname}, jobids = {''.join(jobids)}")
+            logger.info(f"finish submit {jobname}, jobids = {''.join(jobids)}")
             os.chdir(cwd)
 
     @staticmethod
     def getpid():
         """get pid number"""
         jobids = []
-        print("wait 6s, The program will tell you PID"); #time.sleep(6); 
+        logger.debug("wait 6s, The program will tell you PID"); #time.sleep(6); 
         osawk = """ps -ef | grep -E "pw.x|ph.x|matdyn.x|lambda.x|q2r.x|eliashberg.x|dos.x|pp.x|projwfc.x" |  grep -v grep | awk '{print $2}'""" # return a series of number, such as: 423423 324233 423424
         # ps -ef ps -ef用于查看全格式的全部进程，其中“ps”是在Linux中是查看进程的命令，“-e ”参数代表显示所有进程，“-f”参数代表全格式。
         # grep -E  ‘grep’ ‘-E’ 选项表示使用扩展的正则表达式。如果你使用 ‘grep’ 命令时带 ‘-E’，你只需要用途 ‘|’ 来分隔OR条件。 grep -E 'pattern1|pattern2' filename
@@ -190,13 +186,13 @@ class qe_submitjob:
         if outputfile_path.exists():
             content = open(outputfile_path, "r").read()
             if ("Error" in content) or ("error" in content) or ("stopping" in content):
-                print(f"{outputfilename} output some wrong results. The program will exit!!!") 
+                logger.error(f"{outputfilename} output some wrong results. The program will exit!!!") 
                 sys.exit(1)
             elif crash_file.exists():
-                print(f"{outputfilename} output some wrong results. The program will exit!!!") 
+                logger.error(f"{outputfilename} output some wrong results. The program will exit!!!") 
                 sys.exit(1)
         else:
-            print(f"{outputfilename} doesn't exist temporarily!")
+            logger.debug(f"{outputfilename} doesn't exist temporarily!")
 
 
 

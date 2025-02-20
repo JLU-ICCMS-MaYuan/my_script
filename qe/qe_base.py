@@ -1,7 +1,6 @@
 import os
 import re
 import sys
-import time
 import shutil
 import logging
 import numpy as np
@@ -16,7 +15,7 @@ from pymatgen.io.vasp import Poscar
 from qe.qebin import qe_source_libs
 from qe.qe_check import qe_check
 
-logger = logging.getLogger("qe_base")
+logger = logging.getLogger(__name__)
 
 class qe_base:
     def __init__(
@@ -57,20 +56,19 @@ class qe_base:
             self.work_path = Path(self.work_path)
             if not self.work_path.exists():
                 self.work_path.mkdir(parents=True, exist_ok=True)
-                
+        logger.info(f"work_path: {self.work_path.absolute()}")
+        
         try:
             self.ase_type = read(self.input_file_path)
         except:
-            print("\nNote: --------------------")
-            print("    When reading `{}` file, the program get something wrong, you need to check it !!!".format(self.input_file_path))
+            logger.error("When reading `{}` file, the program get something wrong, you need to check it !!!".format(self.input_file_path))
             sys.exit(1)
 
         self.struct_type = AseAtomsAdaptor.get_structure(self.ase_type)
         self.get_struct_info(self.struct_type, self.work_path)
         ############################ prepare pp directory #########################
-        print("\nNote: ----------")
-        print(f"    Create pp in {self.work_path}")
-        print(f"    Pick up UPF from: \n        {qe_source_libs}")
+        logger.info(f"Create pp in {self.work_path.absolute()}")
+        logger.info(f"Pick up UPF from: \n{qe_source_libs}")
         self.workpath_pppath = Path(self.work_path).joinpath("pp")
         if not self.workpath_pppath.exists():
             self.workpath_pppath.mkdir(parents=True)
@@ -91,8 +89,7 @@ class qe_base:
         pstruct = spa.get_primitive_standard_structure()
         # Poscar(pstruct).write_file(output_poscar.joinpath("PPOSCAR"))
         # 备份原始结构
-        print("Note: -------------------- ")
-        print(f"    finish back up origin inputed structure file into workpath:\n         {self.work_path}")
+        logger.debug(f"finish back up origin inputed structure file into workpath: {self.work_path.absolute()}")
         if not self.work_path.joinpath(self.input_file_path.name).exists():
             # shutil.copy(self.input_file_path, self.work_path)
             backup_inputfile = self.work_path.joinpath("origin-"+self.input_file_path.name)
@@ -142,26 +139,24 @@ class qe_base:
                 while not choosed_flag:
                     for i, p in enumerate(dst_pps):
                         print(f"{i+1}.  ", p)
-                    print("\nNote: --------------------")
-                    choosed_pp_number = int(input("    please input you want one(Enter the previous number, such as 1,2,3...)\n"))
+                    choosed_pp_number = int(input("Please input you want one(Enter the previous number, such as 1,2,3...)\n"))
                     choosed_pp = dst_pps[choosed_pp_number-1]
                     if choosed_pp in dst_pps:
                         choosed_flag = True
                         self.final_choosed_pp.append(choosed_pp)
                     else:
                         choosed_flag = False
-                print(self.final_choosed_pp)
+                logger.info(self.final_choosed_pp)
             elif len(dst_pps) == 1:
                 # 如果目标元素只有1个赝势放在pp目录中. 直接将其加入self.final_choosed_pp即可
                 self.final_choosed_pp.append(dst_pps[0])
             elif len(dst_pps) == 0:
                 # 如果目标元素在pp目录中一个都没有，就从之前设置的赝势库中选择一个
-                print("\nNote: --------------------")
-                print(f"    To prepare {species_name} uspp! ")
+                logger.info(f"To prepare {species_name} uspp! ")
                 dst_pp = self.get_single_uspp(species_name, workpath_pppath)
                 self.final_choosed_pp.append(dst_pp)
             else:
-                print(f"find many POTCARs {dst_pps}")
+                logger.info(f"find many qe-pp {dst_pps}")
                 sys.exit(1)
 
     def get_single_uspp(self, species_name, workpath_pppath):
@@ -176,7 +171,7 @@ class qe_base:
         if os.path.exists(qe_USPP):
             pp_files = os.listdir(qe_USPP)
         else:
-            print("    You may not set the potcar_source_libs, you can set it in `qebin.py` ")
+            logger.error("You may not set the potcar_source_libs, you can set it in `qebin.py` ")
             sys.exit(1)
 
         targetppfiles    = get_pps_for_a_element(species_name, pp_files)
@@ -185,7 +180,7 @@ class qe_base:
         while not choosed_flag:
             for i, p in enumerate(targetppnames):
                 print(f"{i+1}.  ", p)
-            choosed_pp_number = int(input("    please input you want one(Enter the previous number, such as 1,2,3...)\n"))
+            choosed_pp_number = int(input("Please input you want one(Enter the previous number, such as 1,2,3...)\n"))
             choosed_pp = targetppnames[choosed_pp_number-1]
             if choosed_pp in targetppnames:
                 src_pp = Path(qe_USPP).joinpath(choosed_pp)
@@ -215,17 +210,15 @@ class qe_base:
         elif relax_out_path.exists() and qe_check(relax_out_path, "relax"):
             res_path = relax_out_path
         else:
-            print("\nNote: --------------------")
-            print("    scffit.out, scf.out and relax.out all don't exist. The program can't get reciprocal lattice from them.")
+            logger.warning("scffit.out, scf.out and relax.out all don't exist. The program can't get reciprocal lattice from them.")
 
         if res_path:
             # 从scffit.out中获得alat
             alat = float(os.popen(f"sed -n '/lattice parameter (alat)/p' {res_path}").read().split()[4])
 
             unit_reciprocal_axis = 2*np.pi/alat
-            print("\nNote: --------------------")
-            print(f"    unit_reciprocal_axis = 2pi/alat=2pi/{alat}={unit_reciprocal_axis}, the unit of alat is `1 a.u.`=0.529117 A")
-            print(f"    However !!!!! When you get cartesian coordinates of high symmetry points, unit_reciprocal_axis={1}. Only in this way can we guarantee the consistency of the coordinates of the q points !!!!")
+            logger.debug(f"unit_reciprocal_axis = 2pi/alat=2pi/{alat}={unit_reciprocal_axis}, the unit of alat is `1 a.u.`=0.529117 A")
+            logger.debug(f"However !!!!! When you get cartesian coordinates of high symmetry points, unit_reciprocal_axis={1}. Only in this way can we guarantee the consistency of the coordinates of the q points !!!!")
             reciprocal_lattice = []
             for i in range(1,4):
                 b = os.popen(f"sed -n '/b({i})/p' {res_path}").read()
@@ -234,8 +227,7 @@ class qe_base:
                 reciprocal_lattice.append(b)
             return np.array(reciprocal_lattice)
         else:
-            print("\nNote: --------------------")
-            print("    The program fail to get reciprocal lattice from scffit.out, scf.out and relax.out. So it will get reciprocal lattice from pymatgen, which unit is the same to the QE result.")
+            logger.warning("The program fail to get reciprocal lattice from scffit.out, scf.out and relax.out. So it will get reciprocal lattice from pymatgen, which unit is the same to the QE result.")
             reciprocal_plattice = struct.lattice.reciprocal_lattice.matrix*0.529177 
             return np.array(reciprocal_plattice)
 
@@ -256,9 +248,9 @@ class qe_base:
             cell_parameters = [cell.strip("\n") for cell in content]
             return cell_parameters
         else:
-            print("You didn't specify relax.out as inputfile")
-            print("So We will get cell-information in the way of PYMATGEN")
-            print("cell_parameters")
+            logger.warning("You didn't specify relax.out as inputfile")
+            logger.warning("So We will get cell-information in the way of PYMATGEN")
+            logger.warning("cell_parameters")
             cell_parameters = struct.lattice.matrix
             cell_parameters = ['{:>20.16f}    {:>20.16f}    {:>20.16f}'.format(cell[0], cell[1], cell[2]) for cell in cell_parameters]
             return cell_parameters
@@ -302,8 +294,8 @@ class qe_base:
                 '{:<4}   {}'.format(ele, site.strip("\n")) for ele, site in fractional_sites]
             return fractional_sites
         else:
-            print("You didn't specify relax.out as inputfile")
-            print("So We will get coords-information in the way of PYMATGEN")
+            logger.warning("You didn't specify relax.out as inputfile")
+            logger.warning("So We will get coords-information in the way of PYMATGEN")
             fractional_sites = struct.sites
             element_names = [re.search(r"[A-Za-z]+", str(site.species)).group() for site in fractional_sites]
             fractional_sites = [
@@ -332,7 +324,7 @@ def get_pps_for_a_element(species_name:str, pp_files:list):
 
         qepp_name_patter = re.compile(f'''^([{species_name[0].capitalize()}|{species_name[0].lower()}]{species_name[1]})[\.|\_]''')
     else:
-        print(f"Inconceivable that the length of the element name is not 1 or 2, it is {namelenth}, its name is {species_name}")
+        logger.error(f"Inconceivable that the length of the element name is not 1 or 2, it is {namelenth}, its name is {species_name}")
     dst_pps          = list(filter(lambda file: qepp_name_patter.findall(file), pp_files))
 
     return dst_pps
