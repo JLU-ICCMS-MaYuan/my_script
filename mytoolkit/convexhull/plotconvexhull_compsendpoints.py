@@ -74,7 +74,7 @@ parser.add_argument(
     "-show",
     "--show-png",
     action="store_true",
-    default=False,
+    default=0.0,
     type=float,
     dest="show_png",
     help="是否展示图片, 以网页的形式展示出一个可以动态调节详细程度的可交互图片\n",
