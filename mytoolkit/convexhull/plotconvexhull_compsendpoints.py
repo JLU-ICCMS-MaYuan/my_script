@@ -65,6 +65,7 @@ parser.add_argument(
     "--save-png",
     action="store",
     default=0.0,
+    type=float,
     dest="save_png",
     help="是否保存图片, 数值为显示ebh的结构的上限, 这里保存的图片是pymatgen自动生成的。\n"
          "保存convexhull图片到当前执行命令的路径下\n"
@@ -74,6 +75,7 @@ parser.add_argument(
     "--show-png",
     action="store_true",
     default=False,
+    type=float,
     dest="show_png",
     help="是否展示图片, 以网页的形式展示出一个可以动态调节详细程度的可交互图片\n",
 )

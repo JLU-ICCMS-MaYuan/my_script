@@ -66,6 +66,7 @@ parser.add_argument(
     "-save",
     "--save-png",
     action="store",
+    type=float,
     default=0.0,
     dest="save_png",
     help="是否保存图片, 数值为显示ebh的结构的上限, 这里保存的图片是pymatgen自动生成的。\n"
@@ -75,6 +76,7 @@ parser.add_argument(
     "-show",
     "--show-png",
     action="store",
+    type=float,
     default=0.0,
     dest="show_png",
     help="是否展示图片, 以网页的形式展示出一个可以动态调节详细程度的可交互图片\n",
