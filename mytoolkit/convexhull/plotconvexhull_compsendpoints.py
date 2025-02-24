@@ -73,7 +73,7 @@ parser.add_argument(
 parser.add_argument(
     "-show",
     "--show-png",
-    action="store_true",
+    action="store",
     default=0.0,
     type=float,
     dest="show_png",
