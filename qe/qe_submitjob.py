@@ -147,7 +147,7 @@ class qe_submitjob:
                 logger.debug(f"{self.submit_order} {jobname}")
                 res = os.popen(f"{self.submit_order} {jobname}").read()
                 jobids = re.findall(r"\d+", res)
-            logger.info(f"finish submit {jobname}, jobids = {''.join(jobids)}")
+            logger.info(f"finish submit {jobname}, jobids = {' '.join(jobids)}")
             os.chdir(cwd)
 
     @staticmethod

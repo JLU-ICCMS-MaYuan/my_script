@@ -108,8 +108,24 @@ class qe_phono:
 
         # prepare input parameter
         self.phono_inputpara = qephono_inputpara.init_from_config(self._config)
-
-        if self.phono_inputpara.mode == "merge":
+        # init the input
+        self.qe_writeinput   = qe_writeinput(self.phono_inputpara)
+        # init the submit job script
+        self.qe_writesubmit = qe_writesubmit(self.phono_inputpara)
+        # submit the job
+        self.qe_submitjob = qe_submitjob(self.phono_inputpara)
+        
+        if self.phono_inputpara.mode == "nosplit":
+            inputfilename = self.qe_writeinput.writeinput()
+            jobnames = self.qe_writesubmit.write_submit_scripts(inputfilename)
+            if self.phono_inputpara.queue is not None:
+                self.qe_submitjob.submit_mode2(inputfilename, jobnames)
+        elif self.phono_inputpara.mode == "split_dyn0" or self.phono_inputpara.mode == "split_assignQ":
+            inputfilename = self.qe_writeinput.writeinput()
+            jobnames = self.qe_writesubmit.write_submit_scripts(inputfilename)
+            if self.phono_inputpara.queue is not None:
+                self.qe_submitjob.submit_mode3(inputfilename, jobnames)
+        elif self.phono_inputpara.mode == "merge":
             self.phono_inputpara.merge(self.phono_inputpara.work_path)
         elif self.phono_inputpara.mode == "phonobanddata":
             gauss = self.phono_inputpara.gauss
@@ -129,26 +145,12 @@ class qe_phono:
             logger.info("Get hspp from ASE package")
             self.phono_inputpara.get_hspp()
         else:
-            # init the input
-            self.qe_writeinput  = qe_writeinput(self.phono_inputpara)
             inputfilename = self.qe_writeinput.writeinput()
-
-            # init the submit job script
-            self.qe_writesubmit = qe_writesubmit(self.phono_inputpara)
             jobnames = self.qe_writesubmit.write_submit_scripts(inputfilename)
-
-            # submit the job
-            self.qe_submitjob = qe_submitjob(self.phono_inputpara)
-            if self.phono_inputpara.queue is not None :
-                if self.phono_inputpara.mode == "nosplit":
-                    self.qe_submitjob.submit_mode2(inputfilename, jobnames)
-                elif self.phono_inputpara.mode == "split_dyn0" or self.phono_inputpara.mode == "split_assignQ":
-                    self.qe_submitjob.submit_mode3(inputfilename, jobnames)
-                else:
-                    logger.debug("If mode=matdyn, please remerber process phono spectrum after finish matdyn.x computation")
-                    logger.debug("The reason is `systemname`.freq, `systemname`.freq.gq and gam.lines will be rewrited when you calcuate phonodos")
-                    logger.debug("In most cases, the number of q-points is different between matdyn.in(high symmetry path qpoints sample) and phonondos.in(even qpoints sample)")
-                    self.qe_submitjob.submit_mode1(inputfilename, jobnames)
+            logger.debug("If mode=matdyn, please remerber process phono spectrum after finish matdyn.x computation")
+            logger.debug("The reason is `systemname`.freq, `systemname`.freq.gq and gam.lines will be rewrited when you calcuate phonodos")
+            logger.debug("In most cases, the number of q-points is different between matdyn.in(high symmetry path qpoints sample) and phonondos.in(even qpoints sample)")
+            self.qe_submitjob.submit_mode1(inputfilename, jobnames)
         
 
 class qe_eletron:
@@ -374,39 +376,34 @@ class qe_prepare:
         self._config = config(args).read_config()
 
         self.prepare_inputpara  = qeprepare_inputpara.init_from_config(self._config)
-        # 准备relax.in,  scffit.in,  scf.in 的输入文件
+        self.qe_writeinput  = qe_writeinput(self.prepare_inputpara)
+        self.qe_writesubmit = qe_writesubmit(self.prepare_inputpara)
+        self.qe_submitjob   = qe_submitjob(self.prepare_inputpara)
 
         if self.prepare_inputpara.mode == "prepareall":
-            self.qe_writeinput  = qe_writeinput(self.prepare_inputpara)
+            # 准备relax.in,  scffit.in,  scf.in 的输入文件
             inputfilename1 = self.qe_writeinput.writeinput(mode="relax-vc")
-
-            self.qe_writeinput  = qe_writeinput(self.prepare_inputpara)
             inputfilename2 = self.qe_writeinput.writeinput(mode="scffit")
-            
-            self.qe_writeinput  = qe_writeinput(self.prepare_inputpara)
             inputfilename3 = self.qe_writeinput.writeinput(mode="scf")
         
             # init the submit job script
-            self.qe_writesubmit = qe_writesubmit(self.prepare_inputpara)
-            jobname = self.qe_writesubmit.write_submit_scripts([inputfilename1, inputfilename2, inputfilename3])
+            jobname = self.qe_writesubmit.write_submit_scripts(
+                [inputfilename1, inputfilename2, inputfilename3]
+                )
             # submit the job
-            self.qe_submitjob   = qe_submitjob(self.prepare_inputpara)
             if self.prepare_inputpara.queue is not None:
                 self.qe_submitjob.submit_mode1(inputfilename1, jobname)
 
         elif self.prepare_inputpara.mode == "preparescf":
 
-            self.qe_writeinput  = qe_writeinput(self.prepare_inputpara)
             inputfilename2 = self.qe_writeinput.writeinput(mode="scffit")
-            
-            self.qe_writeinput  = qe_writeinput(self.prepare_inputpara)
             inputfilename3 = self.qe_writeinput.writeinput(mode="scf")
         
             # init the submit job script
-            self.qe_writesubmit = qe_writesubmit(self.prepare_inputpara)
-            jobname = self.qe_writesubmit.write_submit_scripts([inputfilename2, inputfilename3])
+            jobname = self.qe_writesubmit.write_submit_scripts(
+                [inputfilename2, inputfilename3]
+                )
             # submit the job
-            self.qe_submitjob   = qe_submitjob(self.prepare_inputpara)
             if self.prepare_inputpara.queue is not None:
                 self.qe_submitjob.submit_mode1(inputfilename2, jobname)
 
@@ -434,6 +431,7 @@ class qe_epw:
         self.qe_submitjob = qe_submitjob(self.epw_inputpara)
         if self.epw_inputpara.queue is not None:
             self.qe_submitjob.submit_mode1(inputfilename, jobname)
+     
             
 class qe_sctk:
     
@@ -444,17 +442,57 @@ class qe_sctk:
 
         # prepare input parameter
         self.sctk_inputpara = qesctk_inputpara.init_from_config(self._config)
-
-        #  # init the input
-        self.sctk_writeinput = qe_writeinput(self.sctk_inputpara)
-        inputfilename = self.sctk_writeinput.writeinput()
-        logger.info(inputfilename)
-        
-        # init the submit job script
+        self.qe_writeinput  = qe_writeinput(self.sctk_inputpara)
+        self.qe_submitjob   = qe_submitjob(self.sctk_inputpara)
         self.qe_writesubmit = qe_writesubmit(self.sctk_inputpara)
-        jobname = self.qe_writesubmit.write_submit_scripts(inputfilename)
+        
+        
+        
+        if self.sctk_inputpara.mode == "nosplit":
+            inputfilename = self.qe_writeinput.writeinput()
+            jobname = self.qe_writesubmit.write_submit_scripts(inputfilename)
+            # submit the job
+            if self.sctk_inputpara.queue is not None:
+                self.qe_submitjob.submit_mode2(inputfilename, jobname)
+                
+        elif self.sctk_inputpara.mode == "split_dyn0" or self.sctk_inputpara.mode == "split_assignQ":
+            inputfilenames = self.qe_writeinput.writeinput()
+            jobnames = self.qe_writesubmit.write_submit_scripts(inputfilenames)
+            if self.sctk_inputpara.queue is not None:
+                self.qe_submitjob.submit_mode3(inputfilename, jobnames)
 
-        # submit the job
-        self.qe_submitjob = qe_submitjob(self.sctk_inputpara)
-        if self.sctk_inputpara.queue is not None:
-            self.qe_submitjob.submit_mode1(inputfilename, jobname)
+        elif self.sctk_inputpara.mode == "sctk_all":
+            inputfilename1 = self.qe_writeinput.writeinput(mode="nscf")
+            inputfilename2 = self.qe_writeinput.writeinput(mode="twin")
+            inputfilename3 = self.qe_writeinput.writeinput(mode="kel")
+            inputfilename4 = self.qe_writeinput.writeinput(mode="lambda_mu_k")
+            inputfilename5 = self.qe_writeinput.writeinput(mode="scdft_tc")
+            inputfilename6 = self.qe_writeinput.writeinput(mode="deltaf")
+            inputfilename7 = self.qe_writeinput.writeinput(mode="qpdos")
+            # init the submit job script
+            jobnames = self.qe_writesubmit.write_submit_scripts(
+                [inputfilename1, inputfilename2, inputfilename3,
+                 inputfilename4, inputfilename5, inputfilename6,
+                 inputfilename7]
+                )
+            logger.info(      
+                [inputfilename1, inputfilename2, inputfilename3,
+                 inputfilename4, inputfilename5, inputfilename6,
+                 inputfilename7]
+                )
+            # submit the job
+            if self.sctk_inputpara.queue is not None:
+                self.qe_submitjob.submit_mode1(inputfilename1, jobnames)
+
+        else:
+            #  # init the input
+            self.qe_writeinput = qe_writeinput(self.sctk_inputpara)
+            inputfilename = self.qe_writeinput.writeinput()
+            logger.info(inputfilename)
+            
+            # init the submit job script
+            jobname = self.qe_writesubmit.write_submit_scripts(inputfilename)
+
+            # submit the job
+            if self.sctk_inputpara.queue is not None:
+                self.qe_submitjob.submit_mode1(inputfilename, jobname)

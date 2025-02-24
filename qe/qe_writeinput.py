@@ -41,8 +41,20 @@ class qe_writeinput:
         if mode == "twin":
             inputfilename = self.write_twin_in(self.qe_inputpara.work_path)
             return inputfilename
-        if mode == "coulomp":
-            inputfilename = self.write_coulomp_in(self.qe_inputpara.work_path)
+        if mode == "kel":
+            inputfilename = self.write_kel_in(self.qe_inputpara.work_path)
+            return inputfilename
+        if mode == "lambda_mu_k":
+            inputfilename = self.write_lambda_mu_k(self.qe_inputpara.work_path)
+            return inputfilename
+        if mode == "scdft_tc":
+            inputfilename = self.write_scdft_tc(self.qe_inputpara.work_path)
+            return inputfilename
+        if mode == "deltaf":
+            inputfilename = self.write_deltaf(self.qe_inputpara.work_path)
+            return inputfilename
+        if mode == "qpdos":
+            inputfilename = self.write_qpdos(self.qe_inputpara.work_path)
             return inputfilename
         if mode == "nosplit":
             inputfilename = self.write_ph_no_split_in(self.qe_inputpara.work_path)
@@ -427,46 +439,30 @@ class qe_writeinput:
             qe.write("ATOMIC_POSITIONS (crystal)       \n")
             for site in self.qe_inputpara.fractional_sites:
                 qe.write("{}\n".format(site))
-            if self.qe_inputpara.k_automatic:
-                qe.write("K_POINTS {automatic}             \n")
-                qe.write(" {} {} {} 0 0 0                  \n".format(self.qe_inputpara.kpoints_dense[0], self.qe_inputpara.kpoints_dense[1], self.qe_inputpara.kpoints_dense[2]))
-            else:
-                qe.write("K_POINTS crystal                 \n")
-                qe.write("{}\n".format(self.qe_inputpara.totpts_for_Twin))
-                for kinfo in self.qe_inputpara.kpoints_coords_for_Twin:
-                    qe.write(" {}    \n".format(kinfo))
+            qe.write("K_POINTS crystal                 \n")
+            qe.write("{}\n".format(self.qe_inputpara.totpts_for_Twin))
+            for kinfo in self.qe_inputpara.kpoints_coords_for_Twin:
+                qe.write(" {}    \n".format(kinfo))
         return inputfilename
 
-    def write_coulomp_in(self, work_directory:Path):
-        inputfilename = "coulomp.in"
-        coulomp_in = work_directory.joinpath(inputfilename)
-        with open(coulomp_in, "w") as qe:
+    def write_kel_in(self, work_directory:Path):
+        inputfilename = "kel.in"
+        kel_in = work_directory.joinpath(inputfilename)
+        with open(kel_in, "w") as qe:
             qe.write("&CONTROL\n")
             qe.write(" calculation='kel'            \n")
             qe.write(" prefix='{}',                 \n".format(self.qe_inputpara.system_name))                
             qe.write(" outdir='./tmp',              \n")               
-            qe.write("/\n")
+            qe.write("/                             \n")
             qe.write("&Kel                          \n")
             qe.write(" nci=5                        \n")   
             qe.write(" laddxc=0                     \n")      
             qe.write(" lsf=1                        \n")   
             qe.write(" ecutfock=70.0                \n")
-            qe.write(" nq1={}                       \n".format(self.qe_inputpara.kpoints_dense[0]))
-            qe.write(" nq2={}                       \n".format(self.qe_inputpara.kpoints_dense[1]))
-            qe.write(" nq3={}                       \n".format(self.qe_inputpara.kpoints_dense[2]))
-            qe.write("/\n")
-        return inputfilename
-    
-    def write_sctk_in(self, work_directory:Path):
-        inputfilename = "sctk.in"
-        sctk_in = work_directory.joinpath(inputfilename)
-        with open(sctk_in, "w") as qe:
-            qe.write("&CONTROL\n")
-            qe.write(" calculation='scdft_tc',      \n")
-            qe.write(" prefix='{}',                 \n".format(self.qe_inputpara.system_name))                
-            qe.write(" outdir='./tmp',              \n")               
-            qe.write("/\n")
-            qe.write("SCDFT\n")
+            print(len(self.qe_inputpara.qpoints))
+            qe.write(" nq1={}, nq2={}, nq3={}\n".format(self.qe_inputpara.qpoints[0], self.qe_inputpara.qpoints[1], self.qe_inputpara.qpoints[2]))
+            qe.write("/                             \n")
+            qe.write("&SCDFT                        \n")
             qe.write(" temp = -0.1                  \n")   
             qe.write(" fbee = 1                     \n")
             qe.write(" lbee = 15                    \n") 
@@ -476,10 +472,138 @@ class qe_writeinput:
             qe.write(" ne = 50                      \n")
             qe.write(" emin = 1.0e-7                \n")     
             qe.write(" emax = 5.0                   \n")  
-            qe.write(" electron_maxstep = 100       \n")              
-            qe.write(" conv_thr = 1.0e-15           \n")          
+            qe.write(" electron_maxstep = 100       \n")
+            qe.write(" conv_thr = 1.0e-15           \n")
             qe.write(" spin_fluc =.true.            \n")  
-            qe.write("/\n")      
+            qe.write("/                             \n")      
+        return inputfilename
+    
+    def write_lambda_mu_k(self, work_directory:Path):
+        inputfilename = "lambda_mu_k.in"
+        lambda_mu_k = work_directory.joinpath(inputfilename)
+        with open(lambda_mu_k, "w") as qe:
+            qe.write("&CONTROL\n")
+            qe.write(" calculation='lambda_mu_k'    \n")
+            qe.write(" prefix='{}',                 \n".format(self.qe_inputpara.system_name))                
+            qe.write(" outdir='./tmp',              \n")               
+            qe.write("/                             \n")
+            qe.write("&Kel                          \n")
+            qe.write(" nci=5                        \n")   
+            qe.write(" laddxc=0                     \n")      
+            qe.write(" lsf=1                        \n")   
+            qe.write(" ecutfock=70.0                \n")
+            qe.write(" nq1={}, nq2={}, nq3={}\n".format(self.qe_inputpara.qpoints[0], self.qe_inputpara.qpoints[1], self.qe_inputpara.qpoints[2]))
+            qe.write("/                             \n")
+            qe.write("&SCDFT                        \n")
+            qe.write(" temp = -0.1                  \n")   
+            qe.write(" fbee = 1                     \n")
+            qe.write(" lbee = 10                    \n")  # 这里不同于kel.in中的 lbee, 和scdft_tc, deltaf, qpdos中一样
+            qe.write(" xic = -1.0                   \n")  
+            qe.write(" nmf = 10                     \n")
+            qe.write(" nx = 100                     \n")
+            qe.write(" ne = 50                      \n")
+            qe.write(" emin = 1.0e-7                \n")     
+            qe.write(" emax = 0.7                   \n")  # 这里不同于kel.in中的 emax, 和scdft_tc, deltaf, qpdos中一样
+            qe.write(" electron_maxstep = 100       \n")
+            qe.write(" conv_thr = 1.0e-15           \n")
+            qe.write(" spin_fluc =.true.            \n")  
+            qe.write("/                             \n")      
+        return inputfilename
+    
+    def write_scdft_tc(self, work_directory:Path):
+        inputfilename = "scdft_tc.in"
+        scdft_tc = work_directory.joinpath(inputfilename)
+        with open(scdft_tc, "w") as qe:
+            qe.write("&CONTROL\n")
+            qe.write(" calculation='scdft_tc'       \n")
+            qe.write(" prefix='{}',                 \n".format(self.qe_inputpara.system_name))                
+            qe.write(" outdir='./tmp',              \n")               
+            qe.write("/                             \n")
+            qe.write("&Kel                          \n")
+            qe.write(" nci=5                        \n")   
+            qe.write(" laddxc=0                     \n")      
+            qe.write(" lsf=1                        \n")   
+            qe.write(" ecutfock=70.0                \n")
+            qe.write(" nq1={}, nq2={}, nq3={}\n".format(self.qe_inputpara.qpoints[0], self.qe_inputpara.qpoints[1], self.qe_inputpara.qpoints[2]))
+            qe.write("/                             \n")
+            qe.write("&SCDFT                        \n")
+            qe.write(" temp = -0.1                  \n")   
+            qe.write(" fbee = 1                     \n")
+            qe.write(" lbee = 10                    \n")  # 这里不同于kel.in中的 lbee, 和delta, lambda_mu_kf, qpdos中一样
+            qe.write(" xic = -1.0                   \n")  
+            qe.write(" nmf = 10                     \n")
+            qe.write(" nx = 100                     \n")
+            qe.write(" ne = 50                      \n")
+            qe.write(" emin = 1.0e-7                \n")     
+            qe.write(" emax = 0.7                   \n")  # 这里不同于kel.in中的 emax, 和delta, lambda_mu_kf, qpdos中一样
+            qe.write(" electron_maxstep = 100       \n")
+            qe.write(" conv_thr = 1.0e-15           \n")
+            qe.write(" spin_fluc =.true.            \n")  
+            qe.write("/                             \n")      
+        return inputfilename
+    
+    def write_deltaf(self, work_directory:Path):
+        inputfilename = "deltaf.in"
+        deltaf = work_directory.joinpath(inputfilename)
+        with open(deltaf, "w") as qe:
+            qe.write("&CONTROL\n")
+            qe.write(" calculation='deltaf'       \n")
+            qe.write(" prefix='{}',                 \n".format(self.qe_inputpara.system_name))                
+            qe.write(" outdir='./tmp',              \n")               
+            qe.write("/                             \n")
+            qe.write("&Kel                          \n")
+            qe.write(" nci=5                        \n")   
+            qe.write(" laddxc=0                     \n")      
+            qe.write(" lsf=1                        \n")   
+            qe.write(" ecutfock=70.0                \n")
+            qe.write(" nq1={}, nq2={}, nq3={}\n".format(self.qe_inputpara.qpoints[0], self.qe_inputpara.qpoints[1], self.qe_inputpara.qpoints[2]))
+            qe.write("/                             \n")
+            qe.write("&SCDFT                        \n")
+            qe.write(" temp = -0.1                  \n")   
+            qe.write(" fbee = 1                     \n")
+            qe.write(" lbee = 10                    \n")  # 这里不同于kel.in中的 lbee, 和scdft_tc, lambda_mu_kf, qpdos中一样
+            qe.write(" xic = -1.0                   \n")  
+            qe.write(" nmf = 10                     \n")
+            qe.write(" nx = 100                     \n")
+            qe.write(" ne = 50                      \n")
+            qe.write(" emin = 1.0e-7                \n")     
+            qe.write(" emax = 0.7                   \n")  # 这里不同于kel.in中的 emax, 和scdft_tc, lambda_mu_kf, qpdos中一样
+            qe.write(" electron_maxstep = 100       \n")
+            qe.write(" conv_thr = 1.0e-15           \n")
+            qe.write(" spin_fluc =.true.            \n")  
+            qe.write("/                             \n")      
+        return inputfilename
+    
+    def write_qpdos(self, work_directory:Path):
+        inputfilename = "qpdos.in"
+        qpdos = work_directory.joinpath(inputfilename)
+        with open(qpdos, "w") as qe:
+            qe.write("&CONTROL\n")
+            qe.write(" calculation='qpdos'          \n")
+            qe.write(" prefix='{}',                 \n".format(self.qe_inputpara.system_name))                
+            qe.write(" outdir='./tmp',              \n")               
+            qe.write("/                             \n")
+            qe.write("&Kel                          \n")
+            qe.write(" nci=5                        \n")   
+            qe.write(" laddxc=0                     \n")      
+            qe.write(" lsf=1                        \n")   
+            qe.write(" ecutfock=70.0                \n")
+            qe.write(" nq1={}, nq2={}, nq3={}\n".format(self.qe_inputpara.qpoints[0], self.qe_inputpara.qpoints[1], self.qe_inputpara.qpoints[2]))
+            qe.write("/                             \n")
+            qe.write("&SCDFT                        \n")
+            qe.write(" temp = -0.1                  \n")   
+            qe.write(" fbee = 1                     \n")
+            qe.write(" lbee = 10                    \n")  # 这里不同于kel.in中的 lbee, 其它都一样
+            qe.write(" xic = -1.0                   \n")  
+            qe.write(" nmf = 10                     \n")
+            qe.write(" nx = 100                     \n")
+            qe.write(" ne = 50                      \n")
+            qe.write(" emin = 1.0e-7                \n")     
+            qe.write(" emax = 0.7                   \n")  # 这里不同于kel.in中的 emax, 和scdft_tc, lambda_mu_kf中一样
+            qe.write(" electron_maxstep = 100       \n")
+            qe.write(" conv_thr = 1.0e-15           \n")
+            qe.write(" spin_fluc =.true.            \n")  
+            qe.write("/                             \n")      
         return inputfilename
     
     # not split mode
@@ -599,7 +723,7 @@ class qe_writeinput:
             qe.write("  outdir='./tmp',                                  \n")               
             qe.write("  fildyn='{}.dyn',                                 \n".format(self.qe_inputpara.system_name))  
             qe.write("  alpha_mix(1)={},                                 \n".format(str(self.qe_inputpara.alpha_mix)))  # 可以修改的更小一些, 如果用vasp计算声子谱稳定, 可以修改为0.3
-            qe.write("  ldisp=.false.,                                   \n") # true 代表通过 nq1 nq2 nq3方式计算声子，false 代表通过 坐标指定计算声子
+            qe.write("  ldisp=.true.,                                   \n") # true 代表通过 nq1 nq2 nq3方式计算声子，false 代表通过 坐标指定计算声子
             qe.write("  search_sym = {}                                  \n".format(self.qe_inputpara.search_sym))  # 如果是SCTK计算，最好用.false.         
             
             qe.write("  start_q={}                                       \n".format(start_q)) 
@@ -952,12 +1076,6 @@ class qe_writeinput:
                 epw.write(f" wdata({idx+3})    = '{path_name_coord}'\n")
             epw.write(f" wdata({idx+4})    = 'end kpoint_path'\n")
         return inputfilename
-
-
-
-
-
-            
 
     def write_epw_elph_in():
         pass

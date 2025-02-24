@@ -22,14 +22,17 @@ class qe_inputpara(qe_base):
         press: int,
         submit_job_system: str,
         input_file_path: str,
-        **kwargs: dict,
+        **kwargs: dict, # 这里非常重要, 因为qe_inputpara的__init__需要读入kwargs, 其它需要继承这个类的子类也需要保有这个参数kwargs
         ):
+        
         super(qe_inputpara, self).__init__(
             work_path,
             press,
             submit_job_system,
             input_file_path
         )
+        
+        logger.info('Run `inputpara`')
 
         for key, value in kwargs.items():
             setattr(self, key, value)
@@ -51,7 +54,6 @@ class qe_inputpara(qe_base):
             self.queue = None
             logger.debug(f'queue = {self.queue}\n')
         
-
         # &CONTROL
         if not hasattr(self, "forc_conv_thr"):
             self.forc_conv_thr = "1.0d-6"
@@ -119,10 +121,10 @@ class qe_inputpara(qe_base):
             logger.debug("You didn't set the `electron_maxstep`! The program will use default value: electron_maxstep=200")
 
         if not hasattr(self, "charge_density_dat"):
-            self.charge_density_dat = ""
+            self.charge_density_dat = "tmp/H3S1.save/charge-density.dat"
 
         if not hasattr(self, "data_file_schema_xml"):
-            self.data_file_schema_xml = ""
+            self.data_file_schema_xml = "tmp/H3S1.save/data-file-schema.xml"
 
         # &CELL
         if not hasattr(self, "press_conv_thr"):
@@ -139,14 +141,17 @@ class qe_inputpara(qe_base):
         if hasattr(self, "kpoints_dense"):
             _kpoints_dense = self.kpoints_dense.split()
             self.kpoints_dense = list(map(int, _kpoints_dense))
+            logger.info('kpoints_dense={} by custom'.format(self.kpoints_sparse))
         else:
-            self.kpoints_dense = [16, 16, 16]  
+            logger.warning('kpoints_dense={}'.format(None))
+
 
         if hasattr(self, "kpoints_sparse"):
             _kpoints_sparse = self.kpoints_sparse.split()
             self.kpoints_sparse = list(map(int, _kpoints_sparse))
+            logger.info('kpoints_sparse={} by custom'.format(self.kpoints_sparse))
         else:
-            self.kpoints_sparse = [8, 8, 8]    
+            logger.warning('kpoints_sparse={}'.format(None))
 
         if not hasattr(self, "wan"):
             self.wan = False
@@ -157,19 +162,15 @@ class qe_inputpara(qe_base):
             self.k_automatic = True
             self.kpoints_coords = None
             self.totpts = 0
-            self.kpoints_coords_for_Twin = None
-            self.totpts_for_Twin = 0
             logger.debug("Do not set k_automatic, default k_automatic = True")
         else:
-            if eval(self.k_automatic):
-                self.k_automatic = True; self.totpts = 0; self.totpts_for_Twin = 0
+            if self.k_automatic == "True":
+                self.k_automatic = True; self.totpts = 0
                 logger.debug("Set k_automatic = True by custom. Therefore, self.totpts = 0")
             else:
                 self.k_automatic = False
-                self.kpoints_coords, self.totpts = self.get_kmesh_justlike_kmesh_pl()
-                self.kpoints_coords_for_Twin, self.totpts_for_Twin = self.get_kmesh_justlike_twingrid_x()
+                self.kpoints_coords, self.totpts = self.get_kmesh_justlike_kmesh_pl(kpoints=self.kpoints_dense)
                 logger.debug("Set k_automatic = False by custom. Therefore, self.totpts was gotten by program")
-
 
     @classmethod
     def init_from_config(cls, config: dict):
@@ -266,13 +267,12 @@ class qe_inputpara(qe_base):
         logger.info(string_coord)
         return path_name_coords 
 
-
-    def get_kmesh_justlike_kmesh_pl(self):
+    def get_kmesh_justlike_kmesh_pl(self, kpoints):
         """
         读取self.kpoints_dense参数, 将其传给n1, n2, n3, 再将n1, n2, n3转化为相应的倒空间的均匀网格点坐标
         """
         # 获取输入的 n1, n2, n3
-        n1, n2, n3 = self.kpoints_dense
+        n1, n2, n3 = kpoints
 
         # 参数检查：确保 n1, n2, n3 都大于 0
         if n1 <= 0:
@@ -307,48 +307,6 @@ class qe_inputpara(qe_base):
                         kpoints_coords.append(f"{x/n1:12.8f}{y/n2:12.8f}{z/n3:12.8f}")
         return kpoints_coords, totpts
 
-    def get_kmesh_justlike_twingrid_x(self):
-        # Print the header
-        print("K_POINTS crystal")
-        
-        n1, n2, n3 = self.kpoints_dense
-        totpts = n1 * n2 * n3 * 2
-
-        kpoints_coords = []
-        # First loop (original points)
-        for i1 in range(n1):
-            kv1 = i1 / n1
-            if (i1 * 2) >= n1:
-                kv1 -= 1.0
-            for i2 in range(n2):
-                kv2 = i2 / n2
-                if (i2 * 2) >= n2:
-                    kv2 -= 1.0
-                for i3 in range(n3):
-                    kv3 = i3 / n3
-                    if (i3 * 2) >= n3:
-                        kv3 -= 1.0
-                    # print(f"{kv1:20.15f} {kv2:20.15f} {kv3:20.15f}   1.0")
-                    kpoints_coords.append(f"{kv1:20.15f} {kv2:20.15f} {kv3:20.15f}   1.0")
-
-        # Second loop (special k-points)
-        for i1 in range(n1):
-            kv1 = (2 * i1 + 1) / (2 * n1)
-            if (i1 * 2 + 1) >= n1:
-                kv1 -= 1.0
-            for i2 in range(n2):
-                kv2 = (2 * i2 + 1) / (2 * n2)
-                if (i2 * 2 + 1) >= n2:
-                    kv2 -= 1.0
-                for i3 in range(n3):
-                    kv3 = (2 * i3 + 1) / (2 * n3)
-                    if (i3 * 2 + 1) >= n3:
-                        kv3 -= 1.0
-                    # print(f"{kv1:20.15f} {kv2:20.15f} {kv3:20.15f}   1.0")
-                    kpoints_coords.append(f"{kv1:20.15f} {kv2:20.15f} {kv3:20.15f}   1.0")
-                    
-        return kpoints_coords, totpts
-    
     
 class qephono_inputpara(qe_inputpara):
 
@@ -358,58 +316,44 @@ class qephono_inputpara(qe_inputpara):
         press: int, 
         submit_job_system: str, 
         input_file_path: str, 
-        **kwargs: dict
+        **kwargs: dict, # 这里非常重要, 因为 qephono_inputpara 的__init__需要读入kwargs, 其它需要继承这个类的子类也需要保有这个参数kwargs
         ):
         super(qephono_inputpara, self).__init__(
             work_path, 
             press, 
             submit_job_system, 
             input_file_path, 
-            **kwargs
+            **kwargs, # 这里非常重要, 因为qephono_inputpara的__init__需要读入kwargs
             )
         
         logger.info("Run `phono`")
+        
         dyn0_names = Path(self.work_path).joinpath(f"{self.system_name}.dyn0")
         if hasattr(self, "qpoints"):
             _qpoints = self.qpoints.split()
             self.qpoints = list(map(int, _qpoints))
             self.kpoints_sparse= [kp*2 for kp in self.qpoints]
             self.kpoints_dense = [kp*4 for kp in self.qpoints]
+            logger.info('qpoints={}, kpoints_sparse={}, kpoints_dense={} by custom'.format(self.qpoints, self.kpoints_sparse, self.kpoints_dense))
         elif dyn0_names.exists():
-            logger.debug(f"You didn't set the `qpoints` ! The program will qpoints in read {self.system_name}.dyn0 file")
-            logger.debug("If you want to calculate phonodos, you had better set `qpoints`! Its `qpoints` had better be set more densely than `qpoints` in `ph.in`")
-            logger.debug("For example, In ph.in, qpoints='8 8 8', then in phono_dos.in, qpoints='16 16 16' ")
             self.qpoints = self.get_qpoints(dyn0_path=dyn0_names)
             self.kpoints_sparse= [kp*2 for kp in self.qpoints]
-            self.kpoints_dense = [kp*4 for kp in self.qpoints] 
-        else:
-            logger.debug(f"You didn't set the `qpoints` ! And The program can't get qpoints in {self.system_name}.dyn0 file")
-            logger.debug("If you want to calculate phonodos, you had better set `qpoints`! Its `qpoints` had better be set more densely than `qpoints` in `ph.in`")
-            logger.debug("For example, In ph.in, qpoints='8 8 8', then in phono_dos.in, qpoints='16 16 16' ")
-            self.qpoints = [4,4,4]
-            self.kpoints_sparse= [kp*2 for kp in self.qpoints]
             self.kpoints_dense = [kp*4 for kp in self.qpoints]
+            logger.info('qpoints={}, kpoints_sparse={}, kpoints_dense={} by dyn0'.format(self.qpoints, self.kpoints_sparse, self.kpoints_dense))
+        else:
+            logger.warning('qpoints={}, kpoints_sparse={}, kpoints_dense={}'.format(None, None, None))
 
         if not hasattr(self, "EPC_flag"):
             self.EPC_flag = True
         else:
             self.EPC_flag = eval(self.EPC_flag)
 
-        logger.debug("# 针对SCTK计算的参数----------------------------")
-        if not hasattr(self, "SCTK_flag"):
-            self.SCTK_flag = False
-        else:
-            self.SCTK_flag = eval(self.SCTK_flag)
-
-        if not hasattr(self, "elph_nbnd_min"):
-            self.elph_nbnd_min = 0
-        
-        if not hasattr(self, "elph_nbnd_max"):
-            self.elph_nbnd_max = 0
-
         if not hasattr(self, "search_sym"):
             self.search_sym = ".true." # 当计算SCTK时一般会设置为false
+            
         # 针对SCTK计算的参数----------------------------
+        self.SCTK_flag = False
+        logger.debug("If you wanna use SCTK phonon and EPC, you have to use class qesctk_inputpara")
         
         if not hasattr(self, "tr2_ph"):
             self.tr2_ph = "1.0d-14"
@@ -1032,14 +976,14 @@ class qeeletron_inputpara(qe_inputpara):
         press: int, 
         submit_job_system: str, 
         input_file_path: str, 
-        **kwargs: dict
+        **kwargs: dict,
         ):
         super(qeeletron_inputpara, self).__init__(
             work_path, 
             press, 
             submit_job_system, 
             input_file_path, 
-            **kwargs
+            **kwargs  # 这里非常重要, 因为 qeeletron_inputpara 的__init__需要读入kwargs, 其它需要继承这个类的子类也需要保有这个参数kwargs
             )
 
         logger.info("Run `eletron`")
@@ -1089,14 +1033,14 @@ class qesc_inputpara(qephono_inputpara):
         press: int, 
         submit_job_system: str, 
         input_file_path: str, 
-        **kwargs: dict
+        **kwargs: dict, 
     ):
         super(qesc_inputpara, self).__init__(
             work_path, 
             press, 
             submit_job_system, 
             input_file_path, 
-            **kwargs
+            **kwargs, # 这里非常重要, 因为 qesc_inputpara 的__init__需要读入kwargs, 其它需要继承这个类的子类也需要保有这个参数kwargs
             )
         logger.info("run `superconduct`")
         # Mc-A-D and Eliashberg
@@ -1390,7 +1334,7 @@ class qeprepare_inputpara(qephono_inputpara):
         press: int,
         submit_job_system: str,
         input_file_path: str,
-        **kwargs: dict,
+        **kwargs: dict, 
         ):
 
         super(qeprepare_inputpara, self).__init__(
@@ -1398,7 +1342,7 @@ class qeprepare_inputpara(qephono_inputpara):
             press, 
             submit_job_system, 
             input_file_path, 
-            **kwargs
+            **kwargs, # 这里非常重要, 因为 qeprepare_inputpara 的__init__需要读入kwargs, 其它需要继承这个类的子类也需要保有这个参数kwargs
             )
         logger.info("run `prepare`")
 
@@ -1411,13 +1355,15 @@ class qeepw_inputpara(qe_base):
         press: int,
         submit_job_system: str,
         input_file_path: str,
-        **kwargs: dict,
+        **kwargs: dict, # 这里非常重要, 因为 qeepw_inputpara 的__init__需要读入kwargs, 其它需要继承这个类的子类也需要保有这个参数kwargs
         ):
         super(qeepw_inputpara, self).__init__(
             work_path,
             press,
             submit_job_system,
-            input_file_path
+            input_file_path,
+            # 这里没有写 **kwargs, 是因为我继承了qe_base这个类, 这个类没有kwargs参数, 
+            # 因为 qeepw_inputpara 的__init__需要初始化很多参数与qe的不同, 所以直接继承qe_base, 而没有继承qe_inputpara
         )
         logger.info("run `EPW`")
         
@@ -1488,7 +1434,6 @@ class qeepw_inputpara(qe_base):
             self.proj = self.proj.split()
             for idx, pj in enumerate(self.proj):
                 logger.debug(f'proj({idx+1}) = {pj}\n')
-
 
     @classmethod
     def init_from_config(cls, config: dict):
@@ -1576,30 +1521,90 @@ class qeepw_inputpara(qe_base):
         return path_name_coords_for_EPW 
 
 
-class qesctk_inputpara(qe_base):
+class qesctk_inputpara(qephono_inputpara):
+    
     def __init__(
-    self,
-    work_path: str,
-    press: int,
-    submit_job_system: str,
-    input_file_path: str,
-    **kwargs: dict,
+        self,
+        work_path: str,
+        press: int,
+        submit_job_system: str,
+        input_file_path: str,
+        **kwargs: dict,
     ):
         super(qesctk_inputpara, self).__init__(
             work_path,
             press,
             submit_job_system,
-            input_file_path
+            input_file_path,
+            **kwargs # 这里非常重要, 因为qephono_inputpara的__init__需要读入kwargs, 其它需要继承这个类的子类也需要保有这个参数kwargs
         )
         logger.info("run `SCTK`")
+            
+
+        self.SCTK_flag = True
+
+        self.kpoints_coords_for_Twin, self.totpts_for_Twin = self.get_kmesh_justlike_twingrid_x(kpoints=self.qpoints)
         
-        for key, value in kwargs.items():
-            setattr(self, key, value)
+        if not hasattr(self, "elph_nbnd_min"):
+            self.elph_nbnd_min = 0
+        
+        if not hasattr(self, "elph_nbnd_max"):
+            self.elph_nbnd_max = 0
+
+        if not hasattr(self, "nbnd"):
+            self.nbnd = None
+            logger.warning("nbnd in `nscf.in` and `twin.in` have to be larger than that in `scf.in`")
+
+        if not hasattr(self, "nci"):
+            self.nci = 5
+        
+        if not hasattr(self, "laddxc"):
+            self.laddxc = 0
             
-        if not hasattr(self, "mode"):
-            logger.debug("You must specify mode")
-            sys.exit(1)
+        if not hasattr(self, "lsf"):
+            self.lsf = 1
             
+        if not hasattr(self, "ecutfock"):
+            self.ecutfock = 80
+            
+        if not hasattr(self, "temp"):
+            self.temp = -0.1
+        
+        if not hasattr(self, "fbee"):
+            self.fbee = 1
+            
+        if not hasattr(self, "lbee"):
+            self.lbee = 15
+            logger.warning("Usually, in `kel.in`, lbee=15, in `lambda_mu_k, scdft_tc, deltaf, qpdos`, lbee=10.")
+        
+        if not hasattr(self, "xic"):
+            self.xic = -1.0
+        
+        if not hasattr(self, "nmf"):
+            self.nmf = 10
+        
+        if not hasattr(self, "nx"):
+            self.nx = 100
+        
+        if not hasattr(self, "ne"):
+            self.ne = 100
+
+        if not hasattr(self, "emin"):
+            self.emin = 1.0e-7
+        
+        if not hasattr(self, "emax"):
+            self.emax = 0.7
+            logger.warning("Usually, in `kel.in`, emax=5.0, in `lambda_mu_k, scdft_tc, deltaf, qpdos`, emax=0.7")
+
+        if not hasattr(self, "electron_maxstep"):
+            self.electron_maxstep = 100
+        
+        if not hasattr(self, "conv_thr"):
+            self.conv_thr = 1.0e-15
+        
+        if not hasattr(self, "spin_fluc"):
+            self.spin_fluc = ".true."
+
     @classmethod
     def init_from_config(cls, config: dict):
 
@@ -1616,3 +1621,45 @@ class qesctk_inputpara(qe_base):
             **config,
         )
         return self
+    
+    def get_kmesh_justlike_twingrid_x(self, kpoints):
+        # Print the header
+        print("K_POINTS crystal")
+        
+        n1, n2, n3 = kpoints
+        totpts = n1 * n2 * n3 * 2
+
+        kpoints_coords = []
+        # First loop (original points)
+        for i1 in range(n1):
+            kv1 = i1 / n1
+            if (i1 * 2) >= n1:
+                kv1 -= 1.0
+            for i2 in range(n2):
+                kv2 = i2 / n2
+                if (i2 * 2) >= n2:
+                    kv2 -= 1.0
+                for i3 in range(n3):
+                    kv3 = i3 / n3
+                    if (i3 * 2) >= n3:
+                        kv3 -= 1.0
+                    # print(f"{kv1:20.15f} {kv2:20.15f} {kv3:20.15f}   1.0")
+                    kpoints_coords.append(f"{kv1:20.15f} {kv2:20.15f} {kv3:20.15f}   1.0")
+
+        # Second loop (special k-points)
+        for i1 in range(n1):
+            kv1 = (2 * i1 + 1) / (2 * n1)
+            if (i1 * 2 + 1) >= n1:
+                kv1 -= 1.0
+            for i2 in range(n2):
+                kv2 = (2 * i2 + 1) / (2 * n2)
+                if (i2 * 2 + 1) >= n2:
+                    kv2 -= 1.0
+                for i3 in range(n3):
+                    kv3 = (2 * i3 + 1) / (2 * n3)
+                    if (i3 * 2 + 1) >= n3:
+                        kv3 -= 1.0
+                    # print(f"{kv1:20.15f} {kv2:20.15f} {kv3:20.15f}   1.0")
+                    kpoints_coords.append(f"{kv1:20.15f} {kv2:20.15f} {kv3:20.15f}   1.0")
+                    
+        return kpoints_coords, totpts

@@ -135,15 +135,29 @@ class qe_writesubmit:
         if mode =="nscf":
             jobname = self.s10_nscf(self.qe_inputpara.work_path, inpufilename)
             return jobname
+        
         if mode =="twin":
-            jobname = self.s12_twin(self.qe_inputpara.work_path, inpufilename)
+            jobname = self.a1_twin(self.qe_inputpara.work_path, inpufilename)
             return jobname
-        if mode =="coulomp":
-            jobname = self.s13_coulomp(self.qe_inputpara.work_path, inpufilename)
+        if mode =="kel":
+            jobname = self.a2_kel(self.qe_inputpara.work_path, inpufilename)
             return jobname
-        if mode =="sctk":
-            jobname = self.s14_sctk(self.qe_inputpara.work_path, inpufilename)
+        if mode =="lambda_mu_k":
+            jobname = self.a3_lambda_mu_k(self.qe_inputpara.work_path, inpufilename)
             return jobname
+        if mode =="scdft_tc":
+            jobname = self.a4_scdft_tc(self.qe_inputpara.work_path, inpufilename)
+            return jobname
+        if mode =="deltaf":
+            jobname = self.a5_deltaf(self.qe_inputpara.work_path, inpufilename)
+            return jobname
+        if mode =="qpdos":
+            jobname = self.a6_qpdos(self.qe_inputpara.work_path, inpufilename)
+            return jobname
+        if mode =="sctk_all":
+            jobname = self.a7_sctk_all(self.qe_inputpara.work_path, inpufilename)
+            return jobname
+        
         if mode =="eleproperties":
             jobname = self.s11_eleproperties(self.qe_inputpara.work_path, inpufilename)
             return jobname
@@ -405,36 +419,104 @@ class qe_writesubmit:
             j.write('{} {}/pw.x  -npool {} <{}> {}  \n'.format(self.qe_inputpara.execmd, qebin_path, self.qe_inputpara.npool, _inpufilename, _outputfilename))
         return jobname
 
-    def s12_twin(self, _dirpath, inputfilename):
+    def a1_twin(self, _dirpath, inputfilename):
         _inpufilename = inputfilename
         _outputfilename = _inpufilename.split(".")[0] + ".out"
-        jobname = "s12_twin.sh"
+        jobname = "a1_twin.sh"
         _script_filepath = os.path.join(_dirpath, jobname)
         with open(_script_filepath, "w") as j:
             j.writelines(self.jobtitle)
             j.write('{} {}/pw.x  -npool {} <{}> {}  \n'.format(self.qe_inputpara.execmd, qebin_path, self.qe_inputpara.npool, _inpufilename, _outputfilename))
         return jobname
 
-    def s13_coulomp(self, _dirpath, inputfilename):
+    def a2_kel(self, _dirpath, inputfilename):
         _inpufilename = inputfilename
         _outputfilename = _inpufilename.split(".")[0] + ".out"
-        jobname = "s13_coulomp.sh"
+        jobname = "a2_kel.sh"
         _script_filepath = os.path.join(_dirpath, jobname)
         with open(_script_filepath, "w") as j:
             j.writelines(self.jobtitle)
             j.write('{} {}/sctk.x  -npool {} <{}> {}  \n'.format(self.qe_inputpara.execmd, qebin_path, self.qe_inputpara.npool, _inpufilename, _outputfilename))
         return jobname
 
-    def s14_sctk(self, _dirpath, inputfilename):
+    def a3_lambda_mu_k(self, _dirpath, inputfilename):
         _inpufilename = inputfilename
         _outputfilename = _inpufilename.split(".")[0] + ".out"
-        jobname = "s14_sctk.sh"
+        jobname = "a3_lambda_mu_k.sh"
         _script_filepath = os.path.join(_dirpath, jobname)
         with open(_script_filepath, "w") as j:
             j.writelines(self.jobtitle)
             j.write('{} {}/sctk.x  -npool {} <{}> {}  \n'.format(self.qe_inputpara.execmd, qebin_path, self.qe_inputpara.npool, _inpufilename, _outputfilename))
         return jobname
 
+    def a4_scdft_tc(self, _dirpath, inputfilename):
+        _inpufilename = inputfilename
+        _outputfilename = _inpufilename.split(".")[0] + ".out"
+        jobname = "s14_scdft_tc.sh"
+        _script_filepath = os.path.join(_dirpath, jobname)
+        with open(_script_filepath, "w") as j:
+            j.writelines(self.jobtitle)
+            j.write('{} {}/sctk.x  -npool {} <{}> {}  \n'.format(self.qe_inputpara.execmd, qebin_path, self.qe_inputpara.npool, _inpufilename, _outputfilename))
+        return jobname
+
+    def a5_deltaf(self, _dirpath, inputfilename):
+        _inpufilename = inputfilename
+        _outputfilename = _inpufilename.split(".")[0] + ".out"
+        jobname = "a5_deltaf.sh"
+        _script_filepath = os.path.join(_dirpath, jobname)
+        with open(_script_filepath, "w") as j:
+            j.writelines(self.jobtitle)
+            j.write('{} {}/sctk.x  -npool {} <{}> {}  \n'.format(self.qe_inputpara.execmd, qebin_path, self.qe_inputpara.npool, _inpufilename, _outputfilename))
+        return jobname
+    
+    def a6_qpdos(self, _dirpath, inputfilename):
+        _inpufilename = inputfilename
+        _outputfilename = _inpufilename.split(".")[0] + ".out"
+        jobname = "a6_qpdos.sh"
+        _script_filepath = os.path.join(_dirpath, jobname)
+        with open(_script_filepath, "w") as j:
+            j.writelines(self.jobtitle)
+            j.write('{} {}/sctk.x  -npool {} <{}> {}  \n'.format(self.qe_inputpara.execmd, qebin_path, self.qe_inputpara.npool, _inpufilename, _outputfilename))
+        return jobname
+    
+    def a7_sctk_all(self, _dirpath, inputfilenames):
+        _inpufilename   = inputfilenames
+        _outputfilename = [ipname.split(".")[0] + ".out" for ipname in _inpufilename]
+        input_output    = zip(_inpufilename, _outputfilename)
+        jobname = "a7_sctk_all.sh"
+        _script_filepath = os.path.join(_dirpath, jobname)
+        with open(_script_filepath, "w") as j:
+            j.writelines(self.jobtitle)
+            
+            nscf_in, nscf_out = input_output.__next__()
+            j.write('echo "nscf"                      \n')
+            j.write('{} {}/pw.x   -npool {} <{}>  {}  \n'.format(self.qe_inputpara.execmd, qebin_path, self.qe_inputpara.npool, nscf_in, nscf_out))
+
+            twin_in, twin_out = input_output.__next__()
+            j.write('echo "twin"                      \n')
+            j.write('{} {}/pw.x   -npool {} <{}> {}   \n'.format(self.qe_inputpara.execmd, qebin_path, self.qe_inputpara.npool, twin_in, twin_out))
+            
+            kel_in, kel_out = input_output.__next__()
+            j.write('echo "kel"                       \n')
+            j.write('{} {}/sctk.x -npool {} <{}> {}   \n'.format(self.qe_inputpara.execmd, qebin_path, self.qe_inputpara.npool, kel_in, kel_out))
+            
+            lambda_mu_k_in, lambda_mu_k_out = input_output.__next__()
+            j.write('echo "lambda_mu_k"               \n')
+            j.write('{} {}/sctk.x -npool {} <{}> {}   \n'.format(self.qe_inputpara.execmd, qebin_path, self.qe_inputpara.npool, lambda_mu_k_in, lambda_mu_k_out))
+            
+            scdft_tc_in, scdft_tc_out = input_output.__next__()
+            j.write('echo "scdft_tc"                  \n')
+            j.write('{} {}/sctk.x -npool {} <{}> {}   \n'.format(self.qe_inputpara.execmd, qebin_path, self.qe_inputpara.npool, scdft_tc_in, scdft_tc_out))
+            
+            deltaf_in, deltaf_out = input_output.__next__()
+            j.write('echo "deltaf"                    \n')
+            j.write('{} {}/sctk.x -npool {} <{}> {}   \n'.format(self.qe_inputpara.execmd, qebin_path, self.qe_inputpara.npool, deltaf_in, deltaf_out))
+            
+            qpdos_in, qpdos_out = input_output.__next__()
+            j.write('echo "qpdos"                     \n')
+            j.write('{} {}/sctk.x -npool {} <{}> {}   \n'.format(self.qe_inputpara.execmd, qebin_path, self.qe_inputpara.npool, qpdos_in, qpdos_out))
+        return jobname
+    
     def s11_eleproperties(self, _dirpath, inputfilenames):
         _inpufilename = inputfilenames
         _outputfilename = [ipname.split(".")[0] + ".out" for ipname in _inpufilename]

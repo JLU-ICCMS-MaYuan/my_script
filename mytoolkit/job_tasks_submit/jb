@@ -87,16 +87,22 @@ qe_main.py -i origin-PPOSCAR -j bash -w . epw -m mode=epw_energyband execmd='mpi
 
 qe_main.py -i relax.out -j bash prepare -m mode=preparescf ecutwfc=80 ecutrho=960 occupations=tetrahedra_opt qpoints='4 4 4' execmd='mpirun -np 8' npool=2 queue=lhy
 
-qe_main.py -i relax.out -j bash phono   -m mode=nosplit    dyn0_flag=False EPC_flag=False SCTK_flag=True search_sym=.false. execmd='mpirun -np 8'  qpoints='4 4 4' queue=lhy
+qe_main.py -i relax.out -j bash sctk -m mode=nosplit  dyn0_flag=False EPC_flag=False search_sym=.false. trans=.true.  execmd='mpirun -np 8'  qpoints='4 4 4' queue=lhy
 
-qe_main.py -i relax.out -j bash phono   -m mode=nosplit    dyn0_flag=False EPC_flag=True  SCTK_flag=True search_sym=.false. elph_nbnd_min=2 elph_nbnd_max=6 execmd='mpirun -np 8' npool=8  qpoints='4 4 4' queue=lhy
+qe_main.py -i relax.out -j bash sctk -m mode=nosplit  dyn0_flag=False EPC_flag=True search_sym=.false. trans=.false. elph_nbnd_min=2 elph_nbnd_max=6 execmd='mpirun -np 8' npool=8  qpoints='4 4 4'
 
-在稠密K网格下进行Non-SCF计算, 是qpoints的 4 倍
-qe_main.py -i relax.out -j bash -w nscf_16x16x16 scf -m mode=nscf ecutwfc=80 ecutrho=960 kpoints_dense='16 16 16'  degauss=0.02 execmd='mpirun -np 8' npool=8  charge_density_dat='tmp/H3S1.save/charge-density.dat' data_file_schema_xml='tmp/H3S1.save/data-file-schema.xml'  k_automatic=True   occupations=tetrahedra_opt  queue=lhy
+在稠密K网格下进行Non-SCF计算, 是 nq1 nq2 nq3 的 4 倍。然后运行pw.x
+qe_main.py -i relax.out -j bash scf -m mode=nscf ecutwfc=80 ecutrho=960 nbnd=20 kpoints_dense='16 16 16'  degauss=0.02 execmd='mpirun -np 8' npool=8  charge_density_dat='tmp/H3S1.save/charge-density.dat' data_file_schema_xml='tmp/H3S1.save/data-file-schema.xml'  k_automatic=True   occupations=tetrahedra_opt  queue=lhy
 
 计算屏蔽库仑相互作用下的波函数, k点网格必须和ph.x计算电声相互作用时使用的 nq1 nq2 nq3 一样。然后运行pw.x
-qe_main.py -i relax.out -j bash -w nscf_16x16x16 scf -m mode=twin ecutwfc=80 ecutrho=960 kpoints_dense='4 4 4'  degauss=0.02 execmd='mpirun -np 8' npool=8 k_automatic=False queue=lhy
+qe_main.py -i relax.out -j bash sctk -m mode=twin ecutwfc=80 ecutrho=960 nbnd=20 kpoints_dense='4 4 4'    degauss=0.02 execmd='mpirun -np 8' npool=8 k_automatic=False queue=lhy
 
-计算屏蔽库仑相互作用
-qe_main.py -i relax.out -j bash -w nscf_16x16x16  -l info sctk -m mode=coulomp kpoints_dense='4 4 4' execmd='mpirun -np 8' npool=8 queue=lhy
+计算屏蔽库仑相互作用, k点网格必须和ph.x计算电声相互作用时使用的 nq1 nq2 nq3 一样。然后运行sctk.x
+qe_main.py -i relax.out -j bash sctk -m mode=kel  qpoints='4 4 4' execmd='mpirun -np 8' npool=8 queue=lhy
+
+在电声耦合计算完成后, 后处理数据获得nscf, twin, kel, lambda_mu_k, scdft_tc, deltaf, qpdos的一套脚本
+
+k_automatic=True,  nscf的k点通过qe自动产生
+k_automatic=False, nscf的k点坐标通过指定k点产生
+qe_main.py -i relax.out -j bash -l debug sctk -m mode=sctk_all nbnd=20  occupations=tetrahedra_opt  execmd='mpirun -np 8' npool=8  qpoints='4 4 4' k_automatic=True queue=lhy
 "
