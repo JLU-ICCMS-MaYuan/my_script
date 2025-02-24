@@ -65,17 +65,17 @@ parser.add_argument(
 parser.add_argument(
     "-save",
     "--save-png",
-    action="store_true",
-    default=False,
+    action="store",
+    default=0.0,
     dest="save_png",
-    help="是否保存图片, 这里保存的图片是pymatgen自动生成的。\n"
+    help="是否保存图片, 数值为显示ebh的结构的上限, 这里保存的图片是pymatgen自动生成的。\n"
         "保存convexhull图片到当前执行命令的路径下\n"
 )
 parser.add_argument(
     "-show",
     "--show-png",
-    action="store_true",
-    default=False,
+    action="store",
+    default=0.0,
     dest="show_png",
     help="是否展示图片, 以网页的形式展示出一个可以动态调节详细程度的可交互图片\n",
 )
@@ -239,13 +239,13 @@ unstable_pd.to_csv("unstable.csv", index=False)
 
 
 
-if save_pnd:
-    plotter = PDPlotter(ini_pd, show_unstable=ebh_higher_limit*0.001, backend='matplotlib')
-    plotter.write_image('pd.png', image_format='png')
 
-if show_pnd:
-    plotter = PDPlotter(ini_pd, show_unstable=ebh_higher_limit*0.001, backend='plotly')
-    plotter.show()
+plotter = PDPlotter(ini_pd, show_unstable=save_pnd, backend='matplotlib')
+plotter.write_image('pd.png', image_format='png')
+
+
+plotter = PDPlotter(ini_pd, show_unstable=show_pnd, backend='plotly')
+plotter.show()
 
 if hand_plot_dat:
 
