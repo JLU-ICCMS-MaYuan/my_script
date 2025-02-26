@@ -4,6 +4,7 @@ matplotlib
 f90wrap
 Cython
 scikit-learn
+pyfiglet
 spglib==2.5.0
 pyfiglet==1.0.2
 phonopy

@@ -27,6 +27,7 @@ scripts_names = [
 
     'uspex-toolkit', 
     'magus-toolkit',
+    'sscha-toolkit',
     ]
 
 

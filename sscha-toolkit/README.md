@@ -131,7 +131,10 @@ rm dyn_start_population*_*  dyn_end_population*_*
 #### 1.10.1 检查应力应变是否合理
 在0_Relax.py中, 我们设置了将结构最终优化到指定压强，检查OUT*.dat中的STRESS，可以查看结构的晶格的受到的应力是否在指定压强附近, stress是否稳定在指定压强附近, 目前来看非常重要, 直接决定着最终计算出来的声子谱是否稳定. 
 ```shell
-grep -a3  "STRESS TENSOR" OUT*.dat
+alias gstress='grepstress() { grep -A3 stress OUT"$1".dat | tail -n 4;  grep -A3 STRESS OUT"$1".dat | tail -n 4; }; grepstress'
+
+# 使用方法
+gstress 8
 ```
 
 #### 1.10.2 检查原子受力是否趋于收敛
@@ -139,6 +142,10 @@ grep -a3  "STRESS TENSOR" OUT*.dat
 ```shell
 grep FC OUT*.dat
 # 如果这一代收敛的不够好，我们就进行下一代, 一直到FC gradient modulus < 0.0001
+
+alias gfc='grepfc() { grep "FC gradient modulus" OUT"$1".dat | tail -n 1; }; grepfc'
+# 使用方法: 
+gstress 8
 ```
 
 

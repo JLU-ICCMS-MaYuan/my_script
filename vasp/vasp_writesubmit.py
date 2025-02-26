@@ -147,6 +147,8 @@ class vasp_writesubmit:
             submit.write("killall -9 vasp_std                  \n")
             submit.write("sleep 3                              \n")
             submit.write("{} {} > vasp.log_$i 2>&1             \n".format(self.vasp_inputpara.execmd, vaspstd_path))
+            submit.write("cp CONTCAR CONTCAR_$i                \n")
+            submit.write("cp OUTCAR  OUTCAR_$i                 \n")
             submit.write("cp CONTCAR POSCAR                    \n")
             submit.write("done                                 \n")
         return jobname
@@ -161,6 +163,8 @@ class vasp_writesubmit:
             submit.write("killall -9 vasp_std                  \n")
             submit.write("sleep 3                              \n")
             submit.write("{} {} > vasp.log_$i 2>&1             \n".format(self.vasp_inputpara.execmd, vaspstd_path))
+            submit.write("cp CONTCAR CONTCAR_$i                \n")
+            submit.write("cp OUTCAR  OUTCAR_$i                 \n")
             submit.write("cp CONTCAR POSCAR                    \n")
             submit.write("done                                 \n")
         return jobname
