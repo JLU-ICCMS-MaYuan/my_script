@@ -77,7 +77,7 @@ parser.add_argument(
     "--show-png",
     action="store",
     type=float,
-    default=0.0,
+    default=None,
     dest="show_png",
     help="是否展示图片, 以网页的形式展示出一个可以动态调节详细程度的可交互图片\n",
 )
@@ -240,15 +240,14 @@ unstable_pd = pd.DataFrame(unstable_list)
 unstable_pd.to_csv("unstable.csv", index=False)
 
 
-
-
 plotter = PDPlotter(ini_pd, show_unstable=save_pnd, backend='matplotlib')
 plotter.write_image('pd.png', image_format='png')
 
+if show_pnd is not None:
+    plotter = PDPlotter(ini_pd, show_unstable=show_pnd, backend='plotly')
+    plotter.show()
 
-plotter = PDPlotter(ini_pd, show_unstable=show_pnd, backend='plotly')
-plotter.show()
-
+    
 if hand_plot_dat:
 
     for ele in hand_plot_dat:
@@ -280,17 +279,31 @@ if hand_plot_dat:
 
 if dst_entry_index:
     for dei in dst_entry_index:
-        dei = int(dei)
-        dst_entry = ini_pd.entries[dei]
-        print(f"\n------------dst_entry[{dei}]={dst_entry.entry_id}-{dst_entry.composition.reduced_formula}------------")
+        for dst_entry in ini_pd.entries:
+            if dei == dst_entry.entry_id:
+                print(f"\n------------dst_entry[{dei}]-{dst_entry.composition.reduced_formula}------------")
 
-        decomp_path = ini_pd.get_decomp_and_e_above_hull(dst_entry)[0]
-        decomp_eabovehull = ini_pd.get_decomp_and_e_above_hull(dst_entry)[1]
-        form_energy = ini_pd.get_form_energy_per_atom(dst_entry)
-        for key, value in decomp_path.items():
-            print("{:<15} {:<20} {:<20}".format(key.entry_id, key.composition.reduced_formula, value))
-        print("   e_above_hull = {:>10.6f} ev/atom".format(decomp_eabovehull))
-        print("formed_enthalpy = {:>10.6f} ev/atom".format(form_energy))
+                decomp_path = ini_pd.get_decomp_and_e_above_hull(dst_entry)[0]
+                decomp_eabovehull = ini_pd.get_decomp_and_e_above_hull(dst_entry)[1]
+                form_energy = ini_pd.get_form_energy_per_atom(dst_entry)
+                for key, value in decomp_path.items():
+                    print("{:<15} {:<20} {:<20}".format(key.entry_id, key.composition.reduced_formula, value))
+                print("   e_above_hull = {:>10.6f} ev/atom".format(decomp_eabovehull))
+                print("formed_enthalpy = {:>10.6f} ev/atom".format(form_energy))
+
+# if dst_entry_index:
+#     for dei in dst_entry_index:
+#         dei = int(dei)
+#         dst_entry = ini_pd.entries[dei]
+#         print(f"\n------------dst_entry[{dei}]={dst_entry.entry_id}-{dst_entry.composition.reduced_formula}------------")
+
+#         decomp_path = ini_pd.get_decomp_and_e_above_hull(dst_entry)[0]
+#         decomp_eabovehull = ini_pd.get_decomp_and_e_above_hull(dst_entry)[1]
+#         form_energy = ini_pd.get_form_energy_per_atom(dst_entry)
+#         for key, value in decomp_path.items():
+#             print("{:<15} {:<20} {:<20}".format(key.entry_id, key.composition.reduced_formula, value))
+#         print("   e_above_hull = {:>10.6f} ev/atom".format(decomp_eabovehull))
+#         print("formed_enthalpy = {:>10.6f} ev/atom".format(form_energy))
 
         # get_decomp_and_e_above_hull
         # 该方法用于获得某个化合物的分解路径和e_above_hull
