@@ -1,7 +1,7 @@
 import os
 import re
 import time
-import shutil
+import sys
 import logging
 
 from pathlib import Path
@@ -79,12 +79,9 @@ class vasp_submitjob:
         for poscar_number in poscar_number_list:
             dst_number_dir = Path(self.vasp_inputpara.work_path).joinpath("disp-" + poscar_number.split("-")[-1])
             if not os.path.exists(dst_number_dir):
-                os.makedirs(dst_number_dir)
-            src_poscar = Path(self.vasp_inputpara.work_path).joinpath(poscar_number) ; dst_poscar = Path(dst_number_dir).joinpath("POSCAR"); shutil.copy(src_poscar, dst_poscar)
-            src_potcar = Path(self.vasp_inputpara.work_path).joinpath("POTCAR")      ; dst_potcar = Path(dst_number_dir).joinpath("POTCAR"); shutil.copy(src_potcar, dst_potcar)
-            src_incar  = Path(self.vasp_inputpara.work_path).joinpath("INCAR")       ; dst_incar  = Path(dst_number_dir).joinpath("INCAR" ); shutil.copy(src_incar, dst_incar )
-            src_kpoints= Path(self.vasp_inputpara.work_path).joinpath("KPOINTS")     ; dst_kpoints= Path(dst_number_dir).joinpath("KPOINTS"); shutil.copy(src_kpoints, dst_kpoints) if src_kpoints.exists() else None
-            src_submit = Path(self.vasp_inputpara.work_path).joinpath(jobname)       ; dst_submit = Path(dst_number_dir).joinpath(jobname);  shutil.copy(src_submit, dst_submit)
+                sys.exit(1)
+                logger.error(f"Don't exist {dst_number_dir}")
+            src_poscar = Path(self.vasp_inputpara.work_path).joinpath(poscar_number)
             cwd = src_poscar.cwd()
             dst_dir = dst_number_dir.absolute()
             os.chdir(dst_dir)

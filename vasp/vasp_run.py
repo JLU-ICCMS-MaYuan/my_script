@@ -445,6 +445,7 @@ class vasp_md:
         if self.md_inputpara.queue is not None:
             _vasp_submitjob.submit_mode1(jobname)
 
+
 class vasp_processdata(vasp_base):
 
     def __init__(self, args: ArgumentParser) -> None:
