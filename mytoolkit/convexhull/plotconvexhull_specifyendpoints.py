@@ -59,8 +59,7 @@ parser.add_argument(
     dest="dst_entry_index",
     type=int,
     help="该参数用于输出指定entry的分解路径, 使用者需要事先了解相应化合物的entry编号\n"
-        "一般情况看nnconvexhull.csv文件中目标化合物在第几行就可以, 例如:\n"
-        "对于最后一行的化合物可以用-1来代表最后一个entry\n"
+        "看nnconvexhull.csv文件中目标化合物所在第一列的编号即可\n"
 )
 parser.add_argument(
     "-save",
@@ -364,6 +363,6 @@ if dst_entry_index:
 
 
 usually_order="""I hope these orders will inspire you !!!
-plotconvexhull_specifyendpoints.py -i nnconvexhull.csv -ed Ce Sr H -ebh 0.1 10 -dei -1 -2 -3
+plotconvexhull_specifyendpoints.py -i nnconvexhull.csv -ed Ce Sr H -ebh 0.1 10 -dei 1112 11133
 """
 print(usually_order)

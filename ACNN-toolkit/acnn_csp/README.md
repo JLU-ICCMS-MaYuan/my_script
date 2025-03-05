@@ -15,6 +15,9 @@ https://bonjour221.github.io/notes.github.io/external/external-utilities/
 ###  <span style="font-size: 30px; color: red;">  编译流程：
 
 ####  <span style="font-size: 25px; color: blue;">  编译openblas
+
+网络帖子: https://zhuanlan.zhihu.com/p/631348362
+
 ```shell
 make -j8 USE_OPENMP=1
 make install PREFIX=/...
@@ -87,8 +90,7 @@ set(OpenBLAS_DIR /work/home/mayuan/software/OpenBLAS-0.3.28/anzhuang)    # requi
 (除前五行需要修改，后面的全注释)，创建文件夹build，进入后cmake
 ```shell
 cmake -B build
-
-make
+cmake --build build --target acnn
 ```
 
 
