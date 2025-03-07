@@ -514,12 +514,16 @@ class qephono_inputpara(qe_inputpara):
             dst_elph = os.path.join(elph_dir_path, "elph.inp_lambda."+str(i+1))
             if os.path.exists(src_elph_NoNum):
                 src_elph = src_elph_NoNum
+                shutil.copy(src_elph, dst_elph)
+                logger.debug(f"elph.inp_.1 copy finished \n {dst_elph}")
             elif  os.path.exists(src_elph_Num):
                 src_elph = src_elph_Num
+                shutil.copy(src_elph, dst_elph)
+                logger.debug(f"elph.inp_.1 copy finished \n {dst_elph}")
             else:
                 logger.error(f"In {str(i+1)}, elph.inp_lambda-file doesn't exist ! Exit the program!")
-            shutil.copy(src_elph, dst_elph)
-            logger.debug(f"elph.inp_.1 copy finished \n {dst_elph}")
+
+
             
 
 
