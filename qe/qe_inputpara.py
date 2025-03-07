@@ -553,7 +553,7 @@ class qephono_inputpara(qe_inputpara):
                     shutil.copy(src_a2Fq2r, dst_a2Fq2r)
                     logger.debug(f"a2Fq2r.{str(j)}.1 copy finished  {dst_a2Fq2r}")
                 else:
-                    logger.error(f"{src_a2Fq2r} doesn't exist ! Exit the program!")
+                    logger.error(f"{src_a2Fq2r_NoNum} and {src_a2Fq2r_Num} doesn't exist ! Exit the program!")
 
 
     def get_top_freq(self, dosfile):
