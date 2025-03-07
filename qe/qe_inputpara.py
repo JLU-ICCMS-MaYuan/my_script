@@ -540,20 +540,21 @@ class qephono_inputpara(qe_inputpara):
             shutil.copy(src_dyn, dst_dyn)
             logger.debug(f"{self.system_name}.dyn copy finished {dst_dyn}")
 
-
             for j in range(51, 51+int(self.el_ph_nsigma)):
                 src_a2Fq2r_NoNum = os.path.join(directory, str(i+1), "elph_dir", "a2Fq2r."+str(j)+".1")
                 src_a2Fq2r_Num   = os.path.join(directory, str(i+1), "elph_dir", "a2Fq2r."+str(j)+"."+str(i+1))
                 dst_a2Fq2r = os.path.join(elph_dir_path, "a2Fq2r."+str(j)+"."+str(i+1))
                 if os.path.exists(src_a2Fq2r_NoNum):
                     src_a2Fq2r = src_a2Fq2r_NoNum
+                    shutil.copy(src_a2Fq2r, dst_a2Fq2r)
+                    logger.debug(f"a2Fq2r.{str(j)}.1 copy finished  {dst_a2Fq2r}")
                 elif  os.path.exists(src_a2Fq2r_Num):
                     src_a2Fq2r = src_a2Fq2r_Num
+                    shutil.copy(src_a2Fq2r, dst_a2Fq2r)
+                    logger.debug(f"a2Fq2r.{str(j)}.1 copy finished  {dst_a2Fq2r}")
                 else:
                     logger.error(f"{src_a2Fq2r} doesn't exist ! Exit the program!")
-                    sys.exit(1)
-                shutil.copy(src_a2Fq2r, dst_a2Fq2r)
-                logger.debug(f"a2Fq2r.{str(j)}.1 copy finished  {dst_a2Fq2r}")
+
 
     def get_top_freq(self, dosfile):
         phonon_dos = open(dosfile, "r").readlines()
