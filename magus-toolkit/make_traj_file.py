@@ -106,3 +106,4 @@ def main():
 # 运行脚本
 if __name__ == '__main__':
     main()
+    print("For example: make_traj_file.py -i . -c 100 -o ScH.traj -t CONTCAR   -od Sc H")

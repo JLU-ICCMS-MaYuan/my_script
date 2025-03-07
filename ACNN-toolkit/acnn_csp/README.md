@@ -28,10 +28,10 @@ make install PREFIX=/...
 就写一个叫env_gcc.sh的脚本，内容包含：如何source你的gcc以及相应的lib库, 这里给出一个例子
 ```shell
 source /public/env/gcc-9.2.0
-
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/public/software/gmp-6.1.2/lib
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/public/software/mpfr-4.0.1/lib
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/public/software/mpc-1.1.0/lib
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/public/software/gcc-9.2.0/lib64 
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/public/software/gmp-6.1.2/lib 
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/public/software/mpfr-4.0.1/lib 
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/public/software/mpc-1.1.0/lib 
 ```
 
 如果报错：`error while loading shared libraries: libmpfr.so.6: cannot open shared object file: No such file or directory`
@@ -80,11 +80,12 @@ PyTorch官网下载: https://pytorch.org/
 
 <span style="font-size: 20px; color: lightblue;"> 修改prefix.cmake
 ```shell
-# user modify
-#set(CUDA_TOOLKIT_ROOT_DIR /path/to/cuda)                                # optional
+# 这一部分取消注释并且修改相应的路径
 set(CMAKE_CXX_COMPILER /work/software/gcc-9.2.0/bin/g++)                 # required
 set(Torch_DIR /work/home/mayuan/software/libtorch)                       # required
 set(OpenBLAS_DIR /work/home/mayuan/software/OpenBLAS-0.3.28/anzhuang)    # required
+
+# 这一部分要
 ```
 
 (除前五行需要修改，后面的全注释)，创建文件夹build，进入后cmake

@@ -518,7 +518,6 @@ class qephono_inputpara(qe_inputpara):
                 src_elph = src_elph_Num
             else:
                 logger.error(f"In {str(i+1)}, elph.inp_lambda-file doesn't exist ! Exit the program!")
-                sys.exit(1)
             shutil.copy(src_elph, dst_elph)
             logger.debug(f"elph.inp_.1 copy finished \n {dst_elph}")
             

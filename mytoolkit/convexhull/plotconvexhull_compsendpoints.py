@@ -217,7 +217,7 @@ for unstable_dict in sorted_dict_list:
         unstable_dict["enthalpy"],
         ))
 stable_pd = pd.DataFrame(stable_list)
-stable_pd.to_csv("stable.csv", index=False)
+stable_pd.to_csv("stable_blocks.csv", index=False)
 
 
 # 获得 高于convex hull 上亚稳结构的 csv 文件
@@ -246,7 +246,7 @@ for unstable_dict in sorted_dict_list:
         unstable_dict["enthalpy"],
         ))
 unstable_pd = pd.DataFrame(unstable_list)
-unstable_pd.to_csv("unstable.csv", index=False)
+unstable_pd.to_csv("unstable_blocks.csv", index=False)
 
 
 

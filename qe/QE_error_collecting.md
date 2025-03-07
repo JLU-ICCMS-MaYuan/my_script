@@ -150,9 +150,49 @@ tmp/_ph0/La1Ce1Th2Be4H32.phsave/patterns.1.xml
 
 最后重新计算scffit.in 和 scf.in 和 split_ph.in
 
+### <span style="color:green"> 9. 报错 计算声子的时候，爆内存。如何完成后续计算。  </span> </div>
+
+最简单的方法，在split_ph.in里面加入`recover=.true.`, 然后修改提交任务的脚本，增加你的节点数和使用的核数，重新提交任务即可。 
+
+但是，按照上述方法，你会遇到下面的错误：
+```shell
+     stopping ...
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+     Error in routine davcio (20):
+     error reading file "/lustre/data/hp240139/mayuan/35.Ce-Sc-H/4.detailed-compute/CeSc2H24-sscha/100GPa/2.interpolation/2.fine/22/./tmp/_ph0/Ce1Sc2H24.q_22/Ce1Sc2H24.wfc26"
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+     stopping ...
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+     Error in routine davcio (20):
+     error reading file "/lustre/data/hp240139/mayuan/35.Ce-Sc-H/4.detailed-compute/CeSc2H24-sscha/100GPa/2.interpolation/2.fine/22/./tmp/_ph0/Ce1Sc2H24.q_22/Ce1Sc2H24.wfc7"
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+```
+这是因为你改变了你所使用的核数，导致QE在重新续算声子的时候，读取计算声子时所需要的波函数出现了问题。
+解决方法就是，上一次计算声子控制波函数生成的文件，让他重新生成即可。那么到底删除那个文件呢？
+
+```shell
+$ tree -d tmp
+
+└── tmp
+    ├── Ce1Sc2H24.save # 它是做scf时候产生的, 里面包含了赝势文件*.upf, charge-density.dat, data-file-schema.xml, paw.txt, 波函数文件wfc*.dat
+    └── _ph0 # 这个是在算声子的时候产生的文件
+        ├── Ce1Sc2H24.phsave # 它里面包含了control_ph.xml, 动力学矩阵dynmat*.xml, 电声耦合矩阵elph*.xml, patterns*.xml
+        └── Ce1Sc2H24.q_23 # 它里面包含了*.mix*, *.dwf*, *.bar*, *.dvscf1, *.dvscf_paw1, *prd*, 如果你之前续算过还有*.recover*
+            └── Ce1Sc2H24.save # 这个是最重要的，里面包含了要删除的文件，里面有charge-density.dat，data-file-schema.xml，paw.txt
+
+# 所以你可以执行就够了
+rm -fr tmp/_ph0/Ce1Sc2H24.q_23/Ce1Sc2H24.save 
+
+# 但是不知道为什么，有时候明明不虚频的声子，也会因为续算虚频，我推测就是波函数文件搞得续算前后受力不一致导致虚频。
+# 所以如果上面的删除方法失效，试试下面的，把所有的波函数文件都删了
+rm -fr tmp/Ce1Sc2H24.wfc* tmp/Ce1Sc2H24.save/ tmp/_ph0/Ce1Sc2H24.q_22/{Ce1Sc2H24.wfc*,Ce1Sc2H24.prd*,Ce1Sc2H24.dwf*,Ce1Sc2H24.bar*,Ce1Sc2H24.save}
+```
 
 
-### <span style="color:green"> 9. 报错 read_file_new: Wavefunctions not in collected format?!?   read_file: Wavefunctions in collected format not available
+
+### <span style="color:green"> 10. 报错 read_file_new: Wavefunctions not in collected format?!?   read_file: Wavefunctions in collected format not available
 
 有时候我们在自洽结束后，进行电声耦合计算时，会有这样的报错。这是因为你修改了并行参数后，波函数的数量发生了变化，导致进行电声耦合计算时读入波函数有误。
 
@@ -160,11 +200,11 @@ tmp/_ph0/La1Ce1Th2Be4H32.phsave/patterns.1.xml
 
 解决方法：在续算电声耦合之前，用这4个核重新计算一次。
 
-### <span style="color:green"> 10. Error in routine lambda (100):  wrong # or too many modes
+### <span style="color:green"> 11. Error in routine lambda (100):  wrong # or too many modes
 
 这是因为默认qe代码中最多只能计算100个振动模式，需要手动调大`PH`中的振动模式
 
-### <span style="color:green"> 11. 通过`start_q`和`last_q`方式进行q点计算，如何合并各个q点目录中的tmp目录中关于动力学矩阵的文件
+### <span style="color:green"> 12. 通过`start_q`和`last_q`方式进行q点计算，如何合并各个q点目录中的tmp目录中关于动力学矩阵的文件
 
 首先要搞清楚：1/tmp中的目录结构和2/tmp中目录结构的差别. 通过对比可以知道：唯一差别就是`tmp/_ph0`的差别. 
 

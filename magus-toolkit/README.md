@@ -1,10 +1,8 @@
 ## <span style="font-size: 30px; color: lightgreen;"> 网络经验贴
-```shell
 https://www.bilibili.com/read/cv23297817/
 
-# 我的帖子
-https://zhuanlan.zhihu.com/p/685715050
-```
+我的帖子: https://zhuanlan.zhihu.com/p/685715050
+
 
 ## <span style="font-size: 30px; color: lightgreen;"> 将OUTCAR转化为train.cfg
 ```shell
@@ -359,7 +357,7 @@ def select(self, pop):
     # content = f"{self.mtp_runner} -n 1 {self.mtp_exe} select-add "\
     #           f"pot.mtp train.cfg new.cfg diff.cfg "\
     #           f"--weighting=structures\n"
-    content = f"srun --mpi=pmi2 select-add "\
+    content = f"srun --mpi=pmi2 {self.mtp_exe} select-add "\
               f"pot.mtp train.cfg new.cfg diff.cfg "\
               f"--weighting=structures\n"
     if self.mode == 'parallel':
