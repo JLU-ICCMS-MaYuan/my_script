@@ -141,7 +141,7 @@ class qe_inputpara(qe_base):
         if hasattr(self, "kpoints_dense"):
             _kpoints_dense = self.kpoints_dense.split()
             self.kpoints_dense = list(map(int, _kpoints_dense))
-            logger.info('kpoints_dense={} by custom'.format(self.kpoints_sparse))
+            logger.info('kpoints_dense={} by custom'.format(self.kpoints_dense))
         else:
             logger.warning('kpoints_dense={}'.format(None))
 

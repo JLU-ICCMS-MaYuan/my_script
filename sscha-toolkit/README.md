@@ -422,6 +422,13 @@ inter_dyn.save_qe("inter_dyn_") # 插好值的动力学矩阵被命名为inter_d
     /
     XQ1 XQ2 XQ3
    ```
+
+```shell
+   Error in routine initialize_grid_variables (1):
+     problems reading u
+```
+
+
 3. 从`2.fine`目录中拷贝记录了不可约q点坐标的`*.dyn0`文件到`3.Tc`目录中。
    
 4. 准备分q点目录，并且在各个分q点目录中tmp文件中的`dv文件`和`patterns文件`。
