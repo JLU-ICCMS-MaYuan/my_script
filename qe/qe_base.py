@@ -234,6 +234,7 @@ class qe_base:
     def get_cell(self, struct):
         cell_parameters = None
         if self.input_file_path.name == "relax.out" and self.input_file_path.exists():
+            logger.info("Find relax.out, so reacquire cell parameters from it!")
             awk_order = "awk '/Begin final coordinates/,/End final coordinates/{print $0}'" + f" {self.input_file_path.absolute()} " 
             content = os.popen(awk_order).readlines()
             for idx, line in enumerate(content):
@@ -243,6 +244,7 @@ class qe_base:
                     cell_parameters = [cell.strip("\n") for cell in cell_parameters]
             return cell_parameters
         elif self.input_file_path.name == "POSCAR" or "CONTCAR" in self.input_file_path.name or ".vasp" in self.input_file_path.name:
+            logger.info("Find relax.out, so reacquire cell parameters from it!")
             sed_order = "sed -n '3,5p' " + f" {self.input_file_path.absolute()} "
             content = os.popen(sed_order).readlines()
             cell_parameters = [cell.strip("\n") for cell in content]
