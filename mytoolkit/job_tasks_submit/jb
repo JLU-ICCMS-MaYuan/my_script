@@ -46,8 +46,8 @@ qe_main.py -i CONTCAR -j bash phono -m mode=gibbsvb execmd='' queue=local
 
 qe_main.py -i CONTCAR -j bash phono -m mode=matdyn qpoints='8 8 8' execmd='mpirun -np 2' npool=1 queue=local qinserted=50
 
-qe_main.py -i CONTCAR -j bash phono -m mode=phonobanddata execmd=''
-
+qe_main.py -i CONTCAR -j bash phono -m mode=phonobandwidthsdata execmd=''
+qe_main.py -i CONTCAR -j bash phono -m mode=phonobanddata execmd='' 
 
 qe_main.py -i CONTCAR -j bash sc -m mode=Tc execmd='' npool=1 queue=local temperature_steps=100 a2fdos=True alpha2fdat=False broaden=0.5 smearing_method=1  gauss=0.035 gaussid=7
 
