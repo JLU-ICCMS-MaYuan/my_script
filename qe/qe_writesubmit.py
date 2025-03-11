@@ -111,6 +111,10 @@ class qe_writesubmit:
         if mode =="matdyn":
             jobname = self.s7_matdyn(self.qe_inputpara.work_path, inpufilename)
             return jobname
+        if mode == "phonobanddata":
+            print(inpufilename)
+            jobname = self.s7_phonobanddata(self.qe_inputpara.work_path, inpufilename)
+            return jobname
         if mode =="eletdos":
             jobname = self.s8_eletdos(self.qe_inputpara.work_path, inpufilename)
             return jobname
@@ -321,6 +325,16 @@ class qe_writesubmit:
             j.write('grep nqs q2r.out > nqs                   \n')  
         return jobname
 
+    def s7_phonobanddata(self, _dirpath, inputfilename):
+        _inpufilename = inputfilename
+        _outputfilename = _inpufilename.split(".")[0] + ".out"
+        jobname = "s7_phonobanddata.sh"
+        _script_filepath = os.path.join(_dirpath, jobname)
+        with open(_script_filepath, "w") as j:
+            j.writelines(self.jobtitle)
+            j.write('{}/plotband.x <{}> {} \n'.format(qebin_path, _inpufilename, _outputfilename))
+        return jobname
+    
     def s7_matdyn(self, _dirpath, inputfilename):
         _inpufilename = inputfilename
         _outputfilename = _inpufilename.split(".")[0] + ".out"
@@ -330,7 +344,7 @@ class qe_writesubmit:
             j.writelines(self.jobtitle)
             j.write('{} {}/matdyn.x -npool {} <{}> {} \n'.format(self.qe_inputpara.execmd, qebin_path, self.qe_inputpara.npool, _inpufilename, _outputfilename))
         return jobname
-
+    
     def s8_eletdos(self, _dirpath, inputfilename):
         _inpufilename = inputfilename
         _outputfilename = _inpufilename.split(".")[0] + ".out"

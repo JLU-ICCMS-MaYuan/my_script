@@ -758,7 +758,7 @@ class qephono_inputpara(qe_inputpara):
         """
         qpoints_freqs_phonowidth = np.hstack((qpoints_freqs, phononwidth))
         qp_freq_width = pd.DataFrame(qpoints_freqs_phonowidth)
-        qp_freq_width.columns = ["qpoints", "freqs", "widths"]
+        qp_freq_width.columns = ["Q-Path", "Frequency(cm\+(-1))", "Widths"]
         qp_freq_width.to_csv(
             self.work_path.joinpath("qp_freq_width.csv"),
             header=True,

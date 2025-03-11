@@ -89,6 +89,9 @@ class qe_writeinput:
         if mode == "matdyn":
             inputfilename = self.write_matdyn_in(self.qe_inputpara.work_path)
             return inputfilename
+        if mode == "phonobanddata":
+            inputfilename = self.write_phonobanddata_in(self.qe_inputpara.work_path)
+            return inputfilename
         if mode == "eletdos":
             inputfilename = self.write_eletdos_in(self.qe_inputpara.work_path)
             return inputfilename
@@ -805,6 +808,17 @@ class qe_writeinput:
                 qe.write(" {:<15} {:<15} {:<15} {:<5}                   \n".format(str(coord[0]), str(coord[1]), str(coord[2]), str(inserted_qpoints_number)))
         return inputfilename
 
+    def write_phonobanddata_in(self, work_directory:Path):
+        inputfilename = "phonobanddata.in"
+        with open(inputfilename, "w") as qe:
+            qe.write("{}.freq                    \n".format(self.qe_inputpara.system_name))            
+            qe.write("0 4000                     \n".format())    
+            qe.write("{}.phonon.bands.dat        \n".format(self.qe_inputpara.system_name))                        
+            qe.write("{}.phonon.bands.ps         \n".format(self.qe_inputpara.system_name))                       
+            qe.write("0                          \n".format())
+            qe.write("50 0                       \n".format())  
+        return inputfilename
+    
     def write_eletdos_in(self, work_directory:Path):
         inputfilename = "eletdos.in"
         eledos_in = work_directory.joinpath(inputfilename) 

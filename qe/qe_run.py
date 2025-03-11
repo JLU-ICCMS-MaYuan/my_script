@@ -127,12 +127,17 @@ class qe_phono:
                 self.qe_submitjob.submit_mode3(inputfilename, jobnames)
         elif self.phono_inputpara.mode == "merge":
             self.phono_inputpara.merge(self.phono_inputpara.work_path)
-        elif self.phono_inputpara.mode == "phonobanddata":
+        elif self.phono_inputpara.mode == "phonobandwidthsdata":
             gauss = self.phono_inputpara.gauss
             qpoints_freqs, q_number, freq_number = self.phono_inputpara.get_phono_freq()
             phononwidth = self.phono_inputpara.get_gam_lines(gauss, q_number, freq_number)
             self.phono_inputpara.merge_qp_freq_width(qpoints_freqs, phononwidth)
             logger.info("You can use `qp_freq_width.csv` to plot phonon-band")
+        elif self.phono_inputpara.mode == "phonobanddata":
+            inputfilename = self.qe_writeinput.writeinput()
+            jobnames = self.qe_writesubmit.write_submit_scripts(inputfilename)
+            self.qe_submitjob.submit_mode1(inputfilename, jobnames)
+            logger.info("You can use `prefix`.phonon.bands.dat to plot phonon-band")
         elif self.phono_inputpara.mode == "phonodosdata":
             self.phono_inputpara.get_phonodos()
             logger.info("You can use `phdos_proj2eles.csv` to plot phonon-DOS")
