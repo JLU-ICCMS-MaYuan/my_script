@@ -373,6 +373,14 @@ python qedyn2struct.py -i V3_Hessian.dyn1 -o qe
 # `K_POINTS in scf.in`.
 ```
 
+如果报错，`D_S (l=2) for this symmetry operation is not orthogonal`，
+这说明V3_Hessian.dyn可能弛豫出来的对称性微微扭曲，建议在那一代补充增加结构数，获得新的V3_Hessian.dyn矩阵。
+```shell
+task #         0
+from d_matrix : error #         3
+D_S (l=2) for this symmetry operation is not orthogonal
+```
+
 ### <span style="color:yellow"> 3.2 回收`1.sparse`目录中稀疏q网格的动力学矩阵，`2.fine`目录中稠密q网格的动力学矩阵，`1.sscha-relax`目录中V3_Hessian动力学矩阵。
 用到了`3.Inter`里面的`get_dense.sh`，`get_sparse.sh`，`get_v3_hessian.sh`三个脚本。有相关路径需要自己修改，很简单。
 
