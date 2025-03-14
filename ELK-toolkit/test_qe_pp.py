@@ -39,9 +39,9 @@ def get_coords(poscar_path):
         '{:<4}   {}'.format(ele, site.strip("\n")) for ele, site in fractional_sites]
     return fractional_sites
 
-def change_info(old_relax_in_path, new_relax_in_path, press, poscar_path=None):
+def change_info(old_scf_in_path, new_scf_in_path, press, poscar_path=None):
 
-    with open(old_relax_in_path, "r") as f:
+    with open(old_scf_in_path, "r") as f:
         lines = f.readlines()
 
     for idx, line in enumerate(lines):
@@ -62,24 +62,26 @@ def change_info(old_relax_in_path, new_relax_in_path, press, poscar_path=None):
         for i, coord in enumerate(coords):
             lines[coords_idx+i+1] = coord+'\n'
 
-    with open(new_relax_in_path, "w") as f:
+    with open(new_scf_in_path, "w") as f:
         f.writelines(lines)
 
-def get_total_energy(relax_out_path):
+def get_total_energy(scf_out_path):
     """计算并返回结构能量 单位的Ry"""
     try:
-        Et = float(os.popen(f""" grep -s "!    total energy" {relax_out_path}""" + """ | tail -n 1  | awk '{print $5}' """).read().strip('\n'))
+        Et = float(os.popen(f""" grep -s "!    total energy" {scf_out_path}""" + """ | tail -n 1  | awk '{print $5}' """).read().strip('\n'))
         Et = Et/2 # 注意单位是Ry
         return Et
     except:
         Et = 1000000000000.0
         return Et
 
-def get_volume(relax_out_path):
+def get_volume(scf_out_path):
+    angstrom2bohr = 0.14803588900000003
+    bohr2angstrom = 6.75511868611806558
     try:
-        # V = float(os.popen(f'grep -s "new unit-cell volume" {relax_out_path}' + " | tail -n 1 | awk '{print $ 5}'").read().strip('\n'))
-        V = float(os.popen(f'grep -s "unit-cell volume" {relax_out_path}' + " | tail -n 1 | awk '{print $ 4}'").read().strip('\n'))
-        V = V * (0.52917721092**3)
+        # V = float(os.popen(f'grep -s "new unit-cell volume" {scf_out_path}' + " | tail -n 1 | awk '{print $ 5}'").read().strip('\n'))
+        V = float(os.popen(f'grep -s "unit-cell volume" {scf_out_path}' + " | tail -n 1 | awk '{print $ 4}'").read().strip('\n'))
+        # V = V * (0.52917721092**3)
     except:
         V = 100000000000
     return V
@@ -87,7 +89,7 @@ def get_volume(relax_out_path):
 if __name__ == "__main__":
 
     print("Note: --------------------")
-    print("    你需要在当前目录下准备好: relax.in, pp, submit.sh(pp目录中放好赝势)")
+    print("    你需要在当前目录下准备好: scf.in, pp, submit.sh(pp目录中放好赝势)")
     print("    测试的press值分别是: -5 0.0001 50 100 150 200 250 300 350 400")
     print("    该脚本不提供自动提任务的命令: 你可以用以下命令提供命令:")
     print("        for i in p-5 p+0.00001 p+50 p+100 p+150 p+200 p+250 p+300 p+350 p+400; do cd $i; qsub submit.sh; cd ..; done")
@@ -96,22 +98,22 @@ if __name__ == "__main__":
     print("Note: --------------------")
     print("    创建测试qe的赝势输入文件目录以及准备qe的输入文件")
     press_s = [-5, 0.00001, 50, 100, 150, 200, 250, 300, 350, 400]
-    old_relax_in_path = os.path.abspath("relax.in")
+    old_scf_in_path = os.path.abspath("scf.in")
     for press in press_s:
         poscar_path = None
         if type(press) == int :
             test_path = os.path.abspath('p{:+d}'.format(press))
-            new_relax_in_path = os.path.join(test_path, "relax.in")
+            new_scf_in_path = os.path.join(test_path, "scf.in")
             if sys.argv[1]:
                 poscar_path = os.path.join(sys.argv[1], 'p{:+d}'.format(press),"CONTCAR")
         elif type(press) == float:
             test_path = os.path.abspath('p{:+.5f}'.format(press))
-            new_relax_in_path = os.path.join('p{:+.5f}'.format(press), "relax.in")
+            new_scf_in_path = os.path.join('p{:+.5f}'.format(press), "scf.in")
             if sys.argv[1]:
                 poscar_path = os.path.join(sys.argv[1], 'p{:+.5f}'.format(press),"CONTCAR")
         if not os.path.exists(test_path):
             os.mkdir(test_path)
-        change_info(old_relax_in_path, new_relax_in_path, press, poscar_path)
+        change_info(old_scf_in_path, new_scf_in_path, press, poscar_path)
         submit_path = os.path.abspath("submit.sh")
         os.system(f"cp -f {submit_path} {test_path}")
 
@@ -123,26 +125,26 @@ if __name__ == "__main__":
     for press in press_s:
         if type(press) == int :
             test_path = os.path.abspath('p{:+d}'.format(press))
-            relax_out_path = os.path.join(test_path, "relax.out")
+            scf_out_path = os.path.join(test_path, "scf.out")
         elif type(press) == float:
             test_path = os.path.abspath('p{:+.5f}'.format(press))
-            relax_out_path = os.path.join('p{:+.5f}'.format(press), "relax.out")
-        E = get_total_energy(relax_out_path)
-        V = get_volume(relax_out_path)
+            scf_out_path = os.path.join('p{:+.5f}'.format(press), "scf.out")
+        E = get_total_energy(scf_out_path)
+        V = get_volume(scf_out_path)
         V_pstress.append([V, press])
         v_energy.append([V, E])
 
     V_pstress = np.array(V_pstress)
     if len(V_pstress) == 9:
-        print("{:<14},{:<14}".format("V(A^3)", "pstress(GPa)"))
+        print("{:<14},{:<14}".format("V(bohr^3)", "pstress(GPa)"))
         with open("V_pstress.csv", 'w') as f:
             f.write("{:<14},{:<14}\n".format("V(A^3)", "pstress(GPa)"))
             for V, pstress in V_pstress:
                 f.write("{:<14.8f},{:<14.8f}\n".format(V, pstress))
                 print("{:<14.8f},{:<14.8f}".format(V, pstress))
-        print("All relax.out are OK, V_pstress.csv has been wroten in current position")
+        print("All scf.out are OK, V_pstress.csv has been wroten in current position")
     else:
-        print("If all relax.out are OK, V_pstress.csv will be wroten in current position")
+        print("If all scf.out are OK, V_pstress.csv will be wroten in current position")
 
     v_energy = np.array(v_energy)
     if len(v_energy) == 10:
@@ -156,9 +158,9 @@ if __name__ == "__main__":
             for V, E in v_energy:
                 f.write("{:<14.8f}  {:<14.8f}\n".format(V, E))
                 print("{:<14.8f}  {:<14.8f}".format(V, E))
-        print("All relax.out are OK, V_pstress.csv has been wroten in current position")
+        print("All scf.out are OK, V_pstress.csv has been wroten in current position")
     else:
-        print("If all relax.out are OK, V_pstress.csv will be wroten in current position")
+        print("If all scf.out are OK, V_pstress.csv will be wroten in current position")
 
     print("Note: --------------------")
     print("    现在获得了eos.in文件, 直接./eos就可以获得PVPAI.OUT文件了")

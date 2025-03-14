@@ -244,7 +244,7 @@ class qe_base:
                     cell_parameters = [cell.strip("\n") for cell in cell_parameters]
             return cell_parameters
         elif self.input_file_path.name == "POSCAR" or "CONTCAR" in self.input_file_path.name or ".vasp" in self.input_file_path.name:
-            logger.info("Find relax.out, so reacquire cell parameters from it!")
+            logger.info("Find POSCAR or CONTCAR or *.vasp, so reacquire cell parameters from it!")
             sed_order = "sed -n '3,5p' " + f" {self.input_file_path.absolute()} "
             content = os.popen(sed_order).readlines()
             cell_parameters = [cell.strip("\n") for cell in content]
@@ -260,6 +260,7 @@ class qe_base:
     def get_coords(self, struct):
         fractional_sites = None
         if self.input_file_path.name == "relax.out" and self.input_file_path.exists():
+            logger.info("Find relax.out, so reacquire atoms coordinates from it!")
             awk_order = "awk '/Begin final coordinates/,/End final coordinates/{print $0}'" + f" {os.path.abspath(self.input_file_path)} " 
             content = os.popen(awk_order).readlines()
             for idx, line in enumerate(content):
@@ -269,6 +270,7 @@ class qe_base:
                     fractional_sites = [coords.strip("\n") for coords in fractional_sites]
             return fractional_sites
         elif self.input_file_path.name == "POSCAR" or "CONTCAR" in self.input_file_path.name or ".vasp" in self.input_file_path.name:
+            logger.info("Find POSCAR or CONTCAR or *.vasp, so reacquire atoms coordinates from it!")
             sed_order1 = "sed -n '6p' " + f" {self.input_file_path.absolute()} "
             elements   = os.popen(sed_order1).read().strip('\n').split()
             sed_order2 = "sed -n '7p' " + f" {self.input_file_path.absolute()} "

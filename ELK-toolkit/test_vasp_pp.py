@@ -40,9 +40,11 @@ def get_totalenergy(outcar_path):
     return dE
 
 def get_volume(outcar_path):
+    bohr2angstrom = 0.14803588900000003
+    angstrom2bohr = 6.75511868611806558
     try:
         V = float(os.popen(f'grep -s "volume of cell" {outcar_path}' + " | tail -n 1 | awk '{print $ 5}'").read().strip('\n'))
-        V = V / np.power(0.529, 3)
+        V = V * angstrom2bohr
     except:
         V = 100000000000
     return V

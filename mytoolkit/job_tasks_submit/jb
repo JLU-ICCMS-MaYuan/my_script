@@ -15,9 +15,9 @@ vasp_main.py -i CONTCAR -j slurm -w 100-eletron  eletron -m mode='scf eledos eba
 
 vasp_main.py -i CONTCAR -j slurm -w d111 phono -m supercell='1 1 1' kspacing=0.18 mode=disp execmd=48 ismear=1 encut=800 ediff=1E-08 ediffg=-0.001 lreal=.FALSE. queue=lhy execmd='mpirun -np 48'
 
-vasp_main.py -i POSCAR -j bash data -m mode=dispphdos supercell='2 2 2' tmin=0 tmax=4000 tstep=100
+vasp_main.py -i POSCAR -j bash data -m mode=dispphdos supercell='2 2 2' tmin=0 tmax=4000 tstep=100 mp='8 8 8'
 
-vasp_main.py -i POSCAR -j bash data -m mode=dispband supercell='2 2 2'
+vasp_main.py -i POSCAR -j bash data -m mode=dispband supercell='2 2 2' mp='8 8 8'
 
 qe_main.py -i CONTCAR -j slurm -p PRESS -w . relax -m mode=relax-vc kpoints_dense="l m n" conv_thr=1.0d-8 execmd='mpirun -np 48' ecutwfc=80 ecutrho=960 degauss=0.02 npool=4 queue=lhy
 
