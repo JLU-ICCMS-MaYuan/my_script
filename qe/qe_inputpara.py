@@ -424,12 +424,15 @@ class qephono_inputpara(qe_inputpara):
             if hasattr(self, "gaussid") and hasattr(self, "gauss"):
                 self.gaussid = int(self.gaussid)
                 self.gauss = float(self.gauss)
+                logger.info(f'Converged gaussid = {self.gaussid+1}, corresponding gaussian value={self.gauss}')
             elif hasattr(self, "efermi_dos"):
                 self.efermi_dos = float(self.efermi_dos)
                 self.gaussid, self.gauss = self.check_convergence(efermi_dos=self.efermi_dos)
+                logger.info(f'Converged gaussid = {self.gaussid+1}, corresponding gaussian value={self.gauss}')
             else:
                 self.efermi_dos = None
                 self.gaussid, self.gauss = self.check_convergence(efermi_dos=self.efermi_dos)
+                logger.info(f'Converged gaussid = {self.gaussid+1}, corresponding gaussian value={self.gauss}')
 
     def get_qpoints(self, dyn0_path):
         '''
@@ -619,7 +622,6 @@ class qephono_inputpara(qe_inputpara):
             delta_dos = [np.abs(idos-float(efermi_dos)) for idos in dos]
             idx = np.argmin(delta_dos) # 收敛Gaussian的索引
             gauss = gaussian0[idx]
-        logger.info(f'Converged gaussid = {idx+1}, corresponding gaussian value={gaussian1[idx]}')
         # time.sleep(3)
         return idx+1, gauss  # 因为python都是从0开始
 
