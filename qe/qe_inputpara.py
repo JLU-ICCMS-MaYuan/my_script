@@ -797,7 +797,8 @@ class qephono_inputpara(qe_inputpara):
         columns = ['freq', 'tdos']+[ele for ele in elements]
         phonondos.columns = columns
         # 对相同的列名(相同的元素的pdos相加)进行相加,
-        phonondos_sum = phonondos.groupby(phonondos.columns, axis=1).sum()
+        # phonondos_sum = phonondos.groupby(phonondos.columns, axis=1).sum()
+        phonondos_sum = phonondos.T.groupby(phonondos.columns).sum().T
         # 将 'freq' 列移动到 DataFrame 的第一列
         freq_col = phonondos_sum.pop('freq')
         phonondos_sum.insert(0, 'freq', freq_col)
