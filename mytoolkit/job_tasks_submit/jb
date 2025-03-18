@@ -3,6 +3,7 @@
 echo "
 
 vasp_main.py -i CONTCAR -j slurm -p PRESS relax -m mode=rv4 execmd='mpirun -np 48' ismear=0 sigma=0.01 ediff=1e-8 ediffg=-0.001 encut=900 kspacing=0.188 queue=lhy
+for i in $(cat relax-none); do p=$(echo $i | grep -oE '[0-9]+(\.[0-9]+)?$'); echo $p; cd $i; vasp_main.py -i CONTCAR -j slurm -p $p relax -m mode=rv4 execmd='mpirun -np 48' ismear=0 sigma=0.01 ediff=1e-7 ediffg=-0.01 encut=600 kspacing=0.189 queue=lhy;  done
 
 # 批量计算多个结构的多个压强
 vasp_main.py -i stdlibs -j slurm -ps '100 200 300' batchrelax -m mode=rv4 sigma=0.01 encut=900 ediff=1e-7 ediffg=-0.01 ismear=0 core=48 kspacing=0.18 queue=lhy execmd='mpirun -np 48'
@@ -46,7 +47,7 @@ qe_main.py -i CONTCAR -j bash phono -m mode=gibbsvb execmd='' queue=local
 
 qe_main.py -i CONTCAR -j bash phono -m mode=matdyn qpoints='8 8 8' execmd='mpirun -np 2' npool=1 queue=local qinserted=50
 
-qe_main.py -i CONTCAR -j bash phono -m mode=phonobandwidthsdata execmd=''
+qe_main.py -i CONTCAR -j bash phono -m mode=phonobandwidthsdata execmd='' gauss=0.035 gaussid=7
 qe_main.py -i CONTCAR -j bash phono -m mode=phonobanddata execmd='' 
 
 qe_main.py -i CONTCAR -j bash sc -m mode=Tc execmd='' npool=1 queue=local temperature_steps=100 a2fdos=True alpha2fdat=False broaden=0.5 smearing_method=1  gauss=0.035 gaussid=7
