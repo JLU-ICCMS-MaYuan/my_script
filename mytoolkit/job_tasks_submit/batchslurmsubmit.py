@@ -45,7 +45,6 @@ def get_que_num():
         squeue_output = subprocess.check_output(command, shell=True).decode('utf-8').strip()
         # print(squeue_output)  # 打印当前队列输出，便于调试
         # 返回匹配的行数（即正在运行的任务数量）
-        print(len(squeue_output.splitlines()), squeue_output.splitlines())
         return len(squeue_output.splitlines()), squeue_output.splitlines()
     except subprocess.CalledProcessError:
         #print('Error fetching queue data')  # 错误处理

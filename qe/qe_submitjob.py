@@ -46,7 +46,7 @@ class qe_submitjob:
             cwd_path = os.getcwd()
             os.chdir(self.qe_inputpara.work_path)
             jobids = os.popen(f"nohup {qebin_path}/{dotx_file} <{inputfilename}> {outputfilename} 2>&1 & echo $!").read()
-            logger.info(f"{dotx_file} is running. pid or jobids = {jobids}")
+            logger.info(f"{dotx_file} is executed. pid or jobids = {jobids}")
             os.chdir(cwd_path)
             return jobids, outputfilename
         # 这个是专门为eliashberg方程求解提供的提交任务模式
@@ -70,7 +70,7 @@ class qe_submitjob:
     def submit_mode1(self, inputfilename, jobname):
         """
         submit_mode1 can be used to submit job by job-system, 
-            such as by PBS, SLURM or Background running mode of bash 
+            such as by PBS, SLURM or Background executed mode of bash 
         """
         input_file = Path(self.qe_inputpara.work_path).joinpath(inputfilename)
         if not input_file.exists():
@@ -90,7 +90,7 @@ class qe_submitjob:
             res = os.popen(f"{self.submit_order} {jobname}").read()
             jobids = re.findall(r"\d+", res)
 
-        logger.info(f"{jobname} is running. pid or jobids = {jobids}")
+        logger.info(f"{jobname} is executed. pid or jobids = {jobids}")
         os.chdir(cwd)
         # 检查任务是否成功提交，成功提交的话，应该会有进程号或者任务号返回。
         # 如果没有成功提交任务就跳出程序
@@ -111,7 +111,7 @@ class qe_submitjob:
             # 在运行ph.x之前，检查dyn0文件是否已经存在
             if self.checksuffix(self.qe_inputpara.work_path, ".dyn0"):
                 # 在运行ph.x之前，如果dyn0文件已经存在， 那么就直接退出程序
-                logger.error("Before running the ph.x, the program will check the *.dyn0 exists whether or not !")
+                logger.error("Before executing the ph.x, the program will check the *.dyn0 exists whether or not !")
                 logger.error("It seems that dyn0 is not create by you!! Please check it carefully!!! The program will exit!!!")
                 sys.exit(0)
             else:

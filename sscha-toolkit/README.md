@@ -1,4 +1,4 @@
-# 流程大纲
+#  <span style="color:orange"> split-mode-for-timelimit-meachine流程大纲
 
 ## <span style="color:red"> 1. 根据第j代的动力学矩阵, 产生随机结构, 生成随机结构自洽计算的输入文件, 生成提交任务的脚本, 提交任务, 检查每个随机结构自洽计算的结果, 回收自洽计算的结果, 结构弛豫并生成第j+1代动力学矩阵
 
@@ -145,10 +145,19 @@ grep FC OUT*.dat
 
 alias gfc='grepfc() { grep "FC gradient modulus" OUT"$1".dat | tail -n 1; }; grepfc'
 # 使用方法: 
-gstress 8
+gfc 8
 ```
 
+#### 1.10.3 检查体系的自由能是否趋于收敛，只有NPT的计算才会有自由能
+检查OUT*.dat中的FC，可以查看结构中原子的受力是否趋于收敛
+```shell
+grep Gibbs OUT*.dat
+# 如果这一代收敛的不够好，我们就进行下一代, 一直到FC gradient modulus < 0.0001
 
+alias gbs='gbs() { grep "Gibbs" OUT"$1".dat; }; gbs'
+# 使用方法: 
+gbs 8
+```
 
 ### <span style="color:yellow"> 1.11 至此完成了第j代动力学矩阵的迭代!!!下面介绍一些特殊情况的处理。需要注意，如果你忘记现在迭代到第几代了，下面教你一些简单的方法判断你进行到了第几代：
 1. 如果8_ReStart.sh中的STRAT_POP=n1,  9_ReEnd.sh中的START_POP=n2, n1=n2且dyn_pop0_n3中的n3=n1+1=n2+1, 说明你这时已经迭代出了第n3代的动力学矩阵，下一步应该修改8_ReStart.sh中的STRAT_POP=n3然后产生随机结构做自洽了。
@@ -163,8 +172,6 @@ gstress 8
 # 4_SubAllJobs.sh 中的 for i in `seq 1 40` ，seq命令的终止参数 设为 n_sub=40
 # 9_ReEnd.sh 中的 ENS_NUM=200
 ```
-一般经验是:前5代, 100个结构算, 第6,7,8代, 200个结构算, 第9,10代, 500个结构算, 第11代1000个结构算.
-更一般的经验是: 当FC不再下降时,就需要扩大每一代需要自洽的结构数, 一直到FC gradient modulus < 0.0001
 
 #### <span style="color:lightyellow">  1.11.2 在已经计算完成的 第j代 中添加更多自洽结构, 将第j代的新的随机结构的自洽能量和受力 与 第j代的旧的随机结构自洽的能量和受力结合起来, 去进行结构弛豫, 生成第j+1代的dyn动力学矩阵.
 1.11.2 的这种做法比 1.11.1 的做法更加复杂, 但是好处在于计算量比较小. 仅适用于第j代已经达到了收敛, 但是算出来三阶hessian矩阵有点虚频, 你想看看增加随机结构数之后, 第j代的随机结构导出的hessian矩阵的虚频的频率有没有进一步减小. 
@@ -252,6 +259,14 @@ sbatch R7_SubRelax.sh
 ```shell
 sscha-plot-data.py 1_freqs 2_freqs 3_freqs 4_freqs 5_freqs 6_freqs 7_freqs 8_freqs 9_freqs 10_freqs 11_freqs 12_freqs 13_freqs 14_freqs 15_freqs 16_freqs 17_freqs 18_freqs 19_freqs 20_freqs 21_freqs 22_freqs 23_freqs 24_freqs
 ```
+
+### <span style="color:yellow"> 1.12 非常重要：如何加速动力学矩阵迭代过程？
+**1. 一般经验是:前5代, 100个结构算, 第6,7,8代, 200个结构算, 第9,10代, 500个结构算, 第11代1000个结构算.
+更一般的经验是: 当FC不再下降时,就需要扩大每一代需要自洽的结构数, 一直到FC gradient modulus < 0.0001**
+
+**2. 我的做法是：对于比较复杂的体系，前10代用100个结构算，第10-20代用200个结构算。然后再用逐渐增加随机结构迭代后续的动力学矩阵。
+前期用100或者200个随即结构迭代动力学矩阵，虽然FC没有下降，但是Gibbs却在不断下降。
+完成前期计算后，后面就不需要增加特别多的结构迭代动力学矩阵。**
 
 ## <span style="color:red"> 2. 使用受力收敛的动力学矩阵去计算三阶HESSIAN矩阵
 
@@ -450,3 +465,39 @@ inter_dyn.save_qe("inter_dyn_") # 插好值的动力学矩阵被命名为inter_d
 
 
 
+#  <span style="color:orange"> merge-mode-for-infinitytime-meachine
+
+## <span style="color:red"> 1. 需要修改的参数 relax_merged_*.py
+
+```python
+# 1.Prepare QE input parameters部分
+atom_masses = {}
+pseudo = {}
+input_data = {pseudo_dir, ecutwfc, degauss, conv_thr, mixing_beta}
+k_points = ()
+
+# 2.Load the dynamical matrix
+dyn_pop_idx # 你准备读入的动力学矩阵的名称, 他在relax函数的start_pop参数也用到了, 但是为dyn_pop_idx+1: 这意味着要把新生成的动力学矩阵编号记为dyn_pop_idx+1
+irr_idx # 不可约动力学矩阵的个数
+
+# 3.Prepare random configurations
+T0
+
+# 4.Rrepare the cluster
+mpi_cmd
+AlreadyInCluster # AlreadyInCluster=True代表本地提交任务, 既可以把当前python脚本提交到节点上, 也可以在主节点运行当前脚本 AlreadyInCluster=False代表通过ssh连接远程机器提交任务
+my_hpc.workdir # 大量运行qe自洽计算的路径
+my_hpc.binary # pw.x的路径和运行方式
+my_hpc.load_modules
+my_hpc.n_cpu
+my_hpc.n_nodes
+my_hpc.n_pool
+my_hpc.batch_size # 每个脚本中包含多少个自洽计算
+my_hpc.job_number # 总共提多少个任务
+my_hpc.set_timeout(600) # 每个任务限制10min时长
+my_hpc.time = "100:00:00" # 每个脚本限制100hours时长
+
+# 5.prepare sscha minimizer
+max_population # 算到第多少代终止
+target_press # 指定压强
+```

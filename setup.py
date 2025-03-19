@@ -18,7 +18,7 @@ def pip_install_git(link):
 
 setup(
     name="my_script",
-    version="1.0",
+    version="2.0",
     author="madegan",
     author_email="myth620137018@163.com",
     description="一个计算qe vasp 和产生结构的小软件",
