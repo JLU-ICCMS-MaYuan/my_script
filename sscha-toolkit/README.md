@@ -471,6 +471,14 @@ inter_dyn.save_qe("inter_dyn_") # 插好值的动力学矩阵被命名为inter_d
 
 这种模式是针对可以无限占用节点的机器开发出来的计算模式, 也是sscha官方非常推崇的方式.
 
+##  <span style="color:red"> 0. 安装sscha
+
+由于sscha提交任务的模式仅支持通过ssh连接到远程, 将任务分发到远程机器, 然后打包回收到本地做结构弛豫. 所以无法在主节点上运行该任务.
+为了在主节点运行该任务, 直接使用slurm提交任务, 需要修改sscha的源码.
+
+将该仓库中的Cluster.py整个文件拷贝到sscha环境中相应的源码位置即可. 如何找到相应的sscha环境中的源码呢?
+一般来说, 先激活conda 环境`conda activate sscha`. 然后进入sscha环境. `cd  ~/miniconda/env/sscha`这是我的路径. 然后进入`cd  lib/python3.11/site-packages/sscha`就找到Cluster.py了.
+
 ## <span style="color:red"> 1. 准备初始动力学矩阵
 
 做一个稀疏q网格的声子计算(比如2x2x2),获得动力学矩阵. 在0.generate-init-dyn目录下进行.
