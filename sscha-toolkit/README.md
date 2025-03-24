@@ -1,5 +1,7 @@
 #  <span style="color:orange"> split-mode-for-timelimit-meachine流程大纲
 
+这个计算模式是针对限制提交任务时长的机器, 做出来的计算流程. 如果你每个节点最多只能占用1-3天,非常建议使用这种模式计算.
+
 ## <span style="color:red"> 1. 根据第j代的动力学矩阵, 产生随机结构, 生成随机结构自洽计算的输入文件, 生成提交任务的脚本, 提交任务, 检查每个随机结构自洽计算的结果, 回收自洽计算的结果, 结构弛豫并生成第j+1代动力学矩阵
 
 ### <span style="color:yellow"> 1.1 dyn文件改名: 222q网格计算出来的4个dyn文件分别改名为
@@ -467,17 +469,33 @@ inter_dyn.save_qe("inter_dyn_") # 插好值的动力学矩阵被命名为inter_d
 
 #  <span style="color:orange"> merge-mode-for-infinitytime-meachine
 
-## <span style="color:red"> 1. 需要修改的参数 relax_merged_*.py
+这种模式是针对可以无限占用节点的机器开发出来的计算模式, 也是sscha官方非常推崇的方式.
 
+## <span style="color:red"> 1. 准备初始动力学矩阵
+
+做一个稀疏q网格的声子计算(比如2x2x2),获得动力学矩阵. 在0.generate-init-dyn目录下进行.
+
+## <span style="color:red"> 2. 将0.generate-init-dyn中准备的初始动力学矩阵拷贝到1.relax目录下, 并修改relax_merged_*.py目录下的relax.py文件中的以下参数:
+
+需要修改relax_merged.py中的参数
 ```python
+
+# 0.frequently changed parameters
+BATCH_SIZE = 20     # 总共提多少个任务
+JOB_NUMBER = 5      # 每个脚本中包含多少个自洽计算
+ONSET_DYN_POP_IDX = 0 # 你准备读入的动力学矩阵的名称, 他在relax函数的start_pop参数也用到了, 但是为dyn_pop_idx+1: 这意味着要把新生成的动力学矩阵编号记为dyn_pop_idx+1
+MAX_POPULATION = 10   # 算到第多少代终止
+TARGET_PRESSURE = 200 # 指定压强 GPa
+
+
 # 1.Prepare QE input parameters部分
+
 atom_masses = {}
 pseudo = {}
 input_data = {pseudo_dir, ecutwfc, degauss, conv_thr, mixing_beta}
 k_points = ()
 
 # 2.Load the dynamical matrix
-dyn_pop_idx # 你准备读入的动力学矩阵的名称, 他在relax函数的start_pop参数也用到了, 但是为dyn_pop_idx+1: 这意味着要把新生成的动力学矩阵编号记为dyn_pop_idx+1
 irr_idx # 不可约动力学矩阵的个数
 
 # 3.Prepare random configurations
@@ -492,12 +510,15 @@ my_hpc.load_modules
 my_hpc.n_cpu
 my_hpc.n_nodes
 my_hpc.n_pool
-my_hpc.batch_size # 每个脚本中包含多少个自洽计算
-my_hpc.job_number # 总共提多少个任务
 my_hpc.set_timeout(600) # 每个任务限制10min时长
 my_hpc.time = "100:00:00" # 每个脚本限制100hours时长
 
-# 5.prepare sscha minimizer
-max_population # 算到第多少代终止
-target_press # 指定压强
 ```
+
+## <span style="color:red"> 3. 迭代好动力矩阵后, 使用CalHess.py计算hessian矩阵
+
+## <span style="color:red"> 4. 使用hessian矩阵中的晶格参数和原子坐标, 在2.interpolation/1.sparse中计算稀疏的动力学矩阵, 在2.interpolation/2.fine里面计算稠密的动力学矩阵
+
+## <span style="color:red"> 5. 基于2.interpolation/1.sparse中稀疏的动力学矩阵和2.interpolation/2.fine中稠密的动力学矩阵, 使用脚本在2.interpolation/3.Inter中计算插值的动力学矩阵
+
+## <span style="color:red"> 6. 基于插值的动力学矩阵inter_dyn_*, 在3.Tc目录中计算电声耦合.

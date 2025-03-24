@@ -15,22 +15,34 @@ import numpy as np
 
 import os
 
+#-----------------------0.frequently changed parameters-----------------------#
+BATCH_SIZE = 20     # We can also choose in how many batch of jobs we want to submit simultaneously
+JOB_NUMBER = 5     # and how many configurations for each job. # In this way we submit 25 jobs, each one with 8 configurations (overall 200 configuration at time)
+ONSET_DYN_POP_IDX = 0
+MAX_POPULATION = 10
+TARGET_PRESSURE = 200 # GPa
+#-----------------------0.frequently changed parameters-----------------------#
+
+
+
 
 #------------------------1.Prepare QE input parameters------------------------#
 print("1.Prepare QE input parameters")
 atom_masses = {
   "Ce": 140.116,
+  "Sc": 44.955912,
    "H" : 1.00794
          }
 
 bool_value = True
-pseudo = {"Ca": "Ce.paw.z_12.atompaw.wentzcovitch.v1.2.upf",
+pseudo = {"Ce": "Ce.paw.z_12.atompaw.wentzcovitch.v1.2.upf",
+          "Sc": "Sc.pbe-spn-kjpaw_psl.1.0.0.UPF",
           "H" : "H.pbe-kjpaw_psl.1.0.0.UPF"}
 
 input_data = {
                'control' : {
                    'disk_io' : 'none',
-                   'pseudo_dir' : '/work/home/mayuan/workplace/5.calypso/35.Ce-Sc-H/4.detailed-compute/17.CeH4-50GPa-I4mmm/170/0.generate-init-dyn/pp',
+                   'pseudo_dir' : '/work/home/mayuan/workplace/5.calypso/35.Ce-Sc-H/4.detailed-compute/1.CeSc2H24/200GPa/0.prepare-init-dyn/pp',
                    'tstress' : bool_value,
                    'tprnfor ': bool_value
                            },
@@ -48,11 +60,12 @@ input_data = {
                              }
              }
 k_points = (4,4,2) # The k points grid (you can alternatively specify a kspacing)
+# k_points = "gamma" # It is suitable for very big supercell
 k_offset = (0,0,0) # The offset of the grid (can increase convergence)
 
 espresso_calc = CC.calculators.Espresso(input_data,
                                      pseudo,
-                                     kpts = "gamma",
+                                     kpts = k_points,
                                      masses=atom_masses,
                                      koffset = k_offset)
 #------------------------Prepare QE input parameters------------------------#
@@ -62,10 +75,10 @@ espresso_calc = CC.calculators.Espresso(input_data,
 
 #-------------------------2.Load the dynamical matrix-------------------------#
 print("2.Load the dynamical matrix")
-# Begin from dyn_pop15
-dyn_pop_idx = 11
-irr_idx = 3
-dyn = CC.Phonons.Phonons(f"dyn_pop{dyn_pop_idx}_", nqirr = irr_idx)
+# Begin from dyn_pop_idx
+onset_dyn_pop_idx = ONSET_DYN_POP_IDX
+irr_idx = 4
+dyn = CC.Phonons.Phonons(f"dyn_pop{onset_dyn_pop_idx}_", nqirr = irr_idx)
 
 # Apply the sum rule and delete the imaginary modes
 dyn.Symmetrize()
@@ -87,15 +100,14 @@ ensemble = sscha.Ensemble.Ensemble(dyn, T0 = 0, supercell = dyn.GetSupercell())
 #---------------------------4.Rrepare the cluster----------------------------#
 print("4.Rrepare the cluster")
 my_hpc = sscha.Cluster.Cluster(mpi_cmd=r"mpirun -n 48", AlreadyInCluster=True) # AlreadyInCluster=True代表本地提交任务, 既可以把当前python脚本提交到节点上, 也可以在主节点运行当前脚本 AlreadyInCluster=False代表通过ssh连接远程机器提交任务
-my_hpc.workdir = "/work/home/mayuan/workplace/5.calypso/35.Ce-Sc-H/4.detailed-compute/17.CeH4-50GPa-I4mmm/170/2.relax_continue_from_dyn10/run_calculation"
-my_hpc.binary = "/work/home/mayuan/software/qe-7.1/bin/pw.x -npool NPOOL -i  PREFIX.pwi > PREFIX.pwo"
+my_hpc.workdir = os.path.join(os.getcwd(), "run_calculation")
+my_hpc.binary  = "/work/home/mayuan/software/qe-7.1/bin/pw.x -npool NPOOL -i  PREFIX.pwi > PREFIX.pwo"
 # Then we need to specify if some modules must be loaded in the submission script. # All these information are independent from the calculation. Now we need some more specific info, like the number of processors, pools and other stuff
 my_hpc.load_modules = """#!/bin/sh
 #SBATCH  --job-name=qe
 #SBATCH  --output=slurm-%j.out
 #SBATCH  --error=slurm-%j.err
-##SBATCH  --partition=liuhanyu
-#SBATCH  --partition=public
+#SBATCH  --partition=liuhanyu
 #SBATCH  --nodes=1
 #SBATCH  --ntasks=48
 #SBATCH  --ntasks-per-node=48
@@ -114,10 +126,10 @@ export MPIR_CVAR_COLL_ALIAS_CHECK=0
 my_hpc.n_cpu = 48  # We will use 32 processors
 my_hpc.n_nodes = 1 # In 1 node
 my_hpc.n_pool = 8  # This is an espresso specific tool, the parallel CPU are divided in 4 pools
-my_hpc.batch_size = 10     # We can also choose in how many batch of jobs we want to submit simultaneously
-my_hpc.job_number = 60    # and how many configurations for each job. # In this way we submit 25 jobs, each one with 8 configurations (overall 200 configuration at time)
-my_hpc.set_timeout(1200)   # We give 25 seconds of timeout
-my_hpc.time = "2:00:00" #  We can specify the time limit for each job, 5 minutes
+my_hpc.batch_size = BATCH_SIZE     # We can also choose in how many batch of jobs we want to submit simultaneously
+my_hpc.job_number = JOB_NUMBER     # and how many configurations for each job. # In this way we submit 25 jobs, each one with 8 configurations (overall 200 configuration at time)
+my_hpc.set_timeout(3600)   # We give 25 seconds of timeout
+my_hpc.time = "48:00:00" #  We can specify the time limit for each job, 5 minutes
 my_hpc.setup_workdir()
 #---------------------------Rrepare the cluster ----------------------------#
 
@@ -128,15 +140,16 @@ my_hpc.setup_workdir()
 print("5.prepare sscha minimizer")
 minim = sscha.SchaMinimizer.SSCHA_Minimizer(ensemble)
 # We set up the minimization parameters
-minim.min_step_dyn = 0.05     # The minimization step on the dynamical matrix
-minim.min_step_struc = 0.05   # The minimization step on the structure
-minim.kong_liu_ratio = 0.5    # The parameter that estimates whether the ensemble is still good
-minim.gradi_op = "all"        # Check the stopping condition on both gradients
-minim.meaningful_factor = 0.000001 # How much small the gradient should be before I stop?
+minim.min_step_dyn = 0.01     # The minimization step on the dynamical matrix
+minim.min_step_struc = 0.01   # The minimization step on the structure
+minim.kong_liu_ratio = 0.5     # The parameter that estimates whether the ensemble is still good
+minim.gradi_op = "all" # Check the stopping condition on both gradients
+minim.meaningful_factor = 0.00001 # How much small the gradient should be before I stop?
+minim.neglect_symmetries = False # whether neglect symmetries or not when relaxing structures
 
 number_configs = my_hpc.batch_size * my_hpc.job_number # Total random configurations 
-max_population = 15 # If sscha calculation is executed to dyn_pop20_, so the calculation will be stopped.
-target_press = 170
+max_population = MAX_POPULATION # If sscha calculation is executed to dyn_pop20_, so the calculation will be stopped.
+print("number_configs",number_configs)
 relax = sscha.Relax.SSCHA(minim, ase_calculator = espresso_calc,
                          N_configs = number_configs,
                          max_pop = max_population,
@@ -203,6 +216,10 @@ def print_spacegroup(minim):
     np.savetxt("all_frequencies.dat", all_frequencies)
 
 relax.setup_custom_functions(custom_function_post = print_spacegroup)
+IO_freq = sscha.Utilities.IOInfo()
+IO_freq.SetupSaving("minimization_data")
+relax.setup_custom_functions(custom_function_post = IO_freq.CFP_SaveAll)
+
 #-----------------------------Print space group-----------------------------#
 
 
@@ -214,9 +231,8 @@ print("7.Print space group")
 # But you can also fixe the target pressure (as done in the commented line)
 if not os.path.exists("ensembles"):
     os.mkdir("ensembles")
-#relax.vc_relax(fix_volume = True, static_bulk_modulus = 120, ensemble_loc = "ensembles")
-#relax.vc_relax(target_press = 10, static_bulk_modulus = 150, ensemble_loc = "ensembles")
-relax.vc_relax(target_press = target_press, static_bulk_modulus = 300, ensemble_loc = "ensembles", start_pop = dyn_pop_idx+1)
+relax.vc_relax(target_press = TARGET_PRESSURE, static_bulk_modulus = 300, ensemble_loc = "ensembles", start_pop = onset_dyn_pop_idx+1)
 relax.minim.finalize(verbose = 2)
+relax.minim.plot_results(save_filename = "save_filename.dat",plot = False)
 #-----------------------------Run the calculation-----------------------------#
 
