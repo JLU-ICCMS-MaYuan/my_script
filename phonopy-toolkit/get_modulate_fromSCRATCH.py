@@ -2,7 +2,7 @@
 import argparse
 import pprint
 import os
-import glob
+import shutil
 from phonopy import Phonopy
 from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.interface.vasp import read_vasp, write_vasp
@@ -75,10 +75,17 @@ def generate_modulation(
 
 
 def write_modulated_supercells(modulations: list[PhonopyAtoms], amplitudes: list[float]):
-    """Write the modulated supercells to POSCAR files."""
+    """Write the modulated supercells to POSCAR files in a 'modulations' directory."""
+    # Create the 'modulations' directory if it doesn't exist
+    modulations_dir = "modulations"
+    os.makedirs(modulations_dir, exist_ok=True)
+    
+    # Write each modulated supercell to a POSCAR file
     i = 1
     for phonoatoms, amp in zip(modulations, amplitudes):
-        write_vasp(f"{i}.modu_delta{amp:.2f}.vasp", phonoatoms)
+        file_name = f"{i}.modu_delta{amp:.2f}.vasp"
+        file_path = os.path.join(modulations_dir, file_name)
+        write_vasp(file_path, phonoatoms)
         i += 1
 
 
@@ -93,14 +100,16 @@ def generate_amplitudes(start: float, stop: float, step: float) -> list[float]:
 
 
 def delete_old_modulated_files():
-    """Delete all files containing 'modu_delta' in the current directory."""
-    files = glob.glob("*modu_delta*")
-    for file in files:
+    """Delete the 'modulations' directory and all its contents."""
+    modulations_dir = "modulations"
+    if os.path.exists(modulations_dir):
         try:
-            os.remove(file)
-            print(f"Deleted: {file}")
+            shutil.rmtree(modulations_dir)
+            print(f"Deleted directory and its contents: {modulations_dir}")
         except Exception as e:
-            print(f"Error deleting {file}: {e}")
+            print(f"Error deleting {modulations_dir}: {e}")
+    else:
+        print(f"Directory does not exist: {modulations_dir}")
 
 if __name__ == "__main__":
     # Set up argparse
