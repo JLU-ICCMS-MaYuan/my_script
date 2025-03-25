@@ -154,7 +154,7 @@ if __name__ == "__main__":
         "--amplitudes",
         nargs=3,
         type=float,
-        default=[-0.3, 0.3, 0.1],
+        default=[-3.0, 3.0, 0.2],
         help="Three values: start, stop, and step for amplitudes (default: -3.0 3.0 0.2).",
     )
     args = parser.parse_args()
