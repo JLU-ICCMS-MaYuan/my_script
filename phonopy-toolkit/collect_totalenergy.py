@@ -2,6 +2,7 @@
 import argparse
 import subprocess
 import os
+import re
 
 def get_num_atoms(outcar_path):
     try:
@@ -64,12 +65,12 @@ def main():
 
     # Scan the current directory for OUTCAR files and extract free energy
     outcar_files = [f for f in os.listdir() if f.startswith("OUTCAR")]
-    print("{:>30}, {:>9}, {:>6}, {}".format("OUTCAR_file", "Amplitude", "natoms", "total Energy"))
+    print("{:>30}, {:>9}, {:>6}, {:>15}".format("OUTCAR_file", "Amplitude", "natoms", "total Energy"))
     for idx, amp in enumerate(amplitudes):
         outcar_file = os.path.join(f"{idx+1}.modu_delta{amp:.2f}", "OUTCAR")
         energy = get_free_energy(outcar_file)
         natoms = get_num_atoms(outcar_file)
-        print("{:>30}, {:>9.2f}, {:>6}, {}".format(outcar_file, amp, natoms, energy/natoms))
+        print("{:>30}, {:>9.2f}, {:>6}, {:>15.8f}".format(outcar_file, amp, natoms, energy/natoms))
 
 
 if __name__ == "__main__":
