@@ -92,7 +92,7 @@ class vasp_writesubmit:
         elif mode == 'dfpt':
             jobname = self.dfpt(submitjob_path)
             return jobname
-        elif mode in ['only-scf', "only-eband", 'only-eledos', 'only-cohp']:
+        elif mode == "scf" or mode == "eband" or mode == "eledos" or mode == "cohp":
             jobname = self.only_onemode(submitjob_path)
             return jobname
         elif mode == "scf-eband-eledos":

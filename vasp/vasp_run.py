@@ -44,49 +44,6 @@ class vasp_relax:
             _vasp_submitjob.submit_mode1(jobname)
 
 
-class vaspbatch_relax:
-    def __init__(self, args: ArgumentParser):
-        _config = config(args).read_config()
-        input_dir_path = Path(_config['input_file_path'])
-        if input_dir_path.is_dir():
-            input_files_path  = [input_dir_path.joinpath(pathname) for pathname in os.listdir(input_dir_path) if input_dir_path.joinpath(pathname).suffix == ".cif" or input_dir_path.joinpath(pathname).suffix == ".vasp"]
-            if not input_files_path:
-                logger.error(f"The program didn't get any structures from {input_dir_path}")
-                sys.exit(1)
-            work_path         = _config['work_path']        ; del _config['work_path']
-            presses           = _config['presses'].split()  ; del _config['presses']
-            press             = _config['press']            ; del _config['press']
-            submit_job_system = _config['submit_job_system']; del _config['submit_job_system']
-            pass                                            ; del _config['input_file_path']
-            mode              = _config['mode']             ; del _config['mode']
-            for input_file_path in input_files_path:
-                # prepare the POSCAR POTCAR  
-                logger.info(f"Create directory for {input_file_path} file !!!")
-                for press in presses:
-                    logger.debug(press)
-                    self.relax_inputpara  = vaspbatch_inputpara(
-                        work_path=work_path,
-                        press=press,
-                        submit_job_system=submit_job_system,
-                        input_file_path=input_file_path,
-                        mode=mode,
-                        **_config
-                        )
-                    # init the INCAR
-                    self._vasp_writeincar  = vasp_writeincar(self.relax_inputpara)
-                    self._vasp_writeincar.writeinput()
-                    # init the submit job script
-                    _vasp_writesubmit = vasp_writesubmit(self.relax_inputpara)
-                    jobname = _vasp_writesubmit.write_submit_scripts()
-                    # submit the job
-                    _vasp_submitjob = vasp_submitjob(self.relax_inputpara)
-                    if self.relax_inputpara.queue is not None:
-                        _vasp_submitjob.submit_mode1(jobname)
-        else:
-            logger.error(f"The {input_dir_path} path doesn't exist!")
-            sys.exit(1)
-
-
 class vasp_phono:
     def __init__(self, args: ArgumentParser):
 
@@ -128,47 +85,6 @@ class vasp_phono:
                 _vasp_submitjob.submit_mode1(jobname)
 
 
-class vaspbatch_phono:
-    def __init__(self, args: ArgumentParser):
-
-        _config = config(args).read_config()
-        input_dir_path = Path(_config['input_file_path'])
-        if input_dir_path.is_dir():
-            input_files_path = list(input_dir_path.glob("*.vasp"))
-            work_path         = _config['work_path']        ; del _config['work_path']
-            press             = _config['press']            ; del _config['press']
-            submit_job_system = _config['submit_job_system']; del _config['submit_job_system']
-            pass                                            ; del _config['input_file_path']
-            mode              = _config['mode']             ; del _config['mode']
-            for input_file_path in input_files_path:
-                # prepare the POSCAR POTCAR  
-                phono_inputpara  = vaspbatch_phonopara(
-                    work_path=work_path,
-                    press=press,
-                    submit_job_system=submit_job_system,
-                    input_file_path=input_file_path,
-                    mode=mode,
-                    **_config
-                    )
-
-                # init the INCAR
-                self._vasp_writeincar  = vasp_writeincar(phono_inputpara)
-                self._vasp_writeincar.writeinput()
-                # init the KPOINTS
-                phono_inputpara.create_kpoints_by_pymatgen(
-                    phono_inputpara.sposcar_struct_type,
-                    phono_inputpara.work_path.joinpath("KPOINTS"),
-                    phono_inputpara.kdensity,
-                    )
-                # init the submit job script
-                _vasp_writesubmit = vasp_writesubmit(phono_inputpara)
-                jobname = _vasp_writesubmit.write_submit_scripts()
-                # submit the job
-                _vasp_submitjob   = vasp_submitjob(phono_inputpara)
-                if phono_inputpara.queue is not None:
-                    _vasp_submitjob.submit_mode2(jobname)
-
-
 class vasp_eletron:
 
     def __init__(self, args: ArgumentParser):
@@ -179,6 +95,7 @@ class vasp_eletron:
         # prepare the POSCAR POTCAR  
         self.eletron_inputpara = vasp_eletronpara.init_from_config1(_config)
 
+        #TODO 简化整个计算流程
         # 准备输入文件
         self._vasp_writeincar  = vasp_writeincar(self.eletron_inputpara)
         if 'scf'    in self.eletron_inputpara.mode:
@@ -203,8 +120,7 @@ class vasp_eletron:
             ('eband'       in self.eletron_inputpara.mode):
             # 准备任务脚本
             _vasp_writesubmit = vasp_writesubmit(self.eletron_inputpara)
-            jobname = _vasp_writesubmit.write_submit_scripts(
-                mode="scf-eband-eledos")
+            jobname = _vasp_writesubmit.write_submit_scripts(mode="scf-eband-eledos")
             # 提交任务
             _vasp_submitjob = vasp_submitjob(self.eletron_inputpara)
             if self.eletron_inputpara.queue is not None:
@@ -237,8 +153,7 @@ class vasp_eletron:
              ('eband'      in self.eletron_inputpara.mode):
             # 准备任务脚本
             _vasp_writesubmit = vasp_writesubmit(self.eletron_inputpara)
-            jobname = _vasp_writesubmit.write_submit_scripts(
-                mode="eband-eledos")
+            jobname = _vasp_writesubmit.write_submit_scripts(mode="eband-eledos")
             chgcar_src = self.eletron_inputpara.work_path.joinpath("scf", "CHGCAR")
             if not chgcar_src.exists():
                 logger.error(f"The CHGCAR is not found in path \n{chgcar_src.absolute()}")
@@ -259,7 +174,7 @@ class vasp_eletron:
             # 准备任务脚本
             _vasp_writesubmit = vasp_writesubmit(self.eletron_inputpara)
             jobname = _vasp_writesubmit.write_submit_scripts(
-                mode="only-scf",
+                mode="scf",
                 submitjob_path=scf_path)
             # 提交任务
             _vasp_submitjob = vasp_submitjob(self.eletron_inputpara)
@@ -272,7 +187,7 @@ class vasp_eletron:
             # 准备任务脚本
             _vasp_writesubmit = vasp_writesubmit(self.eletron_inputpara)
             jobname = _vasp_writesubmit.write_submit_scripts(
-                mode="only-eband",
+                mode="eband",
                 submitjob_path=eband_path)
             chgcar_src = self.eletron_inputpara.work_path.joinpath("scf", "CHGCAR")
             chgcar_dst = self.eletron_inputpara.work_path.joinpath("eband", "CHGCAR")
@@ -292,9 +207,7 @@ class vasp_eletron:
              ('eband'  not in self.eletron_inputpara.mode):
             # 准备任务脚本
             _vasp_writesubmit = vasp_writesubmit(self.eletron_inputpara)
-            jobname = _vasp_writesubmit.write_submit_scripts(
-                mode="only-eledos",
-                submitjob_path=eledos_path)
+            jobname = _vasp_writesubmit.write_submit_scripts(mode="eledos", submitjob_path=eledos_path)
             chgcar_src = self.eletron_inputpara.work_path.joinpath("scf", "CHGCAR")
             chgcar_dst = self.eletron_inputpara.work_path.joinpath("eledos", "CHGCAR")
             if not chgcar_src.exists():
@@ -313,7 +226,7 @@ class vasp_eletron:
             # 准备任务脚本
             _vasp_writesubmit = vasp_writesubmit(self.eletron_inputpara)
             jobname = _vasp_writesubmit.write_submit_scripts(
-                mode="only-cohp",
+                mode="cohp",
                 submitjob_path=cohp_path
                 )
             # 提交任务
@@ -444,6 +357,110 @@ class vasp_md:
         _vasp_submitjob = vasp_submitjob(md_inputpara)
         if self.md_inputpara.queue is not None:
             _vasp_submitjob.submit_mode1(jobname)
+
+
+class vaspbatch:
+    def __init__(self, args: ArgumentParser):
+        _config = config(args).read_config()
+        input_dir_path = Path(_config['input_file_path'])
+        if input_dir_path.is_dir():
+            input_files_path  = [input_dir_path.joinpath(pathname) for pathname in os.listdir(input_dir_path) if input_dir_path.joinpath(pathname).suffix == ".cif" or input_dir_path.joinpath(pathname).suffix == ".vasp"]
+            if not input_files_path:
+                logger.error(f"The program didn't get any structures from {input_dir_path}")
+                sys.exit(1)
+            work_path         = _config['work_path']        ; del _config['work_path']
+            presses           = _config['presses']          ; del _config['presses']
+            press             = _config['press']            ; del _config['press']
+            submit_job_system = _config['submit_job_system']; del _config['submit_job_system']
+            pass                                            ; del _config['input_file_path']
+            mode              = _config['mode']             ; del _config['mode']
+            for input_file_path in input_files_path:
+                # prepare the POSCAR POTCAR  
+                logger.info(f"Create directory for {input_file_path} file !!!")
+                if presses is not None:
+                    for press in presses:
+                        logger.debug(press)
+                        self.batch_inputpara  = vaspbatch_inputpara(
+                            work_path=work_path,
+                            press=press,
+                            submit_job_system=submit_job_system,
+                            input_file_path=input_file_path,
+                            mode=mode,
+                            **_config
+                            )
+                        # init the INCAR
+                        self._vasp_writeincar  = vasp_writeincar(self.batch_inputpara)
+                        self._vasp_writeincar.writeinput()
+                        # init the submit job script
+                        _vasp_writesubmit = vasp_writesubmit(self.batch_inputpara)
+                        jobname = _vasp_writesubmit.write_submit_scripts()
+                        # submit the job
+                        _vasp_submitjob = vasp_submitjob(self.batch_inputpara)
+                        if self.batch_inputpara.queue is not None:
+                            _vasp_submitjob.submit_mode1(jobname)
+                else:
+                    self.batch_inputpara  = vaspbatch_inputpara(
+                        work_path=work_path,
+                        press=presses, # 此时presses = None, 在set_args.py中默认值设置的
+                        submit_job_system=submit_job_system,
+                        input_file_path=input_file_path,
+                        mode=mode,
+                        **_config
+                        )
+                    # init the INCAR
+                    self._vasp_writeincar  = vasp_writeincar(self.batch_inputpara)
+                    self._vasp_writeincar.writeinput()
+                    # init the submit job script
+                    _vasp_writesubmit = vasp_writesubmit(self.batch_inputpara)
+                    jobname = _vasp_writesubmit.write_submit_scripts()
+                    # submit the job
+                    _vasp_submitjob = vasp_submitjob(self.batch_inputpara)
+                    if self.batch_inputpara.queue is not None:
+                        _vasp_submitjob.submit_mode1(jobname)
+        else:
+            logger.error(f"The {input_dir_path} path doesn't exist!")
+            sys.exit(1)
+
+
+class vaspbatch_phono:
+    def __init__(self, args: ArgumentParser):
+
+        _config = config(args).read_config()
+        input_dir_path = Path(_config['input_file_path'])
+        if input_dir_path.is_dir():
+            input_files_path = list(input_dir_path.glob("*.vasp"))
+            work_path         = _config['work_path']        ; del _config['work_path']
+            press             = _config['press']            ; del _config['press']
+            submit_job_system = _config['submit_job_system']; del _config['submit_job_system']
+            pass                                            ; del _config['input_file_path']
+            mode              = _config['mode']             ; del _config['mode']
+            for input_file_path in input_files_path:
+                # prepare the POSCAR POTCAR  
+                phono_inputpara  = vaspbatch_phonopara(
+                    work_path=work_path,
+                    press=press,
+                    submit_job_system=submit_job_system,
+                    input_file_path=input_file_path,
+                    mode=mode,
+                    **_config
+                    )
+
+                # init the INCAR
+                self._vasp_writeincar  = vasp_writeincar(phono_inputpara)
+                self._vasp_writeincar.writeinput()
+                # init the KPOINTS
+                phono_inputpara.create_kpoints_by_pymatgen(
+                    phono_inputpara.sposcar_struct_type,
+                    phono_inputpara.work_path.joinpath("KPOINTS"),
+                    phono_inputpara.kdensity,
+                    )
+                # init the submit job script
+                _vasp_writesubmit = vasp_writesubmit(phono_inputpara)
+                jobname = _vasp_writesubmit.write_submit_scripts()
+                # submit the job
+                _vasp_submitjob   = vasp_submitjob(phono_inputpara)
+                if phono_inputpara.queue is not None:
+                    _vasp_submitjob.submit_mode2(jobname)
 
 
 class vasp_processdata(vasp_base):

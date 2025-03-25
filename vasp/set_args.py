@@ -29,10 +29,11 @@ def set_more_args(parser: ArgumentParser):
     parser.add_argument(
         '-ps',
         '--presses',
-        type=str,  # 设置输入为浮点数类型
+        type=float,  # 设置输入为浮点数类型
+        nargs='+',  # 接受一个或多个参数
         dest='presses',
         help="please tell me your press values (in GPa), separated by spaces; default is '100 200 300'",
-        default=0.0,
+        default=None,
     )
     # 指明工作目录
     parser.add_argument(
@@ -168,7 +169,7 @@ def set_more_args(parser: ArgumentParser):
     parser_md.set_defaults(vasp_workflow=vasp_phono)
 
     # 批量结构弛豫
-    parser_batch_relax = subparsers.add_parser("batchrelax", formatter_class=RawTextHelpFormatter)
+    parser_batch_relax = subparsers.add_parser("batch", formatter_class=RawTextHelpFormatter)
     parser_batch_relax.add_argument(
         '-m',
         '--more-argments-about-batch-relax',
@@ -191,7 +192,7 @@ def set_more_args(parser: ArgumentParser):
             "mode = None, you can set it to be: rvf rv3 \n"
             "queue = xieyu\n"
     )
-    parser_batch_relax.set_defaults(vasp_workflow=vaspbatch_relax) 
+    parser_batch_relax.set_defaults(vasp_workflow=vaspbatch) 
 
     # 批量声子谱
     parser_batch_phono = subparsers.add_parser("batchphono", formatter_class=RawTextHelpFormatter)

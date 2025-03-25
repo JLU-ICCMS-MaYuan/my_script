@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import argparse
 import pprint
 import os
@@ -154,7 +155,7 @@ if __name__ == "__main__":
         nargs=3,
         type=float,
         default=[-0.3, 0.3, 0.1],
-        help="Three values: start, stop, and step for amplitudes (default: -0.3 0.3 0.1).",
+        help="Three values: start, stop, and step for amplitudes (default: -3.0 3.0 0.2).",
     )
     args = parser.parse_args()
 

@@ -36,7 +36,7 @@ class vasp_base:
     ) -> None:
 
         self.work_path         = work_path
-        self.press             = int(press)          
+        self.press             = press          
         self.submit_job_system = submit_job_system
         self.input_file_path   = input_file_path
         self.mode              = mode
@@ -433,7 +433,7 @@ class vaspbatch_base(vasp_base):
     ) -> None:
 
         self.work_path         = work_path
-        self.press             = int(press)          
+        self.press             = press          
         self.submit_job_system = submit_job_system
         self.input_file_path   = input_file_path
         self.mode              = mode
@@ -445,16 +445,21 @@ class vaspbatch_base(vasp_base):
         else:
             self.input_file_name   = self.input_file_path.name
 
-        if self.work_path is None:
+        if self.work_path is None and self.press is None: # 既没有指定工作路径, 也没有指定压强
+            self.work_path = Path.cwd().joinpath(self.input_file_name)
+            logger.debug(f"You didn't specify the work_path and specify press is None, the default work_path is the current path {self.work_path}!")
+        elif self.work_path is None and self.press is not None: # 没有指定工作路径, 但指定压强
             self.work_path = Path.cwd().joinpath(self.input_file_name, str(self.press))
-            if not self.work_path.exists():
-                self.work_path.mkdir(parents=True)
-            logger.info(f"You didn't specify the work_path, the default work_path is the current path {self.work_path}!")
-        else:
+            logger.debug(f"You didn't specify the work_path, but specify press, the default work_path is the current path {self.work_path}!")
+        elif self.work_path is not None and self.press is None: # 指定工作路径, 但没指定压强
+            self.work_path= Path(self.work_path).joinpath(self.input_file_name)
+            logger.debug(f"You specify the work_path, but did not specify press, the default work_path is the current path {self.work_path}!")
+        else: # 都指定了
             self.work_path= Path(self.work_path).joinpath(self.input_file_name, str(self.press))
-            if not self.work_path.exists():
-                self.work_path.mkdir(parents=True)
-            logger.info("Now {} will be created".format(self.work_path))
+            logger.debug(f"You specify the work_path and press, the default work_path is the current path {self.work_path}!")
+        if not self.work_path.exists():
+            self.work_path.mkdir(parents=True)
+        logger.info("Now {} will be created".format(self.work_path))
 
         self.ase_type          = read(self.input_file_path)
         self.struct_type       = AseAtomsAdaptor.get_structure(self.ase_type)

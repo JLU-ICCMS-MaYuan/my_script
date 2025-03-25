@@ -5,14 +5,19 @@ echo "
 vasp_main.py -i CONTCAR -j slurm -p PRESS relax -m mode=rv4 execmd='mpirun -np 48' ismear=0 sigma=0.01 ediff=1e-8 ediffg=-0.001 encut=900 kspacing=0.188 queue=lhy
 for i in $(cat relax-none); do p=$(echo $i | grep -oE '[0-9]+(\.[0-9]+)?$'); echo $p; cd $i; vasp_main.py -i CONTCAR -j slurm -p $p relax -m mode=rv4 execmd='mpirun -np 48' ismear=0 sigma=0.01 ediff=1e-7 ediffg=-0.01 encut=600 kspacing=0.189 queue=lhy;  done
 
-# 批量计算多个结构的多个压强
-vasp_main.py -i stdlibs -j slurm -ps '100 200 300' batchrelax -m mode=rv4 sigma=0.01 encut=900 ediff=1e-7 ediffg=-0.01 ismear=0 core=48 kspacing=0.18 queue=lhy execmd='mpirun -np 48'
+# 批量结构优化多个结构的多个压强
+vasp_main.py  -i stdlibs -ps 100 200 300 -j slurm  batch -m mode=rv4  sigma=0.01 encut=900 ediff=1e-7 ediffg=-0.01 ismear=0 core=48 kspacing=0.18 execmd='mpirun -np 48'
+vasp_main.py  -i stdlibs -ps 100 -j slurm  batch -m mode=rv4  sigma=0.01 encut=900 ediff=1e-7 ediffg=-0.01 ismear=0 core=48 kspacing=0.18 execmd='mpirun -np 48'
 
-vasp_main.py -i stdlibs -j slurm -ps  100          batchrelax -m mode=rv4 sigma=0.01 encut=900 ediff=1e-7 ediffg=-0.01 ismear=0 core=48 kspacing=0.18 queue=lhy execmd='mpirun -np 48'
+# 批量计算多个结构多个压强的多个自洽
+# 在指定压强子目录下自洽
+vasp_main.py  -i stdlibs -ps 100 200 300 -j slurm  batch -m mode=scf  sigma=0.01 encut=900 ediff=1e-7 ediffg=-0.01 ismear=0 core=48 kspacing=0.18 execmd='mpirun -np 48'
+# 没有指定压强就不设置压强子目录
+vasp_main.py  -i stdlibs -j slurm batch -m mode=scf sigma=0.01 encut=900 ediff=1e-7 ediffg=-0.01 ismear=0 core=48 kspacing=0.18 execmd='mpirun -np 48'
 
 vasp_main.py -i CONTCAR -j slurm -p PRESS -w 100 relax -m mode=rv4 execmd='mpirun -np 48' ismear=0 sigma=0.01 ediff=1e-8 ediffg=-0.001 encut=900 kspacing=0.188 queue=lhy
 
-vasp_main.py -i CONTCAR -j slurm -w 100-eletron  eletron -m mode='scf eledos eband' execmd='mpirun -np 48' encut=900 ediff=1e-8 ediffg=-0.001 kspacing=0.188 ismear=0 sigma=0.02  queue=lhy
+vasp_main.py -i CONTCAR -j slurm -w 100-eletron  eletron -m mode='scf eledos eband' execmd='mpirun -np 48' encut=900 ediff=1e-8 ediffg=-0.001 kspacing=0.188 ismear=0 sigma=0.01  queue=lhy
 
 vasp_main.py -i CONTCAR -j slurm -w d111 phono -m supercell='1 1 1' kspacing=0.18 mode=disp execmd=48 ismear=1 encut=800 ediff=1E-08 ediffg=-0.001 lreal=.FALSE. queue=lhy execmd='mpirun -np 48'
 
