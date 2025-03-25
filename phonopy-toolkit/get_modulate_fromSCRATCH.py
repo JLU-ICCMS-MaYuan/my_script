@@ -74,10 +74,14 @@ def generate_modulation(
     return cells
 
 
-def write_modulated_supercells(modulations: list[PhonopyAtoms], amplitudes: list[float]):
+def write_modulated_supercells(
+    modulations: list[PhonopyAtoms], 
+    amplitudes: list[float],
+    q_point: list[float],
+    band_index: int,):
     """Write the modulated supercells to POSCAR files in a 'modulations' directory."""
     # Create the 'modulations' directory if it doesn't exist
-    modulations_dir = "modulations"
+    modulations_dir = "modulations"+"_"+"qpoints_"+str(q_point[0])+"_"+str(q_point[1])+"_"+str(q_point[2])+"_"+"band_index_"+str(band_index)
     os.makedirs(modulations_dir, exist_ok=True)
     
     # Write each modulated supercell to a POSCAR file
@@ -99,9 +103,12 @@ def generate_amplitudes(start: float, stop: float, step: float) -> list[float]:
     return amplitudes
 
 
-def delete_old_modulated_files():
+def delete_old_modulated_files(
+    q_point: list[float],
+    band_index: int,
+    ):
     """Delete the 'modulations' directory and all its contents."""
-    modulations_dir = "modulations"
+    modulations_dir = "modulations"+"_"+"qpoints_"+str(q_point[0])+"_"+str(q_point[1])+"_"+str(q_point[2])+"_"+"band_index_"+str(band_index)
     if os.path.exists(modulations_dir):
         try:
             shutil.rmtree(modulations_dir)
@@ -121,13 +128,22 @@ if __name__ == "__main__":
         help="Path to the POSCAR file."
     )
     parser.add_argument(
-        "-sm",
-        "--supercell_matrix",
+        "-smf",
+        "--supercell_matrix-for-force_constants",
         nargs="+",
         type=float,
         default=[2.0, 0.0, 0.0, 0.0, 2.0, 0.0, 0.0, 0.0, 2.0],
         help="Supercell matrix as 9 numbers (default: 2 0 0 0 2 0 0 0 2).",
     )
+    parser.add_argument(
+        "-smm",
+        "--supercell_matrix-for-modulation",
+        nargs="+",
+        type=float,
+        default=[2.0, 0.0, 0.0, 0.0, 2.0, 0.0, 0.0, 0.0, 1.0],
+        help="Supercell matrix as 9 numbers (default: 2 0 0 0 2 0 0 0 2).",
+    )
+
     parser.add_argument(
         "-pm",
         "--primitive_matrix",
@@ -169,7 +185,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Delete old modulated files
-    delete_old_modulated_files()
+    delete_old_modulated_files(q_point=args.q_point, band_index=args.band_index)
 
     # Generate amplitudes based on start, stop, and step
     amplitudes = generate_amplitudes(args.amplitudes[0], args.amplitudes[1], args.amplitudes[2])
@@ -178,14 +194,18 @@ if __name__ == "__main__":
     unitcell = read_vasp(args.poscar_init)
 
     # Parse matrices
-    supercell_matrix = parse_matrix_arg(args.supercell_matrix)
+    print("supercell_matrix_for_force_constants:")
+    supercell_matrix_for_force_constants = parse_matrix_arg(args.supercell_matrix_for_force_constants)
+    print("primitive_matrix:")
     primitive_matrix = parse_matrix_arg(args.primitive_matrix)
-
+    print("supercell_matrix_for_modulation:")
+    supercell_matrix_for_modulation = parse_matrix_arg(args.supercell_matrix_for_modulation)
+    print("qpoint:\n{}".format(args.q_point))
     # Generate force constants and modulation
-    phonon = generate_force_constant(unitcell, supercell_matrix, primitive_matrix)
+    phonon = generate_force_constant(unitcell, supercell_matrix_for_force_constants, primitive_matrix)
     modulations = generate_modulation(
         phonon, 
-        supercell_matrix, 
+        supercell_matrix_for_modulation, 
         args.q_point, 
         args.band_index, 
         amplitudes, 
@@ -193,4 +213,4 @@ if __name__ == "__main__":
     )
 
     # Write the modulated supercells to POSCAR files
-    write_modulated_supercells(modulations=modulations, amplitudes=amplitudes)
+    write_modulated_supercells(modulations=modulations, amplitudes=amplitudes, q_point=args.q_point, band_index=args.band_index)
