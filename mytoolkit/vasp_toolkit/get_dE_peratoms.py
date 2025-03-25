@@ -7,7 +7,7 @@ import subprocess
 
 def get_free_energy(outcar_path):
     try:
-        result = subprocess.run("grep -s " + " free  energy   TOTEN " + f" {outcar_path} | tail -n 1 | awk '{{print $5}}'", 
+        result = subprocess.run(f'grep -s  "free  energy   TOTEN"  {outcar_path} | tail -n 1 ' + "| awk '{print $5}'" , 
                                 shell=True, capture_output=True, text=True)
         dE = result.stdout.strip()
         return float(dE) if dE else 1e14
