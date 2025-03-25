@@ -54,8 +54,8 @@ def main():
         "--amplitudes",
         nargs=3,
         type=float,
-        default=[-0.3, 0.3, 0.1],
-        help="Three values: start, stop, and step for amplitudes (default: -0.3 0.3 0.1).",
+        default=[-3.0, 3.0, 0.1],
+        help="Three values: start, stop, and step for amplitudes (default: -3.0 3.0 0.1).",
     )
     args = parser.parse_args()
 
