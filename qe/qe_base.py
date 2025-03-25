@@ -3,11 +3,13 @@ import re
 import sys
 import shutil
 import logging
-import numpy as np
 from pathlib import Path
+from collections import Counter
 
+import numpy as np
 
 from ase.io import read
+from ase.atoms import Atoms
 from pymatgen.io.ase import AseAtomsAdaptor
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from pymatgen.io.vasp import Poscar
@@ -57,12 +59,18 @@ class qe_base:
             if not self.work_path.exists():
                 self.work_path.mkdir(parents=True, exist_ok=True)
         logger.info(f"work_path: {self.work_path.absolute()}")
-        
-        try:
+
+        # try:
+        print(self.input_file_path.name)
+        if "V3_Hessian.dyn" in self.input_file_path.name:
+            symbols, celldm1, cell, coords = get_struct_info_from_V3_hessian(self.input_file_path)
+            print(symbols, coords, cell)
+            self.ase_type = Atoms(symbols=symbols, cell=cell*celldm1*0.529177210903, positions=coords*celldm1*0.529177210903, pbc=True)
+        else:
             self.ase_type = read(self.input_file_path)
-        except:
-            logger.error("When reading `{}` file, the program get something wrong, you need to check it !!!".format(self.input_file_path))
-            sys.exit(1)
+        # except:
+            # logger.error("When reading `{}` file, the program get something wrong, you need to check it !!!".format(self.input_file_path))
+            # sys.exit(1)
 
         self.struct_type = AseAtomsAdaptor.get_structure(self.ase_type)
         self.get_struct_info(self.struct_type, self.work_path)
@@ -116,7 +124,8 @@ class qe_base:
         # self.reciprocal_blattice = bstruct.lattice.reciprocal_lattice
         # 返回晶体倒数晶格，即没有2π的因子。
         # self.reciprocal_lattice_crystallographic = struct.lattice.reciprocal_lattice_crystallographic
-
+        self.celldm1 = self.get_celldm1()
+        
     def get_USPP(self, workpath_pppath):
         '''
         input parameter:
@@ -249,6 +258,12 @@ class qe_base:
             content = os.popen(sed_order).readlines()
             cell_parameters = [cell.strip("\n") for cell in content]
             return cell_parameters
+        elif "V3_Hessian" in self.input_file_path.name:
+            logger.info("Find V3_Hessian, so reacquire cell parameters from it!")
+            with open(self.input_file_path, 'r') as f:
+                lines = f.readlines()
+            cell_parameters = [line.strip() for line in lines[4:7]]
+            return cell_parameters
         else:
             logger.warning("You didn't specify relax.out as inputfile")
             logger.warning("So We will get cell-information in the way of PYMATGEN")
@@ -257,6 +272,23 @@ class qe_base:
             cell_parameters = ['{:>20.16f}    {:>20.16f}    {:>20.16f}'.format(cell[0], cell[1], cell[2]) for cell in cell_parameters]
             return cell_parameters
 
+    def get_celldm1(self):
+        '''
+        从POSCAR文件中获得celldm1
+        ''' 
+        celldm1 = None
+        if "V3_Hessian" in self.input_file_path.name:
+            logger.info("Find V3_Hessian, so reacquire celldm1 from it!")
+            with open(self.input_file_path, 'r') as f:
+                lines = f.readlines()
+            celldm1 = float(lines[2].strip().split()[3])  # 单位是bohr
+            celldm1 = float(f"{celldm1:.16f}")
+            return celldm1
+        else:
+            logger.warning("You didn't specify V3_Hessian.dyn* as inputfile")
+            logger.warning("So the program let celldm1=None")
+            return celldm1
+        
     def get_coords(self, struct):
         fractional_sites = None
         if self.input_file_path.name == "relax.out" and self.input_file_path.exists():
@@ -297,6 +329,17 @@ class qe_base:
             fractional_sites = [
                 '{:<4}   {}'.format(ele, site.strip("\n")) for ele, site in fractional_sites]
             return fractional_sites
+        elif "V3_Hessian" in self.input_file_path.name:
+            logger.info("Find V3_Hessian, so reacquire atoms coordinates from it!")
+            with open(self.input_file_path, 'r') as f:
+                lines = f.readlines()
+            nelements = int(lines[2].strip().split()[0])
+            totnatoms = int(lines[2].strip().split()[1])
+            elename = {int(line.strip().split("'")[0].strip()):line.strip().split("'")[1].strip() 
+                        for line in lines[7:7+nelements]} # elename = {1: 'Nb', 2: 'H'}
+            fractional_sites = [list(line.strip().split()[1:]) for line in lines[7+nelements:7+nelements+totnatoms]]
+            fractional_sites = ['     '.join([elename[int(coord[0])], str(coord[1]), str(coord[2]), str(coord[3])]) for coord in fractional_sites]
+            return fractional_sites
         else:
             logger.warning("You didn't specify relax.out as inputfile")
             logger.warning("So We will get coords-information in the way of PYMATGEN")
@@ -332,3 +375,32 @@ def get_pps_for_a_element(species_name:str, pp_files:list):
     dst_pps          = list(filter(lambda file: qepp_name_patter.findall(file), pp_files))
 
     return dst_pps
+
+def get_struct_info_from_V3_hessian(input_file_path):
+    """
+    从V3_Hessian.dyn*文件中获得结构信息
+    """
+    with open(input_file_path, 'r') as f:
+        lines = f.readlines()
+    
+    nelements = int(lines[2].strip().split()[0])
+    totnatoms = int(lines[2].strip().split()[1])
+    celldm1 = float(lines[2].strip().split()[3])  # 单位是bohr
+    celldm1 = float(f"{celldm1:.16f}")
+    
+    cell = [list(map(float, line.strip().split())) for line in lines[4:7]]
+    cell = [[float(f"{x:.16f}") for x in vector] for vector in cell]
+    
+    elename = {int(line.strip().split("'")[0].strip()):line.strip().split("'")[1].strip() 
+               for line in lines[7:7+nelements]} # elename = {1: 'Nb', 2: 'H'}
+        
+    coords = [list(map(float, line.strip().split()[1:])) for line in lines[7+nelements:7+nelements+totnatoms]]
+    coords = [[float(f"{c:.16f}") for c in coord] for coord in coords]
+
+    natoms = [int(line.strip().split()[1]) for line in lines[7+nelements:7+nelements+totnatoms]]
+    element_counts = Counter(natoms)  # element_counts = {2:14, 1:4}
+    symbols = []
+    for idx, elenam in elename.items():
+        symbols.extend([elenam, str(element_counts[idx])])
+    symbols = ''.join(symbols)
+    return symbols, celldm1, np.array(cell), np.array(coords)[:,-3:], 
