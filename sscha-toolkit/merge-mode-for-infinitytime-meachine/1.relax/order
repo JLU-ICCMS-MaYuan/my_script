@@ -1,0 +1,2 @@
+python relax_merged.py > sscha.out 2>&1 &
+echo $! > taskids

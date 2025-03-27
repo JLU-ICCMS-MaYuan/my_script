@@ -52,12 +52,13 @@ input_data = {
                           # Information about smearing (it is a metal)
                             'occupations' : 'smearing',
                             'smearing' : 'mp',
-                            'degauss' : 0.02
-                          }                       ,
+                            'degauss' : 0.02,
+                            # 'nbnd' : 100,
+                          },
                'electrons' : {
                              'conv_thr' : 1e-8 ,
                              'mixing_beta' : 0.5
-                             }
+                             },
              }
 k_points = (4,4,2) # The k points grid (you can alternatively specify a kspacing)
 # k_points = "gamma" # It is suitable for very big supercell
