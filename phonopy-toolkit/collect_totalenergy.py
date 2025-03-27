@@ -67,7 +67,8 @@ def main():
     outcar_files = [f for f in os.listdir() if f.startswith("OUTCAR")]
     print("{:>30}, {:>9}, {:>6}, {:>15}".format("OUTCAR_file", "Amplitude", "natoms", "total Energy"))
     for idx, amp in enumerate(amplitudes):
-        outcar_file = os.path.join(f"{idx+1}.modu_delta{amp:.2f}", "OUTCAR")
+        # outcar_file = os.path.join(f"{idx+1}.modu_delta{amp:.2f}", "OUTCAR")
+        outcar_file = os.path.join(f"modu_delta{amp:.2f}", "OUTCAR")
         energy = get_free_energy(outcar_file)
         natoms = get_num_atoms(outcar_file)
         print("{:>30}, {:>9.2f}, {:>6}, {:>15.8f}".format(outcar_file, amp, natoms, energy/natoms))

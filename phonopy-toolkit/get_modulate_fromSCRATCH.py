@@ -87,7 +87,8 @@ def write_modulated_supercells(
     # Write each modulated supercell to a POSCAR file
     i = 1
     for phonoatoms, amp in zip(modulations, amplitudes):
-        file_name = f"{i}.modu_delta{amp:.2f}.vasp"
+        # file_name = f"{i}.modu_delta{amp:.2f}.vasp"
+        file_name = f"modu_delta{amp:.2f}.vasp"
         file_path = os.path.join(modulations_dir, file_name)
         write_vasp(file_path, phonoatoms)
         i += 1
