@@ -303,6 +303,8 @@ class qe_writeinput:
             qe.write(" ecutrho = {},                   \n".format(self.qe_inputpara.ecutrho))
             qe.write(" lspinorb = .{}.,                \n".format(self.qe_inputpara.lspinorb))
             qe.write(" noncolin = .{}.,                \n".format(self.qe_inputpara.noncolin))
+            if self.qe_inputpara.celldm1 is not None:
+                qe.write(" celldm(1) = {:<.16f},                 \n".format(self.qe_inputpara.celldm1))
             if self.qe_inputpara.nbnd is not None:
                 qe.write(" nbnd = {},                \n".format(self.qe_inputpara.nbnd))
             qe.write("/\n")
@@ -373,6 +375,8 @@ class qe_writeinput:
             qe.write(" la2F = {},                      \n".format(self.qe_inputpara.la2F))
             qe.write(" lspinorb = .{}.,                \n".format(self.qe_inputpara.lspinorb))
             qe.write(" noncolin = .{}.,                \n".format(self.qe_inputpara.noncolin))
+            if self.qe_inputpara.celldm1 is not None:
+                qe.write(" celldm(1) = {:<.16f},                 \n".format(self.qe_inputpara.celldm1))
             if self.qe_inputpara.nbnd is not None:
                 qe.write(" nbnd = {},                \n".format(self.qe_inputpara.nbnd))
             qe.write("/\n")
@@ -437,6 +441,8 @@ class qe_writeinput:
             qe.write(" ntyp={},                        \n".format(self.qe_inputpara.species_quantity))
             qe.write(" ecutwfc = {},                   \n".format(self.qe_inputpara.ecutwfc))
             qe.write(" ecutrho = {},                   \n".format(self.qe_inputpara.ecutrho))
+            if self.qe_inputpara.celldm1 is not None:
+                qe.write(" celldm(1) = {:<.16f},                 \n".format(self.qe_inputpara.celldm1))
             if self.qe_inputpara.nbnd is not None:
                 qe.write(" nbnd = {},                \n".format(self.qe_inputpara.nbnd))
             qe.write("/\n")
