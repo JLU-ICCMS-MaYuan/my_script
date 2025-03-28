@@ -431,6 +431,8 @@ class qe_writesubmit:
             phonodos_in, phonodos_out = input_output.__next__()
             j.write('echo "run phonodos"              \n')
             j.write('{} {}/matdyn.x  <{}> {}  \n'.format(self.qe_inputpara.execmd, qebin_path, phonodos_in, phonodos_out))
+            j.write('mkdir -p phonodos                \n')
+            j.write('cp {}"_phono.dos"  phonodos      \n'.format(self.qe_inputpara.system_name))
         return jobname
     
     def s9_lambda(self, _dirpath, inputfilename):
