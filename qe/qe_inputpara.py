@@ -172,6 +172,12 @@ class qe_inputpara(qe_base):
                 self.kpoints_coords, self.totpts = self.get_kmesh_justlike_kmesh_pl(kpoints=self.kpoints_dense)
                 logger.debug("Set k_automatic = False by custom. Therefore, self.totpts was gotten by program")
 
+        # 是否自动选择高对称路径
+        if not hasattr(self, "autoselect"):
+            self.autoselect = False
+        else:
+            self.autoselect = eval(self.autoselect)
+
     @classmethod
     def init_from_config(cls, config: dict):
 
@@ -189,7 +195,7 @@ class qe_inputpara(qe_base):
         )
         return self
 
-    def get_hspp(self):
+    def get_hspp(self, autoselect=False):
         """
         This method is to get high symmetry paths and points
         """ 
@@ -210,11 +216,14 @@ class qe_inputpara(qe_base):
             "...."
             "Nothing to input, directly press ENTER, the default is all_points\n"
             )
-        try:
-            high_symmetry_type = list(map(int, input().split())) #将输入的整数字符串按照空格划分成列表并分别转化为整数类型并再转化为列表
-        except:
-            logger.error("what you input is not an integer number, So use the `0:  all_points`")
+        if autoselect:
             high_symmetry_type = [0]
+        else:
+            try:
+                high_symmetry_type = list(map(int, input().split())) #将输入的整数字符串按照空格划分成列表并分别转化为整数类型并再转化为列表
+            except:
+                logger.error("what you input is not an integer number, So use the `0:  all_points`")
+                high_symmetry_type = [0]
 
         path_name_list = []
         if "," in pstring:
@@ -414,8 +423,8 @@ class qephono_inputpara(qe_inputpara):
             self.ndos = 500
 
         # phonoband计算
-        if self.mode == "matdyn":
-            self.path_name_coords = self.get_hspp()
+        if self.mode == "matdyn" or self.mode == "processphono":
+            self.path_name_coords = self.get_hspp(autoselect=self.autoselect)
         else:
             self.path_name_coords = None
 
@@ -1014,7 +1023,7 @@ class qeeletron_inputpara(qe_inputpara):
             logger.debug("You didn't set `emax`   for eledos.in, the program will use default value: pdosdegauss=0 ")
         # 电子能带计算
         if self.mode == "eleband" or self.mode == "eleproperties":
-            self.path_name_coords = self.get_hspp()
+            self.path_name_coords = self.get_hspp(autoselect=self.autoselect)
         else:
             self.path_name_coords = None
 
@@ -1333,7 +1342,7 @@ class qesc_inputpara(qephono_inputpara):
         return Tc_McM, Tc_AD
 
 
-class qeprepare_inputpara(qephono_inputpara):
+class qebatch_inputpara(qephono_inputpara):
 
     def __init__(
         self,
@@ -1344,7 +1353,7 @@ class qeprepare_inputpara(qephono_inputpara):
         **kwargs: dict, 
         ):
 
-        super(qeprepare_inputpara, self).__init__(
+        super(qebatch_inputpara, self).__init__(
             work_path, 
             press, 
             submit_job_system, 

@@ -105,6 +105,7 @@ class qe_writesubmit:
                 jobnames.append(jobname)
                 logger.debug(f"finish writing submit job script in {i+1}")
             return jobnames
+        
         if mode =="q2r":
             jobname = self.s6_q2r(self.qe_inputpara.work_path, inpufilename)
             return jobname
@@ -115,6 +116,13 @@ class qe_writesubmit:
             print(inpufilename)
             jobname = self.s7_phonobanddata(self.qe_inputpara.work_path, inpufilename)
             return jobname
+        if mode =="phonodos":
+            jobname = self.s8_phonodos(self.qe_inputpara.work_path, inpufilename)
+            return jobname
+        if mode =="processphono":
+            jobname = self.s678_processphono(self.qe_inputpara.work_path, inpufilename)
+            return jobname
+        
         if mode =="eletdos":
             jobname = self.s8_eletdos(self.qe_inputpara.work_path, inpufilename)
             return jobname
@@ -127,9 +135,7 @@ class qe_writesubmit:
         if mode =="elebanddata":
             jobname = self.s8_elebanddata(self.qe_inputpara.work_path, inpufilename)
             return jobname
-        if mode =="phonodos":
-            jobname = self.s8_phonodos(self.qe_inputpara.work_path, inpufilename)
-            return jobname
+
         if mode =="McAD":
             jobname = self.s9_lambda(self.qe_inputpara.work_path, inpufilename)
             return jobname
@@ -398,6 +404,35 @@ class qe_writesubmit:
             j.write('{} {}/matdyn.x  <{}> {}  \n'.format(self.qe_inputpara.execmd, qebin_path, _inpufilename, _outputfilename))
         return jobname
 
+    def s678_processphono(self, _dirpath, inputfilenames):
+        _inpufilename   = inputfilenames
+        _outputfilename = [ipname.split(".")[0] + ".out" for ipname in _inpufilename]
+        input_output    = zip(_inpufilename, _outputfilename)
+        jobname = "s678_processphono.sh"
+        _script_filepath = os.path.join(_dirpath, jobname)
+        with open(_script_filepath, "w") as j:
+            j.writelines(self.jobtitle)
+            j.writelines(self.jobtitle)
+            q2r_in, q2r_out = input_output.__next__()
+            j.write('echo "run q2r"                   \n')
+            j.write('{} {}/q2r.x -npool {} <{}> {}    \n'.format(self.qe_inputpara.execmd, qebin_path, self.qe_inputpara.npool, q2r_in, q2r_out))
+            j.write('grep nqs q2r.out > nqs           \n')
+            matdyn_in, matdyn_out = input_output.__next__()
+            j.write('echo "run phonoband"             \n')
+            j.write('{} {}/matdyn.x  <{}> {}          \n'.format(self.qe_inputpara.execmd, qebin_path, matdyn_in, matdyn_out))
+            j.write('mkdir -p phonoband               \n')
+            j.write('cp {}.freq     phonoband         \n'.format(self.qe_inputpara.system_name))
+            j.write('cp {}.freq     phonoband         \n'.format(self.qe_inputpara.system_name))
+            j.write('cp gam.lines   phonoband         \n')
+            j.write('cp elph.gamma* phonoband         \n')
+            plotband_in, plotband_out = input_output.__next__()
+            j.write('echo "run phonoband-data-process"\n')
+            j.write('{}/plotband.x <{}> {} \n'.format(qebin_path, plotband_in, plotband_out))
+            phonodos_in, phonodos_out = input_output.__next__()
+            j.write('echo "run phonodos"              \n')
+            j.write('{} {}/matdyn.x  <{}> {}  \n'.format(self.qe_inputpara.execmd, qebin_path, phonodos_in, phonodos_out))
+        return jobname
+    
     def s9_lambda(self, _dirpath, inputfilename):
         _inpufilename = inputfilename
         _outputfilename = _inpufilename.split(".")[0] + ".out"

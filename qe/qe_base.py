@@ -60,17 +60,16 @@ class qe_base:
                 self.work_path.mkdir(parents=True, exist_ok=True)
         logger.info(f"work_path: {self.work_path.absolute()}")
 
-        # try:
-        print(self.input_file_path.name)
-        if "V3_Hessian.dyn" in self.input_file_path.name:
-            symbols, celldm1, cell, coords = get_struct_info_from_V3_hessian(self.input_file_path)
-            print(symbols, coords, cell)
-            self.ase_type = Atoms(symbols=symbols, cell=cell*celldm1*0.529177210903, positions=coords*celldm1*0.529177210903, pbc=True)
-        else:
-            self.ase_type = read(self.input_file_path)
-        # except:
-            # logger.error("When reading `{}` file, the program get something wrong, you need to check it !!!".format(self.input_file_path))
-            # sys.exit(1)
+        try:
+            logger.info(f"work_path: {self.input_file_path.name}")
+            if "V3_Hessian.dyn" in self.input_file_path.name:
+                symbols, celldm1, cell, coords = get_struct_info_from_V3_hessian(self.input_file_path)
+                self.ase_type = Atoms(symbols=symbols, cell=cell*celldm1*0.529177210903, positions=coords*celldm1*0.529177210903, pbc=True)
+            else:
+                self.ase_type = read(self.input_file_path)
+        except:
+            logger.error("When reading `{}` file, the program get something wrong, you need to check it !!!".format(self.input_file_path))
+            sys.exit(1)
 
         self.struct_type = AseAtomsAdaptor.get_structure(self.ase_type)
         self.get_struct_info(self.struct_type, self.work_path)

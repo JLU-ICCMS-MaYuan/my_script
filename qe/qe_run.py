@@ -148,7 +148,7 @@ class qe_phono:
             logger.info("Get hspp from matdyn")
             self.phono_inputpara.read_hspp_in_matdyn()
             logger.info("Get hspp from ASE package")
-            self.phono_inputpara.get_hspp()
+            self.phono_inputpara.get_hspp(autoselect=self.phono_inputpara.autoselect)
         else:
             inputfilename = self.qe_writeinput.writeinput()
             jobnames = self.qe_writesubmit.write_submit_scripts(inputfilename)
@@ -169,7 +169,7 @@ class qe_eletron:
         self.eletron_inputpara = qeeletron_inputpara.init_from_config(self._config)
 
         if self.eletron_inputpara.mode == "hspp":
-            self.eletron_inputpara.get_hspp()
+            self.eletron_inputpara.get_hspp(autoselect=self.eletron_inputpara.autoselect)
             eV_To_Ry = 0.0734986443513116
             ef_scffit,  ef_scf  = self.get_fermi_energy()
             nef_scffit, nef_scf = self.get_Nef(ef_scffit, ef_scf)
@@ -373,19 +373,19 @@ class qe_superconduct:
                 print(f"{file} doesn't exist!")
 
 
-class qe_prepare:
+class qe_batch:
 
     def __init__(self, args: ArgumentParser) -> None:
 
         # read input para
         self._config = config(args).read_config()
 
-        self.prepare_inputpara  = qeprepare_inputpara.init_from_config(self._config)
-        self.qe_writeinput  = qe_writeinput(self.prepare_inputpara)
-        self.qe_writesubmit = qe_writesubmit(self.prepare_inputpara)
-        self.qe_submitjob   = qe_submitjob(self.prepare_inputpara)
+        self.batch_inputpara = qebatch_inputpara.init_from_config(self._config)
+        self.qe_writeinput  = qe_writeinput(self.batch_inputpara)
+        self.qe_writesubmit = qe_writesubmit(self.batch_inputpara)
+        self.qe_submitjob   = qe_submitjob(self.batch_inputpara)
 
-        if self.prepare_inputpara.mode == "prepareall":
+        if self.batch_inputpara.mode == "prepareall":
             # 准备relax.in,  scffit.in,  scf.in 的输入文件
             inputfilename1 = self.qe_writeinput.writeinput(mode="relax-vc")
             inputfilename2 = self.qe_writeinput.writeinput(mode="scffit")
@@ -396,11 +396,10 @@ class qe_prepare:
                 [inputfilename1, inputfilename2, inputfilename3]
                 )
             # submit the job
-            if self.prepare_inputpara.queue is not None:
+            if self.batch_inputpara.queue is not None:
                 self.qe_submitjob.submit_mode1(inputfilename1, jobname)
 
-        elif self.prepare_inputpara.mode == "preparescf":
-
+        elif self.batch_inputpara.mode == "preparescf":
             inputfilename2 = self.qe_writeinput.writeinput(mode="scffit")
             inputfilename3 = self.qe_writeinput.writeinput(mode="scf")
         
@@ -409,9 +408,21 @@ class qe_prepare:
                 [inputfilename2, inputfilename3]
                 )
             # submit the job
-            if self.prepare_inputpara.queue is not None:
+            if self.batch_inputpara.queue is not None:
                 self.qe_submitjob.submit_mode1(inputfilename2, jobname)
 
+        elif self.batch_inputpara.mode == "processphono":
+            self.batch_inputpara.merge(self.batch_inputpara.work_path)
+            inputfilename1 = self.qe_writeinput.writeinput(mode="q2r")
+            inputfilename2 = self.qe_writeinput.writeinput(mode="matdyn")
+            inputfilename3 = self.qe_writeinput.writeinput(mode="phonobanddata")
+            inputfilename4 = self.qe_writeinput.writeinput(mode="phonodos")
+            # init the submit job script
+            jobname = self.qe_writesubmit.write_submit_scripts(
+                [inputfilename1, inputfilename2, inputfilename3,inputfilename4]
+                )
+            if self.batch_inputpara.queue is not None:
+                self.qe_submitjob.submit_mode1(inputfilename1, jobname)
 
 class qe_epw:
 

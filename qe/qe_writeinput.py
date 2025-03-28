@@ -325,10 +325,16 @@ class qe_writeinput:
                     print("\nNote: --------------------")
                     print("    When write pseudo-potentional information, something wrong. Maybe methdo `get_pps_for_a_element` is problematic !")
                     sys.exit(1)
-            qe.write("CELL_PARAMETERS {angstrom}        \n")  # 如果选择angstrom单未，原子坐标选择分数坐标，即，ATOMIC_POSITIONS (crystal), 且不设置celldm(1). 这时alat和celldm(1)设置成v1的长度
+            if "V3_Hessian" in self.qe_inputpara.input_file_path.name:
+                qe.write("CELL_PARAMETERS {alat}          \n")  # 如果选择alat单位，原子坐标选择分数坐标，即，ATOMIC_POSITIONS (crystal), 且不设置celldm(1). 这时alat和celldm(1)设置成v1的长度
+            else:
+                qe.write("CELL_PARAMETERS {angstrom}      \n")  # 如果选择angstrom单位，原子坐标选择分数坐标，即，ATOMIC_POSITIONS (crystal), 且不设置celldm(1). 这时alat和celldm(1)设置成v1的长度
             for cell_p in self.qe_inputpara.cell_parameters:
                 qe.write("{}\n".format(cell_p))
-            qe.write("ATOMIC_POSITIONS (crystal)       \n")
+            if "V3_Hessian" in self.qe_inputpara.input_file_path.name:
+                qe.write("ATOMIC_POSITIONS {alat}         \n")
+            else:
+                qe.write("ATOMIC_POSITIONS {crystal}      \n")  # 如果选择angstrom单位，原子坐标选择分数坐标，即，ATOMIC_POSITIONS (crystal), 且不设置celldm(1). 这时alat和celldm(1)设置成v1的长度
             for site in self.qe_inputpara.fractional_sites:
                 qe.write("{}\n".format(site))
             qe.write("K_POINTS {automatic}             \n")
@@ -390,10 +396,16 @@ class qe_writeinput:
                     print("\nNote: --------------------")
                     print("    When write pseudo-potentional information, something wrong. Maybe methdo `get_pps_for_a_element` is problematic !")
                     sys.exit(1)
-            qe.write("CELL_PARAMETERS {angstrom}        \n")  # 如果选择angstrom单未，原子坐标选择分数坐标，即，ATOMIC_POSITIONS (crystal), 且不设置celldm(1). 这时alat和celldm(1)设置成v1的长度
+            if "V3_Hessian" in self.qe_inputpara.input_file_path.name:
+                qe.write("CELL_PARAMETERS {alat}          \n")  # 如果选择alat单位，原子坐标选择分数坐标，即，ATOMIC_POSITIONS (crystal), 且不设置celldm(1). 这时alat和celldm(1)设置成v1的长度
+            else:
+                qe.write("CELL_PARAMETERS {angstrom}      \n")  # 如果选择angstrom单位，原子坐标选择分数坐标，即，ATOMIC_POSITIONS (crystal), 且不设置celldm(1). 这时alat和celldm(1)设置成v1的长度
             for cell_p in self.qe_inputpara.cell_parameters:
                 qe.write("{}\n".format(cell_p))
-            qe.write("ATOMIC_POSITIONS (crystal)       \n")
+            if "V3_Hessian" in self.qe_inputpara.input_file_path.name:
+                qe.write("ATOMIC_POSITIONS {alat}         \n")
+            else:
+                qe.write("ATOMIC_POSITIONS {crystal}      \n")  # 如果选择angstrom单位，原子坐标选择分数坐标，即，ATOMIC_POSITIONS (crystal), 且不设置celldm(1). 这时alat和celldm(1)设置成v1的长度
             for site in self.qe_inputpara.fractional_sites:
                 qe.write("{}\n".format(site))
             if self.qe_inputpara.k_automatic:
@@ -444,10 +456,16 @@ class qe_writeinput:
                     print("\nNote: --------------------")
                     print("    When write pseudo-potentional information, something wrong. Maybe methdo `get_pps_for_a_element` is problematic !")
                     sys.exit(1)
-            qe.write("CELL_PARAMETERS {angstrom}        \n")  # 如果选择angstrom单未，原子坐标选择分数坐标，即，ATOMIC_POSITIONS (crystal), 且不设置celldm(1). 这时alat和celldm(1)设置成v1的长度
+            if "V3_Hessian" in self.qe_inputpara.input_file_path.name:
+                qe.write("CELL_PARAMETERS {alat}          \n")  # 如果选择alat单位，原子坐标选择分数坐标，即，ATOMIC_POSITIONS (crystal), 且不设置celldm(1). 这时alat和celldm(1)设置成v1的长度
+            else:
+                qe.write("CELL_PARAMETERS {angstrom}      \n")  # 如果选择angstrom单位，原子坐标选择分数坐标，即，ATOMIC_POSITIONS (crystal), 且不设置celldm(1). 这时alat和celldm(1)设置成v1的长度
             for cell_p in self.qe_inputpara.cell_parameters:
                 qe.write("{}\n".format(cell_p))
-            qe.write("ATOMIC_POSITIONS (crystal)       \n")
+            if "V3_Hessian" in self.qe_inputpara.input_file_path.name:
+                qe.write("ATOMIC_POSITIONS {alat}         \n")
+            else:
+                qe.write("ATOMIC_POSITIONS {crystal}      \n")  # 如果选择angstrom单位，原子坐标选择分数坐标，即，ATOMIC_POSITIONS (crystal), 且不设置celldm(1). 这时alat和celldm(1)设置成v1的长度
             for site in self.qe_inputpara.fractional_sites:
                 qe.write("{}\n".format(site))
             qe.write("K_POINTS crystal                 \n")

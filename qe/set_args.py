@@ -188,7 +188,7 @@ def set_more_args(parser: ArgumentParser):
 
 
    # relax scffit scf dyn0file
-    parser_prepare = subparsers.add_parser("prepare",  formatter_class=RawTextHelpFormatter)
+    parser_prepare = subparsers.add_parser("batch",  formatter_class=RawTextHelpFormatter)
     parser_prepare.add_argument(
         '-m',
         '--more-argments-about-relax',
@@ -198,7 +198,7 @@ def set_more_args(parser: ArgumentParser):
         help="输入更多关于prepare的参数\n"
             "mode=all"
     )
-    parser_prepare.set_defaults(qe_workflow=qe_prepare)
+    parser_prepare.set_defaults(qe_workflow=qe_batch)
 
 
     # EPW计算
