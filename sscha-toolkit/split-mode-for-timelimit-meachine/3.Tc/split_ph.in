@@ -1,16 +1,17 @@
-Electron-phonon coefficients for Nb4H14
+Electron-phonon coefficients for Ce1Sc2H24
  &inputph
   tr2_ph=1.0d-14,
-  prefix='Nb4H14',
-  fildvscf='Nb4H14.dv',
+  prefix='Ce1Sc2H24',
+  fildvscf='dvscf',
   electron_phonon='interpolated',
   el_ph_sigma=0.005,
   el_ph_nsigma=10,
   alpha_mix(1)=0.3,
-  amass(1)=92.90638 ,
-  amass(2)=1.00794 ,
+  amass(1)=140.116 ,
+  amass(2)=44.955912 ,
+  amass(3)=1.00794 ,
   outdir='./tmp',
-  fildyn='Nb4H14.dyn',
+  fildyn='Ce1Sc2H24.dyn',
   trans=.false.,
   ldisp=.false.,
   nq1=6,nq2=6,nq3=6,
