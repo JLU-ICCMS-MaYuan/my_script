@@ -6,20 +6,23 @@ vasp_main.py -i CONTCAR -j slurm -p PRESS relax -m mode=rv4 execmd='mpirun -np 4
 for i in $(cat relax-none); do p=$(echo $i | grep -oE '[0-9]+(\.[0-9]+)?$'); echo $p; cd $i; vasp_main.py -i CONTCAR -j slurm -p $p relax -m mode=rv4 execmd='mpirun -np 48' ismear=0 sigma=0.01 ediff=1e-7 ediffg=-0.01 encut=600 kspacing=0.189 queue=lhy;  done
 
 # 批量结构优化多个结构的多个压强
-vasp_main.py  -i stdlibs -ps 100 200 300 -j slurm  batch -m mode=rv4  sigma=0.01 encut=900 ediff=1e-7 ediffg=-0.01 ismear=0 core=48 kspacing=0.18 execmd='mpirun -np 48'
-vasp_main.py  -i stdlibs -ps 100 -j slurm  batch -m mode=rv4  sigma=0.01 encut=900 ediff=1e-7 ediffg=-0.01 ismear=0 core=48 kspacing=0.18 execmd='mpirun -np 48'
+vasp_main.py  -i stdlibs -ps 100 200 300 -j slurm  batch -m mode=rv4  sigma=0.01 encut=900 ediff=1e-7 ediffg=-0.01 ismear=0 symprec=1e-5 ncore=4 kspacing=0.189 execmd='mpirun -np 48'
+
+vasp_main.py  -i stdlibs -ps 100 -j slurm  batch -m mode=rv4  sigma=0.01 encut=900 ediff=1e-7 ediffg=-0.01 ismear=0 symprec=1e-5 ncore=4 kspacing=0.189 execmd='mpirun -np 48'
 
 # 批量计算多个结构多个压强的多个自洽
+
 # 在指定压强子目录下自洽
-vasp_main.py  -i stdlibs -ps 100 200 300 -j slurm  batch -m mode=scf  sigma=0.01 encut=900 ediff=1e-7 ediffg=-0.01 ismear=0 core=48 kspacing=0.18 execmd='mpirun -np 48'
+vasp_main.py  -i stdlibs -ps 100 200 300 -j slurm  batch -m mode=scf  sigma=0.01 encut=900 ediff=1e-7 ediffg=-0.01 ismear=0  kspacing=0.189 execmd='mpirun -np 48'
+
 # 没有指定压强就不设置压强子目录
-vasp_main.py  -i stdlibs -j slurm batch -m mode=scf sigma=0.01 encut=900 ediff=1e-7 ediffg=-0.01 ismear=0 core=48 kspacing=0.18 execmd='mpirun -np 48'
+vasp_main.py  -i stdlibs -j slurm batch -m mode=scf sigma=0.01 encut=900 ediff=1e-7 ediffg=-0.01 ismear=0  kspacing=0.189 symprec=1e-5 ncore=4  execmd='mpirun -np 48'
 
 vasp_main.py -i CONTCAR -j slurm -p PRESS -w 100 relax -m mode=rv4 execmd='mpirun -np 48' ismear=0 sigma=0.01 ediff=1e-8 ediffg=-0.001 encut=900 kspacing=0.188 queue=lhy
 
 vasp_main.py -i CONTCAR -j slurm -w 100-eletron  eletron -m mode='scf eledos eband' execmd='mpirun -np 48' encut=900 ediff=1e-8 ediffg=-0.001 kspacing=0.188 ismear=0 sigma=0.01  queue=lhy
 
-vasp_main.py -i CONTCAR -j slurm -w d111 phono -m supercell='1 1 1' kspacing=0.18 mode=disp ismear=1 encut=800 ediff=1E-08 ediffg=-0.001 lreal=.FALSE. queue=lhy execmd='mpirun -np 48'
+vasp_main.py -i CONTCAR -j slurm -w d111 phono -m supercell='1 1 1' kspacing=0.189 mode=disp ismear=1 encut=800 ediff=1E-08 ediffg=-0.001 lreal=.FALSE. queue=lhy execmd='mpirun -np 48'
 
 vasp_main.py -i POSCAR -j bash data -m mode=dispphdos supercell='2 2 2' tmin=0 tmax=4000 tstep=100 mp='8 8 8'
 
@@ -61,7 +64,7 @@ qe_main.py -i CONTCAR -j bash sc -m mode=Tc execmd='' npool=1 queue=local temper
 
 
 # qe能带计算
-qe_main.py -i PPOSCAR -j bash -w band eletron -m mode=eleband execmd='mpirun -np 2 ' npool=1 queue=local kinserted=200 charge_density_dat='../phonon/tmp/H3S1.save/charge-density.dat' data_file_schema_xml='../phonon/tmp/H3S1.save/data-file-schema.xml'  
+qe_main.py -i PPOSCAR -j bash -w band eletron -m mode=eleband execmd='mpirun -np 2 ' npool=1 queue=local kinserted=200 charge_density_dat='../phonon/tmp/H3S1.save/charge-density.dat' data_file_schema_xml='../phonon/tmp/H3S1.save/data-file-schema.xml' paw_txt='tmp/H3S1.save/paw.txt'  
 
 # 获得能带的高对称路径二维投影 
 qe_main.py -i PPOSCAR -j bash eletron -m mode=hspp  execmd=''
@@ -74,10 +77,10 @@ qe_main.py -i PPOSCAR -j bash eletron -m mode=elebanddata execmd='' queue=lhy
 # qe态密度计算
 
 # 适用于EPW计算前的nscf计算，这里的展开方式是高斯展宽，因为EPW要求nscf的K点是自定义坐标的，而自定义坐标的nscf不支持四面体方法
-qe_main.py -i ../phonon/PPOSCAR -j bash scf -m mode=nscf ecutwfc=80 ecutrho=960 kpoints_dense='8 8 8'  degauss=0.02 execmd='mpirun -np 4' npool=4  charge_density_dat='../phonon/tmp/H3S1.save/charge-density.dat' data_file_schema_xml='../phonon/tmp/H3S1.save/data-file-schema.xml'  k_automatic=False wan=False  occupations=smearing  queue=lhy
+qe_main.py -i ../phonon/PPOSCAR -j bash scf -m mode=nscf ecutwfc=80 ecutrho=960 kpoints_dense='8 8 8'  degauss=0.02 execmd='mpirun -np 4' npool=4  charge_density_dat='../phonon/tmp/H3S1.save/charge-density.dat' data_file_schema_xml='../phonon/tmp/H3S1.save/data-file-schema.xml' paw_txt='tmp/H3S1.save/paw.txt' k_automatic=False wan=False  occupations=smearing  queue=lhy
 
 # 四面体方法计算nscf
-qe_main.py -i ../phonon/PPOSCAR -j bash scf -m mode=nscf ecutwfc=80 ecutrho=960 kpoints_dense='8 8 8'  degauss=0.02 execmd='mpirun -np 4' npool=4  charge_density_dat='../phonon/tmp/H3S1.save/charge-density.dat' data_file_schema_xml='../phonon/tmp/H3S1.save/data-file-schema.xml'  k_automatic=True   occupations=tetrahedra  queue=lhy
+qe_main.py -i ../phonon/PPOSCAR -j bash scf -m mode=nscf ecutwfc=80 ecutrho=960 kpoints_dense='8 8 8'  degauss=0.02 execmd='mpirun -np 4' npool=4  charge_density_dat='../phonon/tmp/H3S1.save/charge-density.dat' data_file_schema_xml='../phonon/tmp/H3S1.save/data-file-schema.xml' paw_txt='tmp/H3S1.save/paw.txt' k_automatic=True   occupations=tetrahedra  queue=lhy
 
 # 处理态密度
 qe_main.py -i CONTCAR -j slurm eletron -m mode=eledosdata execmd='' npool=1 queue=local kpoints_dense='48 48 48'
@@ -100,7 +103,7 @@ qe_main.py -i relax.out -j bash sctk -m mode=nosplit  dyn0_flag=False EPC_flag=F
 qe_main.py -i relax.out -j bash sctk -m mode=nosplit  dyn0_flag=False EPC_flag=True search_sym=.false. trans=.false. elph_nbnd_min=2 elph_nbnd_max=6 execmd='mpirun -np 8' npool=8  qpoints='4 4 4'
 
 在稠密K网格下进行Non-SCF计算, 是 nq1 nq2 nq3 的 4 倍。然后运行pw.x
-qe_main.py -i relax.out -j bash scf -m mode=nscf ecutwfc=80 ecutrho=960 nbnd=20 kpoints_dense='16 16 16'  degauss=0.02 execmd='mpirun -np 8' npool=8  charge_density_dat='tmp/H3S1.save/charge-density.dat' data_file_schema_xml='tmp/H3S1.save/data-file-schema.xml'  k_automatic=True   occupations=tetrahedra_opt  queue=lhy
+qe_main.py -i relax.out -j bash scf -m mode=nscf ecutwfc=80 ecutrho=960 nbnd=20 kpoints_dense='16 16 16'  degauss=0.02 execmd='mpirun -np 8' npool=8  charge_density_dat='tmp/H3S1.save/charge-density.dat' data_file_schema_xml='tmp/H3S1.save/data-file-schema.xml' paw_txt='tmp/H3S1.save/paw.txt'  k_automatic=True  occupations=tetrahedra_opt  queue=lhy
 
 计算屏蔽库仑相互作用下的波函数, k点网格必须和ph.x计算电声相互作用时使用的 nq1 nq2 nq3 一样。然后运行pw.x
 qe_main.py -i relax.out -j bash sctk -m mode=twin ecutwfc=80 ecutrho=960 nbnd=20 kpoints_dense='4 4 4'    degauss=0.02 execmd='mpirun -np 8' npool=8 k_automatic=False queue=lhy

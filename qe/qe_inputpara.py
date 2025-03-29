@@ -124,7 +124,14 @@ class qe_inputpara(qe_base):
             self.charge_density_dat = "tmp/H3S1.save/charge-density.dat"
 
         if not hasattr(self, "data_file_schema_xml"):
-            self.data_file_schema_xml = "tmp/H3S1.save/data-file-schema.xml"
+            self.data_file_schema_xml = f"tmp/{self.system_name}.save/data-file-schema.xml"
+
+        if not hasattr(self, "data_file_schema_xml"):
+            self.data_file_schema_xml = f"tmp/{self.system_name}.save/data-file-schema.xml"
+
+        if not hasattr(self, "paw_txt"):
+            logger.warning("If you use PAW pseudopotential, you have to set `paw_txt`")
+            self.paw_txt = f"tmp/{self.system_name}.save/paw.txt"
 
         # &CELL
         if not hasattr(self, "press_conv_thr"):
