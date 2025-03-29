@@ -31,7 +31,7 @@ print("1.Prepare QE input parameters")
 atom_masses = {
   "Ce": 140.116,
   "Sc": 44.955912,
-   "H" : 1.00794
+   "H": 1.00794,
          }
 
 bool_value = True

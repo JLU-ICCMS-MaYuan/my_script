@@ -9,7 +9,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 def get_a2Fdos_data(gauss_idx):
-    a2Fdos_path = "a2F.dos"+str(gauss_idx)
+    a2Fdos_path = Path("a2F.dos"+str(gauss_idx))
     if not a2Fdos_path.exists():
         print("\nNote: --------------------")
         print(f"    `a2F.dos+{str(gauss_idx)}` file doesn't exist!!!")
@@ -97,10 +97,10 @@ if __name__ == "__main__":
     try:
         el_ph_sigma  = float(sys.argv[1]) # 起始展宽和展宽步长
     except:
-        el_ph_sigma  = 0.005 # 起始展宽和展宽步长
+        el_ph_sigma  = 0.005 # 起始展宽
 
     try:
-        el_ph_nstep  = el_ph_sigma
+        el_ph_nstep  = el_ph_sigma # 展开递增的步长
     except:
         el_ph_nstep  = el_ph_sigma
 
@@ -130,9 +130,9 @@ if __name__ == "__main__":
 
     # 绘制图表
     plt.figure(figsize=(10, 6))
-    plt.plot(Lambda, tc_McM_mu1, label='Tc_McM (mu=0.1)', marker='o')
-    plt.plot(Lambda, tc_McM_mu2, label='Tc_McM (mu=0.13)', marker='o')
-    plt.plot(Lambda, tc_McM_mu3, label='Tc_McM (mu=0.16)', marker='o')
+    plt.plot(total_sigma, tc_McM_mu1, label='Tc_McM (mu=0.1)',  marker='o')
+    plt.plot(total_sigma, tc_McM_mu2, label='Tc_McM (mu=0.13)', marker='o')
+    plt.plot(total_sigma, tc_McM_mu3, label='Tc_McM (mu=0.16)', marker='o')
     plt.xlabel('Lambda')
     plt.ylabel('Tc_McM (K)')
     plt.title('Tc_McM vs Lambda')
@@ -143,9 +143,9 @@ if __name__ == "__main__":
 
     # 2. 绘制 tc_AD_mu1, tc_AD_mu2, tc_AD_mu3 与 Lambda 的关系
     plt.figure(figsize=(10, 6))
-    plt.plot(Lambda, tc_AD_mu1, label='Tc_AD (mu=0.1)', marker='o')
-    plt.plot(Lambda, tc_AD_mu2, label='Tc_AD (mu=0.13)', marker='o')
-    plt.plot(Lambda, tc_AD_mu3, label='Tc_AD (mu=0.16)', marker='o')
+    plt.plot(total_sigma, tc_AD_mu1, label='Tc_AD (mu=0.1)', marker='o')
+    plt.plot(total_sigma, tc_AD_mu2, label='Tc_AD (mu=0.13)', marker='o')
+    plt.plot(total_sigma, tc_AD_mu3, label='Tc_AD (mu=0.16)', marker='o')
     plt.xlabel('Lambda')
     plt.ylabel('Tc_AD (K)')
     plt.title('Tc_AD vs Lambda')

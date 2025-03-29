@@ -564,3 +564,23 @@ my_hpc.time = "100:00:00" # 每个脚本限制100hours时长
 
 这是单胞CeH9的nbnd=25, 如果是2x2x2的CeH9，里面包含了160个原子，总共空带需要25*8=200条。但是你会发现此时自洽计算会不收敛。
 你需要大概设置比200再多一点，至于多多少，需要自己试一试。激进一点，直接写300我觉得问题也不是很大。
+
+
+### <span style="color:yellow"> 7.2 续算是结构优化失败。
+
+很可能是因为随机结构太少，或者随机结构不合理，无法优化。可以尝试多产生一点随机结构。
+
+```shell
+ERROR WHILE UPDATING THE WEIGHTS
+
+Error, one dynamical matrix does not satisfy the acoustic sum rule.
+    If this problem arises on a sscha run,
+    it may be due to a gradient that violates the sum rule.
+    Please, be sure you are not using a custom gradient function.
+
+DETAILS OF ERROR:
+    Number of translatinal modes in the original dyn = 0
+    Number of translational modes in the target dyn = 3
+    (They should be both 3)
+
+```
