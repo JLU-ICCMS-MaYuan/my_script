@@ -130,7 +130,7 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
     ase_atom = read(args.filename)
-    path_name_coords = get_hspp(ase_atom)
+    path_name_coords = get_hspp(ase_atom, get_hspp=True)
 
     write4tdep_type(path_name_coords)
     if args.num_points > 0:

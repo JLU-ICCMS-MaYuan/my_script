@@ -267,19 +267,19 @@ class vasp_base:
         kpoints.write_file(output_kpoints)
         logger.info(kpoints)
 
-    def get_hspp(self, ase_type):
+    def get_hspp(self, ase_type, autoselect):
 
         from itertools import chain
 
         ltype   = ase_type.cell.get_bravais_lattice()
-        logger.debug(f"lattice type: \n{ltype}")
+        logger.info(f"lattice type: \n{ltype}")
         pstring = ltype.special_path
-        logger.debug(f"the high symmetry points path: \n{pstring}")
+        logger.info(f"the high symmetry points path: \n{pstring}")
 
         _plist  = [[ p for p in pp if not p.isdigit()] for pp in pstring.split(",")]
-        logger.debug(f"the high symmetry points path: \n{_plist}")
+        logger.info(f"the high symmetry points path: \n{_plist}")
 
-        logger.debug(
+        print(
             "please input the mode you want, just even input Number like 1 or 2\n",
             "0:  all_points:\n",
             "1:  first_group_points\n",
@@ -289,22 +289,25 @@ class vasp_base:
             "...."
             "Nothing to input, directly press ENTER, the default is all_points\n"
             )
-        try:
-            high_symmetry_type = list(map(int, input().split())) #将输入的整数字符串按照空格划分成列表并分别转化为整数类型并再转化为列表
-        except:
-            logger.debug("what you input is not an integer number, So use the `0:  all_points`")
+        if autoselect:
             high_symmetry_type = [0]
+        else:
+            high_symmetry_type = list(map(int, input().split())) #将输入的整数字符串按照空格划分成列表并分别转化为整数类型并再转化为列表
+            if high_symmetry_type == []:
+                high_symmetry_type = [0]
+                logger.error("what you input is not an integer number, So use the `0:  all_points`")
 
+        print(high_symmetry_type)
         path_name_list = []
         if "," in pstring:
             if 0 in high_symmetry_type:
                 path_name_list = list(chain.from_iterable(_plist))
-                logger.debug(f"the choosed high symmetry points path is \n {path_name_list}")
+                logger.info(f"the choosed high symmetry points path is \n {path_name_list}")
             elif 0 not in high_symmetry_type:
                 # path_name_list = max(_plist, key=len)
                 for hst in high_symmetry_type:
                     path_name_list.extend(_plist[hst-1])
-                logger.debug(f"the choosed high symmetry points path is \n {path_name_list}")
+                logger.info(f"the choosed high symmetry points path is \n {path_name_list}")
         else:
             path_name_list = [ pp for pp in pstring]
         
@@ -316,16 +319,16 @@ class vasp_base:
 
 
         # 处理高对称点路径
-        logger.debug("Print Fractional Coordinates of Reciprocal Lattice ! ")
+        print("Print Fractional Coordinates of Reciprocal Lattice ! ")
         for name, coord in zip(path_name_list, path_coords):
-            logger.debug("{}      {:<8.6f} {:<8.6f} {:<8.6f}".format(name, coord[0], coord[1], coord[2]))
+            print("{}      {:<8.6f} {:<8.6f} {:<8.6f}".format(name, coord[0], coord[1], coord[2]))
             # < 表示左对齐，8.6f 表示留出8个位置并保留小数点后6位。
 
 
 
-        logger.debug("The reciprocal lattice (without multiplating `unit_reciprocal_axis`)")
+        logger.info("The reciprocal lattice (without multiplating `unit_reciprocal_axis`)")
         for vector in self.reciprocal_plattice:
-            logger.debug("{:<6.3f} {:<6.3f} {:<6.3f} ".format(vector[0], vector[1], vector[2]))
+            print("{:<6.3f} {:<6.3f} {:<6.3f} ".format(vector[0], vector[1], vector[2]))
 
 
 
@@ -344,8 +347,8 @@ class vasp_base:
             projected_path_name_coords.append([current_name, total_dist])
         string_names = '  '.join(coord[0] for coord in projected_path_name_coords)
         string_coord = '  '.join(str(np.round(coord[1], 6)) for coord in projected_path_name_coords)
-        logger.info(string_names)
-        logger.info(string_coord)
+        print(string_names)
+        print(string_coord)
 
         
         return path_name_list, path_coords
@@ -396,11 +399,10 @@ class vasp_base:
         print(string_names)
         print(string_coord)
 
-    def write_highsymmetry_kpoints(self, ase_type, kpoints_path):
+    def write_highsymmetry_kpoints(self, ase_type, kpoints_path, autoselect, vaspkitflag):
 
         kpoints_filepath = kpoints_path.joinpath("KPOINTS")
-        vaspkitflag = input("If you have installed vaspkit and you want to use it, input: Yes\n")
-        if vaspkitflag:
+        if vaspkitflag is True:
             cwd = os.getcwd()
             os.chdir(kpoints_path)
             os.system('echo -e "3\n303" | vaspkit')
@@ -408,7 +410,7 @@ class vasp_base:
             os.system("sed -i '2s/.*/200/' KPOINTS")
             os.chdir(cwd)
         else: 
-            path_name_list, path_coords = self.get_hspp(ase_type)
+            path_name_list, path_coords = self.get_hspp(ase_type, autoselect)
             pair_two_names  = [[path_name_list[i], path_name_list[i+1]] for i in range(len(path_name_list)-1)]
             pair_two_coords = [[path_coords[i], path_coords[i+1]] for i in range(len(path_coords)-1)]
             with open(kpoints_filepath, "w") as kp:

@@ -275,6 +275,8 @@ class vasp_eletron:
         self.eletron_inputpara.write_highsymmetry_kpoints(
             self.eletron_inputpara.ase_type, 
             kpoints_path=eband_path,
+            autoselect=self.eletron_inputpara.autoselect,
+            vaspkitflag=self.eletron_inputpara.vaspkitflag,
             )
         # 准备计算电子band的INCAR
         self._vasp_writeincar.writeinput(mode="eband", incar_path=eband_path)
@@ -532,7 +534,7 @@ class vasp_processdata(vasp_base):
                 os.system("sed -i '6s/.*/{}/' band.conf".format(mpinfo))
                 os.chdir(cwd)
             else: 
-                path_name_list, path_coords = self.get_hspp(self.ase_type)
+                path_name_list, path_coords = self.get_hspp(self.ase_type, self.autoselect)
                 self.write_disp_band_conf(
                     self.work_path, 
                     self.species, 
@@ -570,7 +572,7 @@ class vasp_processdata(vasp_base):
                 os.system("sed -i '2s/.*/{}/' band.conf".format(diminfo))
                 os.chdir(cwd)
             else: 
-                special_points, path_coords = self.get_hspp(self.ase_type)
+                special_points, path_coords = self.get_hspp(self.ase_type, self.autoselect)
                 self.write_dfpt_band_conf(
                 self.work_path, 
                 self.species, 

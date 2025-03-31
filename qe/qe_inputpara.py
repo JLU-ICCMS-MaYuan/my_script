@@ -226,11 +226,10 @@ class qe_inputpara(qe_base):
         if autoselect:
             high_symmetry_type = [0]
         else:
-            try:
-                high_symmetry_type = list(map(int, input().split())) #将输入的整数字符串按照空格划分成列表并分别转化为整数类型并再转化为列表
-            except:
-                logger.error("what you input is not an integer number, So use the `0:  all_points`")
+            high_symmetry_type = list(map(int, input().split())) #将输入的整数字符串按照空格划分成列表并分别转化为整数类型并再转化为列表
+            if high_symmetry_type == []:
                 high_symmetry_type = [0]
+                logger.error("what you input is not an integer number, So use the `0:  all_points`")
 
         path_name_list = []
         if "," in pstring:

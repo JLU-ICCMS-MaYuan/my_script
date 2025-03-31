@@ -20,7 +20,7 @@ vasp_main.py  -i stdlibs -j slurm batch -m mode=scf sigma=0.01 encut=900 ediff=1
 
 vasp_main.py -i CONTCAR -j slurm -p PRESS -w 100 relax -m mode=rv4 execmd='mpirun -np 48' ismear=0 sigma=0.01 ediff=1e-8 ediffg=-0.001 encut=900 kspacing=0.188 queue=lhy
 
-vasp_main.py -i CONTCAR -j slurm -w 100-eletron  eletron -m mode='scf eledos eband' execmd='mpirun -np 48' encut=900 ediff=1e-8 ediffg=-0.001 kspacing=0.188 ismear=0 sigma=0.01  queue=lhy
+vasp_main.py -i CONTCAR -j slurm -w eletron  eletron -m mode='scf eledos eband' execmd='mpirun -np 48' encut=900 ediff=1e-8 ediffg=-0.001 kspacing=0.188 ismear=0 sigma=0.01 vaspkitflag=False autoselect=False queue=lhy
 
 vasp_main.py -i CONTCAR -j slurm -w d111 phono -m supercell='1 1 1' kspacing=0.189 mode=disp ismear=1 encut=800 ediff=1E-08 ediffg=-0.001 lreal=.FALSE. queue=lhy execmd='mpirun -np 48'
 

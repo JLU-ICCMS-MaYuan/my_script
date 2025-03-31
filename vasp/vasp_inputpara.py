@@ -285,8 +285,18 @@ class vasp_eletronpara(vasp_inputpara):
         except:
             logger.debug("You are using `vasp eletron module`, what you use mode is:")
             print(f"{self.mode}")
-            
+        
+        if not hasattr(self, "vaspkitflag"):
+            self.vaspkitflag = False
+        else:
+            self.vaspkitflag = eval(self.vaspkitflag)
 
+        if not hasattr(self, "autoselect"):
+            self.autoselect = False
+        else:
+            self.autoselect = eval(self.autoselect)
+        print(self.vaspkitflag, self.autoselect)
+        
 class vaspbatch_inputpara(vaspbatch_base, vasp_inputpara):
 
     def __init__(
