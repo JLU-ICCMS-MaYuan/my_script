@@ -671,9 +671,9 @@ class qephono_inputpara(qe_inputpara):
                     for pw in line.strip("\n").split():
                         phononwidth.append(pw)
         if len(phononwidth) != (q_number*freq_number):
-            logger.debug("The number of phonon-width is not equal to the number of `q_number*freq_number`")
+            logger.info("The number of phonon-width is not equal to the number of `q_number*freq_number`")
             logger.debug(f"phonon-width = {phononwidth}")
-            logger.debug(f"q_number * freq_number = {q_number} * {freq_number} = {q_number*freq_number}")
+            logger.info(f"q_number * freq_number = {q_number} * {freq_number} = {q_number*freq_number}")
             sys.exit(1)
         # phononwidth 是一个一维数组，大小为 q点个数 * 每个q点的振动模式数
         phononwidth = np.array(phononwidth)
@@ -1366,7 +1366,7 @@ class qebatch_inputpara(qephono_inputpara):
             input_file_path, 
             **kwargs, # 这里非常重要, 因为 qeprepare_inputpara 的__init__需要读入kwargs, 其它需要继承这个类的子类也需要保有这个参数kwargs
             )
-        logger.info("run `prepare`")
+        logger.info("run `batch`")
 
 
 class qeepw_inputpara(qe_base):

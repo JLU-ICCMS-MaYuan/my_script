@@ -295,8 +295,7 @@ class vasp_eletronpara(vasp_inputpara):
             self.autoselect = False
         else:
             self.autoselect = eval(self.autoselect)
-        print(self.vaspkitflag, self.autoselect)
-        
+
 class vaspbatch_inputpara(vaspbatch_base, vasp_inputpara):
 
     def __init__(
