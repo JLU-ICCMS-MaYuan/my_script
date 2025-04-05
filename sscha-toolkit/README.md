@@ -479,6 +479,31 @@ inter_dyn.save_qe("inter_dyn_") # 插好值的动力学矩阵被命名为inter_d
 将该仓库中的Cluster.py整个文件拷贝到sscha环境中相应的源码位置即可. 如何找到相应的sscha环境中的源码呢?
 一般来说, 先激活conda 环境`conda activate sscha`. 然后进入sscha环境. `cd  ~/miniconda/env/sscha`这是我的路径. 然后进入`cd  lib/python3.11/site-packages/sscha`就找到Cluster.py了.
 
+另一个非常重要的问题：就是Julia中调用python相关库的安装问题。sscha中，提到了
+```shell
+You must ensure Julia’s dependencies are correctly set up to activate Julia’s speedup on the SSCHA minimization. To do this, run the following line:
+
+python -c 'import julia; julia.install()'
+Note: this command may fail if you are using micromamba. To solve the issue, you need to manually specify the binary location of micromamba to julia:
+
+export CONDA_JL_CONDA_EXE=$HOME/.local/bin/micromamba
+Replacing $HOME/.local/bin/micromamba with the path to the micromamba binary if you changed the default. To make it work after the next login, add the environment variable to the init script
+
+echo "export CONDA_JL_CONDA_EXE=$HOME/.local/bin/micromamba" >> $HOME/.bashrc
+To configure Julia PyCall to work with anaconda (or micromamba), open a Julia shell, typing Julia. Enter in the package manager by typing ]. You should see your prompt turning into a pkg>. Then build the conda extension and compile PyCall.
+
+build Conda
+add PyCall
+```
+
+你在激活了Julia之后，用`build Conda`和`add PyCall`就可以安装相关的库。但是在实际操作中，我发现这两个命令都无法成功安装。下面的命令是可以使用的：
+```julia
+using Pkg # 加载 Pkg 模块
+Pkg.build("Conda")
+Pkg.add("PyCall") 
+```
+
+
 ## <span style="color:red"> 1. 准备初始动力学矩阵
 
 做一个稀疏q网格的声子计算(比如2x2x2),获得动力学矩阵. 在0.generate-init-dyn目录下进行.
