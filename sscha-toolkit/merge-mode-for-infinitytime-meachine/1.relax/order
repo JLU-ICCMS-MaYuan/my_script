@@ -1,2 +1,5 @@
+echo "Please make sure that you have back up the data by backup_minimization_data.sh"
+sleep 10
+
 python relax_merged.py > sscha.out 2>&1 &
 echo $! > taskids

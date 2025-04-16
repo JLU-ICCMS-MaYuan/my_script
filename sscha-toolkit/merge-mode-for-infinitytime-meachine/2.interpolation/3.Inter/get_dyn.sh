@@ -1,10 +1,10 @@
 #!/bin/bash
 echo "./get_dyn.sh <sparse_qmesh> <sparse_dyns> <fine_qmesh> <fine_dyns> <prefix>"
-sparse_qmesh=$1
-sparse_dyns=$2
-fine_qmesh=$3
-fine_dyns=$4
-prefix=$5
+sparse_qmesh=$1 # 222
+sparse_dyns=$2  # 6
+fine_qmesh=$3   # 664
+fine_dyns=$4    # 47
+prefix=$5       # Ce1Sc2H24
 
 for i in $(seq 1 $sparse_dyns); do
 	cp ../1.sparse/${prefix}.dyn$i ${sparse_qmesh}.dyn$i

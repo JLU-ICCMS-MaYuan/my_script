@@ -554,7 +554,7 @@ my_hpc.time = "100:00:00" # 每个脚本限制100hours时长
 
 ## <span style="color:red"> 4. 使用hessian矩阵中的晶格参数和原子坐标, 在2.interpolation/1.sparse中计算稀疏的动力学矩阵, 在2.interpolation/2.fine里面计算稠密的动力学矩阵
 
-## <span style="color:red"> 5. 基于2.interpolation/1.sparse中稀疏的动力学矩阵和2.interpolation/2.fine中稠密的动力学矩阵, 使用脚本在2.interpolation/3.Inter中计算插值的动力学矩阵
+## <span style="color:red"> 5. 基于2.interpolation/1.sparse中稀疏的动力学矩阵和2.interpolation/2.fine中稠密的动力学矩阵, 使用脚本2_Inter.py在2.interpolation/3.Inter中计算插值的动力学矩阵
 
 ## <span style="color:red"> 6. 基于插值的动力学矩阵inter_dyn_*, 在3.Tc目录中计算电声耦合.
 

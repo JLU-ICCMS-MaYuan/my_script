@@ -17,7 +17,7 @@ import os
 IRR_IDX = 4
 DYN_POP_IDX = 5 # 准备读入的dyn的代编号
 N_CONFIGS = 100
-TARGET_PRESS = 300
+TARGET_PRESSURE = 300
 
 dyn = CC.Phonons.Phonons(f"dyn_pop{DYN_POP_IDX}_", nqirr = IRR_IDX)
 
@@ -46,7 +46,7 @@ IO_freq.SetupSaving(f"minimization_data_{DYN_POP_IDX+1}")
 
 relax.setup_custom_functions(custom_function_post = IO_freq.CFP_SaveAll)
 
-relax.vc_relax(target_press = TARGET_PRESS, static_bulk_modulus = 300, ensemble_loc = "ensembles", restart_from_ens = True, start_pop = DYN_POP_IDX+1) # start_pop = DYN_POP_IDX+1 将迭代出的DYN_POP_IDX+1代的动力学矩阵保存下来，编号为DYN_POP_IDX+1代
+relax.vc_relax(target_press = TARGET_PRESSURE, static_bulk_modulus = 300, ensemble_loc = "ensembles", restart_from_ens = True, start_pop = DYN_POP_IDX+1) # start_pop = DYN_POP_IDX+1 将迭代出的DYN_POP_IDX+1代的动力学矩阵保存下来，编号为DYN_POP_IDX+1代
 relax.minim.finalize(verbose = 2)
 
 relax.minim.plot_results(save_filename = f"save_filename_{DYN_POP_IDX+1}.dat",plot = False)
