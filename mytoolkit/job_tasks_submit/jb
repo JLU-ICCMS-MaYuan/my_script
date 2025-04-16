@@ -28,6 +28,8 @@ vasp_main.py -i POSCAR -j bash data -m mode=dispphdos supercell='2 2 2' tmin=0 t
 
 vasp_main.py -i POSCAR -j bash data -m mode=dispband supercell='2 2 2' mp='8 8 8'
 
+vasp_main.py -i POSCAR -j bash data -m mode=hspp
+
 qe_main.py -i CONTCAR -j slurm -p PRESS -w . relax -m mode=relax-vc kpoints_dense="l m n" conv_thr=1.0d-8 execmd='mpirun -np 48' ecutwfc=80 ecutrho=960 degauss=0.02 npool=4 queue=lhy
 
 qe_main.py -i CONTCAR -j slurm -p PRESS batch -m mode=preparescf ecutwfc=80 ecutrho=960 degauss=0.02               qpoints='l m n' execmd='mpirun -np 48' npool=4 queue=lhy

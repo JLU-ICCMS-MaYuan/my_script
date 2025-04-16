@@ -9,8 +9,8 @@ scripts_names = [
     'lobster-toolkit', 
 
     'deepkit-dpgen-toolkit',
-    'ELK-toolkit',
-    'EPW-toolkit',
+    'elk-toolkit',
+    'epw-toolkit',
     'lammps-toolkit',
 
     'mytoolkit/convexhull', 

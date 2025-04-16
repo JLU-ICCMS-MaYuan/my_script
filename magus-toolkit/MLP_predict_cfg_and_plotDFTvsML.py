@@ -35,7 +35,7 @@ def dump_cfg(frames, filename, symbol_to_type, mode='w'):
 
             flags = np.array(['T']*len(atoms))
             if atoms.constraints:
-                info.append('mvable')
+                atoms.info.append('mvable')
                 for constr in atoms.constraints:
                     flags[constr.index] = 'F'
                 has_constraints = True

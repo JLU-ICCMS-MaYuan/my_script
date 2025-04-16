@@ -54,20 +54,22 @@ def change_kpoints(old_scf_in_path, new_scf_in_path, kresolution):
 
 def write_submit(jobtype:str, work_path):
 
-    chaoyin_pbs = """#!/bin/sh
-#PBS -N    mayqe
-#PBS -q    liuhy
-#PBS -l    nodes=1:ppn=28
-#PBS -j    oe
-#PBS -V
-source /public/home/mayuan/intel/oneapi/setvars.sh --force
+    chaoyin_slurm = """#!/bin/sh
+#SBATCH  --job-name=vasp
+#SBATCH  --output=log.out                       
+#SBATCH  --error=log.err                       
+#SBATCH  --partition=cpu
+#SBATCH  --nodes=1                          
+#SBATCH  --ntasks=56
+#SBATCH  --ntasks-per-node=56
+#SBATCH  --cpus-per-task=1                         
+
+source /public/home/mayuan/intel/oneapi/setvars.sh --force      
+ulimit -s unlimited
 export I_MPI_ADJUST_REDUCE=3
 export MPIR_CVAR_COLL_ALIAS_CHECK=0
-ulimit -s unlimited
-cd $PBS_O_WORKDIR
-#killall -9 pw.x ph.x
 
-mpirun -np 28 /public/home/mayuan/software/qe-7.1/bin/pw.x -npool 4 <scf.in> scf.out
+mpirun -np 56 /public/home/mayuan/software/qe-7.1/bin/pw.x -npool 8 <scf.in> scf.out
 """
 
     tangB_slurm = """#!/bin/sh
@@ -128,8 +130,8 @@ module load intel/23.02.1
 srun /home/h240012/soft/qe-7.0/bin/pw.x -nk 4 -in scf.in > scf.out 2>&1
     """
 
-    if jobtype == "chaoyin_pbs":
-        jobsystem = chaoyin_pbs
+    if jobtype == "chaoyin_slurm":
+        jobsystem = chaoyin_slurm
     elif jobtype == "tangB_slurm":
         jobsystem = tangB_slurm
     elif jobtype == "coshare_slurm":
@@ -167,10 +169,7 @@ def checktime(scf_out_path):
 
 if __name__ == "__main__":
 
-    # jobsystem = "chaoyin_pbs"
-    # jobsystem = "tangB_slurm"
-    # jobsystem = "coshare_slurm"
-    jobsystem = "riken_slurm"
+    jobsystem = sys.argv[1]
 
     print("Note: --------------------")
     print("    你需要在当前目录下准备好: scf, pp(pp目录中放好赝势)")
@@ -179,7 +178,7 @@ if __name__ == "__main__":
     print("    创建测试VASP的ENCUT输入文件目录以及准备vasp的输入文件")
 #    try:
     print("Note: --------------------")
-    start, stop, step = sys.argv[1:]
+    start, stop, step = sys.argv[2:]
     print("    python test_qe_ecutwfc.py 0.2 1.2 0.2")
     print("    python test_qe_ecutwfc.py 1.0 0.0 -0.2")
     print("    以上两种都是产生0.2到1.0， 间隔为0.2的kspacing")

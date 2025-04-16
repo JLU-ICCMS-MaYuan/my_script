@@ -20,21 +20,21 @@ def write_incar(encut, input_incar, work_path):
 
 def write_submit(jobtype:str, work_path):
 
-    chaoyin_pbs = """#!/bin/sh
-#PBS -N    mayqe                                    
-#PBS -q    liuhy         
-#PBS -l    nodes=1:ppn=28               
-#PBS -j    oe                                      
-#PBS -V  
-source /public/home/mayuan/intel/oneapi/setvars.sh --force
+    chaoyin_slurm = """#!/bin/sh
+#SBATCH  --job-name=vasp
+#SBATCH  --output=log.out                       
+#SBATCH  --error=log.err                       
+#SBATCH  --partition=cpu
+#SBATCH  --nodes=1                          
+#SBATCH  --ntasks=56
+#SBATCH  --ntasks-per-node=56
+#SBATCH  --cpus-per-task=1                         
+
+source /public/home/mayuan/intel/oneapi/setvars.sh --force      
+ulimit -s unlimited
 export I_MPI_ADJUST_REDUCE=3
 export MPIR_CVAR_COLL_ALIAS_CHECK=0
-ulimit -s unlimited        
-cd $PBS_O_WORKDIR    
-
-#killall -9 vasp_std
-
-mpirun -n 28 /public/home/mayuan/software/vasp.6.1.0/bin/vasp_std > vasp.log 2>&1  
+mpirun -np 56 /public/home/mayuan/software/vasp.6.3.2/bin/vasp_std > vasp.log 2>&1             
 """
 
     tangB_slurm = """#!/bin/sh
@@ -93,8 +93,8 @@ module load intel/23.02.1
 
 srun /lustre/home/h240012/soft/vasp.6.1.0/bin/vasp_std > vasp.log 2>&1
 """
-    if jobtype == "chaoyin_pbs":
-        jobsystem = chaoyin_pbs
+    if jobtype == "chaoyin_slurm":
+        jobsystem = chaoyin_slurm
     elif jobtype == "tangB_slurm":
         jobsystem = tangB_slurm
     elif jobtype == "coshare_slurm":
