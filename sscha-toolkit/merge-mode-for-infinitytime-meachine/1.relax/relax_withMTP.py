@@ -26,13 +26,14 @@ bohr2angstrom = 1.0 / angstrom2bohr
 # They are often modified
 ONSET_DYN_POP_IDX = 41
 MAX_POPULATION = 42
-N_RANDOM = 4000
+N_RANDOM = 10
 
 # They are modified only once.
 NQIRR = 4
 TEMPERATURE = 0
 TARGET_PRESSURE = 100 # GPa
 SYMBOLS = ['H']
+LOCALRUN_MTP = True
 #-----------------------0.frequently changed parameters-----------------------#
 
 
@@ -125,7 +126,7 @@ def dump_cfg(frames, filename, symbol_to_type, mode='w'):
             ret += 'END_CFG\n'
             f.write(ret)
 
-def convert_dat2cfg(symbols, population, n_random):
+def convert_dat2cfg(data_dir, symbols, population, n_random):
     
     type_to_symbol = {i: j for i, j in enumerate(symbols)}  # i: [0,1,2], j: [Ce, Sr, H]
     symbol_to_type = {v: k for k, v in type_to_symbol.items()}   # 用于输出cfg时的映射 v: [Ce, Sr, H], k: [0,1,2]
@@ -133,26 +134,26 @@ def convert_dat2cfg(symbols, population, n_random):
     cfg_file = f"init_{str(population)}.cfg"
     cfg_file = open(cfg_file, "w")
     FORCE_FILES = True
-    energy_file_name = Path("ensembles").joinpath(f"energies_supercell_population{population}.dat")
+    energy_file_name = Path(data_dir).joinpath(f"energies_supercell_population{population}.dat")
     with open(energy_file_name, "r") as f:
         energy_lines = [l.strip() for l in f.readlines()]
 
     assert n_random == len(energy_lines), "Number of random structures does not match the number of energy lines."
 
     for j in range(n_random):
-        structure_file_name = Path("ensembles").joinpath(f"scf_population{population}_{j+1}.dat")
+        structure_file_name = Path(data_dir).joinpath(f"scf_population{population}_{j+1}.dat")
         with open(structure_file_name, "r") as f:
             lines = [l.strip() for l in f.readlines()]
 
         try:
-            force_file_name = Path("ensembles").joinpath(f"forces_population{population}_{j+1}.dat")
+            force_file_name = Path(data_dir).joinpath(f"forces_population{population}_{j+1}.dat")
             with open(force_file_name, "r") as f:
                 force_lines = [l.strip() for l in f.readlines()]
         except: 
             FORCE_FILES = False
 
         try:
-            pressure_file_name = Path("ensembles").joinpath(f"pressures_population{population}_{j+1}.dat")
+            pressure_file_name = Path(data_dir).joinpath(f"pressures_population{population}_{j+1}.dat")
             with open(pressure_file_name, "r") as f:
                 pressure_lines = [l.strip() for l in f.readlines()]
         except:
@@ -273,7 +274,7 @@ def load_cfg(population, type_to_symbol):
 
     return frames
 
-def convert_cfg2dat(population):
+def convert_cfg2dat(data_dir, population):
 
     frames = load_cfg(population=population, type_to_symbol=type_to_symbol)
   
@@ -281,10 +282,10 @@ def convert_cfg2dat(population):
     
     for i, atoms in enumerate(frames):
         energies[i] = atoms.info['energy']*eV2Ry
-        force_filename = os.path.join("ensembles", f"forces_population{population}_{i+1}.dat")
+        force_filename = Path(data_dir).joinpath(f"forces_population{population}_{i+1}.dat")
         np.savetxt(force_filename, atoms.info['forces']*(eV2Ry/angstrom2bohr))
         
-        pressure_filename = os.path.join("ensembles", f"pressures_population{population}_{i+1}.dat")
+        pressure_filename = Path(data_dir).joinpath(f"pressures_population{population}_{i+1}.dat")
         pressure_eV_in_a_volume_Angstrom3 = atoms.info['PlusStress']
         pressure_Ry_per_volume_bohr3 = [[0,0,0],[0,0,0],[0,0,0]]
         pressure_Ry_per_volume_bohr3[0][0] = pressure_eV_in_a_volume_Angstrom3[0]  *  eV2Ry/(atoms.get_volume()*angstrom2bohr**3)
@@ -295,12 +296,24 @@ def convert_cfg2dat(population):
         pressure_Ry_per_volume_bohr3[0][1] = pressure_eV_in_a_volume_Angstrom3[5]  *  eV2Ry/(atoms.get_volume()*angstrom2bohr**3)     
         np.savetxt(pressure_filename, pressure_Ry_per_volume_bohr3)
 
-    energy_file_name = os.path.join("ensembles", f"energies_supercell_population{population}.dat")
+    energy_file_name = Path(data_dir).joinpath(f"energies_supercell_population{population}.dat")
     np.savetxt(energy_file_name, energies)
 
-def calculate_efs(population):
+def calculate_efs(population, localrun_MTP=False):
     # 读取所有的能量文件
-    slurm_scripts = f"""#!/bin/bash
+    if localrun_MTP == True:
+        if not os.path.exists("run_calculation"):
+            os.mkdir("run_calculation")
+
+        print(f"submit job for calculate init_{population}.cfg")
+        shutil.copy(f"init_{population}.cfg", "run_calculation")
+        cwd = os.getcwd()
+        os.chdir("run_calculation")
+        os.system("mpirun -np 4 mlp calc-efs pot.mtp init_{population}.cfg calculated_{population}.cfg")
+        os.chdir(cwd)
+    else:
+    # 读取所有的能量文件
+        slurm_scripts = f"""#!/bin/bash
 #SBATCH --partition=cpu
 #SBATCH --time=24:0:0
 #SBATCH --nodes=1
@@ -313,30 +326,30 @@ source /public/home/mayuan/intel/oneapi/setvars.sh --force
 mpirun -np 56 mlp calc-efs pot.mtp init_{population}.cfg calculated_{population}.cfg
 
 """
-    if not os.path.exists("run_calculation"):
-        os.mkdir("run_calculation")
-    slurm_scripts_name = Path("run_calculation").joinpath(f"cal_efs.sh")
-    with open(slurm_scripts_name, "w") as f:
-        f.write(slurm_scripts)
+        if not os.path.exists("run_calculation"):
+            os.mkdir("run_calculation")
+        slurm_scripts_name = Path("run_calculation").joinpath(f"cal_efs.sh")
+        with open(slurm_scripts_name, "w") as f:
+            f.write(slurm_scripts)
+        
+        
+        print(f"submit job for calculate init_{population}.cfg")
+        shutil.copy(f"init_{population}.cfg", "run_calculation")
+        cwd = os.getcwd()
+        os.chdir("run_calculation")
+        jobid = os.popen(f"sbatch cal_efs.sh").read().strip().split()[-1]
+        os.chdir(cwd)
+        
+        run_flag = True
+        while run_flag:
+            squeue_output = os.popen(f"squeue -j {jobid}").readlines()
+            if len(squeue_output) == 1:
+                run_flag = False
+                print(f"{jobid} is running.")
+            else:
+                print(f"{jobid} was stopped.")
+                time.sleep(10) 
     
-    
-    print(f"submit job for calculate init_{population}.cfg")
-    shutil.copy(f"init_{population}.cfg", "run_calculation")
-    cwd = os.getcwd()
-    os.chdir("run_calculation")
-    jobid = os.popen(f"sbatch cal_efs.sh").read().strip().split()[-1]
-    os.chdir(cwd)
-    
-    run_flag = True
-    while run_flag:
-        squeue_output = os.popen(f"squeue -j {jobid}").readlines()
-        if len(squeue_output) == 1:
-            run_flag = False
-            print(f"{jobid} is running.")
-        else:
-            print(f"{jobid} was stopped.")
-            time.sleep(10) 
-
 def print_spacegroup(minim):
     space_groups = []
     angles = []
@@ -403,6 +416,7 @@ symbol_to_type = {v: k for k, v in type_to_symbol.items()}   # 用于输出cfg�
 
 for POPULATION in range(ONSET_DYN_POP_IDX, MAX_POPULATION):
     #-------------------------1.Load the dynamical matrix-------------------------#
+    print("1.Load the dynamical matrix")
     dyn_pop = f"dyn_pop{str(POPULATION)}_"
     dyn = CC.Phonons.Phonons(dyn_pop, NQIRR) #LOAD THE DYN MAT IN MEMORY
     dyn.Symmetrize()                       #IN FIRST STEP ONLY: APPLIES SUM RULE
@@ -411,46 +425,51 @@ for POPULATION in range(ONSET_DYN_POP_IDX, MAX_POPULATION):
 
 
 
-
+    ensembles_dirname = f"ensembles_{POPULATION+1}"
     #-------------------------2.Prepare random configurations-------------------------#
+    print("2.Prepare random configurations")
     ensemble = sscha.Ensemble.Ensemble(dyn, T0 = TEMPERATURE, supercell = dyn.GetSupercell()) #LOADS THE DYN IN THE SSCHA PROGRAM (class ensemble)
     ensemble.generate(N_RANDOM)       #GENERATES THE CONFIGURATIONS BASED ON DYN
-    ensemble.save("ensembles", POPULATION+1)  #SAVES THE CONFIGURATIONS ON FILE
+    ensemble.save(ensembles_dirname, POPULATION+1)  #SAVES THE CONFIGURATIONS ON FILE
     #-------------------------2.Prepare random configurations-------------------------#
 
 
 
 
     #-------------------------3.convert random configurations from QE to MTP-type cfg-------------------------#
-    convert_dat2cfg(symbols=SYMBOLS, population=POPULATION+1, n_random=N_RANDOM)
+    print("3.convert random configurations from QE to MTP-type cfg")
+    convert_dat2cfg(data_dir=ensembles_dirname, symbols=SYMBOLS, population=POPULATION+1, n_random=N_RANDOM)
     #-------------------------3.convert random configurations from QE to MLIP cfg-------------------------#
 
 
 
 
     #-------------------------4.evalute energy force virial by MTP-------------------------#
-    calculate_efs(population=POPULATION+1)
+    print("4.evalute energy force virial by MTP")
+    calculate_efs(population=POPULATION+1,  localrun_MTP=LOCALRUN_MTP)
     #-------------------------4.evalute energy force virial by MTP-------------------------#
 
 
 
 
     #--------------------------5.convert cfg to sscha-type dat--------------------------#
-    convert_cfg2dat(population=POPULATION+1)
+    print("5.convert cfg to sscha-type dat")
+    convert_cfg2dat(data_dir=ensembles_dirname, population=POPULATION+1)
     #--------------------------5.convert cfg to sscha-type dat--------------------------#
 
 
 
 
     #--------------------------6.load sscha-data for minimizer--------------------------#
-    ensemble.load(data_dir="ensembles", population=POPULATION+1, N=N_RANDOM)   #THIS IS TO USE IF YOU ALREADY HAVE THE CONFIGURATIONS AND DON'T WANT TO GENERATE NEW ONES
+    print("6.load sscha-data for minimizer")
+    ensemble.load(data_dir=ensembles_dirname, population=POPULATION+1, N=N_RANDOM)   #THIS IS TO USE IF YOU ALREADY HAVE THE CONFIGURATIONS AND DON'T WANT TO GENERATE NEW ONES
     #--------------------------6.load sscha-data for minimizer--------------------------#
 
 
 
 
     #--------------------------7.prepare sscha minimizer--------------------------#
-    print("5.prepare sscha minimizer")
+    print("7.prepare sscha minimizer")
     minimizer = sscha.SchaMinimizer.SSCHA_Minimizer(ensemble) #LOADS THE ROUTINE FOR THE MINIMIZATION
     # We set up the minimization parameters
     minimizer.min_step_dyn = 0.01     # The minimization step on the dynamical matrix
@@ -478,10 +497,11 @@ for POPULATION in range(ONSET_DYN_POP_IDX, MAX_POPULATION):
 
 
     #----------------------------8.Run the calculation----------------------------#
+    print("8.Run the calculation")
     relax.vc_relax(
         target_press = TARGET_PRESSURE, 
         static_bulk_modulus = 300, 
-        ensemble_loc = "ensembles", 
+        ensemble_loc = ensembles_dirname, 
         restart_from_ens = True, 
         start_pop = POPULATION+1) # start_pop = DYN_POP_IDX+1 将迭代出的DYN_POP_IDX+1代的动力学矩阵保存下来，编号为DYN_POP_IDX+1代
     relax.minim.finalize(verbose = 2)
