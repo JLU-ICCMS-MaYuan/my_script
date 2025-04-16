@@ -430,7 +430,7 @@ inter_dyn.save_qe("inter_dyn_") # 插好值的动力学矩阵被命名为inter_d
     &inputph
     tr2_ph=1.0d-14,
     prefix='Nb4H14',
-    fildvscf='Nb4H14.dv',
+    fildvscf='dvscf',
     electron_phonon='interpolated',
     el_ph_sigma=0.005,
     el_ph_nsigma=10,
