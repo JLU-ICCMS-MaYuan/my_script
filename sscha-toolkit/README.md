@@ -508,9 +508,9 @@ Pkg.add("PyCall")
 
 做一个稀疏q网格的声子计算(比如2x2x2),获得动力学矩阵. 在0.generate-init-dyn目录下进行.
 
-## <span style="color:red"> 2. 将0.generate-init-dyn中准备的初始动力学矩阵拷贝到1.relax目录下, 并修改relax_merged_*.py目录下的relax.py文件中的以下参数:
+## <span style="color:red"> 2. 将0.generate-init-dyn中准备的初始动力学矩阵拷贝到1.relax目录下, 并修改relax_withQE.py目录下的relax.py文件中的以下参数:
 
-需要修改relax_merged.py中的参数. 
+需要修改relax_withQE.py中的参数. (relax_withQE.py是所有的自洽计算用QE计算, relax_withMTP.py是所有的自洽计算都用mtp计算) 
 
 
 ```python
