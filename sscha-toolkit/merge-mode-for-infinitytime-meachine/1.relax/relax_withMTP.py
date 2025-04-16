@@ -33,7 +33,7 @@ NQIRR = 4
 TEMPERATURE = 0
 TARGET_PRESSURE = 100 # GPa
 SYMBOLS = ['H']
-LOCALRUN_MTP = True
+Localrun_MTP = True
 #-----------------------0.frequently changed parameters-----------------------#
 
 
@@ -300,19 +300,25 @@ def convert_cfg2dat(data_dir, population):
     np.savetxt(energy_file_name, energies)
 
 def calculate_efs(population, localrun_MTP=False):
-    # 读取所有的能量文件
-    if localrun_MTP == True:
-        if not os.path.exists("run_calculation"):
-            os.mkdir("run_calculation")
 
+    if not os.path.exists("run_calculation"):
+        os.mkdir("run_calculation")
+    if not Path("run_calculation").joinpath("pot.mtp").exists():
+        if Path.cwd().joinpath("pot.mtp").exists():
+            shutil.copy(Path.cwd().joinpath("pot.mtp"), "run_calculation")
+        else:
+            print("Error: pot.mtp not found.")
+            sys.exit(1)
+    shutil.copy(f"init_{population}.cfg", "run_calculation")
+
+    if localrun_MTP == True:
         print(f"submit job for calculate init_{population}.cfg")
         shutil.copy(f"init_{population}.cfg", "run_calculation")
         cwd = os.getcwd()
         os.chdir("run_calculation")
-        os.system("mpirun -np 4 mlp calc-efs pot.mtp init_{population}.cfg calculated_{population}.cfg")
+        os.system(f"mpirun -np 4 mlp calc-efs pot.mtp init_{population}.cfg calculated_{population}.cfg")
         os.chdir(cwd)
     else:
-    # 读取所有的能量文件
         slurm_scripts = f"""#!/bin/bash
 #SBATCH --partition=cpu
 #SBATCH --time=24:0:0
@@ -326,15 +332,11 @@ source /public/home/mayuan/intel/oneapi/setvars.sh --force
 mpirun -np 56 mlp calc-efs pot.mtp init_{population}.cfg calculated_{population}.cfg
 
 """
-        if not os.path.exists("run_calculation"):
-            os.mkdir("run_calculation")
         slurm_scripts_name = Path("run_calculation").joinpath(f"cal_efs.sh")
         with open(slurm_scripts_name, "w") as f:
             f.write(slurm_scripts)
-        
-        
+
         print(f"submit job for calculate init_{population}.cfg")
-        shutil.copy(f"init_{population}.cfg", "run_calculation")
         cwd = os.getcwd()
         os.chdir("run_calculation")
         jobid = os.popen(f"sbatch cal_efs.sh").read().strip().split()[-1]
@@ -446,7 +448,7 @@ for POPULATION in range(ONSET_DYN_POP_IDX, MAX_POPULATION):
 
     #-------------------------4.evalute energy force virial by MTP-------------------------#
     print("4.evalute energy force virial by MTP")
-    calculate_efs(population=POPULATION+1,  localrun_MTP=LOCALRUN_MTP)
+    calculate_efs(population=POPULATION+1, localrun_MTP=Localrun_MTP)
     #-------------------------4.evalute energy force virial by MTP-------------------------#
 
 
