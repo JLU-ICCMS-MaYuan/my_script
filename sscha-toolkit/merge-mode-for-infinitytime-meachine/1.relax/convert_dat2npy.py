@@ -17,8 +17,8 @@ def main(NQIRR, DYN_POP_IDX, END_POP_IDX):
 if __name__ == "__main__":
     # 设置 argparse 参数解析
     parser = argparse.ArgumentParser(description="处理声子动力学和系综数据")
-    parser.add_argument("--nqirr", type=int, required=True, help="不可约 q 点的数量")
-    parser.add_argument("--dyn_pop_idx", type=int, required=True, help="要读取的 dyn 文件的代编号")
+    parser.add_argument("-n", "--nqirr", type=int, required=True, help="不可约 q 点的数量")
+    parser.add_argument("-i", "--dyn_pop_idx", type=int, required=True, help="要读取的 dyn 文件的代编号")
     
     args = parser.parse_args()
     
