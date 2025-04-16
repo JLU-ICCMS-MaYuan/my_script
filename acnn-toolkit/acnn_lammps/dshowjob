@@ -1,0 +1,33 @@
+#!/bin/bash
+
+# 运行 djob 命令并将输出保存到变量中
+djob_output=$(djob)
+
+# 提取所有的 JOB_ID 并保存到文件
+job_ids=$(echo "$djob_output" | awk 'NR > 1 {print $1}')
+
+print_line() {
+    local style=$1
+    local length=$2
+    local num=$3
+    for ((i = 0; i < length; i++)); do
+        printf "$style"
+    done
+    printf " $num"
+    printf "\n"
+}
+count=0
+printf "%-8s%-18s%-21s%-26s%-1s\n" "JOB_ID" "JOB_NAME" "TASK_EXEC_NODES" "JOB_CREATE_TIME" "EXEC_PATH"
+print_line "=" 120 
+
+# 遍历每个 JOB_ID，并运行 job -L 命令
+for job_id in $job_ids; do
+    printf "%-8s" $job_id
+    djob -L $job_id|grep "JOB_NAME" |awk '{printf "%-16s ", $2}'
+    djob -L $job_id|grep "TASK_EXEC_NODES" |awk '{printf "%-21s ", $2}'
+    djob -L $job_id|grep "JOB_CREATE_TIME" |awk '{printf "%-12s%-12s ", $2, $3}'
+    djob -L $job_id|grep "EXEC_PATH" |awk '{print $2}'
+    count=$((count + 1))
+done
+print_line "=" 120 
+echo "total  $count"
