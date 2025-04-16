@@ -94,8 +94,9 @@ def convert_dat2cfg(symbols, population, n_random):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-s","--symbols", type=str, nargs="+", default=["Ce", "Sc", "H"])
-    parser.add_argument("-p", "--population", type=int, default=0)
+    parser.add_argument("-p", "--population", nargs="+", type=list[int], default=None)
     parser.add_argument("-n","--n_random", type=int, default=100)
     args = parser.parse_args()
-    convert_dat2cfg(args.symbols, args.population, args.n_random)
+    for population in args.population:
+        convert_dat2cfg(args.symbols, population, args.n_random)
     
