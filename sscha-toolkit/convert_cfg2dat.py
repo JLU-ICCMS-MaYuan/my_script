@@ -1,10 +1,4 @@
-# convert ML eval-log to sscah readable dats file
-# USAGE:
-#   python "this" eval-log "outdir" "pwscf_pwi_dir" "sscha_pop"
-#
-# OUT:
-#   structure info, write .dat to outdir
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+#!/usr/bin/env python3
 import os
 import numpy as np
 
