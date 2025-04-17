@@ -81,33 +81,66 @@ if __name__ == "__main__":
     if (not os.path.exists(merged_phsave_path)):
         os.makedirs(merged_phsave_path)
         
-    for i in range(qirreduced):
-        print(i+1)
-        if i==0 :
-            splited_dv1_path    = os.path.join(str(i+1), "tmp", "_ph0", system_name+".dvscf1")
-            merged_dv1_path     = os.path.join(merged_ph0_path,         system_name+".dvscf1")
-            shutil.copy(splited_dv1_path, merged_dv1_path)
-
-            splited_control_ph_path = os.path.join(str(i+1), "tmp", "_ph0", system_name+".phsave", "control_ph.xml")
-            merged_control_ph_path  = os.path.join(merged_ph0_path,         system_name+".phsave", "control_ph.xml")
-            shutil.copy(splited_control_ph_path, merged_control_ph_path)
-        else:
-            q_num_path          = os.path.join(merged_ph0_path,         system_name+".q_"+str(i+1))
-            if not os.path.exists(q_num_path):
-                os.makedirs(q_num_path)
-            splited_dv1_path    = os.path.join(str(i+1), "tmp", "_ph0", system_name+".q_"+str(i+1), system_name+".dvscf1")
-            merged_dv1_path     = os.path.join(q_num_path,                                          system_name+".dvscf1")    
-            shutil.copy(splited_dv1_path, merged_dv1_path)
-
-        splited_phsave_path = os.path.join(str(i+1), "tmp", "_ph0", system_name+".phsave")
-        merged_phsave_path  = os.path.join(merged_ph0_path, system_name+".phsave")
-        for src in os.listdir(splited_phsave_path):
-            print(src)
-            src_path = os.path.join(splited_phsave_path, src)
-            if "dynmat" in src_path or "elph" in src_path:
-                shutil.copy(src_path, merged_phsave_path)
-
-        splited_patterns_path = os.path.join(str(i+1), "tmp", "_ph0", system_name+".phsave", "patterns."+str(i+1)+".xml")
-        merged_patterns_path  = os.path.join(merged_ph0_path,         system_name+".phsave", "patterns."+str(i+1)+".xml")
-        shutil.copy(splited_patterns_path, merged_patterns_path)
-
+    if specifyQ_type == "by_index":    
+        for i in range(qirreduced):
+            print(i+1)
+            if i==0 :
+                splited_dv1_path    = os.path.join(str(i+1), "tmp", "_ph0", system_name+".dvscf1")
+                merged_dv1_path     = os.path.join(merged_ph0_path,         system_name+".dvscf1")
+                shutil.copy(splited_dv1_path, merged_dv1_path)
+    
+                splited_control_ph_path = os.path.join(str(i+1), "tmp", "_ph0", system_name+".phsave", "control_ph.xml")
+                merged_control_ph_path  = os.path.join(merged_ph0_path,         system_name+".phsave", "control_ph.xml")
+                shutil.copy(splited_control_ph_path, merged_control_ph_path)
+            else:
+                q_num_path          = os.path.join(merged_ph0_path,         system_name+".q_"+str(i+1))
+                if not os.path.exists(q_num_path):
+                    os.makedirs(q_num_path)
+                splited_dv1_path1    = os.path.join(str(i+1), "tmp", "_ph0", system_name+".q_"+str(i+1), system_name+".dvscf1")
+                merged_dv1_path      = os.path.join(q_num_path,                                          system_name+".dvscf1")    
+                shutil.copy(splited_dv1_path, merged_dv1_path)
+      
+    
+            splited_phsave_path = os.path.join(str(i+1), "tmp", "_ph0", system_name+".phsave")
+            merged_phsave_path  = os.path.join(merged_ph0_path, system_name+".phsave")
+            for src in os.listdir(splited_phsave_path):
+                print(src)
+                src_path = os.path.join(splited_phsave_path, src)
+                if "dynmat" in src_path or "elph" in src_path:
+                    shutil.copy(src_path, merged_phsave_path)
+    
+            splited_patterns_path = os.path.join(str(i+1), "tmp", "_ph0", system_name+".phsave", "patterns."+str(i+1)+".xml")
+            merged_patterns_path  = os.path.join(merged_ph0_path,         system_name+".phsave", "patterns."+str(i+1)+".xml")
+            shutil.copy(splited_patterns_path, merged_patterns_path)
+    if specifyQ_type == "by_coords":    
+        for i in range(qirreduced):
+            print(i+1)
+            if i==0 :
+                splited_dv1_path    = os.path.join(str(i+1), "tmp", "_ph0", system_name+".dvscf1")
+                merged_dv1_path     = os.path.join(merged_ph0_path,         system_name+".dvscf1")
+                shutil.copy(splited_dv1_path, merged_dv1_path)
+    
+                splited_control_ph_path = os.path.join(str(i+1), "tmp", "_ph0", system_name+".phsave", "control_ph.xml")
+                merged_control_ph_path  = os.path.join(merged_ph0_path,         system_name+".phsave", "control_ph.xml")
+                shutil.copy(splited_control_ph_path, merged_control_ph_path)
+            else:
+                q_num_path          = os.path.join(merged_ph0_path,         system_name+".q_"+str(i+1))
+                if not os.path.exists(q_num_path):
+                    os.makedirs(q_num_path)
+                splited_dv1_path    = os.path.join(str(i+1), "tmp", "_ph0", system_name+".dvscf1")
+                merged_dv1_path      = os.path.join(q_num_path,              system_name+".dvscf1")    
+                shutil.copy(splited_dv1_path, merged_dv1_path)
+      
+    
+            splited_phsave_path = os.path.join(str(i+1), "tmp", "_ph0", system_name+".phsave")
+            merged_phsave_path  = os.path.join(merged_ph0_path, system_name+".phsave")
+            for src in os.listdir(splited_phsave_path):
+                print(src)
+                src_path = os.path.join(splited_phsave_path, src)
+                if "dynmat" in src_path or "elph" in src_path:
+                    shutil.copy(src_path, merged_phsave_path)
+    
+            splited_patterns_path = os.path.join(str(i+1), "tmp", "_ph0", system_name+".phsave", "patterns.1.xml")
+            merged_patterns_path  = os.path.join(merged_ph0_path,         system_name+".phsave", "patterns."+str(i+1)+".xml")
+            shutil.copy(splited_patterns_path, merged_patterns_path)
+            os.system(f"sed -i '4s/1/{str(i+1)}/' {merged_patterns_path}")

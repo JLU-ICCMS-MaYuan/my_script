@@ -7,34 +7,34 @@ import sys
 Ry2eV = 13.605698066
 bohr2angstrom = 0.52917721092
 
-def convert_dat2cfg(symbols, population, n_random):
+def convert_dat2cfg(symbols, population):
     
     type_to_symbol = {i: j for i, j in enumerate(symbols)}  # i: [0,1,2], j: [Ce, Sr, H]
     symbol_to_type = {v: k for k, v in type_to_symbol.items()}   # 用于输出cfg时的映射 v: [Ce, Sr, H], k: [0,1,2]
 
-    cfg_file = f"init_{str(population)}.cfg"
+    cfg_file = f"train_{str(population)}.cfg"
     cfg_file = open(cfg_file, "w")
     FORCE_FILES = True
-    energy_file_name = Path("ensembles").joinpath(f"energies_supercell_population{population}.dat")
+    energy_file_name = Path("data_ensemble_manual").joinpath(f"energies_supercell_population{population}.dat")
     with open(energy_file_name, "r") as f:
         energy_lines = [l.strip() for l in f.readlines()]
 
-    assert n_random == len(energy_lines), "Number of random structures does not match the number of energy lines."
+    n_random = len(energy_lines)
 
     for j in range(1,n_random+1):
-        structure_file_name = Path("ensembles").joinpath(f"scf_population{population}_{j}.dat")
+        structure_file_name = Path("data_ensemble_manual").joinpath(f"scf_population{population}_{j}.dat")
         with open(structure_file_name, "r") as f:
             lines = [l.strip() for l in f.readlines()]
 
         try:
-            force_file_name = Path("ensembles").joinpath(f"forces_population{population}_{j}.dat")
+            force_file_name = Path("data_ensemble_manual").joinpath(f"forces_population{population}_{j}.dat")
             with open(force_file_name, "r") as f:
                 force_lines = [l.strip() for l in f.readlines()]
         except: 
             FORCE_FILES = False
 
         try:
-            pressure_file_name = Path("ensembles").joinpath(f"pressures_population{population}_{j}.dat")
+            pressure_file_name = Path("data_ensemble_manual").joinpath(f"pressures_population{population}_{j}.dat")
             with open(pressure_file_name, "r") as f:
                 pressure_lines = [l.strip() for l in f.readlines()]
         except:
@@ -94,9 +94,7 @@ def convert_dat2cfg(symbols, population, n_random):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-s","--symbols", type=str, nargs="+", default=["Ce", "Sc", "H"])
-    parser.add_argument("-p", "--population", nargs="+", type=list[int], default=None)
-    parser.add_argument("-n","--n_random", type=int, default=100)
+    parser.add_argument("-p", "--population", nargs="+", type=int, default=None)
     args = parser.parse_args()
     for population in args.population:
-        convert_dat2cfg(args.symbols, population, args.n_random)
-    
+        convert_dat2cfg(args.symbols, population)

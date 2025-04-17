@@ -212,7 +212,7 @@ def convert_dat2cfg(data_dir, symbols, population, n_random):
 
 def load_cfg(population, type_to_symbol):
     frames = []
-    calculated_cfg = Path("run_calculation").joinpath(f"calculated_{population}.cfg")
+    calculated_cfg = Path("run_calculation_mtp").joinpath(f"calculated_{population}.cfg")
     with open(calculated_cfg) as f:
         line = 'chongchongchong!'
         while line:
@@ -301,21 +301,21 @@ def convert_cfg2dat(data_dir, population):
 
 def calculate_efs(population, localrun_MTP=False):
 
-    if not os.path.exists("run_calculation"):
-        os.mkdir("run_calculation")
-    if not Path("run_calculation").joinpath("pot.mtp").exists():
+    if not os.path.exists("run_calculation_mtp"):
+        os.mkdir("run_calculation_mtp")
+    if not Path("run_calculation_mtp").joinpath("pot.mtp").exists():
         if Path.cwd().joinpath("pot.mtp").exists():
-            shutil.copy(Path.cwd().joinpath("pot.mtp"), "run_calculation")
+            shutil.copy(Path.cwd().joinpath("pot.mtp"), "run_calculation_mtp")
         else:
             print("Error: pot.mtp not found.")
             sys.exit(1)
-    shutil.copy(f"init_{population}.cfg", "run_calculation")
+    shutil.copy(f"init_{population}.cfg", "run_calculation_mtp")
 
     if localrun_MTP == True:
         print(f"submit job for calculate init_{population}.cfg")
-        shutil.copy(f"init_{population}.cfg", "run_calculation")
+        shutil.copy(f"init_{population}.cfg", "run_calculation_mtp")
         cwd = os.getcwd()
-        os.chdir("run_calculation")
+        os.chdir("run_calculation_mtp")
         os.system(f"mpirun -np 4 mlp calc-efs pot.mtp init_{population}.cfg calculated_{population}.cfg")
         os.chdir(cwd)
     else:
@@ -332,13 +332,13 @@ source /public/home/mayuan/intel/oneapi/setvars.sh --force
 mpirun -np 56 mlp calc-efs pot.mtp init_{population}.cfg calculated_{population}.cfg
 
 """
-        slurm_scripts_name = Path("run_calculation").joinpath(f"cal_efs.sh")
+        slurm_scripts_name = Path("run_calculation_mtp").joinpath(f"cal_efs.sh")
         with open(slurm_scripts_name, "w") as f:
             f.write(slurm_scripts)
 
         print(f"submit job for calculate init_{population}.cfg")
         cwd = os.getcwd()
-        os.chdir("run_calculation")
+        os.chdir("run_calculation_mtp")
         jobid = os.popen(f"sbatch cal_efs.sh").read().strip().split()[-1]
         os.chdir(cwd)
         
@@ -427,7 +427,7 @@ for POPULATION in range(ONSET_DYN_POP_IDX, MAX_POPULATION):
 
 
 
-    ensembles_dirname = f"ensembles_{POPULATION+1}"
+    ensembles_dirname = f"ensembles_mtp_{POPULATION+1}"
     #-------------------------2.Prepare random configurations-------------------------#
     print("2.Prepare random configurations")
     ensemble = sscha.Ensemble.Ensemble(dyn, T0 = TEMPERATURE, supercell = dyn.GetSupercell()) #LOADS THE DYN IN THE SSCHA PROGRAM (class ensemble)
