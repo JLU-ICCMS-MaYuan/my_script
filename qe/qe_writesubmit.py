@@ -469,7 +469,7 @@ class qe_writesubmit:
             j.writelines('mkdir -p tmp/{}.save/    \n'.format(self.qe_inputpara.system_name))
             j.writelines("cp {}    tmp/{}.save/    \n".format(Path(self.qe_inputpara.charge_density_dat).absolute(), self.qe_inputpara.system_name))
             j.writelines("cp {}    tmp/{}.save/    \n".format(Path(self.qe_inputpara.data_file_schema_xml).absolute(), self.qe_inputpara.system_name))
-            j.write('{} {}/pw.x  -npool {} <{}> {}  \n'.format(self.qe_inputpara.execmd, qebin_path, self.qe_inputpara.npool, _inpufilename, _outputfilename))
+            j.writelines("cp {}    tmp/{}.save/    \n".format(Path(self.qe_inputpara.paw_txt).absolute(), self.qe_inputpara.system_name))
         return jobname
 
     def a1_twin(self, _dirpath, inputfilename):
