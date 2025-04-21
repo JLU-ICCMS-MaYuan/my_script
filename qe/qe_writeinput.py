@@ -1076,7 +1076,7 @@ class qe_writeinput:
                 species_mass = str(element.atomic_mass).strip("amu")
                 epw.write(" amass({})    ={},\n".format(i+1, species_mass))          
             epw.write(" outdir      ='./tmp'\n")
-            epw.write(" dvscf_dir   ='{}'".format(self.qe_inputpara.dvscf_dir))
+            epw.write(" dvscf_dir   ='{}'\n".format(self.qe_inputpara.dvscf_dir))
 
             epw.write(" etf_mem     ={}\n".format(self.qe_inputpara.etf_mem))
 
@@ -1088,13 +1088,14 @@ class qe_writeinput:
             epw.write(" dis_froz_min = {}\n".format(self.qe_inputpara.dis_froz_min))
             epw.write(" dis_froz_max = {}\n".format(self.qe_inputpara.dis_froz_max))
             for idx, pj in enumerate(self.qe_inputpara.proj):
-                epw.write(" proj({})     = {}\n".format(idx, pj))
+                epw.write(" proj({})     = {}\n".format(idx+1, pj))
             epw.write(" wannier_plot= .true.\n")
             epw.write(" wdata(1)    = 'bands_plot = .true.'\n")
             epw.write(" wdata(2)    = 'begin kpoint_path'\n")
             for idx, path_name_coord in enumerate(self.qe_inputpara.path_name_coords_for_EPW):
                 epw.write(f" wdata({idx+3})    = '{path_name_coord}'\n")
             epw.write(f" wdata({idx+4})    = 'end kpoint_path'\n")
+            epw.write("/                           \n")                                                                
         
         return inputfilename
     
