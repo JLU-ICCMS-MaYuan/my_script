@@ -145,11 +145,11 @@ if __name__ == "__main__":
                 if not os.path.exists(q_num_path):
                     os.makedirs(q_num_path)
                 splited_dv1_path    = os.path.join(str(i+1), "tmp", "_ph0", system_name+".dvscf1")
-                merged_dv1_path      = os.path.join(q_num_path,              system_name+".dvscf1")    
+                merged_dv1_path     = os.path.join(q_num_path,              system_name+".dvscf1")    
                 shutil.copy(splited_dv1_path, merged_dv1_path)
       
                 splited_dv_paw1_path    = os.path.join(str(i+1), "tmp", "_ph0", system_name+".dvscf_paw1")
-                merged_dv_paw1_path     = os.path.join(merged_ph0_path,         system_name+".dvscf_paw1")
+                merged_dv_paw1_path     = os.path.join(q_num_path,              system_name+".dvscf_paw1")
                 shutil.copy(splited_dv_paw1_path, merged_dv_paw1_path)
     
             splited_phsave_path = os.path.join(str(i+1), "tmp", "_ph0", system_name+".phsave")
