@@ -900,13 +900,19 @@ class qe_writeinput:
             qe.write(" ibrav=0,                        \n")  # 设置ibrav=0，这时需要在输入文件中写入CELL_PARAMETERS，即CELL的基矢量. alat bohr angstrom alat 由 celldm(1)或A定义的晶格常数单位
             qe.write(" nat={},                         \n".format(self.qe_inputpara.all_atoms_quantity))
             qe.write(" ntyp={},                        \n".format(self.qe_inputpara.species_quantity))
-            qe.write(" occupations = '{}',               \n".format(self.qe_inputpara.occupations))
-            qe.write(" smearing = '{}',                \n".format(self.qe_inputpara.smearing))
-            qe.write(" degauss = {},                   \n".format(self.qe_inputpara.degauss))
+            qe.write(" occupations = '{}',             \n".format(self.qe_inputpara.occupations))
+            if self.qe_inputpara.occupations == 'smearing':
+                qe.write(" occupations = '{}',         \n".format(self.qe_inputpara.occupations)) 
+                qe.write(" smearing = '{}',            \n".format(self.qe_inputpara.smearing))
+                qe.write(" degauss = {},               \n".format(self.qe_inputpara.degauss))
+            elif self.qe_inputpara.occupations == 'tetrahedra' or self.qe_inputpara.occupations == 'tetrahedra_opt':
+                qe.write(" occupations = '{}',         \n".format(self.qe_inputpara.occupations)) 
             qe.write(" ecutwfc = {},                   \n".format(self.qe_inputpara.ecutwfc))
             qe.write(" ecutrho = {},                   \n".format(self.qe_inputpara.ecutrho))
             qe.write(" lspinorb = .{}.,                \n".format(self.qe_inputpara.lspinorb))
             qe.write(" noncolin = .{}.,                \n".format(self.qe_inputpara.noncolin))
+            if self.qe_inputpara.celldm1 is not None:
+                qe.write(" celldm(1) = {:<.16f},       \n".format(self.qe_inputpara.celldm1))
             if self.qe_inputpara.nbnd is not None:
                 qe.write(" nbnd = {},                  \n".format(self.qe_inputpara.nbnd))
             qe.write("/\n")
@@ -929,10 +935,16 @@ class qe_writeinput:
                     print("\nNote: --------------------")
                     print("    When write pseudo-potentional information, something wrong. Maybe methdo `get_pps_for_a_element` is problematic !")
                     sys.exit(1)
-            qe.write("CELL_PARAMETERS {angstrom}        \n")  # 如果选择angstrom单未，原子坐标选择分数坐标，即，ATOMIC_POSITIONS (crystal), 且不设置celldm(1). 这时alat和celldm(1)设置成v1的长度
+            if "V3_Hessian" in self.qe_inputpara.input_file_path.name:
+                qe.write("CELL_PARAMETERS {alat}          \n")  # 如果选择alat单位，原子坐标选择分数坐标，即，ATOMIC_POSITIONS (crystal), 且不设置celldm(1). 这时alat和celldm(1)设置成v1的长度
+            else:
+                qe.write("CELL_PARAMETERS {angstrom}      \n")  # 如果选择angstrom单位，原子坐标选择分数坐标，即，ATOMIC_POSITIONS (crystal), 且不设置celldm(1). 这时alat和celldm(1)设置成v1的长度
             for cell_p in self.qe_inputpara.cell_parameters:
                 qe.write("{}\n".format(cell_p))
-            qe.write("ATOMIC_POSITIONS (crystal)       \n")
+            if "V3_Hessian" in self.qe_inputpara.input_file_path.name:
+                qe.write("ATOMIC_POSITIONS {alat}         \n")
+            else:
+                qe.write("ATOMIC_POSITIONS {crystal}      \n")  # 如果选择angstrom单位，原子坐标选择分数坐标，即，ATOMIC_POSITIONS (crystal), 且不设置celldm(1). 这时alat和celldm(1)设置成v1的长度
             for site in self.qe_inputpara.fractional_sites:
                 qe.write("{}\n".format(site))
             qe.write("K_POINTS {crystal_b}             \n")
