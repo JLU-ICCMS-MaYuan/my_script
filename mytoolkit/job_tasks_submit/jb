@@ -66,7 +66,7 @@ qe_main.py -i CONTCAR -j bash sc -m mode=Tc execmd='' npool=1 queue=local temper
 
 
 # qe能带计算
-qe_main.py -i PPOSCAR -j bash -w band eletron -m mode=eleband execmd='mpirun -np 2 ' npool=1 queue=local kinserted=200 charge_density_dat='../phonon/tmp/H3S1.save/charge-density.dat' data_file_schema_xml='../phonon/tmp/H3S1.save/data-file-schema.xml' paw_txt='tmp/H3S1.save/paw.txt'  
+qe_main.py -i PPOSCAR -j bash -w band eletron -m mode=eleband  ecutwfc=80 ecutrho=960 execmd='mpirun -np 2 ' npool=1 queue=local kinserted=200 charge_density_dat='../phonon/tmp/H3S1.save/charge-density.dat' data_file_schema_xml='../phonon/tmp/H3S1.save/data-file-schema.xml' paw_txt='tmp/H3S1.save/paw.txt'  
 
 # 获得能带的高对称路径二维投影 
 qe_main.py -i PPOSCAR -j bash eletron -m mode=hspp  execmd=''

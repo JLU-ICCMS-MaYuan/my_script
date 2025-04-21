@@ -424,6 +424,7 @@ class qe_batch:
             if self.batch_inputpara.queue is not None:
                 self.qe_submitjob.submit_mode1(inputfilename1, jobname)
 
+
 class qe_epw:
 
     def __init__(self, args: ArgumentParser) -> None:

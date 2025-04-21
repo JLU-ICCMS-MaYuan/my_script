@@ -115,19 +115,23 @@ prefix = str(user_input)
 # SOC = hasSOC(prefix)
 # Test if '.xml' files are used
 XML = hasXML(prefix)
+print(f"hasXML:{XML}")
 
 # Test if PAW
 PAW = hasPAW(prefix)
+print(f"hasPAW:{PAW}")
 
 # Test if fc
 fc = hasfc(prefix)
+print(f"hasfc:{fc}")
 
 # Test if seq. or parallel run
 SEQ = isSEQ(prefix)
+print(f"isSEQ:{SEQ}")
 
-if True:  # this gets the nqpt from the outputfiles
+print("We set nqpt by custom rather than automatic")
+if False:  # this gets the nqpt from the outputfiles
     nqpt = get_nqpt(prefix)
-
 else:
     # Enter the number of irr. q-points
     user_input = input(
@@ -137,12 +141,13 @@ else:
         nqpt = int(user_input)
     except ValueError:
         raise Exception('The value you enter is not an integer!')
+print(f"nqpt: {nqpt}")
 
 os.system('mkdir save 2>/dev/null')
 
 for iqpt in range(1, nqpt+1):
     label = str(iqpt)
-
+    print(label)
     # Case calculation in seq.
     if SEQ:
         # Case with XML files
@@ -210,6 +215,9 @@ for iqpt in range(1, nqpt+1):
                               '.dvscf_paw1 save/'+prefix+'.dvscf_paw_q'+label)
         # Case without XML format
         else:
+            print("# Case calculation in seq. # Case without XML format.")
+            print('cp '+prefix+'.dyn'+str(iqpt)+' save/'+prefix+'.dyn_q' +
+                      label)
             os.system('cp '+prefix+'.dyn'+str(iqpt)+' save/'+prefix+'.dyn_q' +
                       label)
             if (iqpt == 1):
@@ -222,9 +230,13 @@ for iqpt in range(1, nqpt+1):
                     os.system('cp tmp/_ph0/'+prefix+'.dvscf_paw1 save/'+prefix +
                               '.dvscf_paw_q'+label)
             else:
+                print('cp tmp/_ph0/'+prefix+'.q_'+str(iqpt)+'/'+prefix +
+                          '.dvscf1 save/'+prefix+'.dvscf_q'+label)
                 os.system('cp tmp/_ph0/'+prefix+'.q_'+str(iqpt)+'/'+prefix +
                           '.dvscf1 save/'+prefix+'.dvscf_q'+label)
                 os.system('rm tmp/_ph0/'+prefix+'.q_'+str(iqpt)+'/*wfc*')
                 if PAW:
+                    print('cp tmp/_ph0/'+prefix+'.q_'+str(iqpt)+'/'+prefix +
+                              '.dvscf_paw1 save/'+prefix+'.dvscf_paw_q'+label)
                     os.system('cp tmp/_ph0/'+prefix+'.q_'+str(iqpt)+'/'+prefix +
                               '.dvscf_paw1 save/'+prefix+'.dvscf_paw_q'+label)

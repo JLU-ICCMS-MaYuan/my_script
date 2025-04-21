@@ -80,7 +80,7 @@ mpirun -np N $EPWBIN/epw.x -npool N < epw.in > epw.out
                         ! 要设置epwread = .true., 需要同时设置 kmaps = .true., 这是因为设置epwread = .true.时, kmaps相关信息不会重新计算产生，必须读取，所以必须设置kmaps = .true.。并且确保事先已经设置好 epwwrite = .true.
                         ! kmaps = .true. 用于从 prefix.kmap and prefix.kgmap 中读取k+q->k的散射情况。
   
-  etf_mem     =  1      ! etf_mem = 1 所有致密的Bloch-space的电声耦合矩阵元都存在内存中 faster, IO更慢但是要求更少的内存
+  etf_mem     =  1      ! etf_mem = 1 所有致密的Bloch-space的电声耦合矩阵元都存在内存中, 这种方式更快, 此时IO更慢但是要求更少的内存
                         ! etf_mem = 2 在mode上对致密网格插补部分做了一个附加回路。通过设置“nmodes”可以进一步降低内存需求。
                         ! etf_mem = 3 多用于输运性质计算
 ```
