@@ -167,7 +167,10 @@ class qe_eletron:
 
         # prepare input parameter
         self.eletron_inputpara = qeeletron_inputpara.init_from_config(self._config)
-
+        self.qe_writeinput = qe_writeinput(self.eletron_inputpara)
+        self.qe_writesubmit = qe_writesubmit(self.eletron_inputpara)
+        self.qe_submitjob  = qe_submitjob(self.eletron_inputpara)
+        
         if self.eletron_inputpara.mode == "hspp":
             self.eletron_inputpara.get_hspp(autoselect=self.eletron_inputpara.autoselect)
             eV_To_Ry = 0.0734986443513116
@@ -175,49 +178,38 @@ class qe_eletron:
             nef_scffit, nef_scf = self.get_Nef(ef_scffit, ef_scf)
             logger.info("    fermi_energy = {:<8.4f} eV in scffit.out, N(Ef) = {:<8.4f} states/eV/(Unit Cell) = {:<10.6f} states/spin/Ry/(Unit Cell)".format(ef_scffit, nef_scffit, nef_scffit/2/eV_To_Ry))
             logger.info("    fermi_energy = {:<8.4f} eV in scf.out,    N(Ef) = {:<8.4f} states/eV/(Unit Cell) = {:<10.6f} states/spin/Ry/(Unit Cell)".format(ef_scf, nef_scf, nef_scf/2/eV_To_Ry))
-        elif self.eletron_inputpara.mode == "elebanddata": 
-            self.qe_writeinput = qe_writeinput(self.eletron_inputpara)
-            self.qe_writesubmit = qe_writesubmit(self.eletron_inputpara)
-            self.qe_submitjob  = qe_submitjob(self.eletron_inputpara)
+        elif self.eletron_inputpara.mode == "eleband": 
             logger.debug("    !!!!!!!!!! Remember to run pw.x to get eleband.out before you run bands.x") 
             logger.debug("    Run bands.x to get eleband.dat and  eleband.dat.gnu")
             logger.debug("    eleband.dat.gnu can be used in origin to plot-eletronband")
-            inputfilename = self.qe_writeinput.writeinput(mode="elebanddata")
-            if self.eletron_inputpara.queue is not None:
-                self.qe_submitjob.submit_mode0(inputfilename, dotx_file="bands.x")
-            inputfilename = self.qe_writeinput.writeinput(mode="elebandprojdata")
-            if self.eletron_inputpara.queue is not None:
-                self.qe_submitjob.submit_mode0(inputfilename, dotx_file="projwfc.x")
-            self.get_fermi_energy()
-        elif self.eletron_inputpara.mode == "eledosdata": 
-            self.qe_writeinput = qe_writeinput(self.eletron_inputpara)
-            self.qe_submitjob  = qe_submitjob(self.eletron_inputpara)
-            self.qe_writesubmit = qe_writesubmit(self.eletron_inputpara)
-            logger.debug("!!!!!!!!!! Remember to run pw.x to get nscf.out before you run dos.x and projwfc.x") 
-            logger.debug("Run dos.x to get tdos and and run projwfc.x to get pdos")
-            inputfilename = self.qe_writeinput.writeinput(mode="eletdos")
-            if self.eletron_inputpara.queue is not None:
-                self.qe_submitjob.submit_mode0(inputfilename, dotx_file="dos.x")
-            inputfilename = self.qe_writeinput.writeinput(mode="elepdos")
-            if self.eletron_inputpara.queue is not None:
-                self.qe_submitjob.submit_mode0(inputfilename, dotx_file="projwfc.x")
-            self.get_fermi_energy()
-        elif self.eletron_inputpara.mode == "eleproperties":
-            self.qe_writeinput = qe_writeinput(self.eletron_inputpara)
-            self.qe_writesubmit = qe_writesubmit(self.eletron_inputpara)
             inputfilename1 = self.qe_writeinput.writeinput(mode="eleband")
             inputfilename2 = self.qe_writeinput.writeinput(mode="elebanddata")
-            inputfilename3 = self.qe_writeinput.writeinput(mode="nscf")
-            inputfilename4 = self.qe_writeinput.writeinput(mode="eletdos")
-            inputfilename5 = self.qe_writeinput.writeinput(mode="elepdos")
-            self.qe_submitjob  = qe_submitjob(self.eletron_inputpara)
-            jobname = self.qe_writesubmit.write_submit_scripts([inputfilename1, inputfilename2, inputfilename3, inputfilename4, inputfilename5])
+            inputfilename3 = self.qe_writeinput.writeinput(mode="elebandprojdata")
+            jobname = self.qe_writesubmit.write_submit_scripts(inpufilename=[inputfilename1, inputfilename2, inputfilename3])
+            if self.eletron_inputpara.queue is not None:
+                self.qe_submitjob.submit_mode1(inputfilename=inputfilename1, jobname=jobname)
+        elif self.eletron_inputpara.mode == "eledos": 
+            logger.debug("!!!!!!!!!! Remember to run pw.x to get nscf.out before you run dos.x and projwfc.x") 
+            logger.debug("Run dos.x to get tdos and and run projwfc.x to get pdos")
+            inputfilename1 = self.qe_writeinput.writeinput(mode="nscf")
+            inputfilename2 = self.qe_writeinput.writeinput(mode="eletdos")
+            inputfilename3 = self.qe_writeinput.writeinput(mode="elepdos")
+            jobname = self.qe_writesubmit.write_submit_scripts(inpufilename=[inputfilename1, inputfilename2, inputfilename3])
+            if self.eletron_inputpara.queue is not None:
+                self.qe_submitjob.submit_mode1(inputfilename=inputfilename1, jobname=jobname)
+            self.get_fermi_energy()
+        elif self.eletron_inputpara.mode == "eleproperties":
+            inputfilename1 = self.qe_writeinput.writeinput(mode="eleband")
+            inputfilename2 = self.qe_writeinput.writeinput(mode="elebanddata")
+            inputfilename3 = self.qe_writeinput.writeinput(mode="elebandprojdata")
+            inputfilename4 = self.qe_writeinput.writeinput(mode="nscf")
+            inputfilename5 = self.qe_writeinput.writeinput(mode="eletdos")
+            inputfilename6 = self.qe_writeinput.writeinput(mode="elepdos")
+            jobname = self.qe_writesubmit.write_submit_scripts([inputfilename1, inputfilename2, inputfilename3, inputfilename4, inputfilename6, inputfilename6])
             if self.eletron_inputpara.queue is not None:
                 self.qe_submitjob.submit_mode1(inputfilename1, jobname)
             self.get_fermi_energy()
         else:
-            self.qe_writeinput  = qe_writeinput(self.eletron_inputpara)
-            self.qe_writesubmit = qe_writesubmit(self.eletron_inputpara)
             # write input parameter
             inputfilename = self.qe_writeinput.writeinput()
             # init the submit job script

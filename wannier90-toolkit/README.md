@@ -6,15 +6,15 @@ wannier90按照Marzari和Vanderbilt (MV)的方法计算最大局部万尼尔函�
 
 ##  <span style="color:red">  用pw.x运行计算自洽（scf）和非自洽（nscf）
 
-自洽网格与非自洽网格可以不一致。但是非自洽网格与`Nb4H14.win`中网格必须一致。
+自洽网格与非自洽网格可以不一致。但是非自洽网格与`Ce1Sc2H24.win`中网格必须一致。
 
 非自洽计算时必须手动设置好以下参数：
-```shell
+```Fortran
 &control
  verbosity = 'high' #输出本征值     
 /
 &system
- nbnd = xxx #设定能带数
+ nbnd = xxx !设定能带数, 千万要注意，能带数一定要多一点. 比如CeSc2H24, 用41个num_wannier, 那么能带数一定要超过41
 /
 &electrons
  diago_full_acc = .true. #对角化
@@ -25,11 +25,88 @@ wannier90按照Marzari和Vanderbilt (MV)的方法计算最大局部万尼尔函�
 kmesh.pl 8 8 8  > kpoint 
 ```
 
-### <span style="color:yellow">  准备`Nb4H14.win`输入文件
+##  <span style="color:red">  准备Ce1Sc2H24.win输入文件
+
+```shell
+begin projections
+ Ce:f
+ Sc:d
+ H:s
+end projections
+exclude_bands = 1:29
+                                                                                
+begin unit_cell_cart
+Ang
+    5.2292802927    0.0000000000    0.0000000000
+   -2.6146401463    4.5286895771    0.0000000000
+    0.0000000000    0.0000000000    3.6396561976                                
+end unit_cell_cart
+
+begin atoms_frac
+Ce  0.000000000000  0.000000000000  0.000000000000
+Sc  0.666666666570  0.333333333141  0.500000000288
+Sc  0.333333333156  0.666666666513  0.500000000288
+H   0.237917437763  0.762082561912  0.000000000000
+H   0.524165124248  0.762082561912  0.000000000000
+H   0.762082562043  0.524165124285  0.000000000000
+H   0.237917437684  0.475834875369  0.000000000000
+H   0.762082562063  0.237917437742  0.000000000000
+H   0.475834875479  0.237917437742  0.000000000000
+H   0.000000000000  0.617417740465  0.217157425327
+H   0.617417740594  0.617417740465  0.217157425327
+H   0.000000000000  0.382582259189  0.217157425327
+H   0.382582259233  0.382582259189  0.217157425327
+H   0.382582259277  0.000000000000  0.217157425327
+H   0.617417740723  0.000000000000  0.217157425327
+H   0.773679796493  0.773679796343  0.500000000288
+H   0.226320203334  0.226320203310  0.500000000288
+H   0.773679796642  0.000000000000  0.500000000288
+H   0.226320203358  0.000000000000  0.500000000288
+H   0.000000000000  0.226320203310  0.500000000288
+H   0.000000000000  0.773679796343  0.500000000288
+H   0.382582259233  0.382582259189  0.782842575249
+H   0.000000000000  0.382582259189  0.782842575249
+H   0.000000000000  0.617417740465  0.782842575249
+H   0.382582259277  0.000000000000  0.782842575249
+H   0.617417740594  0.617417740465  0.782842575249
+H   0.617417740723  0.000000000000  0.782842575249
+end atoms_frac
+                    
+num_wann =  41
+iprint =   2
+dis_froz_min =     8.000000000000
+dis_froz_max =    32.620000000000
+num_iter =     500
+write_bvec = .true.
+
+bands_plot = .true.
+begin kpoint_path
+G  +0.0000 +0.0000 +0.0000 M  +0.5000 +0.0000 +0.0000
+M  +0.5000 +0.0000 +0.0000 K  +0.3333 +0.3333 +0.0000
+K  +0.3333 +0.3333 +0.0000 G  +0.0000 +0.0000 +0.0000
+G  +0.0000 +0.0000 +0.0000 A  +0.0000 +0.0000 +0.5000
+A  +0.0000 +0.0000 +0.5000 L  +0.5000 +0.0000 +0.5000
+L  +0.5000 +0.0000 +0.5000 H  +0.3333 +0.3333 +0.5000
+H  +0.3333 +0.3333 +0.5000 A  +0.0000 +0.0000 +0.5000
+end kpoint_path
+bands_plot_format = gnuplot
+num_bands = 50
+dis_num_iter = 1000
+write_hr = .true.
+
+mp_grid = 6 6 6
+begin kpoints
+   0.00000000  0.00000000  0.00000000 
+   0.50000000  0.00000000  0.00000000
+   ...
+   ...
+End Kpoints
+
+```
 
 
 相关参数设置的经验贴：
-1.  wannier90拟合能带能量窗口参数说明：https://blog.csdn.net/bubu789/article/details/119220576
+1. wannier90拟合能带能量窗口参数说明：https://blog.csdn.net/bubu789/article/details/119220576
 2. wannier90计算流程说明：https://zhuanlan.zhihu.com/p/381615718
 3. 分享一个确定Wannier90能量窗口的脚本: https://blog.sciencenet.cn/blog-2909108-1263724.html
 4. wannier90拟合能带能量窗口调节: https://zhuanlan.zhihu.com/p/541333688
@@ -92,7 +169,7 @@ mp_grid : 8 8 8
 ```
 
 ```shell
-# 下面是`Nb4H14.win`中的kpints例子
+# 下面是`Ce1Sc2H24.win`中的kpints例子
 begin kpoints
   0.00000000  0.00000000  0.00000000
   0.00000000  0.00000000  0.12500000
@@ -117,7 +194,7 @@ end kpoints
 
 那么具体到底怎么设置`dis_win_min`, `dis_win_max`和`dis_froz_min`, `dis_froz_max`这四个值呢？
 
-你可以同时打开`nscf.out`和`Nb4H14.win`。然后看着nscf.out中任意一个k点的能级，取大致估算你如何设置这四个窗口值。
+你可以同时打开`nscf.out`和`Ce1Sc2H24.win`。然后看着nscf.out中任意一个k点的能级，取大致估算你如何设置这四个窗口值。
 ```shell
           k = 0.8750 0.8750 0.5000 (  5670 PWs)   bands (ev):                  |
    -31.8058 -31.8046 -31.5983 -31.5972  -9.0731  -8.9430  -8.7745  -8.6940     |num_wann  = 34  
@@ -129,32 +206,32 @@ end kpoints
     32.0483  32.6754  33.5966  33.6699  36.4114  37.3127  37.5861  37.6481     |dis_win_max = 41 # eV
     39.1632  40.1968  40.3752  40.5535                                         |dis_froz_min = 15 # eV
                                                                                |dis_froz_max = 40 # eV
-# 我们已经通过scffit.out知道Nb4H14的费米能级在23.4468eV.所有必须确保费米能级在这其中。
+# 我们已经通过scffit.out知道Ce1Sc2H24的费米能级在23.4468eV.所有必须确保费米能级在这其中。
 # 所以以22eV为中心，上下各取num_wann/2数量的能带即可，不用严格1/2, 稍微有点误差也行。
 # 甚至你可以用60-34=26, 直接放弃最低能级的16条带。这很粗暴，一般情况奏效。
 # 一定要确保num_bands + exclude_bands = qe中的nbnd。
-# 检查Nb4H14.amn，确保其中的能带数等于Nb4H14.win中的num_bands
+# 检查Ce1Sc2H24.amn，确保其中的能带数等于Ce1Sc2H24.win中的num_bands
 ```
 
-### <span style="color:yellow">  执行`wannier90.x -pp Nb4H14`获得Nb4H14.nnkp
+## <span style="color:red">  执行`wannier90.x -pp Ce1Sc2H24`获得Ce1Sc2H24.nnkp
 
-执行这句话，wannier90.x会自动读取`Nb4H14.win`里面关于`num_wann`和`begin projections...end projections`的设置。
+执行这句话，wannier90.x会自动读取`Ce1Sc2H24.win`里面关于`num_wann`和`begin projections...end projections`的设置。
 
 **所以如果你想修改`num_wann`和`begin projections...end projections`重新计算wannier90的能带，必须从这一步开始执行。**
 
 `-pp`后面跟的是你自定义的prefix, 叫什么都可以，自己记着点就行。注意这个破程序`wannier90.x`不能并行。
 ```shell
-wannier90.x -pp Nb4H14
+wannier90.x -pp Ce1Sc2H24
 ```
 
-### <span style="color:yellow">  执行`pw2wannier90.x -pd .true. < pw2win.inp > pw2win.out`获得`Nb4H14.mmn`, `Nb4H14.eig`, `Nb4H14.amn`.
+### <span style="color:yellow">  执行` ~/software/qe-7.1/bin/pw2wannier90.x -pd .true. < Ce1Sc2H24.pw2wan.in > Ce1Sc2H24.pw2wan.out`获得`Ce1Sc2H24.mmn`, `Ce1Sc2H24.eig`, `Ce1Sc2H24.amn`.
 
 `pw2win.inp`的文件模板
 ```shell
 &inputpp
-  outdir     =  './' # 如果设置'./', 程序就会在当前目录下寻找Nb4H14.save这个目录下的波函数文件。如果设置'../', 程序就会在上级目录下寻找Nb4H14.save这个目录下的波函数文件。
-  prefix     =  'Nb4H14'       
-  seedname   =  'Nb4H14'
+  outdir     =  './' # 如果设置'./', 程序就会在当前目录下寻找Ce1Sc2H24.save这个目录下的波函数文件。如果设置'../', 程序就会在上级目录下寻找Ce1Sc2H24.save这个目录下的波函数文件。
+  prefix     =  'Ce1Sc2H24'       
+  seedname   =  'Ce1Sc2H24'
   write_amn  =  .true.
   write_mmn  =  .true.
 /
@@ -162,16 +239,16 @@ wannier90.x -pp Nb4H14
 
 
 
-1. `Nb4H14.mmn` 重叠矩阵
-2. `Nb4H14.amn` Bloch states 到一个局域轨道的投影
-3.  `Nb4H14.eig` 每一个k点的bloch本征态
+1. `Ce1Sc2H24.mmn` 重叠矩阵
+2. `Ce1Sc2H24.amn` Bloch states 到一个局域轨道的投影
+3.  `Ce1Sc2H24.eig` 每一个k点的bloch本征态
 
 注意这个破程序`pw2wannier90.x`竟然可以并行。但是在wannier.90的手册中提到`Note that, unless you specify wf_collect=.true. in your pw.x input file, you must run pw2wannier90 with the same number of processors as pw.x`
 ```shell
 pw2wannier90.x < pw2win.inp > pw2win.out
 ```
 
-### <span style="color:yellow">  执行`wannier90.x Nb4H14.win > wannier90.log 2>&1`开始拟合wannier90能带
+### <span style="color:yellow">  执行`wannier90.x Ce1Sc2H24.win > wannier90.log 2>&1`开始拟合wannier90能带
 
 `wannier90.x 可以并行但是要在编译的时候搞好了`
 ```shell
@@ -179,14 +256,14 @@ pw2wannier90.x < pw2win.inp > pw2win.out
 
 # To enable the parallel version to be built, you must specify some flags in the make.inc file of wannier90 and postw90; for further information, please refer to the README.install file in the top directory of the wannier90 distribution.
 
-wannier90.x Nb4H14.win > wannier90.log 2>&1
+wannier90.x Ce1Sc2H24.win > wannier90.log 2>&1
 ```
 
 ##  <span style="color:red">  Wannier90计算报错集锦
-### 1. 执行`wannier90.x -pp Nb4H14`报错`param_get_projection: Problem reading m state into string Error: examine the output/error file for details`
+### 1. 执行`wannier90.x -pp Ce1Sc2H24`报错`param_get_projection: Problem reading m state into string Error: examine the output/error file for details`
 
 可能发生报错的位置：
-1. `Nb4H14.win`里面`num_wann = 34`与`begin projections ... end projections`矛盾。比如下面的设置是合理的：
+1. `Ce1Sc2H24.win`里面`num_wann = 34`与`begin projections ... end projections`矛盾。比如下面的设置是合理的：
     ```shell
     num_wann  = 34  # 设置需要投影的Wannier轨道，4个Nb，每个Nb有5个d轨道，总共20个d轨道，14个H有14个s轨道，总共有34个轨道。所以需要设置num_wann轨道为34
 
@@ -202,14 +279,18 @@ wannier90.x Nb4H14.win > wannier90.log 2>&1
     ```
 2. 千万注意`dz2; dx2-y2; dxy; dyz; dxz`的`dxz`后面不要加`;`。加了一定报错。
 
-### 2.执行`wannier90.x Nb4H14.win > wannier90.log 2>&1`报错` dis_windows: More states in the frozen window than target WFs`
+### 2.执行`wannier90.x Ce1Sc2H24.win > wannier90.log 2>&1`报错` dis_windows: More states in the frozen window than target WFs`
 
 1. 报这个是因为你设置的`frozen_window`内的能带数超出了`num_wann`个数了。
 2. 如果你是按照我前面讲的设置`frozen_window`的方法设置的`dis_froz_min`, `dis_froz_max`。那么其实你不需要大动干戈，只需要一个eV一个eV的减小`dis_froz_max`或者增加`dis_froz_min`即可缩小冻结在窗口中的轨道数。
 
-### 3.执行`wannier90.x Nb4H14.win > wannier90.log 2>&1`报错`dis_windows: Energy window contains fewer states than number of target WFs`
+### 3.执行`wannier90.x Ce1Sc2H24.win > wannier90.log 2>&1`报错`dis_windows: Energy window contains fewer states than number of target WFs`
 
 1. 报这个是因为你设置的`dis_windows`内包含的态小于`num_wann`个数, 可以适当扩展`dis_win_min`和`dis_win_max`确定的能量范围。
 
-### 4. 执行`wannier90.x Nb4H14.win > wannier90.log 2>&1`报错`too many projections to be used without selecting a subset`
+### 4. 执行`wannier90.x Ce1Sc2H24.win > wannier90.log 2>&1`报错`too many projections to be used without selecting a subset`
+
+### 5. 执行`wannier90.x -pp Ce1Sc2H24` 
+报错 `Error: You must specify dimensions of the Monkhorst-Pack grid by setting mp_grid Error: examine the output/error file for details`
+
 

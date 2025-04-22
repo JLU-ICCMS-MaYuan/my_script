@@ -123,19 +123,12 @@ class qe_writesubmit:
             jobname = self.s678_processphono(self.qe_inputpara.work_path, inpufilename)
             return jobname
         
-        if mode =="eletdos":
-            jobname = self.s8_eletdos(self.qe_inputpara.work_path, inpufilename)
-            return jobname
-        if mode =="elepdos":
-            jobname = self.s8_elepdos(self.qe_inputpara.work_path, inpufilename)
+        if mode =="eledos":
+            jobname = self.s8_eledos(self.qe_inputpara.work_path, inpufilename)
             return jobname
         if mode =="eleband":
             jobname = self.s8_eleband(self.qe_inputpara.work_path, inpufilename)
             return jobname
-        if mode =="elebanddata":
-            jobname = self.s8_elebanddata(self.qe_inputpara.work_path, inpufilename)
-            return jobname
-
         if mode =="McAD":
             jobname = self.s9_lambda(self.qe_inputpara.work_path, inpufilename)
             return jobname
@@ -351,29 +344,32 @@ class qe_writesubmit:
             j.write('{} {}/matdyn.x -npool {} <{}> {} \n'.format(self.qe_inputpara.execmd, qebin_path, self.qe_inputpara.npool, _inpufilename, _outputfilename))
         return jobname
     
-    def s8_eletdos(self, _dirpath, inputfilename):
-        _inpufilename = inputfilename
-        _outputfilename = _inpufilename.split(".")[0] + ".out"
-        jobname = "s8_eletdos.sh"
+    def s8_eledos(self, _dirpath, inputfilenames):
+        _inpufilename   = inputfilenames
+        _outputfilename = [ipname.split(".")[0] + ".out" for ipname in _inpufilename]
+        input_output    = zip(_inpufilename, _outputfilename)
+        jobname = "s8_eledos.sh"
         _script_filepath = os.path.join(_dirpath, jobname)
         with open(_script_filepath, "w") as j:
             j.writelines(self.jobtitle)
-            j.write('{} {}/dos.x <{}> {}  \n'.format(self.qe_inputpara.execmd, qebin_path,  _inpufilename, _outputfilename))
+
+            nscf_in, nscf_out = input_output.__next__()
+            j.write('echo "nscf"\n')
+            j.write('{} {}/pw.x -npool {} <{}> {}  \n'.format(self.qe_inputpara.execmd, qebin_path, self.qe_inputpara.npool, nscf_in, nscf_out))
+            
+            eletdos_in, eletdos_out = input_output.__next__()
+            j.write('echo "eletdos"\n')
+            j.write('{} {}/dos.x -pd .true. <{}> {}  \n'.format(self.qe_inputpara.execmd, qebin_path,  eletdos_in, eletdos_out))
+            
+            elepdos_in, elepdos_out = input_output.__next__()
+            j.write('echo "elepdos"\n')
+            j.write('{} {}/projwfc.x -pd .true. <{}> {}  \n'.format(self.qe_inputpara.execmd, qebin_path,  elepdos_in, elepdos_out))
         return jobname
 
-    def s8_elepdos(self, _dirpath, inputfilename):
-        _inpufilename = inputfilename
-        _outputfilename = _inpufilename.split(".")[0] + ".out"
-        jobname = "s8_elepdos.sh"
-        _script_filepath = os.path.join(_dirpath, jobname)
-        with open(_script_filepath, "w") as j:
-            j.writelines(self.jobtitle)
-            j.write('{} {}/projwfc.x <{}> {}  \n'.format(self.qe_inputpara.execmd, qebin_path,  _inpufilename, _outputfilename))
-        return jobname
-
-    def s8_eleband(self, _dirpath, inputfilename):
-        _inpufilename = inputfilename
-        _outputfilename = _inpufilename.split(".")[0] + ".out"
+    def s8_eleband(self, _dirpath, inputfilenames):
+        _inpufilename   = inputfilenames
+        _outputfilename = [ipname.split(".")[0] + ".out" for ipname in _inpufilename]
+        input_output    = zip(_inpufilename, _outputfilename)
         jobname = "s8_eband.sh"
         _script_filepath = os.path.join(_dirpath, jobname)
         with open(_script_filepath, "w") as j:
@@ -382,17 +378,17 @@ class qe_writesubmit:
             j.writelines("cp {}    tmp/{}.save/    \n".format(Path(self.qe_inputpara.charge_density_dat).absolute(),   self.qe_inputpara.system_name))
             j.writelines("cp {}    tmp/{}.save/    \n".format(Path(self.qe_inputpara.data_file_schema_xml).absolute(), self.qe_inputpara.system_name))
             j.writelines("cp {}    tmp/{}.save/    \n".format(Path(self.qe_inputpara.paw_txt).absolute(),              self.qe_inputpara.system_name))
-            j.write('{} {}/pw.x -npool {} <{}> {}  \n'.format(self.qe_inputpara.execmd, qebin_path, self.qe_inputpara.npool, _inpufilename, _outputfilename))
-        return jobname
-
-    def s8_elebanddata(self, _dirpath, inputfilename):
-        _inpufilename = inputfilename
-        _outputfilename = _inpufilename.split(".")[0] + ".out"
-        jobname = "s8_elebanddata.sh"
-        _script_filepath = os.path.join(_dirpath, jobname)
-        with open(_script_filepath, "w") as j:
-            j.writelines(self.jobtitle)
-            j.write('{} {}/bands.x <{}> {}  \n'.format(self.qe_inputpara.execmd, qebin_path,  _inpufilename, _outputfilename))
+            eleband_in, eleband_out = input_output.__next__()
+            j.write('echo "eleband"\n')
+            j.write('{} {}/pw.x -npool {} <{}> {}  \n'.format(self.qe_inputpara.execmd, qebin_path, self.qe_inputpara.npool, eleband_in, eleband_out))
+            
+            elebanddata_in, elebanddata_out = input_output.__next__()
+            j.write('echo "elebanddata"\n')
+            j.write('{} {}/bands.x -pd .true. <{}> {}  \n'.format(self.qe_inputpara.execmd, qebin_path, elebanddata_in, elebanddata_out))
+            
+            elebandprojdata_in, elebandprojdata_out = input_output.__next__()
+            j.write('echo "elebandprojdata"\n')
+            j.write('{} {}/projwfc.x -pd .true. <{}> {}  \n'.format(self.qe_inputpara.execmd, qebin_path, elebandprojdata_in, elebandprojdata_out))
         return jobname
 
     def s8_phonodos(self, _dirpath, inputfilename):
@@ -582,17 +578,21 @@ class qe_writesubmit:
             # 先做能带计算 输入文件是 eleband.in
             eleband_in, eleband_out = input_output.__next__()
             j.write('echo "eleband"\n')
-            j.write('{} {}/pw.x <{}> {}  \n\n'.format(self.qe_inputpara.execmd, qebin_path, eleband_in, eleband_out))
+            j.write('{} {}/pw.x <{}> {}  \n\n'.format(self.qe_inputpara.execmd, qebin_path, self.qe_inputpara.npool, eleband_in, eleband_out))
             
             # 先做处理能带数据 输入文件是 elebanddata.in
             elebanddata_in, elebanddata_out = input_output.__next__()
             j.write('echo "elebanddata"\n')
-            j.write('{}/bands.x <{}> {}  \n\n'.format(qebin_path, elebanddata_in, elebanddata_out))
+            j.write('{} {}/bands.x -pd .true. <{}> {}  \n\n'.format(self.qe_inputpara.execmd, qebin_path, elebanddata_in, elebanddata_out))
+            
+            elebandprojdata_in, elebandprojdata_out = input_output.__next__()
+            j.write('echo "elebandprojdata"\n')
+            j.write('{} {}/projwfc.x      <{}> {}  \n'.format(self.qe_inputpara.execmd, qebin_path, elebandprojdata_in, elebandprojdata_out))
 
             # 再做非自洽计算
             nscf_in, nscf_out = input_output.__next__()
             j.write('echo "nscf"\n')
-            j.write('{} {}/pw.x <{}> {} \n\n'.format(self.qe_inputpara.execmd, qebin_path, nscf_in, nscf_out))
+            j.write('{} {}/pw.x -npool {} <{}> {} \n\n'.format(self.qe_inputpara.execmd, qebin_path, nscf_in, nscf_out))
         
             # 再做总dos计算TDOS
             eletdos_in, eletdos_out = input_output.__next__()
