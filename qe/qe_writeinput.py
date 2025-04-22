@@ -384,6 +384,7 @@ class qe_writeinput:
             qe.write("&ELECTRONS\n")
             qe.write(" conv_thr = 1.0d-12,             \n")
             qe.write(" diagonalization = '{}'          \n".format(self.qe_inputpara.diagonalization))
+            qe.write(" diago_full_acc = .true.         \n")
             qe.write(" mixing_mode = 'plain',          \n")
             qe.write(" mixing_beta = 0.8d0,            \n")
             qe.write("/\n")
@@ -1134,6 +1135,7 @@ class qe_writeinput:
             for idx, path_name_coord in enumerate(self.qe_inputpara.path_name_coords_for_EPW):
                 epw.write(f" wdata({idx+3})    = '{path_name_coord}'\n")
             epw.write(f" wdata({idx+4})    = 'end kpoint_path'\n")
+            epw.write("/                           \n")      
         return inputfilename
 
     def write_epw_elph_in():
