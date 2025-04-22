@@ -171,7 +171,8 @@ def plot_energy_comparison(DFTenergies, MLPenergies):
     
     # 添加对角线（淡灰色）
     max_energy = max(max(DFTenergies), max(MLPenergies))
-    plt.plot([0, max_energy], [0, max_energy], color='red', linestyle='--', alpha=0.5)
+    min_energy = min(min(DFTenergies), min(MLPenergies))
+    plt.plot([min_energy, max_energy], [min_energy, max_energy], color='red', linestyle='--', alpha=0.5)
     
     plt.grid(True)
     plt.savefig('energy_comparison.png')  # 保存图像
