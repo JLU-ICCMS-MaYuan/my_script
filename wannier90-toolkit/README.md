@@ -290,7 +290,8 @@ wannier90.x Ce1Sc2H24.win > wannier90.log 2>&1
 
 ### 4. 执行`wannier90.x Ce1Sc2H24.win > wannier90.log 2>&1`报错`too many projections to be used without selecting a subset`
 
-### 5. 执行`wannier90.x -pp Ce1Sc2H24` 
-报错 `Error: You must specify dimensions of the Monkhorst-Pack grid by setting mp_grid Error: examine the output/error file for details`
+### 5. 执行`wannier90.x -pp Ce1Sc2H24`  报错 `Error: You must specify dimensions of the Monkhorst-Pack grid by setting mp_grid Error: examine the output/error file for details`
+这明显就是没有设置mp_grid
 
-
+### 6. 执行`wannier90.x < Ce1Sc2H24.win > Ce1Sc2H24.wout` 报错 `param_read: mismatch in Ce1Sc2H24.eig Error: examine the output/error file for details`  
+这明显就是
