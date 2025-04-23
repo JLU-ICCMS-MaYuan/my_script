@@ -416,32 +416,7 @@ class qe_batch:
             if self.batch_inputpara.queue is not None:
                 self.qe_submitjob.submit_mode1(inputfilename1, jobname)
 
-
-class qe_epw:
-
-    def __init__(self, args: ArgumentParser) -> None:
-
-        # read input para
-        self._config = config(args).read_config()
-
-        # prepare input parameter
-        self.epw_inputpara = qeepw_inputpara.init_from_config(self._config)
-
-        #  # init the input
-        self.epw_writeinput = qe_writeinput(self.epw_inputpara)
-        inputfilename = self.epw_writeinput.writeinput()
-        logger.info(inputfilename)
-        
-        # init the submit job script
-        self.qe_writesubmit = qe_writesubmit(self.epw_inputpara)
-        jobname = self.qe_writesubmit.write_submit_scripts(inputfilename)
-
-        # submit the job
-        self.qe_submitjob = qe_submitjob(self.epw_inputpara)
-        if self.epw_inputpara.queue is not None:
-            self.qe_submitjob.submit_mode1(inputfilename, jobname)
-     
-            
+         
 class qe_sctk:
     
     def __init__(self, args: ArgumentParser) -> None:

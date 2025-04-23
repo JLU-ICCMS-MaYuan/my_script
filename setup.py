@@ -21,10 +21,10 @@ setup(
     version="2.0",
     author="madegan",
     author_email="myth620137018@163.com",
-    description="一个计算qe vasp 和产生结构的小软件",
+    description="一个计算qe vasp epw 和产生结构的小软件",
     url="https://gitee.com/mayuan_JLUPHY/my_script",
     packages=["qe", "vasp", "structuregenerator"],
-    long_description="这个库有三个主要的功能, qe声子超导计算, vasp声子计算, 产生结构",
+    long_description="这个库有4个主要的功能, qe声子超导计算, vasp声子计算, 产生结构, epw计算",
     classifiers=[
         'Development Status :: 1 - Alpha',
         'Intended Audience :: everybudy',
@@ -36,6 +36,6 @@ setup(
         'Programming Language :: Python :: 3.10',
     ],
     install_requires=parse_requirements(),
-    scripts=['qe/qe_main.py', 'vasp/vasp_main.py', 'structuregenerator/generator_main.py'],
+    scripts=['qe/qe_main.py', 'vasp/vasp_main.py', 'structuregenerator/generator_main.py', 'epw/epw_main.py'],
     python_requires='>=3',
 )

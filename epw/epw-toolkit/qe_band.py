@@ -1,15 +1,16 @@
+#!/usr/bin/env python3
+
 import argparse
 import os
-import shutil
+
 import sys
 import subprocess
 import re
 import math
 import numpy as np
 import xml.etree.ElementTree as ET  
-from qe_opt import extract_qe_input
-from qe_phonon import convert_vasp_kpath_to_qe, qe2vasp
 
+from ase.io import read
 
 def generate_band_input(data, total_electrons, num_kpoints):
     print("Generate band.in ...")
@@ -272,7 +273,7 @@ def extract_fermi(prefix):
 #extract band energy from band.out file
 def extract_band_energy(file_name):
     hartree2ev=27.211407953
-    file_name = os.path.join(f"{prefix}.save","data-file-schema.xml")
+    file_name = os.path.join("tmp", f"{prefix}.save","data-file-schema.xml")
     tree = ET.parse(file_name)
     root = tree.getroot()  
   
@@ -295,24 +296,28 @@ def extract_orbital(file_name):
     atom_index = []
     with open(file_name,'r') as file:
         ischar = False
-        next(file)
+        next(file) # 跳过第一行（可能是标题或注释）
+        # 获取元素符号--------------------------------------------------------
         for line in file:
             if line.strip().split()[1].isalpha():
                 ischar = True
                 atom_index.append(line.strip().split()[1])
             elif not any(char.isalpha() for char in line) and ischar:
                 break
+        #--------------------------------------------------------
         
+        #获取投影轨道信息 k点信息 带信息
         for line in file:
             if len(line.strip().split()) == 3:
                 parts = line.strip().split()
                 break
-        
         num_proj = int(parts[0])
         num_kpoints = int(parts[1])
         num_bands = int(parts[2])
         next(file)
-
+        #--------------------------------------------------------
+        
+        
         projwfc = np.zeros((num_proj,num_kpoints,num_bands))
         index = None
         symbol = None
@@ -326,14 +331,15 @@ def extract_orbital(file_name):
         for i in range(num_proj):
             line = file.readline()
             parts = line.strip().split()
+            # input(f"parts:{parts}")
             if not index and not symbol and not proj:
-                index = parts[1]
+                index  = parts[1]
                 symbol = parts[2]
-                proj = parts[3]
+                proj   = parts[3]
             else:
-                index_next = parts[1]
+                index_next  = parts[1]
                 symbol_next = parts[2]
-                proj_next = parts[3]
+                proj_next   = parts[3]
             if not index_next and not symbol_next and not proj_next:
                 initial = 0
                 index_list.append(index)
@@ -357,17 +363,25 @@ def extract_orbital(file_name):
                 for j in range(num_kpoints):
                     for k in range(num_bands):
                         projwfc[initial][j][k] += float(file.readline().strip().split()[2])
-        
+    
+    # print(len(proj_list))
+    # print(len(projwfc), len(projwfc[0]), len(projwfc[0][0]))
     return index_list, symbol_list, proj_list, projwfc
 
 
 if __name__ == "__main__" :
     parser = argparse.ArgumentParser(description='Generate qe band input file.')  
-    parser.add_argument('--num_kpoints', type=int, default = 50, help='number of kpoints between high symmetry path.')
-    parser.add_argument('--pw_cmd', type=str, default='mpirun -np 20 pw.x -nk 4',help='parallel run command for pw.x run.')
+    parser.add_argument('--num-kpoints', type=int, default = 50, help='number of kpoints between high symmetry path.')
+    parser.add_argument('--pw-cmd', type=str, default='mpirun -np 20 pw.x -nk 4',help='parallel run command for pw.x run.')
+    parser.add_argument('--prefix', type=str, default='',help='prefix of qe calculation.')
+    parser.add_argument('--inputfile', type=str, default='',help='input file of qe calculation.')
 
     args = parser.parse_args()  
 
+    num_kpoints = args.num_kpoints
+    prefix = args.prefix
+    inputfile = args.inputfile
+    
     # if os.path.exists("qe_opt"):
     #     if os.path.exists("qe_opt/scf.in"):
     #         pass
@@ -391,27 +405,28 @@ if __name__ == "__main__" :
     #     shutil.copy(file_name,'./band')
     # shutil.copy("qe_opt/scf.in","./band")
 
-    os.chdir("band")
+    # os.chdir("band")
     #extract qe data
-    shutil.copy("../phonon/scf.in","./")   
-    qe_input=extract_qe_input("scf.in")
+    # shutil.copy("../phonon/scf.in","./")   
+    # qe_input=extract_qe_input("scf.in")
 
     #generate POSCAR which will used in VASPKIT to generate high symmetry path
-    qe2vasp(qe_input)
-
+    # qe2vasp(qe_input)
+    atoms = read(inputfile)
     #generate high symmetry path
     vaspkit_commands = '3\n303\n'
     subprocess.run(['vaspkit'], input=vaspkit_commands, text=True)
-
-    prefix = qe_input['CONTROL']['prefix'].strip("'")
-    atomic_positions = []
-    for position in qe_input['ATOMIC_POSITIONS']['positions']:
-        element = position['element']
-        coordinates = " ".join(position['coordinates'])
-        atomic_positions.append(f"{coordinates}")
-    #calculate total electron in this system
-    pseudopotentials_directory = "/home/qianwang/workplace/pseudopotential/nc-sr-05_pbe_standard_upf"
-    total_electrons = calculate_total_electrons(qe_input, pseudopotentials_directory)
+    atomic_positions = atoms.get_positions()
+    print(atomic_positions)
+    # prefix = qe_input['CONTROL']['prefix'].strip("'")
+    # atomic_positions = []
+    # for position in qe_input['ATOMIC_POSITIONS']['positions']:
+    #     element = position['element']
+    #     coordinates = " ".join(position['coordinates'])
+    #     atomic_positions.append(f"{coordinates}")
+    # #calculate total electron in this system
+    # pseudopotentials_directory = "/home/qianwang/workplace/pseudopotential/nc-sr-05_pbe_standard_upf"
+    # total_electrons = calculate_total_electrons(qe_input, pseudopotentials_directory)
 
     # #generate files which band calculation used.
     # generate_band_input(qe_input, total_electrons, args.num_kpoints)
@@ -450,15 +465,19 @@ if __name__ == "__main__" :
     band_energy_min = min(min(row) for row in band_energy) -efermi
 
     #extract KPATH.in label and kpoints number
-    label, nkpoints = extract_label("KPATH.in",args.num_kpoints)
-
+    label, nkpoints = extract_label("KPATH.in", num_kpoints)
+    print(label, nkpoints)
     #extract projection orbital
     #projband is the weight for each atoms' orbital
     #projband is a three dimensional array, means: projband[angular number][kpoint][band]
     #It should used with atom_symbol and orbital_symbol
-    atom_index, atom_symbol, orbital_symbol, projband = extract_orbital("fatband.projwfc_up")
-
-    #write band energy and projection band file
+    atom_index, atom_symbol, orbital_symbol, projband = extract_orbital("elebandprojdata.projwfc_up")
+    # input(f"atom_index:{atom_index}")
+    # input(f"atom_symbol:{atom_symbol}")
+    # input(f"orbital_symbol:{orbital_symbol}")
+    # input(f"projband:{projband}")
+    
+    print("write band energy and projection band file")
     with open('projband.dat','w') as file:
         for i in range(len(atom_symbol) ):
             file.write(atom_symbol[i])
@@ -484,7 +503,7 @@ if __name__ == "__main__" :
                         projector_atom_index.append(atom_index[i])
                         projector_atom_symbol.append(atom_symbol[i])
                         projector_orbital.append(orbital_symbol[i])
-                        file.write(f"{atom_index[i]} : {atom_symbol[i]} : f={','.join(atomic_positions[int(atom_index[i])-1].strip().split())} : {orbital_symbol[i][1].lower()}\n")
+                        file.write(f"{atom_index[i]} : {atom_symbol[i]} : f={','.join(f'{position:.9f}' for position in atomic_positions[int(atom_index[i])-1])} : {orbital_symbol[i][1].lower()}\n")
                         flag = True
                         break
                 if flag:
@@ -570,7 +589,7 @@ if __name__ == "__main__" :
 pp=postproc(wkdir)
 for task in run_task:
     if task==1: #'band_read':
-        pp.band_read(Ef=Ef,bandfile='band.out')
+        pp.band_read(Ef=Ef,bandfile='eleband.out')
     elif task==2: #'band_plot':
         pp.band_plot(kdiv=kdiv,klabel=klabel,Ebound=Ebound)
     elif task==3: #'fatband_read':

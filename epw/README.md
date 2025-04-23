@@ -377,3 +377,8 @@ etf_mem = 3 is used for transport calculations with ultra dense fine momentum gr
 
 然后设置`max_memlt = 8`可以增大每个pool分配的内存。
 
+### <span style="color:lightgreen"> 9. Error: dis_spheres_first_wann is larger than num_bands-num_wann+1 Error: examine the output/error file for details
+
+这是由于在计算wannier的时候设置的frozen窗口里面的能带数大于实即体系中的能带数，应该好好仔细检查你的nscf.in自洽是不是包含了足够多的nbnd。
+比如：我的体系中CeSc2H24需要对41个wannier轨道进行投影，但是我在nscf.in中实际只用默认的nbnd计算了35个能带。需要重新计算nscf并设置nbnd=100
+

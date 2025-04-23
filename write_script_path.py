@@ -10,7 +10,7 @@ scripts_names = [
 
     'deepkit-dpgen-toolkit',
     'elk-toolkit',
-    'epw-toolkit',
+    'epw/epw-toolkit',
     'lammps-toolkit',
 
     'mytoolkit/convexhull', 

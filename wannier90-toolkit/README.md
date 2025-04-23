@@ -2,7 +2,7 @@
 
 wannier90按照Marzari和Vanderbilt (MV)的方法计算最大局部万尼尔函数maximally-localised Wannier functions (MLWF)
 
-##  <span style="color:red">  Wannier90拟合能带的基本流程
+**<font size="5">Wannier90拟合能带基本流程</font>**
 
 ##  <span style="color:red">  用pw.x运行计算自洽（scf）和非自洽（nscf）
 
@@ -27,7 +27,7 @@ kmesh.pl 8 8 8  > kpoint
 
 ##  <span style="color:red">  准备Ce1Sc2H24.win输入文件
 
-```shell
+```Fortran
 begin projections
  Ce:f
  Sc:d
@@ -90,8 +90,10 @@ L  +0.5000 +0.0000 +0.5000 H  +0.3333 +0.3333 +0.5000
 H  +0.3333 +0.3333 +0.5000 A  +0.0000 +0.0000 +0.5000
 end kpoint_path
 bands_plot_format = gnuplot
-num_bands = 50
-dis_num_iter = 1000
+num_bands = 50   ! num_bands = nbnd - exclude_bands
+dis_num_iter = 200 ! 这个参数非常不建议弄太大，最多500.
+                   ! 因为如果你的解纠缠窗口设置的不合理，同时dis_num_iter又迭代了很多步
+                   ! 会导致wannier函数在实空间中收敛到很奇怪的地方，或者插值得到的能带你和的很差
 write_hr = .true.
 
 mp_grid = 6 6 6
@@ -105,7 +107,7 @@ End Kpoints
 ```
 
 
-相关参数设置的经验贴：
+###  <span style="color:yellow"> 相关参数设置的经验贴：
 1. wannier90拟合能带能量窗口参数说明：https://blog.csdn.net/bubu789/article/details/119220576
 2. wannier90计算流程说明：https://zhuanlan.zhihu.com/p/381615718
 3. 分享一个确定Wannier90能量窗口的脚本: https://blog.sciencenet.cn/blog-2909108-1263724.html
@@ -190,6 +192,12 @@ end kpoints
 
 `frozen_window`由`dis_froz_min`, `dis_froz_max`控制，在这两个值范围限制的能量范围内，设定为num_wann对应能带的能量范围，两端留些余量。
 
+**冻结窗口要满足如下要求：**
+
+**1. 窗口内所有能带，只能包含来自投影轨道的能带，不能包含其它能带（即只能含有来自Fe-d和Ge-p权重的能带，不能有来自其它的较大权重的能带，但不必包含所有投影轨道能带）。**
+  
+**2. 尽可能大。**
+
 关于什么情况下需要解纠缠？简单来说：只有在拟合完整的半导体或绝缘体价带时，才不需要解纠缠。对于半导体的导带或金属能带，很难找到一组和其它能带完全分离的能带。这种情况下就需要解纠缠。具体看帖子：https://blog.csdn.net/bubu789/article/details/119220576
 
 那么具体到底怎么设置`dis_win_min`, `dis_win_max`和`dis_froz_min`, `dis_froz_max`这四个值呢？
@@ -211,6 +219,15 @@ end kpoints
 # 甚至你可以用60-34=26, 直接放弃最低能级的16条带。这很粗暴，一般情况奏效。
 # 一定要确保num_bands + exclude_bands = qe中的nbnd。
 # 检查Ce1Sc2H24.amn，确保其中的能带数等于Ce1Sc2H24.win中的num_bands
+```
+
+可以通过脚本engwin.py来获得`dis_win_min`, `dis_win_max`和`dis_froz_min`, `dis_froz_max`这四个值。
+```shell
+# e 13的意思是获得第13条能带的展宽的范围, 单位是eV
+python engwin.py tmp/Ce1Sc2H24.xml e 13 
+
+# n -2 0 的意思是在-2~0的范围内，各个k点有多少条能带。
+python engwin.py tmp/Ce1Sc2H24.xml n -2 0
 ```
 
 ## <span style="color:red">  执行`wannier90.x -pp Ce1Sc2H24`获得Ce1Sc2H24.nnkp
@@ -294,4 +311,20 @@ wannier90.x Ce1Sc2H24.win > wannier90.log 2>&1
 这明显就是没有设置mp_grid
 
 ### 6. 执行`wannier90.x < Ce1Sc2H24.win > Ce1Sc2H24.wout` 报错 `param_read: mismatch in Ce1Sc2H24.eig Error: examine the output/error file for details`  
-这明显就是
+
+首先明白 Ce1Sc2H24.eig 的数据都有什么物理意义
+```shell
+    1     1   -1.692913859399 # 这是第1个k点的88条带
+    ...
+    88    1   49.516709760173
+    1     2   -0.883375507281 # 这是第2个k点的88条带
+    ...
+    88    2   51.259917865481
+    ...
+    ...
+    1   216    0.275993620673 # 这是第216个k点的88条带. 这是因为在6x6x6的k网格下总共有216个k点
+    88  216   50.551873581574
+```
+由此可以明白，wannier90取出来88条带用作wannier投影计算。所以在`Ce1Sc2H24.win`中的`num_bands = 88`才是合理的。
+也就是说num_bands的合理的设置方法是：`nbnd - exclude_bands = num_bands`, 
+其中`nbnd`是qe的输出文件中的nbnd, `exclude_bands`是`Ce1Sc2H24.win`中的exclude_bands。
