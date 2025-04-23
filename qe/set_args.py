@@ -201,18 +201,6 @@ def set_more_args(parser: ArgumentParser):
     parser_prepare.set_defaults(qe_workflow=qe_batch)
 
 
-    # EPW计算
-    parser_epw = subparsers.add_parser("epw", formatter_class=RawTextHelpFormatter)
-    parser_epw.add_argument(
-        '-m',
-        '--more-argments-about-epw',
-        type=str,
-        dest='more_args',
-        nargs='+',
-        help="输入更多关于epw的参数\n"
-    )
-    parser_epw.set_defaults(qe_workflow=qe_epw)
-    
     # SCTK计算
     parser_sctk = subparsers.add_parser("sctk", formatter_class=RawTextHelpFormatter)
     parser_sctk.add_argument(

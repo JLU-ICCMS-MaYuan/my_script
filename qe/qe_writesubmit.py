@@ -129,6 +129,9 @@ class qe_writesubmit:
         if mode =="eleband":
             jobname = self.s8_eleband(self.qe_inputpara.work_path, inpufilename)
             return jobname
+        if mode =="eleproperties":
+            jobname = self.s11_eleproperties(self.qe_inputpara.work_path, inpufilename)
+            return jobname
         if mode =="McAD":
             jobname = self.s9_lambda(self.qe_inputpara.work_path, inpufilename)
             return jobname
@@ -161,21 +164,6 @@ class qe_writesubmit:
             jobname = self.a7_sctk_all(self.qe_inputpara.work_path, inpufilename)
             return jobname
         
-        if mode =="eleproperties":
-            jobname = self.s11_eleproperties(self.qe_inputpara.work_path, inpufilename)
-            return jobname
-        if mode == "epw_energyband":
-            jobname = self.j1_epw_energyband(self.qe_inputpara.work_path, inpufilename)
-            return jobname
-        if mode == "epw_phono":
-            jobname = self.j2_epw_phono(self.qe_inputpara.work_path, inpufilename)
-            return jobname
-        if mode == "epw_elph":
-            jobname = self.j3_epw_elph(self.qe_inputpara.work_path, inpufilename)
-            return jobname
-        if mode == "epw_aniso_sc":
-            jobname = self.j4_epw_aniso_sc(self.qe_inputpara.work_path, inpufilename)
-            return jobname
 
 
     #  job scripts
@@ -607,40 +595,7 @@ class qe_writesubmit:
             j.write('{} {}/projwfc.x -pd .true. <{}> {}  \n\n'.format(self.qe_inputpara.execmd, qebin_path, elepdos_in, elepdos_out))
 
         return jobname
-    
-    def j1_epw_energyband(self,  _dirpath, inputfilename):
-        _inpufilename = inputfilename
-        _outputfilename = _inpufilename.split(".")[0] + ".out"
-        jobname = "j1_epw_energyband.sh"
-        _script_filepath = os.path.join(_dirpath, jobname)
-        with open(_script_filepath, "w") as j:
-            j.writelines(self.jobtitle)
-            j.write('{} {}/epw.x -npool {} <{}> {}  \n'.format(self.qe_inputpara.execmd, epwbin_path, self.qe_inputpara.npool, _inpufilename, _outputfilename))
-        return jobname
 
-
-    def j2_epw_phono(self,  _dirpath, inputfilename):
-        _inpufilename = inputfilename
-        _outputfilename = _inpufilename.split(".")[0] + ".out"
-        jobname = "j2_epw_phono.sh"
-        _script_filepath = os.path.join(_dirpath, jobname)
-        with open(_script_filepath, "w") as j:
-            j.writelines(self.jobtitle)
-            j.write('{} {}/epw.x -npool {} <{}> {}  \n'.format(self.qe_inputpara.execmd, epwbin_path, self.qe_inputpara.npool, _inpufilename, _outputfilename))
-        return jobname
-
-    def j3_epw_elph(self,  _dirpath, inputfilename):
-        _inpufilename = inputfilename
-        _outputfilename = _inpufilename.split(".")[0] + ".out"
-        jobname = "j3_epw_elph.sh"
-        _script_filepath = os.path.join(_dirpath, jobname)
-        with open(_script_filepath, "w") as j:
-            j.writelines(self.jobtitle)
-            j.write('{} {}/epw.x -npool {} <{}> {}  \n'.format(self.qe_inputpara.execmd, epwbin_path, self.qe_inputpara.npool, _inpufilename, _outputfilename))
-        return jobname
-
-
-    def j4_epw_aniso_sc(self,  _dirpath, inputfilename):
         _inpufilename = inputfilename
         _outputfilename = _inpufilename.split(".")[0] + ".out"
         jobname = "j4_epw_aniso_sc.sh"
