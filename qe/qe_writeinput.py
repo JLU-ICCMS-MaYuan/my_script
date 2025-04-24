@@ -715,10 +715,12 @@ class qe_writeinput:
                     qe.write("  trans={},                                \n".format(self.qe_inputpara.trans))
                     qe.write("  elph_nbnd_min = {}                       \n".format(self.qe_inputpara.elph_nbnd_min))
                     qe.write("  elph_nbnd_max = {}                       \n".format(self.qe_inputpara.elph_nbnd_max))
-                    qe.write("  nk1={},nk2={},nk3={},                    \n".format(self.qe_inputpara.kpoints_sparse[0], self.qe_inputpara.kpoints_sparse[1], self.qe_inputpara.kpoints_sparse[2]))                 
+                    qe.write("  nk1={},nk2={},nk3={},                    \n".format(self.qe_inputpara.kpoints_sparse[0], self.qe_inputpara.kpoints_sparse[1], self.qe_inputpara.kpoints_sparse[2]))     
+                    qe.write("/                                          \n")            
                     qe.write(" {:<30} {:<30} {:<30}                      \n".format(q3[0], q3[1], q3[2]))
                 else: # 这里代表只计算声子，不算电声耦合
-                    qe.write("  nk1={},nk2={},nk3={},                    \n".format(self.qe_inputpara.kpoints_sparse[0], self.qe_inputpara.kpoints_sparse[1], self.qe_inputpara.kpoints_sparse[2]))                 
+                    qe.write("  nk1={},nk2={},nk3={},                    \n".format(self.qe_inputpara.kpoints_sparse[0], self.qe_inputpara.kpoints_sparse[1], self.qe_inputpara.kpoints_sparse[2]))
+                    qe.write("/                                          \n")                 
                     qe.write(" {:<30} {:<30} {:<30}                      \n".format(q3[0], q3[1], q3[2]))
             else: # 这里代表不使用SCTK的代码计算声子
                 if self.qe_inputpara.EPC_flag == True:
@@ -726,10 +728,12 @@ class qe_writeinput:
                     qe.write("  el_ph_sigma={},                          \n".format(str(self.qe_inputpara.el_ph_sigma)))                
                     qe.write("  el_ph_nsigma={},                         \n".format(str(self.qe_inputpara.el_ph_nsigma)))
                     qe.write("  trans={},                                \n".format(self.qe_inputpara.trans))
+                    qe.write("/                                          \n")
                     qe.write(" {:<30} {:<30} {:<30}                      \n".format(q3[0], q3[1], q3[2]))
                 else:
+                    qe.write("/                                          \n")
                     qe.write(" {:<30} {:<30} {:<30}                      \n".format(q3[0], q3[1], q3[2]))
-            qe.write("/                                                  \n")
+            
 
         return inputfilename
 
