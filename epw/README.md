@@ -299,7 +299,7 @@ In this case *.ephmat, *.freq, *.egnv, and *.ikmap files are not required.
 
 这个错是卡在计算完所有的不可以q点之后，Bloch2wane之前。
 
-我推测是因为epw.in没有完整跑完了， crystal.fmt应该是在epw.in没有完整跑完后生成的文件，
+我推测是因为epw.in没有完整跑完了， crystal.fmt应该是在epw.in没有完整跑完后生成的文件，    
 所以如果用`epwwrite    = .false.,  epwread     = .true.`续算的话，需要读取这个文件又找不到只能报错。
 所以说，不能续算。
 
@@ -382,3 +382,4 @@ etf_mem = 3 is used for transport calculations with ultra dense fine momentum gr
 这是由于在计算wannier的时候设置的frozen窗口里面的能带数大于实即体系中的能带数，应该好好仔细检查你的nscf.in自洽是不是包含了足够多的nbnd。
 比如：我的体系中CeSc2H24需要对41个wannier轨道进行投影，但是我在nscf.in中实际只用默认的nbnd计算了35个能带。需要重新计算nscf并设置nbnd=100
 
+### <span style="color:lightgreen"> 10. Error in routine elphon_shuffle_wrap (1): Error allocating epmatq

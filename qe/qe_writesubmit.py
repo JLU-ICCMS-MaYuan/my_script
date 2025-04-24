@@ -595,12 +595,3 @@ class qe_writesubmit:
             j.write('{} {}/projwfc.x -pd .true. <{}> {}  \n\n'.format(self.qe_inputpara.execmd, qebin_path, elepdos_in, elepdos_out))
 
         return jobname
-
-        _inpufilename = inputfilename
-        _outputfilename = _inpufilename.split(".")[0] + ".out"
-        jobname = "j4_epw_aniso_sc.sh"
-        _script_filepath = os.path.join(_dirpath, jobname)
-        with open(_script_filepath, "w") as j:
-            j.writelines(self.jobtitle)
-            j.write('{} {}/epw.x -npool {} <{}> {}  \n'.format(self.qe_inputpara.execmd, epwbin_path, self.qe_inputpara.npool, _inpufilename, _outputfilename))
-        return jobname

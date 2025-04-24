@@ -105,8 +105,8 @@ class epw_writeinput:
             epw.write(" wdata(1)    = 'bands_plot = .true.'\n")
             epw.write(" wdata(2)    = 'begin kpoint_path'\n")
             for idx, path_name_coord in enumerate(self.epw_inputpara.path_name_coords_for_EPW):
-                epw.write(f" wdata({idx+3})    = '{path_name_coord}'\n")
-            epw.write(f" wdata({idx+4})    = 'end kpoint_path'\n")
+                epw.write(f" wdata({idx+3}) = '{path_name_coord}'\n")
+            epw.write(f" wdata({idx+4})     = 'end kpoint_path'\n")
             epw.write("/                           \n")      
         return inputfilename
 
