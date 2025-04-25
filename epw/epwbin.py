@@ -6,7 +6,7 @@ eliashberg_x_path = "/home/mayuan/code/my_script/qe/eliashberg/eliashberg.x"
 vaspstd_path = "/home/mayuan/soft/vasp.6.3.2/bin/vasp_std"
 vaspgam_path = "/home/mayuan/soft/vasp.6.3.2/bin/vasp_gam"
 
-potcar_source_libs = "/home/mayuan/pot/potpaw_PBE54"
+potcar_source_libs = "/home/mayuan/pot/vasp_pot/potpaw_PBE54"
 
 
 bashtitle = '''#!/bin/sh   
@@ -44,17 +44,16 @@ cd $PBS_O_WORKDIR
 #killall -9 pw.x ph.x
 '''
 
-lsftitle = '''
-#!/bin/sh
-# BSUB -J myjob
-# BSUB -o myjob.out
-# BSUB -e myjob.err
-# BSUB -q normal
-# BSUB -n 48
-# BSUB -R "span[ptile=48]"
-# BSUB -R "select[ngpus=1]"
+lsftitle = '''#!/bin/bash
+#BSUB -n 56
+#BSUB -q normal
+#BSUB -J myjob
+#BSUB -R 'span[ptile=56]'
+#BSUB -o operation.log
 
-source /home/mayuan/intel/oneapi/setvars.sh
+source /data/env/inteloneapi2021
+ulimit -s unlimited        
+
 '''
 
 if __name__ == "__main__":

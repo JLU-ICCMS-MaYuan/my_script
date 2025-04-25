@@ -42,18 +42,27 @@ class epw_inputpara(epw_base):
             self.queue = None
             logger.debug(f'queue = {self.queue}\n')
         
+        if not hasattr(self, "mode"):
+            logger.error("You must specify mode, such as 'epw_eband', 'epw_phono', 'epw_elph', 'epw_aniso_sc'")
+            sys.exit(1)
+            
         self.path_name_coords_for_EPW = self.get_hspp_for_EPW()
 
         if not hasattr(self, "dvscf_dir"):
             logger.error("You must specify dvscf_dir")
             sys.exit(1)
         else:
-            if not Path.cwd().joinpath(self.dvscf_dir).exists():
-                logger.error(f"Specified dvscf_dir: {self.work_path.joinpath(self.dvscf_dir).absolute()} doesn't exist ")
+            self.dvscf_dir = Path.cwd().joinpath("save")
+            if not self.dvscf_dir.exists():
+                logger.error(f"Specified dvscf_dir: {self.dvscf_dir.absolute()} doesn't exist ")
                 sys.exit(1)
         
         if not hasattr(self, "etf_mem"):
             self.etf_mem = 1
+        
+        if not hasattr(self, "wannierize"):
+            self.wannierize = '.false.'
+            logger.debug(f'wannierize = {self.wannierize}\n')
         
         if not hasattr(self, "nbndsub"):
             logger.error(f"You must specify nbndsub!")
@@ -61,14 +70,17 @@ class epw_inputpara(epw_base):
         else:
             logger.debug(f'nbndsub = {self.nbndsub}\n')
 
-        if not hasattr(self, "exclude_bands"):
-            logger.error(f"You must specify exclude_bands! For example, exclude_bands='1:10'")
-            sys.exit(1)
+        if not hasattr(self, "bands_skipped"):
+            logger.warning(f"You had better specify bands_skipped! For example, bands_skipped='1:10'")
+            self.bands_skipped = None
         else:
-            logger.debug(f'exclude_bands = {self.exclude_bands}\n')
-            
+            logger.debug(f'bands_skipped = {self.bands_skipped}\n')
+        
         if not hasattr(self, "num_iter"):
             self.num_iter = 500
+
+        if not hasattr(self, "dis_num_iter"):
+            self.dis_num_iter = 200
 
         if not hasattr(self, "dis_froz_min"):
             logger.error(f"You must specify dis_froz_min !")
@@ -82,6 +94,12 @@ class epw_inputpara(epw_base):
         else:
             logger.debug(f'dis_froz_max = {self.dis_froz_max}\n')
 
+        if not hasattr(self, "dis_win_max"):
+            logger.error(f"You must specify dis_win_max !")
+            sys.exit(1)
+        else:
+            logger.debug(f'dis_win_max = {self.dis_win_max}\n')
+
         if not hasattr(self, "proj"):
             logger.error(f"You must specify proj! Just like: proj='Nb:d  H:s'  (Attention: No space before or after the equal sign)")
             sys.exit(1)
@@ -90,6 +108,61 @@ class epw_inputpara(epw_base):
             for idx, pj in enumerate(self.proj):
                 logger.debug(f'proj({idx+1}) = {pj}\n')
 
+        if not hasattr(self, "asr_typ"):
+            self.asr_typ = "simple"
+            logger.debug(f'asr_typ = {self.asr_typ}\n')
+        
+        if not hasattr(self, "fsthick"):
+            self.fsthick = 0.4
+            logger.debug(f'fsthick = {self.fsthick}\n')
+        
+        if not hasattr(self, "degaussw"):
+            self.degaussw = 0.1
+            logger.debug(f'degaussw = {self.degaussw}\n')
+        
+        if not hasattr(self, "degaussq"):
+            self.degaussq = 0.5
+            logger.debug(f'degaussq = {self.degaussq}\n')
+        
+        if not hasattr(self, "nk"):
+            logger.warning(f"You must specify nk! Just like: nk='4 4 4'  (Attention: No space before or after the equal sign)")
+            self.nk = [4,4,4]
+        else:
+            self.nk = self.check_kgrid_qgird(self.nk)
+            logger.debug(f'nk = {self.nk}\n')
+        
+        if not hasattr(self, "nq"):
+            logger.warning(f"You must specify nk! Just like: nk='4 4 4'  (Attention: No space before or after the equal sign)")
+            self.nq = [4,4,4]
+        else:
+            self.nq = self.check_kgrid_qgird(self.nq)
+            logger.debug(f'nq = {self.nq}\n')
+            
+        if not hasattr(self, "nkf"):
+            logger.warning(f"You must specify nfk! Just like: nfk='4 4 4'  (Attention: No space before or after the equal sign)")
+            self.nkf = [4,4,4]
+        else:
+            self.nkf = self.check_kgrid_qgird(self.nkf)
+            logger.debug(f'nkf = {self.nkf}\n')
+            
+        if not hasattr(self, "nqf"):
+            logger.warning(f"You must specify nqf! Just like: nqf='4 4 4'  (Attention: No space before or after the equal sign)")
+            self.nqf = [4,4,4]
+        else:
+            self.nqf = self.check_kgrid_qgird(self.nqf)
+            logger.debug(f'nqf = {self.nqf}\n')
+    
+        if not hasattr(self, "wscut"):
+            self.wscut = 3.0
+            logger.debug(f'wscut = {self.wscut}\n')
+            
+        if not hasattr(self, "muc"):
+            self.muc = 0.13
+            logger.debug(f'muc = {self.muc}\n')
+        
+        if not hasattr(self, "npade"):
+            self.npade = 20
+            logger.debug(f'npade = {self.npade}\n')
     @classmethod
     def init_from_config(cls, config: dict):
 
@@ -172,3 +245,15 @@ class epw_inputpara(epw_base):
             path_name_coords_for_EPW.append(hsppinfo)
 
         return path_name_coords_for_EPW 
+
+    def check_kgrid_qgird(self, grid:str):
+        """
+        This method is to check kgrid and qgrid
+        """
+        grid = grid.split()
+        if len(grid) != 3:
+            logger.error(f"nk must be 3 numbers, such as nk='4 4 4'")
+            sys.exit(1)
+        else:
+            grid = [int(nk) for nk in grid]
+            return grid

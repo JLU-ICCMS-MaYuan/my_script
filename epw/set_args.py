@@ -53,7 +53,7 @@ def set_more_args(parser: ArgumentParser):
     subparsers = parser.add_subparsers(help="subparsers")
 
     # EPW计算
-    parser_epw = subparsers.add_parser("epw_eband", formatter_class=RawTextHelpFormatter)
+    parser_epw = subparsers.add_parser("epw_run", formatter_class=RawTextHelpFormatter)
     parser_epw.add_argument(
         '-m',
         '--more-argments-about-epw',
@@ -62,7 +62,7 @@ def set_more_args(parser: ArgumentParser):
         nargs='+',
         help="输入更多关于epw的参数\n"
     )
-    parser_epw.set_defaults(epw_workflow=epw_eband)
+    parser_epw.set_defaults(epw_workflow=epw_run)
     
     args = parser.parse_args()
     return args

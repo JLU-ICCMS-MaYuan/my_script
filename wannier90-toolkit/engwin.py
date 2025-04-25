@@ -57,12 +57,15 @@ def main():
         emin = float(sys.argv[3])
         emax = float(sys.argv[4])
         eng_full = get_energies(xml_name)
+        nbnd = []
         for ik, ek in enumerate(eng_full):
             num_bands = 0
             for eng in ek:
                 if eng >= emin and eng <= emax:
                     num_bands += 1
             print("ik = %d, nbnd = %d" % (ik+1, num_bands))
+            nbnd.append(num_bands)
+        print(min(nbnd), max(nbnd))
     else:
         print("ERROR: unknown option '%s'" % option)
 

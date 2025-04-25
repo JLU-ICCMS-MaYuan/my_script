@@ -49,24 +49,63 @@ def check_pid_jobid(ids: list, submit_job_system):
                     return
 
 
-def epw_eband(args):
-    # read input para
-    _config = config(args).read_config()
+class epw_run:
+    def __init__(self, args):
+        # read input para
+        _config = config(args).read_config()
 
-    # prepare input parameter
-    _epw_inputpara = epw_inputpara.init_from_config(_config)
+        # prepare input parameter
+        self.epw_inputpara = epw_inputpara.init_from_config(_config)
+        self.epw_writeinput = epw_writeinput(self.epw_inputpara)
+        self.epw_writesubmit = epw_writesubmit(self.epw_inputpara)
+        self.epw_submitjob = epw_submitjob(self.epw_inputpara)
+        
+        self.run()
+        
+    def run(self):
+        if self.epw_inputpara.mode == "epw_eband":
+            self.epw_eband()
+        elif self.epw_inputpara.mode == "epw_phono":
+            self.epw_phono()
+        elif self.epw_inputpara.mode == "epw_elph":
+            self.epw_elph()
+        else:
+            raise ValueError("Invalid mode selected.")
+    def epw_eband(self, _mode):
 
-    # init the input
-    print("init the input")
-    _epw_writeinput = epw_writeinput(_epw_inputpara)
-    inputfilename = _epw_writeinput.writeinput(mode="epw_eband")
-    logger.info(inputfilename)
+        # init the input file
+        inputfilename = self.epw_writeinput.writeinput(mode="epw_eband")
+        logger.info(inputfilename)
+        
+        # init the submit job script
+        jobname = self.epw_writesubmit.write_submit_scripts(inputfilename, mode="epw_eband")
+
+        # submit the job
+        if self.epw_inputpara.queue is not None:
+            self.epw_submitjob.submit_mode1(inputfilename, jobname)
     
-    # init the submit job script
-    _epw_writesubmit = epw_writesubmit(_epw_inputpara)
-    jobname = _epw_writesubmit.write_submit_scripts(inputfilename, mode="epw_eband")
+    def epw_phono(self):
+        # init the input file
+        inputfilename1, inputfilename2, inputfilename3 = self.epw_writeinput.writeinput(mode="epw_phono")
+        logger.info(inputfilename1)
+        logger.info(inputfilename2)
+        logger.info(inputfilename3)
+        print(inputfilename1, inputfilename2, inputfilename3)
+        # init the submit job script
+        jobname = self.epw_writesubmit.write_submit_scripts([inputfilename1, inputfilename2, inputfilename3], mode="epw_phono")
 
-    # submit the job
-    _epw_submitjob = epw_submitjob(_epw_inputpara)
-    if _epw_inputpara.queue is not None:
-        _epw_submitjob.submit_mode1(inputfilename, jobname)
+        # submit the job
+        if self.epw_inputpara.queue is not None:
+            self.epw_submitjob.submit_mode1(inputfilename1, jobname)
+            
+    def epw_elph(self):
+        # init the input file
+        inputfilename = self.epw_writeinput.writeinput(mode="epw_elph")
+        logger.info(inputfilename)
+        
+        # init the submit job script
+        jobname = self.epw_writesubmit.write_submit_scripts(inputfilename, mode="epw_elph")
+        
+        # submit the job    
+        if self.epw_inputpara.queue is not None:
+            self.epw_submitjob.submit_mode1(inputfilename, jobname)

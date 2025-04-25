@@ -176,12 +176,12 @@ class qe_eletron:
             eV_To_Ry = 0.0734986443513116
             ef_scffit,  ef_scf  = self.get_fermi_energy()
             nef_scffit, nef_scf = self.get_Nef(ef_scffit, ef_scf)
-            logger.info("    fermi_energy = {:<8.4f} eV in scffit.out, N(Ef) = {:<8.4f} states/eV/(Unit Cell) = {:<10.6f} states/spin/Ry/(Unit Cell)".format(ef_scffit, nef_scffit, nef_scffit/2/eV_To_Ry))
-            logger.info("    fermi_energy = {:<8.4f} eV in scf.out,    N(Ef) = {:<8.4f} states/eV/(Unit Cell) = {:<10.6f} states/spin/Ry/(Unit Cell)".format(ef_scf, nef_scf, nef_scf/2/eV_To_Ry))
+            logger.info("fermi_energy = {:<8.4f} eV in scffit.out, N(Ef) = {:<8.4f} states/eV/(Unit Cell) = {:<10.6f} states/spin/Ry/(Unit Cell)".format(ef_scffit, nef_scffit, nef_scffit/2/eV_To_Ry))
+            logger.info("fermi_energy = {:<8.4f} eV in scf.out,    N(Ef) = {:<8.4f} states/eV/(Unit Cell) = {:<10.6f} states/spin/Ry/(Unit Cell)".format(ef_scf, nef_scf, nef_scf/2/eV_To_Ry))
         elif self.eletron_inputpara.mode == "eleband": 
-            logger.debug("    !!!!!!!!!! Remember to run pw.x to get eleband.out before you run bands.x") 
-            logger.debug("    Run bands.x to get eleband.dat and  eleband.dat.gnu")
-            logger.debug("    eleband.dat.gnu can be used in origin to plot-eletronband")
+            logger.debug("!!!!!!!!!! Remember to run pw.x to get eleband.out before you run bands.x") 
+            logger.debug("Run bands.x to get eleband.dat and  eleband.dat.gnu")
+            logger.debug("eleband.dat.gnu can be used in origin to plot-eletronband")
             inputfilename1 = self.qe_writeinput.writeinput(mode="eleband")
             inputfilename2 = self.qe_writeinput.writeinput(mode="elebanddata")
             inputfilename3 = self.qe_writeinput.writeinput(mode="elebandprojdata")
@@ -225,18 +225,20 @@ class qe_eletron:
         if scffit_out_path.exists():
             ef_scffit = float(os.popen(f'grep "Fermi energy" {scffit_out_path}').read().split()[4])
         else:
-            ef_scffit = None 
+            logger.warning("scffit.out doesn't exist, so ef_scffit = 0")
+            ef_scffit = 0 
         scf_out_path = self.eletron_inputpara.work_path.joinpath("scf.out")
         if scf_out_path.exists():
             ef_scf = float(os.popen(f'grep "Fermi energy" {scf_out_path}').read().split()[4])
         else:
-            ef_scf = None
+            logger.warning("scf.out doesn't exist, so ef_scf = 0")
+            ef_scf = 0
         return ef_scffit, ef_scf
 
     def get_Nef(self, ef_scffit, ef_scf):
         eletdos_path = self.eletron_inputpara.work_path.joinpath(self.eletron_inputpara.system_name+".tdos")
         if not eletdos_path.exists():
-            logger.warning(f"Sorry, {self.eletron_inputpara.system_name}_phono.dos doesn't exist !")
+            logger.warning(f"Sorry, {self.eletron_inputpara.system_name}_phono.dos doesn't exist, so nef_scffit and nef_scf = 0")
             nef_scffit, nef_scf = 0, 0
             return nef_scffit, nef_scf
         else:
@@ -244,7 +246,7 @@ class qe_eletron:
                 eletdos_path,
                 skiprows=1,  # skiprows=1：跳过文件的第一行，即不将其作为数据的一部分进行读取。
                 header=None, # header=None：不将文件的第一行作为列名，而将其视为数据。
-                sep='\s+'    # sep='\s+'：使用正则表达式 \s+ 作为列之间的分隔符，表示一个或多个空格字符。
+                sep=r'\s+'    # sep='\s+'：使用正则表达式 \s+ 作为列之间的分隔符，表示一个或多个空格字符。
                 )
             eletdos.columns = ['E(eV)', 'dos(E)', 'Int dos(E)']
             idx_scffit = (eletdos['E(eV)'] - ef_scffit).abs().idxmin()
@@ -404,7 +406,7 @@ class qe_batch:
                 self.qe_submitjob.submit_mode1(inputfilename2, jobname)
 
         elif self.batch_inputpara.mode == "processphono":
-            self.batch_inputpara.merge(self.batch_inputpara.work_path)
+            # self.batch_inputpara.merge(self.batch_inputpara.work_path)
             inputfilename1 = self.qe_writeinput.writeinput(mode="q2r")
             inputfilename2 = self.qe_writeinput.writeinput(mode="matdyn")
             inputfilename3 = self.qe_writeinput.writeinput(mode="phonobanddata")
