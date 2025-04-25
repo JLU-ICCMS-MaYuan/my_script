@@ -124,7 +124,7 @@ if __name__ == "__main__":
     print("        export MPIR_CVAR_COLL_ALIAS_CHECK=0")
     print(pbstitle, "\n")
 
-    def Write_Tobin(qebin_path, vaspbin_path, my_scriptrc_ini):
+    def Write_Tobin(my_scriptrc_ini, qebin_path, vaspbin_path, epwbin_path):
         with open(my_scriptrc_ini, "r") as f:
             content = f.read()
     
@@ -133,9 +133,13 @@ if __name__ == "__main__":
     
         with open(vaspbin_path, "w") as vasp:
             vasp.write(content)
+        
+        with open(epwbin_path, "w") as vasp:
+            vasp.write(content)
     
     my_scriptrc_ini = Path.home().joinpath(".my_scriptrc.py")
     qebin_path      = Path.home().joinpath("code/my_script/qe/qebin.py")
     vaspbin_path    = Path.home().joinpath("code/my_script/vasp/vaspbin.py")
-
-    Write_Tobin(qebin_path, vaspbin_path, my_scriptrc_ini)
+    epwbin_path     = Path.home().joinpath("code/my_script/epw/epwbin.py")
+    
+    Write_Tobin(my_scriptrc_ini, qebin_path, vaspbin_path, epwbin_path, )
