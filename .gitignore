@@ -32,7 +32,6 @@
 /structuregenerator/psolib/fortran_src/sym3dgenerator/src.linux-x86_64-3.9
 /notebook/.ipynb_checkpoints
 /mytoolkit/__pycache__
-/my_script.egg-info
 
 #files
 qe/qebin.py

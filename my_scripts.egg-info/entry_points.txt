@@ -1,4 +1,0 @@
-[console_scripts]
-generator_main = structuregenerator.generator_main:main
-qe_main = qe.qe_main:main
-vasp_main = vasp.vasp_main:main
