@@ -163,6 +163,17 @@ class epw_inputpara(epw_base):
         if not hasattr(self, "npade"):
             self.npade = 20
             logger.debug(f'npade = {self.npade}\n')
+            
+        if not hasattr(self, "nstemp"):
+            self.nstemp = 1
+            logger.debug(f'nstemp = {self.nstemp}\n')
+        
+        if not hasattr(self, "temps"):
+            self.temps = []
+            logger.debug(f'temps = {self.temps}\n')
+        else:
+            self.temps = self.temps.split()
+            
     @classmethod
     def init_from_config(cls, config: dict):
 

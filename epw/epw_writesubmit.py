@@ -69,7 +69,7 @@ class epw_writesubmit:
         if mode == "epw_elph":
             jobname = self.j3_epw_elph(self.epw_inputpara.work_path, inpufilename)
             return jobname
-        if mode == "epw_aniso_sc":
+        if mode == "epw_sc":
             jobname = self.j4_epw_aniso_sc(self.epw_inputpara.work_path, inpufilename)
             return jobname
 
@@ -94,7 +94,7 @@ class epw_writesubmit:
             j.writelines(self.jobtitle)
             epw_phono_in, epw_phono_out = next(input_output)
             j.write('echo "epw_phono"\n')
-            j.write('!{} {}/epw.x -npool {} <{}> {}  \n'.format(self.epw_inputpara.execmd, epwbin_path, self.epw_inputpara.npool, epw_phono_in, epw_phono_out))
+            j.write('{} {}/epw.x -npool {} <{}> {}  \n'.format(self.epw_inputpara.execmd, epwbin_path, self.epw_inputpara.npool, epw_phono_in, epw_phono_out))
             
             epw_phonodata_in, epw_phonodata_out = next(input_output)
             j.write('echo "epw_phonodata"\n')
@@ -116,12 +116,20 @@ class epw_writesubmit:
             j.write('{} {}/epw.x -npool {} <{}> {}  \n'.format(self.epw_inputpara.execmd, epwbin_path, self.epw_inputpara.npool, _inpufilename, _outputfilename))
         return jobname
 
-    def j4_epw_aniso_sc(self,  _dirpath, inputfilename):
-        _inpufilename = inputfilename
-        _outputfilename = _inpufilename.split(".")[0] + ".out"
-        jobname = "j4_epw_aniso_sc.sh"
+    def j4_epw_aniso_sc(self,  _dirpath, inputfilenames):
+        _inpufilename   = inputfilenames
+        _outputfilename = [ipname.split(".")[0] + ".out" for ipname in _inpufilename]
+        input_output    = zip(_inpufilename, _outputfilename)
+        jobname = "j4_epw_sc.sh"
         _script_filepath = os.path.join(_dirpath, jobname)
         with open(_script_filepath, "w") as j:
             j.writelines(self.jobtitle)
-            j.write('{} {}/epw.x -npool {} <{}> {}  \n'.format(self.epw_inputpara.execmd, epwbin_path, self.epw_inputpara.npool, _inpufilename, _outputfilename))
+            epw_iso_sc_in, epw_iso_sc_out = next(input_output)
+            j.write('echo "epw_iso_sc"\n')
+            j.write('{} {}/epw.x -npool {} <{}> {}  \n'.format(self.epw_inputpara.execmd, epwbin_path, self.epw_inputpara.npool, epw_iso_sc_in, epw_iso_sc_out))
+        
+            epw_aniso_sc_in, epw_aniso_sc_out = next(input_output)
+            j.write('echo "epw_aniso_sc"\n')
+            j.write('{} {}/epw.x -npool {} <{}> {}  \n'.format(self.epw_inputpara.execmd, epwbin_path, self.epw_inputpara.npool, epw_aniso_sc_in, epw_aniso_sc_out))
+
         return jobname
