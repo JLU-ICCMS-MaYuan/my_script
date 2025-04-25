@@ -1,6 +1,5 @@
 import os
 import logging
-from argparse import ArgumentParser
 
 from epw.config import config
 from epw.epw_inputpara import epw_inputpara
@@ -50,23 +49,24 @@ def check_pid_jobid(ids: list, submit_job_system):
                     return
 
 
-def epw_band(args):
+def epw_eband(args):
     # read input para
     _config = config(args).read_config()
 
     # prepare input parameter
-    epw_inputpara = epw_inputpara.init_from_config(_config)
+    _epw_inputpara = epw_inputpara.init_from_config(_config)
 
-    #  # init the input
-    epw_writeinput = epw_writeinput(epw_inputpara)
-    inputfilename = epw_writeinput.writeinput()
+    # init the input
+    print("init the input")
+    _epw_writeinput = epw_writeinput(_epw_inputpara)
+    inputfilename = _epw_writeinput.writeinput(mode="epw_eband")
     logger.info(inputfilename)
     
     # init the submit job script
-    epw_writesubmit = epw_writesubmit(epw_inputpara)
-    jobname = epw_writesubmit.write_submit_scripts(inputfilename)
+    _epw_writesubmit = epw_writesubmit(_epw_inputpara)
+    jobname = _epw_writesubmit.write_submit_scripts(inputfilename, mode="epw_eband")
 
     # submit the job
-    epw_submitjob = epw_submitjob(epw_inputpara)
-    if epw_inputpara.queue is not None:
-        epw_submitjob.submit_mode1(inputfilename, jobname)
+    _epw_submitjob = epw_submitjob(_epw_inputpara)
+    if _epw_inputpara.queue is not None:
+        _epw_submitjob.submit_mode1(inputfilename, jobname)

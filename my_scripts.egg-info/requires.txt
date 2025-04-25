@@ -1,0 +1,14 @@
+pymatgen>=2022.9.21
+ase>=3.22.1
+matplotlib
+f90wrap
+Cython
+scikit-learn
+pyfiglet==1.0.2
+spglib==2.5.0
+phonopy>=2.28.0
+
+[dev]
+pytest>=7.0
+black>=23.0
+mypy>=1.0

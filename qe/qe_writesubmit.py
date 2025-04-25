@@ -3,7 +3,7 @@ import re
 import logging
 from pathlib import Path
 from qe.qe_inputpara import qe_inputpara
-from qe.qebin import qebin_path, epwbin_path, eliashberg_x_path, bashtitle, slurmtitle, pbstitle, lsftitle
+from qe.qebin import qebin_path, eliashberg_x_path, bashtitle, slurmtitle, pbstitle, lsftitle
 
 
 logger = logging.getLogger(__name__)

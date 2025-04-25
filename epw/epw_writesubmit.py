@@ -57,16 +57,13 @@ class epw_writesubmit:
 
         info = '''You can use the modes, please carefully compare your input mode is one of the above modes
         {:<20} {:<20} {:<20} {:<20}
-        {:<20} {:<20} {:<20} {:<20}
-        {:<20} {:<20} {:<20} {:<20}
-        {:<20} {:<20}
-        '''.format("relax-vc", "scffit", "scf", "prepare", "nscf", "nosplit", "split_dyn0", "split_assignQ", "q2r", "matdyn", "eletdos", "phonodos", "nscf", "McAD", "eliashberg")
+        '''.format("phonodos", "nscf", "McAD", "eliashberg")
         logger.debug(info)
 
 
         if mode==None:
             mode=self.epw_inputpara.mode
-        if mode == "epw_energyband":
+        if mode == "epw_eband":
             jobname = self.j1_epw_energyband(self.epw_inputpara.work_path, inpufilename)
             return jobname
         if mode == "epw_phono":

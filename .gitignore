@@ -10,6 +10,10 @@
 /qe/__pycache__
 /vasp/__pycache__
 /vasp/vasptools/__pycache__/
+/epw/__pycache__
+/epw/epw-tools/__pycache__/
+
+
 /structuregenerator/__pycache__
 /structuregenerator/psolib/__pycache__
 /structuregenerator/psolib/finger/__pycache__
@@ -31,6 +35,8 @@
 #files
 qe/qebin.py
 vasp/vaspbin.py
+epw/epwbin.py
+
 /calypso/.idea/inspectionProfiles/Project_Default.xml
 /calypso/.idea/inspectionProfiles/profiles_settings.xml
 /calypso/.idea/vcs.xml

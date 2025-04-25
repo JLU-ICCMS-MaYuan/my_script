@@ -4,6 +4,7 @@ import numpy as np
 
 import logging
 import sys
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -12,14 +13,12 @@ class epw_inputpara(epw_base):
     def __init__(
         self,
         work_path: str,
-        press: int,
         submit_job_system: str,
         input_file_path: str,
         **kwargs: dict, # 这里非常重要, 因为 epw_inputpara 的__init__需要读入kwargs, 其它需要继承这个类的子类也需要保有这个参数kwargs
         ):
         super(epw_inputpara, self).__init__(
             work_path,
-            press,
             submit_job_system,
             input_file_path,
             # 这里没有写 **kwargs, 是因为我继承了_base这个类, 这个类没有kwargs参数, 
@@ -29,10 +28,6 @@ class epw_inputpara(epw_base):
         
         for key, value in kwargs.items():
             setattr(self, key, value)
-
-        if not hasattr(self, "mode"):
-            logger.debug("You must specify mode")
-            sys.exit(1)
 
         if not hasattr(self, "execmd"):
             logger.debug("You must specify execute command, such as 'mpirun -np 48', 'bash', 'srun', 'srun --mpi=pmi2'")
@@ -53,7 +48,7 @@ class epw_inputpara(epw_base):
             logger.error("You must specify dvscf_dir")
             sys.exit(1)
         else:
-            if not self.work_path.joinpath(self.dvscf_dir).exists():
+            if not Path.cwd().joinpath(self.dvscf_dir).exists():
                 logger.error(f"Specified dvscf_dir: {self.work_path.joinpath(self.dvscf_dir).absolute()} doesn't exist ")
                 sys.exit(1)
         
@@ -66,12 +61,12 @@ class epw_inputpara(epw_base):
         else:
             logger.debug(f'nbndsub = {self.nbndsub}\n')
 
-        if not hasattr(self, "bands_skipped"):
-            logger.error(f"You must specify bands_skipped!")
+        if not hasattr(self, "exclude_bands"):
+            logger.error(f"You must specify exclude_bands! For example, exclude_bands='1:10'")
             sys.exit(1)
         else:
-            logger.debug(f'bands_skipped = {self.bands_skipped}\n')
-     
+            logger.debug(f'exclude_bands = {self.exclude_bands}\n')
+            
         if not hasattr(self, "num_iter"):
             self.num_iter = 500
 
@@ -99,13 +94,11 @@ class epw_inputpara(epw_base):
     def init_from_config(cls, config: dict):
 
         work_path         = config['work_path']            ; del config['work_path']
-        press             = config['press']                ; del config['press']
         submit_job_system = config['submit_job_system']    ; del config['submit_job_system']
         input_file_path   = config['input_file_path']      ; del config['input_file_path']
         
         self = cls(
             work_path=work_path,
-            press=press,
             submit_job_system=submit_job_system,
             input_file_path=input_file_path,
             **config,

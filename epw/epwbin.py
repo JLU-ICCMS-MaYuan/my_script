@@ -1,17 +1,16 @@
-#qebin_path = "/home/may/soft/qe-7.3.1/bin"
-qebin_path = "/home/may/code/qe-6.7-withSCTK/bin"
-epwbin_path = "/home/may/soft/qe-7.3.1/EPW/bin"
-qe_source_libs = "/home/may/POT/all_pbe_UPF_v1.5"
-eliashberg_x_path = "/home/may/code/my_script/qe/eliashberg/eliashberg.x"
+qebin_path = "/home/mayuan/soft/qe-7.3.1/bin"
+epwbin_path = "/home/mayuan/soft/qe-7.3.1/EPW/bin"
+qe_source_libs = "/home/mayuan/pot/SSSP_1.3.0_PBE_efficiency"
+eliashberg_x_path = "/home/mayuan/code/my_script/qe/eliashberg/eliashberg.x"
 
-vaspstd_path = "/home/may/soft/vasp.6.3.2/bin/vasp_std"
-vaspgam_path = "/home/may/soft/vasp.6.3.2/bin/vasp_gam"
+vaspstd_path = "/home/mayuan/soft/vasp.6.3.2/bin/vasp_std"
+vaspgam_path = "/home/mayuan/soft/vasp.6.3.2/bin/vasp_gam"
 
-potcar_source_libs = "/home/may/POT/potpaw_PBE54"
+potcar_source_libs = "/home/mayuan/pot/potpaw_PBE54"
 
 
 bashtitle = '''#!/bin/sh   
-source ~/intel/oneapi/setvars.sh
+source /home/mayuan/intel/oneapi/setvars.sh
 ulimit -s unlimited
 '''
 
@@ -26,7 +25,7 @@ slurmtitle = '''#!/bin/sh
 #SBATCH  --ntasks-per-node=48                          
 #SBATCH  --cpus-per-task=1                         
 
-source ~/intel/oneapi/setvars.sh
+source /home/mayuan/intel/oneapi/setvars.sh
 ulimit -s unlimited
 export I_MPI_ADJUST_REDUCE=3
 export MPIR_CVAR_COLL_ALIAS_CHECK=0
@@ -38,24 +37,26 @@ pbstitle = '''#!/bin/sh
 #PBS -l    nodes=1:ppn=28               
 #PBS -j    oe                                      
 #PBS -V  
-source /public/home/mayuan/intel/oneapi/setvars.sh --force
+
+source /home/mayuan/intel/oneapi/setvars.sh
 ulimit -s unlimited        
 cd $PBS_O_WORKDIR                  
 #killall -9 pw.x ph.x
 '''
 
-lsftitle = '''#!/bin/bash
-#BSUB -n 56
-#BSUB -q normal
-#BSUB -J vaspMS
-#BSUB -R 'span[ptile=56]'
-#BSUB -o operation.log
+lsftitle = '''
+#!/bin/sh
+# BSUB -J myjob
+# BSUB -o myjob.out
+# BSUB -e myjob.err
+# BSUB -q normal
+# BSUB -n 48
+# BSUB -R "span[ptile=48]"
+# BSUB -R "select[ngpus=1]"
 
-source /public/home/mayuan/intel/oneapi/setvars.sh --force
-ulimit -s unlimited        
-cd $PBS_O_WORKDIR                  
-#killall -9 pw.x ph.x
+source /home/mayuan/intel/oneapi/setvars.sh
 '''
+
 if __name__ == "__main__":
     
     from pathlib import Path
@@ -125,7 +126,7 @@ if __name__ == "__main__":
     print("        export MPIR_CVAR_COLL_ALIAS_CHECK=0")
     print(pbstitle, "\n")
 
-    def Write_Tobin(qebin_path, vaspbin_path, my_scriptrc_ini):
+    def Write_Tobin(my_scriptrc_ini, qebin_path, vaspbin_path, epwbin_path):
         with open(my_scriptrc_ini, "r") as f:
             content = f.read()
     
@@ -134,9 +135,13 @@ if __name__ == "__main__":
     
         with open(vaspbin_path, "w") as vasp:
             vasp.write(content)
+        
+        with open(epwbin_path, "w") as vasp:
+            vasp.write(content)
     
     my_scriptrc_ini = Path.home().joinpath(".my_scriptrc.py")
     qebin_path      = Path.home().joinpath("code/my_script/qe/qebin.py")
     vaspbin_path    = Path.home().joinpath("code/my_script/vasp/vaspbin.py")
-
-    Write_Tobin(qebin_path, vaspbin_path, my_scriptrc_ini)
+    epwbin_path     = Path.home().joinpath("code/my_script/epw/epwbin.py")
+    
+    Write_Tobin(my_scriptrc_ini, qebin_path, vaspbin_path, epwbin_path, )

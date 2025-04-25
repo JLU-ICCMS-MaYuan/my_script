@@ -63,15 +63,6 @@ class epw_base:
 
         self.struct_type = AseAtomsAdaptor.get_structure(self.ase_type)
         self.get_struct_info(self.struct_type, self.work_path)
-        ############################ prepare pp directory #########################
-        logger.info(f"Create pp in {self.work_path.absolute()}")
-        logger.info(f"Pick up UPF from: {epw_source_libs}")
-        self.workpath_pppath = Path(self.work_path).joinpath("pp")
-        if not self.workpath_pppath.exists():
-            self.workpath_pppath.mkdir(parents=True)
-        # 准备赝势 
-        self.get_USPP(self.workpath_pppath)   
-        ############################# done pp directory ##########################        
         
     def get_struct_info(self, struct, output_poscar):
         '''
@@ -103,14 +94,10 @@ class epw_base:
         # 获得每种元素的相对原子质量
         self.all_atoms_quantity = int(sum(self.composition.values()))
         # 获得晶格矩阵
-        self.cell_parameters    = self.get_cell(struct) 
+        self.cell_parameters    = struct.lattice.matrix
         # 获得原子分数坐标
-        self.fractional_sites   = self.get_coords(struct)
+        self.fractional_sites   = struct.sites
         # 获得倒格矢
         # 注意，这是用于固体物理的标准倒数晶格，因数为2π
-        self.reciprocal_plattice= self.get_reciprocal_lattice(struct)
-        # self.reciprocal_plattice = pstruct.lattice.reciprocal_lattice
-        # self.reciprocal_blattice = bstruct.lattice.reciprocal_lattice
-        # 返回晶体倒数晶格，即没有2π的因子。
-        # self.reciprocal_lattice_crystallographic = struct.lattice.reciprocal_lattice_crystallographic
-        self.celldm1 = self.get_celldm1()
+        self.reciprocal_plattice= struct.lattice.reciprocal_lattice.matrix*0.529177 
+

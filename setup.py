@@ -1,20 +1,4 @@
-import os
-from setuptools import setup
-
-def parse_requirements():
-    requires = []
-    with open('requirements.txt', 'r') as fr:
-        for line in fr:
-            pkg = line.strip()
-            if pkg.startswith('git+'):  # 如果是 git 链接，直接调用 pip 安装
-                pip_install_git(pkg)
-            else:
-                requires.append(pkg)
-    return requires
-
-def pip_install_git(link):
-    os.system(f'pip install --upgrade {link}')
-    return
+from setuptools import setup, find_packages
 
 setup(
     name="my_script",
@@ -22,20 +6,40 @@ setup(
     author="madegan",
     author_email="myth620137018@163.com",
     description="一个计算qe vasp epw 和产生结构的小软件",
+    long_description=open("README.md").read(),
+    long_description_content_type="text/markdown",
     url="https://gitee.com/mayuan_JLUPHY/my_script",
-    packages=["qe", "vasp", "structuregenerator"],
-    long_description="这个库有4个主要的功能, qe声子超导计算, vasp声子计算, 产生结构, epw计算",
+    project_urls={
+        "Documentation": "https://your-docs-url",
+        "Source": "https://gitee.com/mayuan_JLUPHY/my_script"
+    },
+    packages=find_packages(include=['qe', 'vasp', 'structuregenerator']),
     classifiers=[
-        'Development Status :: 1 - Alpha',
-        'Intended Audience :: everybudy',
-        'Topic :: Software Development :: Build Tools',
+        'Development Status :: 3 - Alpha',
+        'Intended Audience :: Science/Research',
+        'Topic :: Scientific/Engineering :: Physics',
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
     ],
-    install_requires=parse_requirements(),
-    scripts=['qe/qe_main.py', 'vasp/vasp_main.py', 'structuregenerator/generator_main.py', 'epw/epw_main.py'],
-    python_requires='>=3',
+    install_requires=[
+        "pymatgen>=2022.9.21",
+        "ase>=3.22.1",
+        "matplotlib",
+        "f90wrap",
+        "Cython",
+        "scikit-learn",
+        "pyfiglet==1.0.2",
+        "spglib==2.5.0",
+        "phonopy>=2.28.0",
+    ],
+    scripts=[
+        'qe/qe_main.py',
+        'vasp/vasp_main.py',
+        'structuregenerator/generator_main.py',
+        'epw/epw_main.py',
+    ],
+    python_requires='>=3.7',
 )

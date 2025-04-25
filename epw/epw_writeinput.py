@@ -25,8 +25,8 @@ class epw_writeinput:
         if mode == None:
             mode = self.epw_inputpara.mode
 
-        if mode == "epw_energyband":
-            inputfilename = self.write_epw_energyband_in(self.epw_inputpara.work_path)
+        if mode == "epw_eband":
+            inputfilename = self.write_epw_eband_in(self.epw_inputpara.work_path)
             return inputfilename
         if mode == "epw_phono":
             inputfilename = self.write_epw_phono_in(self.epw_inputpara.work_path)
@@ -38,8 +38,8 @@ class epw_writeinput:
             inputfilename = self.write_epw_aniso_sc_in(self.epw_inputpara.work_path)
             return inputfilename
 
-    def write_epw_energyband_in(self, work_directory:Path):
-        inputfilename = "epw_energyband.in"
+    def write_epw_eband_in(self, work_directory:Path):
+        inputfilename = "epw_eband.in"
         epw_energyband_in = work_directory.joinpath(inputfilename)
         with open(epw_energyband_in, "w") as epw:
             epw.write("&inputepw\n")
@@ -56,7 +56,7 @@ class epw_writeinput:
             epw.write(" use_ws      = .false.\n")
             epw.write(" wannierize  = .true.\n")
             epw.write(" nbndsub     = {}\n".format(self.epw_inputpara.nbndsub))
-            epw.write(" bands_skipped = 'exclude_bands = {}'\n".format(self.epw_inputpara.bands_skipped))
+            epw.write(" bands_skipped = 'exclude_bands = {}'\n".format(self.epw_inputpara.exclude_bands))
             epw.write(" num_iter    = {}\n".format(self.epw_inputpara.num_iter))
             epw.write(" dis_froz_min = {}\n".format(self.epw_inputpara.dis_froz_min))
             epw.write(" dis_froz_max = {}\n".format(self.epw_inputpara.dis_froz_max))
