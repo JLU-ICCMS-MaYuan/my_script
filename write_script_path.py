@@ -24,6 +24,9 @@ scripts_names = [
     'mytoolkit/vasp_toolkit',
     'mytoolkit/vasp_toolkit/vasp-MD-scripts',
     'mytoolkit/wien2K',
+    '/mytoolkit/many_jobsubmitting_system/slurm',
+    '/mytoolkit/many_jobsubmitting_system/pbs',
+    '/mytoolkit/many_jobsubmitting_system/lsf',
 
     'uspex-toolkit', 
     'magus-toolkit',

@@ -1,0 +1,106 @@
+#!/usr/bin/env bash
+
+# set string
+keys='Job_ID,,Status,,User,,Job_Name,,Submit_Time,,Nodes,,Directory'
+patterns='Job<[^>]+>,,Status<[^>]+>,,User<[^>]+>,,JobName<[^>]+>,,STIME<[^>]+>,,onHosts<[^>]+>,,CWD<[^>]+>'
+printf_format='%-10s,,%-10s,,%-10s,,%-12s,,%-15s,,%-20s,,%s'
+mode=1
+nowpath=$(pwd)
+
+# Use all input arguments directly in the bjobs command
+command="bjobs -l  $@"
+
+# Run the command and process its output using awk
+eval $command | iconv -f utf-8 -t utf-8 -c | \
+awk -v keys="$keys" -v patterns="$patterns" -v format="$printf_format" -v mod="$mode" -v subpath="${nowpath#*workplace}" '
+BEGIN {
+    RS = "[\r\n]+-{10,}[\r\n]+"  # Record separator: one or more newlines followed by 10+ dashes
+    FS = "Resource usage collected."      # Field separator: "PENDING REASONS:"
+    
+    # Split format, keys, and patterns into arrays
+    split(format, farr, ",,")
+    split(keys, karr, ",,")
+    split(patterns, parr, ",,")
+
+    # Define the timestamp pattern    
+    time_pattern = "[A-Za-z]{3} [A-Za-z]{3} ( [0-9]{1}|[0-9]{2}) [0-9]{2}:[0-9]{2}:[0-9]{2}"
+
+    # Print header with fixed width fields
+    for (i = 1; i <= length(karr); i++) {
+        if (match(farr[i], /%-([0-9]+)s/, w)) {
+            width[i] = w[1]-1
+        } 
+        else {
+            width[i] = 0
+        }
+        printf farr[i], karr[i]
+    }
+    printf "\n"
+
+    # Initialize the counter and adjust farr format if "TIME" is found in karr""
+    for (i = 1; i <= length(karr); i++) {
+        if (index(karr[i], "Time") > 0) {
+            time_count++
+            farr[i] = "%-4s%-3s%-8s"
+        }
+    }
+}
+{
+    # Use match function to locate the timestamp and replace it 
+    if (time_count > 0) {
+        while (match($1, time_pattern)) { 
+            # Extract the matched timestamp 
+            matched_time = substr($0, RSTART, RLENGTH) 
+            # Format the replacement string 
+            replacement = "STIME<" substr(matched_time, 5, 3) "_" substr(matched_time, 9, 2) "_" substr(matched_time, 12, 5) ">" 
+            # Replace the timestamp 
+            gsub(time_pattern, replacement)
+        }
+    }
+
+
+    # Extract the first part before "PENDING REASONS:"
+    job_record = $1
+    gsub(/[ \t]*\n[ \t]*| +|\(|\)/, "", job_record)
+    gsub(/></,",",job_record)
+
+    # match path
+    if (mod==1) {
+        if (match(job_record, /CWD<[^>]+>/)) {
+            path = substr(job_record, RSTART + 4 , RLENGTH - 5)
+        }
+        if (index(path, subpath) == 0) {
+            job_record = ""
+        }
+    }
+    
+    
+
+    # Initialize fields array, extract fields using patterns, and print fields
+    if (job_record != "") {
+        for (i = 1; i <= length(karr); i++) {
+            fields[karr[i]] = ""
+            if (match(job_record, parr[i])) {
+                fields[karr[i]] = substr(job_record, RSTART + length(parr[i]) - 6 , RLENGTH - length(parr[i]) + 5)
+            }
+            if (index(karr[i], "Time") > 0) {
+                time_parts = split(fields[karr[i]], parts, "_")
+                if (length(parts[2]) == 1) {
+                    parts[2] = "0" parts[2]
+                }
+                printf farr[i], parts[1], parts[2], parts[3]
+            } 
+            else {
+                if (width[i] > 0) {
+                    printf farr[i], substr(fields[karr[i]], 1, width[i])
+                    }
+                else {
+                    printf farr[i], fields[karr[i]]
+                }
+            }
+        }
+        printf "\n"
+    }
+}'
+
+exit 0

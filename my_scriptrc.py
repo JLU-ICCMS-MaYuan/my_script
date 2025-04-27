@@ -47,11 +47,17 @@ lsftitle = '''#!/bin/bash
 #BSUB -n 56
 #BSUB -q normal
 #BSUB -J myjob
-#BSUB -R 'span[ptile=56]'
+#BSUB -R 'select[ncpus>=56] span[ptile=56]'
 #BSUB -o operation.log
 
-source /data/env/inteloneapi2021
-ulimit -s unlimited        
+##EXAMPLE for many nodes 
+##BSUB -n 72
+##BSUB -q normal
+##BSUB -J myjob
+##BSUB -R 'select[ncpus>=56] span[ptile=18]'
+##BSUB -o operation.log
+## 72/ptile = 72/18 = 4:  4代表你申请的节点数, 18代表你每个节点使用的核数，剩余的核数用来存储
+
 
 '''
 

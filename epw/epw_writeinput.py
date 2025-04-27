@@ -171,7 +171,7 @@ class epw_writeinput:
             for idx, pj in enumerate(self.epw_inputpara.proj):
                 epw.write(" proj({})     = {}\n".format(idx+1, pj))
                 
-            epw.write(" wdata({})    = 'dis_num_iter = {}'\n".format(1, self.epw_inputpara.dis_num_iter))
+            epw.write(" wdata({})    = 'dis_num_iter = {}'\n".format(idx+1, self.epw_inputpara.dis_num_iter))
             epw.write(" band_plot = .true. \n")
             epw.write(" filkf = '{}_band.kpt'\n".format(self.epw_inputpara.system_name))
             epw.write(" filqf = '{}_band.kpt'\n".format(self.epw_inputpara.system_name))
@@ -235,7 +235,7 @@ class epw_writeinput:
             for idx, pj in enumerate(self.epw_inputpara.proj):
                 epw.write(" proj({})     = {}\n".format(idx+1, pj))
                 
-            epw.write(" wdata({})    = 'dis_num_iter = {}'\n".format(1, self.epw_inputpara.dis_num_iter))
+            epw.write(" wdata({})    = 'dis_num_iter = {}'\n".format(idx+1, self.epw_inputpara.dis_num_iter))
             epw.write("\n")
             
             epw.write(" iverbosity  = 2     ! 2 = verbose output for the superconducting part only.\n")
@@ -293,7 +293,7 @@ class epw_writeinput:
             for idx, pj in enumerate(self.epw_inputpara.proj):
                 epw.write(" proj({})     = {}\n".format(idx+1, pj))
                 
-            epw.write(" wdata({})    = 'dis_num_iter = {}'\n".format(1, self.epw_inputpara.dis_num_iter))
+            epw.write(" wdata({})    = 'dis_num_iter = {}'\n".format(idx+1, self.epw_inputpara.dis_num_iter))
             epw.write("\n")
             epw.write(" iverbosity  = 2     ! 2 = verbose output for the superconducting part only.\n")
             epw.write(" fsthick  = {}       ! Fermi window thickness [eV]\n".format(self.epw_inputpara.fsthick))
@@ -376,7 +376,7 @@ class epw_writeinput:
             for idx, pj in enumerate(self.epw_inputpara.proj):
                 epw.write(" proj({})     = {}\n".format(idx+1, pj))
                 
-            epw.write(" wdata({})    = 'dis_num_iter = {}'\n".format(1, self.epw_inputpara.dis_num_iter))
+            epw.write(" wdata({})    = 'dis_num_iter = {}'\n".format(idx+1, self.epw_inputpara.dis_num_iter))
             epw.write("\n")
             
             epw.write(" iverbosity  = 2     ! 2 = verbose output for the superconducting part only.\n")

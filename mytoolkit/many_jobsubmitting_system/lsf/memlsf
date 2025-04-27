@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+jobid=$1
+
+bjobs -l $jobid | grep "MAX MEM"
