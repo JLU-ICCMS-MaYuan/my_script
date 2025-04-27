@@ -11,7 +11,9 @@ print(begin_num, end_num)
 def dyn_done(q):
     for filename in os.listdir(q):
     # 如果文件名包含 "dyn" 关键字
-        if 'dyn'+q in filename and os.path.getsize(q+'/'+filename) != 0:
+        if   'dyn'+q in filename and os.path.getsize(q+'/'+filename) != 0:
+            return True
+        elif 'dyn'   in filename and os.path.getsize(q+'/'+filename) != 0:
             return True
     else:
         return False
@@ -22,6 +24,9 @@ def imag_freq(freq):
             return True
     else:
         return False
+
+prefix = os.popen("ls *.dyn0| cut -d '.' -f 1").read().strip()
+print(prefix)
 
 print('{:<20} {:<20} {:<20} {:<20}'.format('q_number', 'dyn', 'elph', 'Representation'))
 current_path = os.getcwd()
@@ -41,7 +46,13 @@ for q in range(begin_num, end_num+1):
         dyn_situ = 'inexistence/empty'
         irres_info= os.popen('grep "Representation #" ' +str(q)+ '/split_ph.out | tail -n 1' ).read().strip()
     else:
-        freq = os.popen('grep freq  '+ str(q)+'/'+f'*dyn{str(q)}').readlines()
+        if os.path.exists(str(q)+'/'+f'{prefix}.dyn{str(q)}'):
+            freq = os.popen('grep freq  '+ str(q)+'/'+f'{prefix}.dyn{str(q)}').readlines()
+        elif os.path.exists(str(q)+'/'+f'{prefix}.dyn'):
+            freq = os.popen('grep freq  '+ str(q)+'/'+f'{prefix}.dyn').readlines()
+        else:
+            print('grep freq  '+ str(q)+'/'+f'{prefix}.dyn')
+            print("there is no " + str(q)+'/'+f'{prefix}.dyn{str(q)}' + '  or  ' + str(q)+'/'+'{prefix}.dyn')
         if imag_freq(freq):
             dyn_situ = 'imaginary'
         else:
