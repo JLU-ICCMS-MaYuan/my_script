@@ -397,7 +397,6 @@ class qe_writesubmit:
         _script_filepath = os.path.join(_dirpath, jobname)
         with open(_script_filepath, "w") as j:
             j.writelines(self.jobtitle)
-            j.writelines(self.jobtitle)
             q2r_in, q2r_out = input_output.__next__()
             j.write('echo "run q2r"                   \n')
             j.write('{} {}/q2r.x -npool {} <{}> {}    \n'.format(self.qe_inputpara.execmd, qebin_path, self.qe_inputpara.npool, q2r_in, q2r_out))

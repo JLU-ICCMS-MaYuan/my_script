@@ -60,7 +60,7 @@ if __name__ == "__main__":
     from pathlib import Path
 
     qebin_path          = Path(qebin_path)
-    qe_source_libs_path = Path(qe_pseudopotential_dir)
+    qe_pseudopotential_dir_path = Path(qe_pseudopotential_dir)
     eliashberg_x_path   = Path(eliashberg_x_path)
 
     if Path(qebin_path).exists():
@@ -73,10 +73,10 @@ if __name__ == "__main__":
     else:
         raise FileNotFoundError(f"The path {epwbin_path} you set wrong !!!")
 
-    if Path(qe_source_libs_path).exists():
-        print(f"The path {qe_source_libs_path} you set rightly !!!")
+    if Path(qe_pseudopotential_dir_path).exists():
+        print(f"The path {qe_pseudopotential_dir_path} you set rightly !!!")
     else:
-        raise FileNotFoundError(f"The path {qe_source_libs_path} you set wrong !!!")
+        raise FileNotFoundError(f"The path {qe_pseudopotential_dir_path} you set wrong !!!")
     if Path(eliashberg_x_path).exists():
         print(f"The path {eliashberg_x_path} you set rightly !!!")
     else:
