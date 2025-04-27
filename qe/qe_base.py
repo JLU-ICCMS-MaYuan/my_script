@@ -14,7 +14,7 @@ from pymatgen.io.ase import AseAtomsAdaptor
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from pymatgen.io.vasp import Poscar
 
-from qe.qebin import qe_source_libs
+from qe.qebin import qe_pseudopotential_dir
 from qe.qe_check import qe_check
 
 logger = logging.getLogger(__name__)
@@ -75,7 +75,7 @@ class qe_base:
         self.get_struct_info(self.struct_type, self.work_path)
         ############################ prepare pp directory #########################
         logger.info(f"Create pp in {self.work_path.absolute()}")
-        logger.info(f"Pick up UPF from: {qe_source_libs}")
+        logger.info(f"Pick up UPF from: {qe_pseudopotential_dir}")
         self.workpath_pppath = Path(self.work_path).joinpath("pp")
         if not self.workpath_pppath.exists():
             self.workpath_pppath.mkdir(parents=True)
@@ -175,11 +175,11 @@ class qe_base:
             species_name: element name from pymatgen.composition.species.name
             workpath_pppath: 
         '''
-        qe_USPP = os.path.abspath(qe_source_libs)
+        qe_USPP = os.path.abspath(qe_pseudopotential_dir)
         if os.path.exists(qe_USPP):
             pp_files = os.listdir(qe_USPP)
         else:
-            logger.error("You may not set the potcar_source_libs, you can set it in `qebin.py` ")
+            logger.error("You may not set the potcar_dir, you can set it in `qebin.py` ")
             sys.exit(1)
 
         targetppfiles    = get_pps_for_a_element(species_name, pp_files)

@@ -2,6 +2,27 @@
 
 ## <span style="color:red">  EPW计算超导流程
 
+### <span style="coler:lightgreen"> 0.提交任务的命令
+```shell
+# qe计算自洽
+qe_main.py -i POSCAR -j bash -p 200 -w scf  scf -m mode=scf ecutwfc=80 ecutrho=960 kpoints_sparse='8 8 8'  degauss=0.02 execmd='mpirun -np 8' npool=4 queue=lhy nbnd=50
+
+# qe计算能带
+qe_main.py -i POSCAR -j bash -w band eletron -m mode=eleband  ecutwfc=80 ecutrho=960 execmd='mpirun -np 8' npool=4 queue=local kinserted=200 charge_density_dat='scf/tmp/H3S1.save/charge-density.dat' data_file_schema_xml='scf/tmp/H3S1.save/data-file-schema.xml' nbnd=50
+
+# qe计算nscf
+qe_main.py -i POSCAR -w epw_band/ -j bash scf  -m mode=nscf ecutwfc=80 ecutrho=960 kpoints_dense='8 8 8'  degauss=0.02 execmd='mpirun -np 8' npool=4  charge_density_dat='scf/tmp/H3S1.save/charge-density.dat' data_file_schema_xml='scf/tmp/H3S1.save/data-file-schema.xml'  k_automatic=False wan=False  occupations=smearing  queue=lhy
+
+# epw计算能带，其实是epw调用wannier计算能带, 要将计算的wannier的能带和qe计算的能带做对比
+epw_main.py -i POSCAR -j bash -w epw_band -l debug epw_eband -m  execmd='mpirun -np 8' dvscf_dir='./save' nbndsub=7 dis_froz_min=-7.635175  dis_froz_max=23 dis_win_max=60  proj='H:s S:s S:p' queue=local npool=8 nk='8 8 8' bands_skipped=1:1
+
+# epw计算声子, 要将计算的声子freq.dat和qe计算的声子做对比
+epw_main.py -i POSCAR -j bash -w epw_band -l debug epw_run -m mode=epw_phono  execmd='mpirun -np 8' dvscf_dir='./save' nbndsub=7 dis_froz_min=-7.635175  dis_froz_max=23 dis_win_max=60  proj='H:s S:s S:p'  npool=8 nk='8 8 8' nq='4 4 4'  queue=lhy
+
+# epw计算超导性质
+epw_main.py -i POSCAR -j bash -w epw_band -l debug epw_run -m mode=epw_elph  execmd='mpirun -np 8' dvscf_dir='./save' nbndsub=7 dis_froz_min=-7.635175  dis_froz_max=23 dis_win_max=60  proj='H:s S:s S:p'  npool=8 nk='8 8 8' nq='4 4 4' nkf='12 12 12' nqf='6 6 6' fsthick=0.4 degaussw=0.1 degaussq=0.5  queue=local
+```
+
 ### <span style="color:lightgreen"> 1.自洽计算
 ```shell
 mkdir 0.phonon

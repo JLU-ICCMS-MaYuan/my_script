@@ -13,14 +13,67 @@ qe, vasp, structuregenerator是三个独立的项目，互相不耦合。可以�
 
 # 安装教程
 
-方法1：
-```shell
-    python setup.py develop
+## 第一步：配置my_scriptrc.py 
+```python
+qebin_path # qe的bin目录
+epwbin_path # epw的bin目录
+qe_pseudopotential_dir # qe的赝势目录
+eliashberg_x_path # eliashberg_x的文件路径
+vaspstd_path # vasp_std的文件路径
+vaspgam_path # vasp_gam的文件路径
+potcar_dir_path # vasp赝势路径
+
+bashtitle中的环境变量, slurmtitle, pbstitle, lsftitle中挑出来你要用的机器支持的系统，然后把对应的环境变量修改好。
+
+# 然后执行
+cp my_scriptrc.py  ~/.my_scriptrc.py
+python ~/.my_scriptrc.py
 ```
-方法2：
+
+## 第二步：在my_script目录中执行write_script_path.py，必须在my_script目录中执行！！！
 ```shell
-    pip install -e .
+python write_script_path.py
 ```
+
+## 第三步：安装软件
+方法1（不推荐）：
+```shell
+python setup.py develop
+```
+方法2（推荐）：
+```shell
+# 在有网络的机器上安装该软件
+pip install -e .
+
+# 或者在没有网络的机器上安装该软件
+# 先在其它有网络的机器上安装好该软件，并将相应的conda环境打包到无网络的机器上，然后执行下面的代码即可。
+pip install -e .  --no-build-isolation --no-index --find-links=./
+# `--no-index`：不要从PyPI下载包。
+#   这个选项告诉pip在安装包时不要使用Python包索引(PyPI)。也就是说，pip不会从PyPI下载包，而是只从指定的本地或网络位置安装包。这通常用于安装那些不在PyPI上发布的包，或者需要从特定位置安装包的情况。
+# `--find-links ./`：从指定的本地路径`./`查找包。
+#   这个选项后面跟的是一个或多个URL或文件系统路径，pip会从这些指定的位置查找包。这可以是本地文件路径，也可以是网络URL。当你使用`--find-links`时，pip会首先检查这些链接，而不是默认的PyPI索引。
+
+# 你也可以在有网络的机器上执行下面的代码
+pip freeze > requirements.txt
+# 然后删掉requirements.txt里面关于网址的部分，不删除会报错
+# 
+pip download --platform anylinux_x86_64 --no-deps on -d pip_packages/ -r requirements.txt
+# 一个关于pip简单的教程：https://blog.csdn.net/Leon_Jinhai_Sun/article/details/139171646
+
+```
+
+有时候你安装的软件会有问题，比如：`ModuleNotFoundError: No module named 'qe'`, 这个时候你可以执行下面的代码：
+```shell
+python -c "import sys; print(sys.path)" 
+
+['', '/data/software/intel/oneapi2021/advisor/2021.1.1/pythonapi', '/data/home/liuhanyu/workplace/luojie/soft/miniconda3/envs/my_scripts/lib/python39.zip', '/data/home/liuhanyu/workplace/luojie/soft/miniconda3/envs/my_scripts/lib/python3.9', '/data/home/liuhanyu/workplace/luojie/soft/miniconda3/envs/my_scripts/lib/python3.9/lib-dynload', '/data/home/liuhanyu/workplace/luojie/soft/miniconda3/envs/my_scripts/lib/python3.9/site-packages']
+
+# 检查这个列表中有没有包含my_scripts的路径，如果没有，那么你需要在你的~/.bashrc文件中添加下面的代码：
+export PYTHONPATH="/data/home/liuhanyu/code/my_script:$PYTHONPATH"
+```
+**但是本质上这个问题的出现是由于`my_script.egg-info/top_level.txt`中没有相应的`qe`为名称的目录名
+在`pyproject.toml`中添加`[tool.setuptools] packages = ["qe", "vasp", "epw", "structuregenerator"]`即可解决。此时再打开`my_script.egg-info/top_level.txt`
+就会发现，出现了qe, vasp, epw, structuregenerator四个目录名**
 
 
 # <div align="center"> <span style="color:red"> QE篇 </span> </div>

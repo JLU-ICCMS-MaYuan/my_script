@@ -12,7 +12,7 @@ from pymatgen.io.ase import AseAtomsAdaptor
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from pymatgen.io.vasp import Poscar
 
-from vasp.vaspbin import potcar_source_libs
+from vasp.vaspbin import potcar_dir
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +63,7 @@ class vasp_base:
         self.get_struct_info(self.struct_type, self.work_path)
 
         logger.info("Prepare the directory of `potcar_lib` and merge POTCARs ")
-        logger.info(f"Pick up POTCARs from: {potcar_source_libs}")
+        logger.info(f"Pick up POTCARs from: {potcar_dir}")
         self.workpath_pppath = Path(self.work_path).joinpath("potcar_lib")
         if not self.workpath_pppath.exists():
             self.workpath_pppath.mkdir() 
@@ -153,11 +153,11 @@ class vasp_base:
         rerutn:
             the class Path of POTCAR of the given element.
         """
-        potcar_dir = os.path.abspath(potcar_source_libs)
-        if os.path.exists(potcar_dir):
-            potcarfiles = os.listdir(potcar_dir)
+        potcar_dir_path = os.path.abspath(potcar_dir)
+        if os.path.exists(potcar_dir_path):
+            potcarfiles = os.listdir(potcar_dir_path)
         else:
-            raise FileExistsError("You may not set the potcar_source_libs, you can set it in `vaspbin.py` ")
+            raise FileExistsError("You may not set the potcar_dir, you can set it in `vaspbin.py` ")
         targetpotcarfiles = filter(lambda file: re.search("^"+species_name, file), potcarfiles)
         targetpotcarnames = [pp for pp in targetpotcarfiles]
         choosed_flag  = False
@@ -167,7 +167,7 @@ class vasp_base:
             choosed_pot_number = int(input("please input you want one(Enter the previous number, such as 1,2,3...)\n"))
             choosed_pot = targetpotcarnames[choosed_pot_number-1]
             if choosed_pot in targetpotcarnames:
-                src_pp = Path(potcar_dir).joinpath(choosed_pot , "POTCAR")
+                src_pp = Path(potcar_dir_path).joinpath(choosed_pot , "POTCAR")
                 dst_pp = Path(self.workpath_pppath).joinpath(species_name)
                 shutil.copy(src_pp, dst_pp)
                 with open(Path(self.workpath_pppath).joinpath("potcar.log"), "a") as log:

@@ -3,7 +3,7 @@ requires = ["setuptools>=64", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "my_scripts"
+name = "my_script"
 version = "2.0.0"
 description = "计算QE/VASP/EPW和结构生成的工具包"
 authors = [
@@ -43,10 +43,16 @@ dev = [
     "mypy>=1.0"
 ]
 
-[project.scripts]
-qe_main = "qe.qe_main:main"
-vasp_main = "vasp.vasp_main:main"
-generator_main = "structuregenerator.generator_main:main"
+# useless method to specify my scripts
+# [project.scripts]
+# qe_main = "qe:qe_main.py"
+# vasp_main = "vasp:vasp_main.py"
+# generator_main = "structuregenerator:generator_main.py"
+# epw_main = "epw:epw_main.py"
+
+[tool.setuptools]
+packages = ["qe", "vasp", "epw", "structuregenerator"]  # 这里的目的是为了将列表中的内容写到my_script.egg-info/top_level.txt中, 方便执行script-files中的脚本是可以调用相应自定义的库和包
+script-files = ["qe/qe_main.py", "vasp/vasp_main.py", "epw/epw_main.py", "structuregenerator/generator_main.py"]  
 
 [project.urls]
 Homepage = "https://gitee.com/mayuan_JLUPHY/my_script"

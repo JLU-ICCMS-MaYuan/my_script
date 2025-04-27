@@ -1,12 +1,12 @@
 qebin_path = "/work/home/mayuan/software/qe-7.1/bin"
 epwbin_path = "/work/home/mayuan/software/qe-7.1/EPW/bin"
-qe_source_libs = "/work/home/mayuan/POT/qe-pp/all_pbe_UPF_v1.5"
+qe_pseudopotential_dir = "/work/home/mayuan/POT/qe-pp/all_pbe_UPF_v1.5"
 eliashberg_x_path = "/work/home/mayuan/code/my_script/qe/eliashberg/eliashberg.x"
 
 vaspstd_path = "/work/home/mayuan/software/vasp.6.1.0/bin/vasp_std"
 vaspgam_path = "/work/home/mayuan/software/vasp.6.1.0/bin/vasp_gam"
 
-potcar_source_libs = "/work/home/mayuan/POT/vasp_pot1/potpaw_PBE54"
+potcar_dir = "/work/home/mayuan/POT/vasp_pot1/potpaw_PBE54"
 
 
 bashtitle = '''#!/bin/sh   
@@ -60,7 +60,7 @@ if __name__ == "__main__":
     from pathlib import Path
 
     qebin_path          = Path(qebin_path)
-    qe_source_libs_path = Path(qe_source_libs)
+    qe_source_libs_path = Path(qe_pseudopotential_dir)
     eliashberg_x_path   = Path(eliashberg_x_path)
 
     if Path(qebin_path).exists():
@@ -83,23 +83,23 @@ if __name__ == "__main__":
         raise FileNotFoundError(f"The path {eliashberg_x_path} you set wrong !!!")
 
     vaspstd_path       = Path(vaspstd_path)
-    potcar_source_libs_path = Path(potcar_source_libs)
+    potcar_dir_path    = Path(potcar_dir)
     if Path(vaspstd_path).exists():
         print(f"The path {vaspstd_path} you set rightly !!!")
     else:
         raise FileNotFoundError(f"The path {vaspstd_path} you set wrong !!!")
     
     vaspgam_path       = Path(vaspgam_path)
-    potcar_source_libs_path = Path(potcar_source_libs)
+    potcar_dir_path    = Path(potcar_dir)
     if Path(vaspgam_path).exists():
         print(f"The path {vaspgam_path} you set rightly !!!")
     else:
         raise FileNotFoundError(f"The path {vaspgam_path} you set wrong !!!")
 
-    if Path(potcar_source_libs_path).exists():
-        print(f"The path {potcar_source_libs_path} you set rightly !!!")
+    if Path(potcar_dir_path).exists():
+        print(f"The path {potcar_dir_path} you set rightly !!!")
     else:
-        raise FileNotFoundError(f"The path {potcar_source_libs_path} you set wrong !!!")
+        raise FileNotFoundError(f"The path {potcar_dir_path} you set wrong !!!")
         
     print("bash      的设置, 请注意:")
     print("    1. 请注意source编译器的设置")
