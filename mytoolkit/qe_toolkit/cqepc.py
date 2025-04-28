@@ -52,7 +52,7 @@ for q in range(begin_num, end_num+1):
             freq = os.popen('grep freq  '+ str(q)+'/'+f'{prefix}.dyn').readlines()
         else:
             print('grep freq  '+ str(q)+'/'+f'{prefix}.dyn')
-            print("there is no " + str(q)+'/'+f'{prefix}.dyn{str(q)}' + '  or  ' + str(q)+'/'+'{prefix}.dyn')
+            print("there is no " + str(q)+'/'+f'{prefix}.dyn{str(q)}' + '  or  ' + str(q)+'/'+f'{prefix}.dyn')
         if imag_freq(freq):
             dyn_situ = 'imaginary'
         else:

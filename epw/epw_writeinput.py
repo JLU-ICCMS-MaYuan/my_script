@@ -174,8 +174,8 @@ class epw_writeinput:
                 
             epw.write(" wdata({})    = 'dis_num_iter = {}'\n".format(idx+1, self.epw_inputpara.dis_num_iter))
             epw.write(" band_plot = .true. \n")
-            epw.write(" filkf = '{}_band.kpt'\n".format(self.epw_inputpara.system_name))
-            epw.write(" filqf = '{}_band.kpt'\n".format(self.epw_inputpara.system_name))
+            epw.write(" filkf = '{}'\n".format(self.epw_inputpara.filkf))
+            epw.write(" filqf = '{}'\n".format(self.epw_inputpara.filqf))
             epw.write(" asr_typ = '{}'     \n".format(self.epw_inputpara.asr_typ))
 
             epw.write("\n")

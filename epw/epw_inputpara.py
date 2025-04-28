@@ -4,6 +4,7 @@ import numpy as np
 
 import logging
 import sys
+import os
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -52,7 +53,7 @@ class epw_inputpara(epw_base):
             logger.error("You must specify dvscf_dir")
             sys.exit(1)
         else:
-            self.dvscf_dir = Path.cwd().joinpath("save")
+            self.dvscf_dir = Path.cwd().joinpath(self.dvscf_dir)
             if not self.dvscf_dir.exists():
                 logger.error(f"Specified dvscf_dir: {self.dvscf_dir.absolute()} doesn't exist ")
                 sys.exit(1)
@@ -110,6 +111,13 @@ class epw_inputpara(epw_base):
             self.proj = self.proj.split()
             for idx, pj in enumerate(self.proj):
                 logger.debug(f'proj({idx+1}) = {pj}\n')
+        
+        if not hasattr(self, "filkf") or not hasattr(self, "filqf"):
+            logger.info("You didn't specify filkf or filqf, so the program will get it from modified_{}_band.kpt that is obtained from {}_band.kpt".format(self.system_name, self.system_name)) 
+            self.filkf = "modified_{}_band.kpt".format(self.system_name)
+            self.filqf = "modified_{}_band.kpt".format(self.system_name)
+            old_band_kpt = self.work_path.joinpath("_{}_band.kpt".format(self.system_name)) 
+            os.system("sed '1s/$/    crystal/' {}_band.kpt >  modified_{}_band.kpt".format(self.system_name, self.system_name))
 
         if not hasattr(self, "asr_typ"):
             self.asr_typ = "simple"
