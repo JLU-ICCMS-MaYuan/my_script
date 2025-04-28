@@ -125,7 +125,7 @@ class epw_inputpara(epw_base):
             logger.debug(f'asr_typ = {self.asr_typ}\n')
         
         if not hasattr(self, "fsthick"):
-            self.fsthick = 0.4
+            self.fsthick = 10
             logger.debug(f'fsthick = {self.fsthick}\n')
         
         if not hasattr(self, "degaussw"):
