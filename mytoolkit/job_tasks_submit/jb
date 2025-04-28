@@ -66,7 +66,7 @@ qe_main.py -i CONTCAR -j bash sc -m mode=Tc execmd='' npool=1 queue=local temper
 
 
 # qe能带计算
-qe_main.py -i PPOSCAR -j bash -w band eletron -m mode=eleband  ecutwfc=80 ecutrho=960 execmd='mpirun -np 2 ' npool=1 queue=local kinserted=200 charge_density_dat='../phonon/tmp/H3S1.save/charge-density.dat' data_file_schema_xml='../phonon/tmp/H3S1.save/data-file-schema.xml' paw_txt='tmp/H3S1.save/paw.txt'  
+qe_main.py -i PPOSCAR -j bash -w band eletron -m mode=eleband  ecutwfc=80 ecutrho=960 execmd='mpirun -np 2 ' npool=1 queue=local kinserted=200 tmp='../qeband/tmp/' paw_txt='tmp/H3S1.save/paw.txt'  
 
 # 获得能带的高对称路径二维投影 
 qe_main.py -i PPOSCAR -j bash eletron -m mode=hspp  execmd=''
@@ -76,14 +76,14 @@ qe_main.py -i PPOSCAR -j bash eletron -m mode=hspp  execmd=''
 
 # qe态密度计算
 # 处理态密度
-qe_main.py -i CONTCAR -j slurm eletron -m mode=eledos execmd='' npool=1 queue=local kpoints_dense='48 48 48'  charge_density_dat='../phonon/tmp/H3S1.save/charge-density.dat' data_file_schema_xml='../phonon/tmp/H3S1.save/data-file-schema.xml' paw_txt='tmp/H3S1.save/paw.txt' k_automatic=False wan=False  occupations=smearing  queue=lhy
+qe_main.py -i CONTCAR -j slurm eletron -m mode=eledos execmd='' npool=1 queue=local kpoints_dense='48 48 48'  tmp='../qeband/tmp/' paw_txt='tmp/H3S1.save/paw.txt' k_automatic=False wan=False  occupations=smearing  queue=lhy
 
 
 # 适用于EPW计算前的nscf计算，这里的展开方式是高斯展宽，因为EPW要求nscf的K点是自定义坐标的，而自定义坐标的nscf不支持四面体方法
-qe_main.py -i ../phonon/PPOSCAR -j bash scf -m mode=nscf ecutwfc=80 ecutrho=960 kpoints_dense='8 8 8'  degauss=0.02 execmd='mpirun -np 4' npool=4  charge_density_dat='../phonon/tmp/H3S1.save/charge-density.dat' data_file_schema_xml='../phonon/tmp/H3S1.save/data-file-schema.xml' paw_txt='tmp/H3S1.save/paw.txt' k_automatic=False wan=False  occupations=smearing  queue=lhy
+qe_main.py -i ../phonon/PPOSCAR -j bash scf -m mode=nscf ecutwfc=80 ecutrho=960 kpoints_dense='8 8 8'  degauss=0.02 execmd='mpirun -np 4' npool=4  tmp='../qeband/tmp/' paw_txt='tmp/H3S1.save/paw.txt' k_automatic=False wan=False  occupations=smearing  queue=lhy
 
 # 四面体方法计算nscf
-qe_main.py -i ../phonon/PPOSCAR -j bash scf -m mode=nscf ecutwfc=80 ecutrho=960 kpoints_dense='8 8 8'  degauss=0.02 execmd='mpirun -np 4' npool=4  charge_density_dat='../phonon/tmp/H3S1.save/charge-density.dat' data_file_schema_xml='../phonon/tmp/H3S1.save/data-file-schema.xml' paw_txt='tmp/H3S1.save/paw.txt' k_automatic=True   occupations=tetrahedra  queue=lhy
+qe_main.py -i ../phonon/PPOSCAR -j bash scf -m mode=nscf ecutwfc=80 ecutrho=960 kpoints_dense='8 8 8'  degauss=0.02 execmd='mpirun -np 4' npool=4  tmp='../qeband/tmp/' paw_txt='tmp/H3S1.save/paw.txt' k_automatic=True   occupations=tetrahedra  queue=lhy
 
 
 

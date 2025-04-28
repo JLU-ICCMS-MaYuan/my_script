@@ -80,23 +80,22 @@ export PYTHONPATH="/data/home/liuhanyu/code/my_script:$PYTHONPATH"
 
 ## 基本输入选项。一定要设置的部分：
 ```shell
-qe_main.py -i 输入文件路径 -w 工作目录 -p 压强 -j 运行方式
+qe_main.py -i 输入文件路径 -w 工作目录 -p 压强 -j 运行方式 -l 输出日志文件等级
 ```
 说明：输入文件路径 和工作路径说明 ：
-1. 如果输入文件是relax.out或者scffit.out或者scf.out, 那么工作目录会被强行限制为输入文件所在目录
-2. 如果输入文件是类型例如，POSCAR或者其它scf.in或者cif文件:
-    1. 如果指定了-w ，那么就是在-w指定的路径下开展计算
-    2. 如果没有指定-w, 那么就默认所有的计算都在当前指定qe_main.py命令的目录下运行. 并不会额外创建一个压强值命名的目录作为最终工作目录
+1. -i, 输入文件任意类型都可以，读入后会拷贝到当前目录以备份
+2. -w, 如果指定了-w ，那么就是在-w指定的路径下开展计算. 如果没有指定-w, 那么就默认所有的计算都在当前指定qe_main.py命令的目录下运行. 并不会额外创建一个压强值命名的目录作为最终工作目录
+    说明: 赝势文件最终存放在-w命名的目录的下面
+3. -p, 只有结构优化该参数起作用，否则其他模式一律无用。单位：GPa
+4. -j, 支持的参数slurm, pbs, lsf, bash
+    说明：运行方式:
+    1. bash 代表本地使用bash shell运行。
+    2. slurm 代表使用slurm脚本运行。
+    3. pbs 代表使用pbs脚本运行。
+5. -l, 支持的参数debug, info, warning, error, critical, 默认为info
 
-说明：压强
-1. 指定结构优化的压强，单位是GPa.
 
-说明：运行方式
-1. bash 代表本地使用bash shell运行。
-2. slurm 代表使用slurm脚本运行。
-3. pbs 代表使用pbs脚本运行。
 
-说明: 赝势文件最终存放在压强命名的目录的下面
 
 ## 具体其它详细的任务模式说明：
 <span style="color:red"> **WARNING1 queue存在则会运行，queue不存在则只会产生输入文件和提交任务的脚本文件。**

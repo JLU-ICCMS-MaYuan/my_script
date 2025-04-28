@@ -73,7 +73,8 @@ class epw_run:
             self.epw_sc()
         else:
             raise ValueError("Invalid mode selected.")
-    def epw_eband(self, _mode):
+    
+    def epw_eband(self):
 
         # init the input file
         inputfilename = self.epw_writeinput.writeinput(mode="epw_eband")

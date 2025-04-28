@@ -11,16 +11,18 @@ qe_main.py -i POSCAR -j bash -p 200 -w scf  scf -m mode=scf ecutwfc=80 ecutrho=9
 qe_main.py -i POSCAR -j bash -w band eletron -m mode=eleband  ecutwfc=80 ecutrho=960 execmd='mpirun -np 8' npool=4 queue=local kinserted=200 charge_density_dat='scf/tmp/H3S1.save/charge-density.dat' data_file_schema_xml='scf/tmp/H3S1.save/data-file-schema.xml' nbnd=50
 
 # qe计算nscf
-qe_main.py -i POSCAR -w epw_band/ -j bash scf  -m mode=nscf ecutwfc=80 ecutrho=960 kpoints_dense='8 8 8'  degauss=0.02 execmd='mpirun -np 8' npool=4  charge_density_dat='scf/tmp/H3S1.save/charge-density.dat' data_file_schema_xml='scf/tmp/H3S1.save/data-file-schema.xml'  k_automatic=False wan=False  occupations=smearing  queue=lhy
+qe_main.py -i POSCAR -j bash -w epw  scf  -m mode=nscf ecutwfc=80 ecutrho=960 kpoints_dense='8 8 8'  degauss=0.02 execmd='mpirun -np 8' npool=4  charge_density_dat='scf/tmp/H3S1.save/charge-density.dat' data_file_schema_xml='scf/tmp/H3S1.save/data-file-schema.xml'  k_automatic=False wan=False  occupations=smearing  queue=lhy
 
 # epw计算能带，其实是epw调用wannier计算能带, 要将计算的wannier的能带和qe计算的能带做对比
-epw_main.py -i POSCAR -j bash -w epw_band -l debug epw_eband -m  execmd='mpirun -np 8' dvscf_dir='./save' nbndsub=7 bands_skipped='1:12' dis_froz_min=-7.635175  dis_froz_max=23 dis_win_max=60  proj='H:s S:s S:p' queue=local npool=8 nk='8 8 8' bands_skipped=1:1
+epw_main.py -i POSCAR -j bash -w epw epw_run -m mode=epw_eband execmd='mpirun -np 8' dvscf_dir='./save' nbndsub=7 bands_skipped='1:12' dis_froz_min=-7.635175  dis_froz_max=23 dis_win_max=60  proj='H:s S:s S:p' queue=local npool=8 nk='8 8 8' bands_skipped=1:1
+# proj='Li:s;p Hf:s;p;d H:s'
+
 
 # epw计算声子, 要将计算的声子freq.dat和qe计算的声子做对比
-epw_main.py -i POSCAR -j bash -w epw_band -l debug epw_run -m mode=epw_phono  execmd='mpirun -np 8' dvscf_dir='./save' nbndsub=7 bands_skipped='1:12' dis_froz_min=-7.635175  dis_froz_max=23 dis_win_max=60  proj='H:s S:s S:p'  npool=8 nk='8 8 8' nq='4 4 4'  queue=lhy
+epw_main.py -i POSCAR -j bash -w epw epw_run -m mode=epw_phono  execmd='mpirun -np 8' dvscf_dir='./save' nbndsub=7 bands_skipped='1:12' dis_froz_min=-7.635175  dis_froz_max=23 dis_win_max=60  proj='H:s S:s S:p'  npool=8 nk='8 8 8' nq='4 4 4'  queue=lhy
 
 # epw计算超导性质
-epw_main.py -i POSCAR -j bash -w epw_band -l debug epw_run -m mode=epw_elph  execmd='mpirun -np 8' dvscf_dir='./save' nbndsub=7 bands_skipped='1:12' dis_froz_min=-7.635175  dis_froz_max=23 dis_win_max=60  proj='H:s S:s S:p'  npool=8 nk='8 8 8' nq='4 4 4' nkf='12 12 12' nqf='6 6 6' fsthick=0.4 degaussw=0.1 degaussq=0.5  queue=local
+epw_main.py -i POSCAR -j bash -w epw epw_run -m mode=epw_elph  execmd='mpirun -np 8' dvscf_dir='./save' nbndsub=7 bands_skipped='1:12' dis_froz_min=-7.635175  dis_froz_max=23 dis_win_max=60  proj='H:s S:s S:p'  npool=8 nk='8 8 8' nq='4 4 4' nkf='12 12 12' nqf='6 6 6' fsthick=0.4 degaussw=0.1 degaussq=0.5  queue=local
 ```
 
 ### <span style="color:lightgreen"> 1.自洽计算
@@ -409,3 +411,18 @@ etf_mem = 3 is used for transport calculations with ultra dense fine momentum gr
 这个是因为epw_phono.in里面设置的nq1, nq2, nq3的网格和qe设置的q网格不一致导致的。
 
 ### <span style="color:lightgreen"> 12. Error in routine loadqmesh_serial (1):  Cannot load fine q points
+
+
+### <span style="color:lightgreen"> 13. coarse k-mesh needs to be strictly positive in 1st BZ
+你可以仔细检查一下nscf.out中k点个数和epw_eband.out中的k点个数是不是一致，如果不一致，就修改nscf.in中的nscf为bands，重新非自洽。
+这时候就可以得到一样数量的k点了。
+
+### <span style="color:lightgreen"> 14. param_read_projection: malformed projection definition
+这是是因为你用了,分割轨道信息，应该用分号
+```shell
+ proj(1)     = Li:s,p      --->   proj(1)     = Li:s;p  
+ proj(2)     = Hf:s,p,d    --->   proj(2)     = Hf:s;p;d
+ proj(3)     = H:s         --->   proj(3)     = H:s     
+```
+
+### <span style="color:lightgreen"> 15. Error in routine elphon_shuffle_wrap (1): Problem with modes file
