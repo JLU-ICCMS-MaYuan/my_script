@@ -55,7 +55,13 @@ class epw_writeinput:
             epw.write("\n")
             epw.write(" etf_mem     ={}\n".format(self.epw_inputpara.etf_mem))
             epw.write("\n")
-            epw.write(" elph        = .false.\n")
+            epw.write(" elph        = .true.  ! If .true. calculate e-ph coefficients.\n")
+            epw.write(" epbwrite    = .true.  ! electron-phonon matrix elements in the coarse Bloch representation and relevant data (dyn matrices)\n")
+            epw.write(" epbread     = .false. ! electron-phonon matrix elements in the coarse Bloch representation and relevant data (dyn matrices)\n")
+            epw.write(" epwwrite    = .true.  ! electron-phonon matrix elements in the coarse Wannier representation and relevant data (dyn matrices)\n")
+            epw.write(" epwread     = .false. ! electron-phonon matrix elements in the coarse Wannier representation and relevant data (dyn matrices). ! It is used for a restart calculation and requires kmaps = .true.  prefix.epmatwp, crystal.fmt, vmedata.fmt, wigner.fmt, and epwdata.fmt are all needed for restarting a calculation.\n")
+            epw.write("\n")
+            epw.write(" lifc = {}\n".format(self.epw_inputpara.lifc))
             epw.write("\n")
             epw.write(" use_ws      = .true.\n")
             epw.write(" wannierize  = .true.\n")
@@ -80,60 +86,16 @@ class epw_writeinput:
             epw.write(" wdata({})    = 'dis_num_iter = {}'\n".format(idx+5, self.epw_inputpara.dis_num_iter))
             epw.write("\n")
             epw.write(" nk1 = {}\n nk2 = {}\n nk3 = {}\n".format(self.epw_inputpara.nk[0], self.epw_inputpara.nk[1], self.epw_inputpara.nk[2]))
+            epw.write("\n")
+            epw.write(" nq1 = {}\n nq2 = {}\n nq3 = {}\n".format(self.epw_inputpara.nq[0], self.epw_inputpara.nq[1], self.epw_inputpara.nq[2]))
+            epw.write("\n")
+            epw.write(" nkf1 = {}\n nkf2 = {}\n nkf3 = {}\n".format(self.epw_inputpara.nkf[0], self.epw_inputpara.nkf[1], self.epw_inputpara.nkf[2]))
+            epw.write("\n")
+            epw.write(" nqf1 = {}\n nqf2 = {}\n nqf3 = {}\n".format(self.epw_inputpara.nqf[0], self.epw_inputpara.nqf[1], self.epw_inputpara.nqf[2]))
             epw.write("/                           \n")                                                                
         
         return inputfilename
     
-    def write_epw_phono_in(self, work_directory:Path):
-        inputfilename = "epw_phono.in"
-        epw_phono_in = work_directory.joinpath(inputfilename)
-        with open(epw_phono_in, "w") as epw:
-            
-            epw.write("&inputepw\n")
-            epw.write(" prefix      ='{}',\n".format(self.epw_inputpara.system_name))
-            for i, species_name in enumerate(self.epw_inputpara.composition.keys()):
-                element      = Element(species_name)
-                species_mass = str(element.atomic_mass).strip("amu")
-                epw.write(" amass({})    ={},\n".format(i+1, species_mass))          
-            epw.write(" outdir      ='./tmp'\n")
-            epw.write(" dvscf_dir   ='{}'\n".format(self.epw_inputpara.dvscf_dir))
-            epw.write("\n")
-            epw.write(" etf_mem     ={}\n".format(self.epw_inputpara.etf_mem))
-            epw.write("\n")
-            epw.write(" elph        = .true.\n")
-            epw.write(" epbwrite    = .true.\n")
-            epw.write(" epbread     = .false.\n")
-            epw.write(" epwwrite    = .true.\n")
-            epw.write(" epwread     = .false.\n")
-            epw.write("\n")
-            epw.write(" use_ws      = .true.\n")
-            epw.write(" wannierize  = {}\n".format(self.epw_inputpara.wannierize))
-            epw.write(" nbndsub     = {}\n".format(self.epw_inputpara.nbndsub))
-            if self.epw_inputpara.bands_skipped is not None:
-                epw.write(" bands_skipped = 'exclude_bands = {}'\n".format(self.epw_inputpara.bands_skipped))
-            epw.write(" num_iter    = {}\n".format(self.epw_inputpara.num_iter))
-            epw.write("\n")
-            epw.write(" dis_win_max = {}\n".format(self.epw_inputpara.dis_win_max))
-            epw.write(" dis_froz_min = {}\n".format(self.epw_inputpara.dis_froz_min))
-            epw.write(" dis_froz_max = {}\n".format(self.epw_inputpara.dis_froz_max))
-            epw.write("\n")
-            for idx, pj in enumerate(self.epw_inputpara.proj):
-                epw.write(" proj({})     = {}\n".format(idx+1, pj))
-                
-            epw.write(" wdata({})    = 'dis_num_iter = {}'\n".format(idx+1, self.epw_inputpara.dis_num_iter))
-            epw.write("\n")
-            epw.write(" nk1 = {}\n nk2 = {}\n nk3 = {}\n".format(self.epw_inputpara.nk[0], self.epw_inputpara.nk[1], self.epw_inputpara.nk[2]))
-            epw.write("\n")
-            epw.write(" nq1 = {}\n nq2 = {}\n nq3 = {}\n".format(self.epw_inputpara.nq[0], self.epw_inputpara.nq[1], self.epw_inputpara.nq[2]))
-            epw.write("\n")
-            epw.write(" nkf1 = {}\n nkf2 = {}\n nkf3 = {}\n".format(1,1,1))
-            epw.write("\n")
-            epw.write(" nqf1 = {}\n nqf2 = {}\n nqf3 = {}\n".format(1,1,1))
-
-            epw.write("/                           \n")                                                                
-
-        return inputfilename
-
     def write_epw_phonodata_in(self, work_directory:Path):
         inputfilename = "epw_phonodata.in"
         epw_phonodata_in = work_directory.joinpath(inputfilename)
@@ -191,9 +153,12 @@ class epw_writeinput:
         epw_phonodata_plot_in = work_directory.joinpath(inputfilename)
         with open(epw_phonodata_plot_in, "w") as epw:
             epw.write("phband.freq\n")
-            epw.write("0 500\n")
+            epw.write("0 4000\n")
             epw.write("freq.dat\n")
-            epw.write("\n")
+            epw.write("freq.dat.ps\n")
+            epw.write("0\n")
+            epw.write("0 50\n")
+            epw.write("\n\n\n")
             epw.write("# Second line is min and max value in your spectrum\n")
             epw.write("# Meanwhile, another file named band.eig is eletron spectrum.\n")
             epw.write("# band.eig also can be plotted by plotband.x, detailed in Tue.6.Lafuente.pdf.\n") 
@@ -215,13 +180,13 @@ class epw_writeinput:
             epw.write("\n")
             epw.write(" etf_mem     ={}\n".format(self.epw_inputpara.etf_mem))
             epw.write("\n")
-            epw.write(" ep_coupling = .true.\n")
-            epw.write(" elph        = .true.\n")
+            epw.write(" ep_coupling = .true.   ! If .true. run e-ph coupling calculation.\n")
+            epw.write(" elph        = .true.   ! If .true. calculate e-ph coefficients.\n")
             epw.write(" epbwrite    = .false.  ! electron-phonon matrix elements in the coarse Bloch representation and relevant data (dyn matrices)\n")
             epw.write(" epbread     = .false.  ! electron-phonon matrix elements in the coarse Bloch representation and relevant data (dyn matrices)\n")
             epw.write(" epwwrite    = .false.  ! electron-phonon matrix elements in the coarse Wannier representation and relevant data (dyn matrices)\n")
             epw.write(" epwread     = .true.   ! electron-phonon matrix elements in the coarse Wannier representation and relevant data (dyn matrices). ! It is used for a restart calculation and requires kmaps = .true.  prefix.epmatwp, crystal.fmt, vmedata.fmt, wigner.fmt, and epwdata.fmt are all needed for restarting a calculation.\n")
-            epw.write("\n")
+            epw.write(" ! only read electron-phonon matrix elements in the coarse Wannier representation\n")
             epw.write("\n")
             epw.write(" lifc = {}\n".format(self.epw_inputpara.lifc))
             epw.write("\n")

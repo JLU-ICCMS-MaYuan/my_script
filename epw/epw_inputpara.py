@@ -116,8 +116,9 @@ class epw_inputpara(epw_base):
             logger.info("You didn't specify filkf or filqf, so the program will get it from modified_{}_band.kpt that is obtained from {}_band.kpt".format(self.system_name, self.system_name)) 
             self.filkf = "modified_{}_band.kpt".format(self.system_name)
             self.filqf = "modified_{}_band.kpt".format(self.system_name)
-            old_band_kpt = self.work_path.joinpath("_{}_band.kpt".format(self.system_name)) 
-            os.system("sed '1s/$/    crystal/' {}_band.kpt >  modified_{}_band.kpt".format(self.system_name, self.system_name))
+            old_band_kpt = self.work_path.joinpath("{}_band.kpt".format(self.system_name))
+            new_band_kpt = self.work_path.joinpath("modified_{}_band.kpt".format(self.system_name))
+            os.system("sed '1s/$/    crystal/' {} >  {}".format(old_band_kpt, new_band_kpt))
 
         if not hasattr(self, "asr_typ"):
             self.asr_typ = "simple"
@@ -151,14 +152,14 @@ class epw_inputpara(epw_base):
             
         if not hasattr(self, "nkf"):
             logger.warning(f"You must specify nfk! Just like: nfk='4 4 4'  (Attention: No space before or after the equal sign)")
-            self.nkf = [4,4,4]
+            self.nkf = [1,1,1]
         else:
             self.nkf = self.check_kgrid_qgird(self.nkf)
             logger.debug(f'nkf = {self.nkf}\n')
             
         if not hasattr(self, "nqf"):
             logger.warning(f"You must specify nqf! Just like: nqf='4 4 4'  (Attention: No space before or after the equal sign)")
-            self.nqf = [4,4,4]
+            self.nqf = [1,1,1]
         else:
             self.nqf = self.check_kgrid_qgird(self.nqf)
             logger.debug(f'nqf = {self.nqf}\n')
