@@ -64,9 +64,14 @@ class epw_run:
         
     def run(self):
         if self.epw_inputpara.mode == "epw_eband":
+            logger.info("Perform an Wannier calculation and to fit energy bands")
             self.epw_eband()
         elif self.epw_inputpara.mode == "epw_phono":
+            logger.info("Perform an EPW calculation to Fourier-transform the electron-phonon matrix element from a coarse k and q-point grids to real space and then interpolate the electronic band structure and phononic dispersion along the high symmetry line by reading modified_`prefix`_band.kpt.")
             self.epw_phono()
+        elif self.epw_inputpara.mode == "epw_phonodata":
+            logger.info("Only perform an EPW calculation to interpolate the electronic band structure and phononic dispersion along the high symmetry line by reading modified_`prefix`_band.kpt.")
+            self.epw_phonodata()
         elif self.epw_inputpara.mode == "epw_elph":
             self.epw_elph()
         elif self.epw_inputpara.mode == "epw_sc":
@@ -99,7 +104,18 @@ class epw_run:
         # submit the job
         if self.epw_inputpara.queue is not None:
             self.epw_submitjob.submit_mode1(inputfilename1, jobname)
-            
+    
+    def epw_phonodata(self):
+        # init the input file
+        inputfilename1, inputfilename2 = self.epw_writeinput.writeinput(mode="epw_phonodata")
+        logger.info(inputfilename1)
+        logger.info(inputfilename2)
+        # init the submit job script        
+        jobname = self.epw_writesubmit.write_submit_scripts([inputfilename1, inputfilename2], mode="epw_phonodata")
+        # submit the job
+        if self.epw_inputpara.queue is not None:
+            self.epw_submitjob.submit_mode1(inputfilename1, jobname)
+    
     def epw_elph(self):
         # init the input file
         inputfilename = self.epw_writeinput.writeinput(mode="epw_elph")

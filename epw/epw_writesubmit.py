@@ -66,11 +66,14 @@ class epw_writesubmit:
         if mode == "epw_phono":
             jobname = self.j2_epw_phono(self.epw_inputpara.work_path, inpufilename)
             return jobname
+        if mode == "epw_phonodata":
+            jobname = self.j3_epw_phonodata(self.epw_inputpara.work_path, inpufilename)
+            return jobname
         if mode == "epw_elph":
-            jobname = self.j3_epw_elph(self.epw_inputpara.work_path, inpufilename)
+            jobname = self.j4_epw_elph(self.epw_inputpara.work_path, inpufilename)
             return jobname
         if mode == "epw_sc":
-            jobname = self.j4_epw_aniso_sc(self.epw_inputpara.work_path, inpufilename)
+            jobname = self.j5_epw_sc(self.epw_inputpara.work_path, inpufilename)
             return jobname
 
  
@@ -93,9 +96,9 @@ class epw_writesubmit:
         with open(_script_filepath, "w") as j:
             j.writelines(self.jobtitle)
             
-            epw_phonodata_in, epw_phonodata_out = next(input_output)
+            epw_phono_in, epw_phono_out = next(input_output)
             j.write('echo "epw_phonodata"\n')
-            j.write('{} {}/epw.x -npool {} <{}> {}  \n'.format(self.epw_inputpara.execmd, epwbin_path, self.epw_inputpara.npool, epw_phonodata_in, epw_phonodata_out))
+            j.write('{} {}/epw.x -npool {} <{}> {}  \n'.format(self.epw_inputpara.execmd, epwbin_path, self.epw_inputpara.npool, epw_phono_in, epw_phono_out))
             
             epw_phonodata_plot_in, epw_phonodata_plot_out = next(input_output)
             j.write('echo "epw_phonondat_plot"\n')
@@ -103,21 +106,39 @@ class epw_writesubmit:
             j.write('echo "You can plot pictures with freq.dat(phonon) and band.dat(eletron)"')
         return jobname
 
-    def j3_epw_elph(self,  _dirpath, inputfilename):
+    def j3_epw_phonodata(self,  _dirpath, inputfilenames):
+        _inpufilename   = inputfilenames
+        _outputfilename = [ipname.split(".")[0] + ".out" for ipname in _inpufilename]
+        input_output    = zip(_inpufilename, _outputfilename)
+        jobname = "j3_epw_phonodata.sh"
+        _script_filepath = os.path.join(_dirpath, jobname)
+        with open(_script_filepath, "w") as j:
+            j.writelines(self.jobtitle)
+            epw_phonodata_in, epw_phonodata_out = next(input_output)
+            j.write('{} {}/epw.x -npool {} <{}> {}  \n'.format(self.epw_inputpara.execmd, epwbin_path, self.epw_inputpara.npool, epw_phonodata_in, epw_phonodata_out))
+            
+            epw_phonodata_plot_in, epw_phonodata_plot_out = next(input_output)
+            j.write('echo "epw_phonondat_plot"\n')
+            j.write('{}/plotband.x <{}   \n'.format(qebin_path, epw_phonodata_plot_in))
+            j.write('echo "You can plot pictures with freq.dat(phonon) and band.dat(eletron)"')
+
+        return jobname
+
+    def j4_epw_elph(self,  _dirpath, inputfilename):
         _inpufilename = inputfilename
         _outputfilename = _inpufilename.split(".")[0] + ".out"
-        jobname = "j3_epw_elph.sh"
+        jobname = "j4_epw_elph.sh"
         _script_filepath = os.path.join(_dirpath, jobname)
         with open(_script_filepath, "w") as j:
             j.writelines(self.jobtitle)
             j.write('{} {}/epw.x -npool {} <{}> {}  \n'.format(self.epw_inputpara.execmd, epwbin_path, self.epw_inputpara.npool, _inpufilename, _outputfilename))
         return jobname
 
-    def j4_epw_aniso_sc(self,  _dirpath, inputfilenames):
+    def j5_epw_sc(self,  _dirpath, inputfilenames):
         _inpufilename   = inputfilenames
         _outputfilename = [ipname.split(".")[0] + ".out" for ipname in _inpufilename]
         input_output    = zip(_inpufilename, _outputfilename)
-        jobname = "j4_epw_sc.sh"
+        jobname = "j5_epw_sc.sh"
         _script_filepath = os.path.join(_dirpath, jobname)
         with open(_script_filepath, "w") as j:
             j.writelines(self.jobtitle)
