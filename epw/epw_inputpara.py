@@ -60,6 +60,9 @@ class epw_inputpara(epw_base):
         if not hasattr(self, "etf_mem"):
             self.etf_mem = 1
         
+        if not hasattr(self, "lifc"):
+            self.lifc = ".true."
+        
         if not hasattr(self, "wannierize"):
             self.wannierize = '.false.'
             logger.debug(f'wannierize = {self.wannierize}\n')

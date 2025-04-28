@@ -89,13 +89,12 @@ class epw_run:
     
     def epw_phono(self):
         # init the input file
-        inputfilename1, inputfilename2, inputfilename3 = self.epw_writeinput.writeinput(mode="epw_phono")
+        inputfilename1, inputfilename2 = self.epw_writeinput.writeinput(mode="epw_phono")
         logger.info(inputfilename1)
         logger.info(inputfilename2)
-        logger.info(inputfilename3)
-        print(inputfilename1, inputfilename2, inputfilename3)
+        print(inputfilename1, inputfilename2)
         # init the submit job script
-        jobname = self.epw_writesubmit.write_submit_scripts([inputfilename1, inputfilename2, inputfilename3], mode="epw_phono")
+        jobname = self.epw_writesubmit.write_submit_scripts([inputfilename1, inputfilename2], mode="epw_phono")
 
         # submit the job
         if self.epw_inputpara.queue is not None:

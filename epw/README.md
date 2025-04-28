@@ -405,7 +405,7 @@ etf_mem = 3 is used for transport calculations with ultra dense fine momentum gr
 比如：我的体系中CeSc2H24需要对41个wannier轨道进行投影，但是我在nscf.in中实际只用默认的nbnd计算了35个能带。需要重新计算nscf并设置nbnd=100
 
 ### <span style="color:lightgreen"> 10. Error in routine elphon_shuffle_wrap (1): Error allocating epmatq
-这个是因为内存不够报错
+这个是因为内存不够报错. 或者是设置nkf=1 1 1和nqf=1 1 1, 这导致k的电子态无法散射到k+q的电子态上插值出现问题。
 
 ### <span style="color:lightgreen"> 11. Error in routine dynmat_asr (1):   wrong qpoint
 这个是因为epw_phono.in里面设置的nq1, nq2, nq3的网格和qe设置的q网格不一致导致的。

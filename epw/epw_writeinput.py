@@ -29,10 +29,9 @@ class epw_writeinput:
             inputfilename = self.write_epw_eband_in(self.epw_inputpara.work_path)
             return inputfilename
         if mode == "epw_phono":
-            inputfilename1 = self.write_epw_phono_in(self.epw_inputpara.work_path)
-            inputfilename2 = self.write_epw_phonodata_in(self.epw_inputpara.work_path)
-            inputfilename3 = self.write_epw_phonodata_plot_in(self.epw_inputpara.work_path)
-            return inputfilename1, inputfilename2, inputfilename3
+            inputfilename1 = self.write_epw_phonodata_in(self.epw_inputpara.work_path)
+            inputfilename2 = self.write_epw_phonodata_plot_in(self.epw_inputpara.work_path)
+            return inputfilename1, inputfilename2
         if mode == "epw_elph":
             inputfilename = self.write_epw_elph_in(self.epw_inputpara.work_path)
             return inputfilename
@@ -157,6 +156,8 @@ class epw_writeinput:
             epw.write(" epwwrite    = .false.\n")
             epw.write(" epwread     = .true.\n")
             epw.write("\n")
+            epw.write(" lifc = {}\n".format(self.epw_inputpara.lifc))
+            epw.write("\n")
             epw.write(" use_ws      = .true.\n")
             epw.write(" wannierize  = {}\n".format(self.epw_inputpara.wannierize))
             epw.write(" nbndsub     = {}\n".format(self.epw_inputpara.nbndsub))
@@ -221,7 +222,10 @@ class epw_writeinput:
             epw.write(" epwwrite    = .false.  ! electron-phonon matrix elements in the coarse Wannier representation and relevant data (dyn matrices)\n")
             epw.write(" epwread     = .true.   ! electron-phonon matrix elements in the coarse Wannier representation and relevant data (dyn matrices). ! It is used for a restart calculation and requires kmaps = .true.  prefix.epmatwp, crystal.fmt, vmedata.fmt, wigner.fmt, and epwdata.fmt are all needed for restarting a calculation.\n")
             epw.write("\n")
-            epw.write(" use_ws      = .true.\n")
+            epw.write("\n")
+            epw.write(" lifc = {}\n".format(self.epw_inputpara.lifc))
+            epw.write("\n")
+            epw.write(" lifc = {}\n".format(self.epw_inputpara.lifc))
             epw.write(" wannierize  = {}\n".format(self.epw_inputpara.wannierize))
             epw.write(" nbndsub     = {}\n".format(self.epw_inputpara.nbndsub))
             if self.epw_inputpara.bands_skipped is not None:
@@ -278,6 +282,9 @@ class epw_writeinput:
             epw.write(" epbread     = .false.  ! electron-phonon matrix elements in the coarse Bloch representation and relevant data (dyn matrices)\n")
             epw.write(" epwwrite    = .false.  ! electron-phonon matrix elements in the coarse Wannier representation and relevant data (dyn matrices)\n")
             epw.write(" epwread     = .true.   ! electron-phonon matrix elements in the coarse Wannier representation and relevant data (dyn matrices). ! It is used for a restart calculation and requires kmaps = .true.  prefix.epmatwp, crystal.fmt, vmedata.fmt, wigner.fmt, and epwdata.fmt are all needed for restarting a calculation.\n")
+            epw.write("\n")
+            epw.write("\n")
+            epw.write(" lifc = {}\n".format(self.epw_inputpara.lifc))
             epw.write("\n")
             epw.write(" use_ws      = .true.\n")
             epw.write(" wannierize  = {}\n".format(self.epw_inputpara.wannierize))
@@ -361,6 +368,9 @@ class epw_writeinput:
             epw.write(" epbread     = .false.  ! electron-phonon matrix elements in the coarse Bloch representation and relevant data (dyn matrices)\n")
             epw.write(" epwwrite    = .false.  ! electron-phonon matrix elements in the coarse Wannier representation and relevant data (dyn matrices)\n")
             epw.write(" epwread     = .true.   ! electron-phonon matrix elements in the coarse Wannier representation and relevant data (dyn matrices). ! It is used for a restart calculation and requires kmaps = .true.  prefix.epmatwp, crystal.fmt, vmedata.fmt, wigner.fmt, and epwdata.fmt are all needed for restarting a calculation.\n")
+            epw.write("\n")
+            epw.write("\n")
+            epw.write(" lifc = {}\n".format(self.epw_inputpara.lifc))
             epw.write("\n")
             epw.write(" use_ws      = .true.\n")
             epw.write(" wannierize  = {}\n".format(self.epw_inputpara.wannierize))

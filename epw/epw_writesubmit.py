@@ -92,9 +92,6 @@ class epw_writesubmit:
         _script_filepath = os.path.join(_dirpath, jobname)
         with open(_script_filepath, "w") as j:
             j.writelines(self.jobtitle)
-            epw_phono_in, epw_phono_out = next(input_output)
-            j.write('echo "epw_phono"\n')
-            j.write('{} {}/epw.x -npool {} <{}> {}  \n'.format(self.epw_inputpara.execmd, epwbin_path, self.epw_inputpara.npool, epw_phono_in, epw_phono_out))
             
             epw_phonodata_in, epw_phonodata_out = next(input_output)
             j.write('echo "epw_phonodata"\n')
