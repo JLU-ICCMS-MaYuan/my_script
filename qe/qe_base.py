@@ -98,8 +98,11 @@ class qe_base:
         # 备份原始结构
         logger.debug(f"finish back up origin inputed structure file into workpath: {self.work_path.absolute()}")
         if not self.work_path.joinpath(self.input_file_path.name).exists():
-            # shutil.copy(self.input_file_path, self.work_path)
+            logger(f"backup input file: {self.input_file_path.name}")
             backup_inputfile = self.work_path.joinpath(self.input_file_path.name)
+            os.system(f"cp -f {self.input_file_path} {backup_inputfile}")
+        else:
+            logger.info(f"It has existed the structure, the program will force to backup input file: {self.input_file_path.name}")
             os.system(f"cp -f {self.input_file_path} {backup_inputfile}")
 
         # 处理PPOSCAR的pymatgen对象
