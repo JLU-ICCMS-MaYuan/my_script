@@ -68,9 +68,10 @@ if __name__ == "__main__":
     
     parser = argparse.ArgumentParser(description="指定合并tmp文件时的方式")
     parser.add_argument("-s", "--specifyQ_type", type=str, required=True, help="只有by_index和by_coords")
+    parser.add_argument("-paw", "--paw-used", action="store_true", help="是否使用paw")
     args = parser.parse_args()
     specifyQ_type   = args.specifyQ_type
-
+    paw_used        = args.paw_used
     system_name     = get_struct_info("scffit.out")
     dyn0_path       = system_name+".dyn0"
     print(dyn0_path)
@@ -95,9 +96,10 @@ if __name__ == "__main__":
                 merged_dv1_path     = os.path.join(merged_ph0_path,         system_name+".dvscf1")
                 shutil.copy(splited_dv1_path, merged_dv1_path)
 
-                splited_dv_paw1_path    = os.path.join(str(i+1), "tmp", "_ph0", system_name+".dvscf_paw1")
-                merged_dv_paw1_path     = os.path.join(merged_ph0_path,         system_name+".dvscf_paw1")
-                shutil.copy(splited_dv_paw1_path, merged_dv_paw1_path)
+                if paw_used:
+                    splited_dv_paw1_path    = os.path.join(str(i+1), "tmp", "_ph0", system_name+".dvscf_paw1")
+                    merged_dv_paw1_path     = os.path.join(merged_ph0_path,         system_name+".dvscf_paw1")
+                    shutil.copy(splited_dv_paw1_path, merged_dv_paw1_path)
     
                 splited_control_ph_path = os.path.join(str(i+1), "tmp", "_ph0", system_name+".phsave", "control_ph.xml")
                 merged_control_ph_path  = os.path.join(merged_ph0_path,         system_name+".phsave", "control_ph.xml")
@@ -109,10 +111,11 @@ if __name__ == "__main__":
                 splited_dv1_path1    = os.path.join(str(i+1), "tmp", "_ph0", system_name+".q_"+str(i+1), system_name+".dvscf1")
                 merged_dv1_path      = os.path.join(q_num_path,                                          system_name+".dvscf1")    
                 shutil.copy(splited_dv1_path, merged_dv1_path)
-      
-                splited_dv_paw1_path    = os.path.join(str(i+1), "tmp", "_ph0", system_name+".q_"+str(i+1), system_name+".dvscf_paw1")
-                merged_dv_paw1_path     = os.path.join(q_num_path,                                          system_name+".dvscf_paw1")
-                shutil.copy(splited_dv_paw1_path, merged_dv_paw1_path)
+                
+                if paw_used:
+                    splited_dv_paw1_path    = os.path.join(str(i+1), "tmp", "_ph0", system_name+".q_"+str(i+1), system_name+".dvscf_paw1")
+                    merged_dv_paw1_path     = os.path.join(q_num_path,                                          system_name+".dvscf_paw1")
+                    shutil.copy(splited_dv_paw1_path, merged_dv_paw1_path)
     
             splited_phsave_path = os.path.join(str(i+1), "tmp", "_ph0", system_name+".phsave")
             merged_phsave_path  = os.path.join(merged_ph0_path, system_name+".phsave")
@@ -136,10 +139,11 @@ if __name__ == "__main__":
                 splited_control_ph_path = os.path.join(str(i+1), "tmp", "_ph0", system_name+".phsave", "control_ph.xml")
                 merged_control_ph_path  = os.path.join(merged_ph0_path,         system_name+".phsave", "control_ph.xml")
                 shutil.copy(splited_control_ph_path, merged_control_ph_path)
-
-                splited_dv_paw1_path    = os.path.join(str(i+1), "tmp", "_ph0", system_name+".dvscf_paw1")
-                merged_dv_paw1_path     = os.path.join(merged_ph0_path,         system_name+".dvscf_paw1")
-                shutil.copy(splited_dv_paw1_path, merged_dv_paw1_path)
+                
+                if paw_used:
+                    splited_dv_paw1_path    = os.path.join(str(i+1), "tmp", "_ph0", system_name+".dvscf_paw1")
+                    merged_dv_paw1_path     = os.path.join(merged_ph0_path,         system_name+".dvscf_paw1")
+                    shutil.copy(splited_dv_paw1_path, merged_dv_paw1_path)
             else:
                 q_num_path          = os.path.join(merged_ph0_path,         system_name+".q_"+str(i+1))
                 if not os.path.exists(q_num_path):
@@ -147,10 +151,11 @@ if __name__ == "__main__":
                 splited_dv1_path    = os.path.join(str(i+1), "tmp", "_ph0", system_name+".dvscf1")
                 merged_dv1_path     = os.path.join(q_num_path,              system_name+".dvscf1")    
                 shutil.copy(splited_dv1_path, merged_dv1_path)
-      
-                splited_dv_paw1_path    = os.path.join(str(i+1), "tmp", "_ph0", system_name+".dvscf_paw1")
-                merged_dv_paw1_path     = os.path.join(q_num_path,              system_name+".dvscf_paw1")
-                shutil.copy(splited_dv_paw1_path, merged_dv_paw1_path)
+                
+                if paw_used:
+                    splited_dv_paw1_path    = os.path.join(str(i+1), "tmp", "_ph0", system_name+".dvscf_paw1")
+                    merged_dv_paw1_path     = os.path.join(q_num_path,              system_name+".dvscf_paw1")
+                    shutil.copy(splited_dv_paw1_path, merged_dv_paw1_path)
     
             splited_phsave_path = os.path.join(str(i+1), "tmp", "_ph0", system_name+".phsave")
             merged_phsave_path  = os.path.join(merged_ph0_path, system_name+".phsave")
