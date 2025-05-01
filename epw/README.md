@@ -405,7 +405,14 @@ etf_mem = 3 is used for transport calculations with ultra dense fine momentum gr
 比如：我的体系中CeSc2H24需要对41个wannier轨道进行投影，但是我在nscf.in中实际只用默认的nbnd计算了35个能带。需要重新计算nscf并设置nbnd=100
 
 ### <span style="color:lightgreen"> 10. Error in routine elphon_shuffle_wrap (1): Error allocating epmatq
-这个是因为内存不够报错. 或者是设置nkf=1 1 1和nqf=1 1 1, 这导致k的电子态无法散射到k+q的电子态上插值出现问题。可以尝试增大fsthick
+这个是因为内存不够报错. 只有一个办法，想办法给与每个计算节点尽可能多的内存
+
+```shell
+#SBATCH  --nodes=1                    --->   #SBATCH  --nodes=2
+#SBATCH  --ntasks-per-node=48         --->   #SBATCH  --ntasks-per-node=16
+#SBATCH  --cpus-per-task=1            --->   #SBATCH  --cpus-per-task=1 
+mpirun -np 48 $EPW_X -npool 48 ...    --->   mpirun -np 32 $EPW_X -npool 32 ... 
+```
 
 ### <span style="color:lightgreen"> 11. Error in routine dynmat_asr (1):   wrong qpoint
 这个是因为epw_phono.in里面设置的nq1, nq2, nq3的网格和qe设置的q网格不一致导致的。
@@ -426,3 +433,28 @@ etf_mem = 3 is used for transport calculations with ultra dense fine momentum gr
 ```
 
 ### <span style="color:lightgreen"> 15. Error in routine elphon_shuffle_wrap (1): Problem with modes file
+检查一下`pp.py`提取得到的`save`文件里面的`prefix`和你的`epw_phono.in`里面的`prefix`是否一致
+
+```shell
+检查dvscf1差别
+diff tmp/_ph0/Ce1Sc2H24.dvscf1 1/tmp/_ph0/Ce1Sc2H24.dvscf1 
+for i in {2..28}; do echo $i; diff tmp/_ph0/Ce1Sc2H24.q_$i/Ce1Sc2H24.dvscf1  save/Ce1Sc2H24.dvscf_q$i  ; done
+
+检查dvscf_paw1差别
+diff tmp/_ph0/Ce1Sc2H24.dvscf_paw1 1/tmp/_ph0/Ce1Sc2H24.dvscf_paw1
+for i in {2..28}; do echo $i; diff tmp/_ph0/Ce1Sc2H24.q_$i/Ce1Sc2H24.dvscf_paw1  save/Ce1Sc2H24.dvscf_paw_q$i  ; done
+
+检查phsave差别
+for i in {1..28}; do echo $i;  diff  tmp/_ph0/Ce1Sc2H24.phsave/patterns.$i.xml  save/Ce1Sc2H24.phsave/patterns.$i.xml ; done
+
+检查dyn差别
+for i in {1..28}; do echo $i;  diff  Ce1Sc2H24.dyn$i  save/Ce1Sc2H24.dyn_q$i ; done
+
+
+elphon_shuffle_wrap.f90:558:         IF (ierr /= 0) CALL errore('elphon_shuffle_wrap', ' Problem with modes file', 1)
+ph_restart.f90:821:    SUBROUTINE read_disp_pattern_only(iunpun, filename, current_iq, ierr)
+
+```
+
+### <span style="color:lightgreen"> 16. q-vec not commensurate
+这是因为nk=8 8 8, nq=6 6 6, k网格和q网格不相称，所以报错。可以尝试将nk=8 8 8改为nk=6 6 6

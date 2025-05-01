@@ -398,7 +398,7 @@ from d_matrix : error #         3
 D_S (l=2) for this symmetry operation is not orthogonal
 ```
 
-### <span style="color:yellow"> 3.2 回收`1.sparse`目录中稀疏q网格的动力学矩阵，`2.fine`目录中稠密q网格的动力学矩阵，`1.sscha-relax`目录中V3_Hessian动力学矩阵。
+### <span style="color:yellow"> 3.2 回收`1.sparse`目录中稀疏q网格的动力学矩阵，`2.fine`目录中稠密q网格的动力学矩阵，`1.relax`目录中V3_Hessian动力学矩阵。
 用到了`3.Inter`里面的`get_dense.sh`，`get_sparse.sh`，`get_v3_hessian.sh`三个脚本。有相关路径需要自己修改，很简单。
 
 ### <span style="color:yellow"> 3.3 在`2.interpolation/3.Inter`目录中获得插值动力学矩阵：`inter_dyn_*`
@@ -551,12 +551,164 @@ my_hpc.time = "100:00:00" # 每个脚本限制100hours时长
 ```
 
 ## <span style="color:red"> 3. 迭代好动力矩阵后, 使用CalHess.py计算hessian矩阵
+### <span style="color:yellow"> 3.1 修改计算脚本 1_CalHess.py, 有以下 10 个参数需要修改
+```python
+DATA_DIR="data_ensemble_manual" # 从该目录中获得动力学矩阵和能量受力, 有时候这个参数要修改为popj_N, j代表代数, N代表该代总计随机结构数(例如: pop12_2000代表从第12代的随机结构的能量受力搞出V3_Hessian.dyn)
+N_RANDOM = 1000 # 动力学矩阵达到收敛的那一代使用的总随机结构的数量
+DYN_PREFIX =  'dyn_pop11_' # 达到收敛的那一代动力学矩阵的前一代动力学矩阵
+FINAL_DYN =   'dyn_pop12_' # 达到收敛的那一代动力学矩阵
+SAVE_PREFIX = 'V3_Hessian.dyn' # 计算出的Hessian矩阵的结果
+NQIRR = 4 # 总的动力学矩阵的数量
+Tg = 0 # 温度
+T =  0 # 温度
+POPULATION = 12 # 达到收敛的那一代动力学矩阵的编号, 程序从DATA_DIR="data_ensemble_manual"中读取那一代动力学矩阵计算出的受力和能量
+ens.load(DATA_DIR, population = POPULATION , N=N_RANDOM ) # 注意这里load函数加载的文件格式是.dat, 如果DATA_DIR目录中存放的文件格式是.npy, 
+#ens.load_bin(DATA_DIR, population_id = POPULATION), 特别的load_bin函数没有 N=N_RANDOM 这个参数.
+```
+
+### <span style="color:yellow"> 3.2 将1_CalHess.py提交到节点运行, 可能需要你根据自己使用的集群修改提交作业的脚本
+```shell
+sbatch SUB_HESS.sh
+```
+
 
 ## <span style="color:red"> 4. 使用hessian矩阵中的晶格参数和原子坐标, 在2.interpolation/1.sparse中计算稀疏的动力学矩阵, 在2.interpolation/2.fine里面计算稠密的动力学矩阵
 
+### <span style="color:yellow"> 4.1 重新计算稀疏的、稠密的动力学矩阵
+
+需要重新准备自洽和声子计算的输入文件
+
+输入文件`scffit.in`和`scf.in`中的结构信息最好都从`V3_Hessian.dyn`中提取。
+
+`V3_Hessian.dyn`中的结构文件的说明:
+```shell
+Dynamical matrix file
+File generated with the CellConstructor by Lorenzo Monacelli
+#  9.4567007000000007 是 celldm(1)
+3 27 0     9.4567007000000007     0.0000000000000000     0.0000000000000000     0.0000000000000000     0.0000000000000000     0.0000000000000000
+Basis vectors # 单位是alat, 对应的scffit.in scf.in中都要用alat
+    1.0092654065722451    -0.0000000000000000     0.0000000000000000
+   -0.5046327032861226     0.8740494812534840     0.0000000000000000
+    0.0000000000000000     0.0000000000000000     0.6998060393036162
+        1  'Ce '  127707.9215674129955005
+        2  'Sc '  40974.8071860994023154
+        3  'H '    918.6811103989390404
+    # 单位也是alat
+    1     1    -0.0000000000000000     0.0000000000000000    -0.0000000000000000
+    2     2    -0.0000000000000001     0.5826996540344207     0.3499030198531194
+    3     2     0.5046327032861220     0.2913498270172102     0.3499030198531194
+    4     3     0.6227139914744079    -0.0000000000000002     0.5498098458271082
+    5     3    -0.3113569957372042     0.5392861358209859     0.5498098458271082
+    6     3     0.1932757075489183     0.3347633452306448     0.5498098458271082
+    7     3     0.3113569957372040     0.5392861358209854     0.1499961938791310
+    8     3     0.3865514150978366    -0.0000000000000002     0.1499961938791310
+    9     3    -0.1932757075489188     0.3347633452306448     0.1499961938791310
+   10     3     0.2303073226102307    -0.0000000000000000     0.3499030198531194
+   11     3    -0.1151536613555787     0.1994519920201268     0.3499030198531194
+   12     3     0.3894790419305433     0.6745974890315040     0.3499030198531194
+   13     3     0.1151536613555785     0.1994519920201264     0.3499030198531194
+   14     3     0.7789580839620139    -0.0000000000000001     0.3499030198531194
+   15     3    -0.3894790419305441     0.6745974890315038     0.3499030198531194
+   16     3     0.3865514150978366    -0.0000000000000002     0.5498098458271082
+   17     3    -0.1932757075489188     0.3347633452306448     0.5498098458271082
+   18     3     0.3113569957372040     0.5392861358209854     0.5498098458271082
+   19     3     0.1932757075489183     0.3347633452306448     0.1499961938791310
+   20     3     0.6227139914744079    -0.0000000000000002     0.1499961938791310
+   21     3    -0.3113569957372042     0.5392861358209859     0.1499961938791310
+   22     3     0.5046327032861222     0.4563658209178845     0.0000000000000000
+   23     3     0.3617246604406449     0.2088418300668730     0.0000000000000000
+   24     3     0.6475407461315990     0.2088418300668730     0.0000000000000000
+   25     3     0.0000000000000000     0.4176836601337461    -0.0000000000000000
+   26     3     0.1429080428454766     0.6652076509847578     0.0000000000000000
+
+```
+
+如果不愿意手动制作`scffit.in`, `scf.in`的输入文件，可以用`qedyn2struct.py`脚本制作。执行命令如下。注意：最好去读取`V3_Hessian.dyn*`中的结构.
+```shell
+python qedyn2struct.py -i V3_Hessian.dyn1 -o qe
+
+# 然后你需要格外注意并修改scffit.in 和 scf.in 中以下部分的参数
+# You have to confirm the 4 iterms, namely 
+# `pp path`, 
+# `ATOMIC_SPECIES`, 
+# `K_POINTS in scffit.in`, 
+# `K_POINTS in scf.in`.
+```
+
+如果报错，`D_S (l=2) for this symmetry operation is not orthogonal`，
+这说明V3_Hessian.dyn可能弛豫出来的对称性微微扭曲，建议在那一代补充增加结构数，获得新的V3_Hessian.dyn矩阵。
+```shell
+task #         0
+from d_matrix : error #         3
+D_S (l=2) for this symmetry operation is not orthogonal
+```
+
+### <span style="color:yellow"> 4.2 回收`1.sparse`目录中稀疏q网格的动力学矩阵，`2.fine`目录中稠密q网格的动力学矩阵，`1.relax`目录中V3_Hessian动力学矩阵。
+用到了`3.Inter`里面的`get_dense.sh`，`get_sparse.sh`，`get_v3_hessian.sh`三个脚本。有相关路径需要自己修改，很简单。
+
+
 ## <span style="color:red"> 5. 基于2.interpolation/1.sparse中稀疏的动力学矩阵和2.interpolation/2.fine中稠密的动力学矩阵, 使用脚本2_Inter.py在2.interpolation/3.Inter中计算插值的动力学矩阵
 
+
+修改`2_Inter.py`的内容，并通过`SUB_INTER.sh`提交任务。
+```python
+···
+...
+# 详细说明需要修改的内容：
+inter_dyn = CC.Phonons.Phonons()
+dyn_sscha = CC.Phonons.Phonons("V3_Hessian.dyn",4) # 指定好V3_Hessian的名称和不可以q点数量。
+dyn_coarse= CC.Phonons.Phonons("222.dyn",4) # 指定好稀疏动力学矩阵的名称和不可以q点数量。
+dyn_fine  = CC.Phonons.Phonons("666.dyn",20)# 指定好稠密动力学矩阵的名称和不可以q点数量。
+# 以上名称有赖于你自己的定义。前后统一即可。
+inter_dyn = dyn_sscha.Interpolate(coarse_grid=[2,2,2], fine_grid=[6,6,6], support_dyn_coarse=dyn_coarse, support_dyn_fine=dyn_fine, symmetrize=True)
+#dyn_222.SwapQPoints(dyn_sscha)
+#dyn_222.save_qe("i")
+inter_dyn.save_qe("inter_dyn_") # 插好值的动力学矩阵被命名为inter_dyn_1, inter_dyn_2, ......
+···
+···
+```
+
 ## <span style="color:red"> 6. 基于插值的动力学矩阵inter_dyn_*, 在3.Tc目录中计算电声耦合.
+### <span style="color:yellow"> 6.1 首先，将`inter_dyn_*`, 降低拷贝为指定体系名称的动力学矩阵。只需要看看你之前的动力学矩阵的命名规则就行。
+### <span style="color:yellow"> 6.2 其次在`3.Tc`目录中准备如下四个文件：`scffit.in`(自洽输入文件la2F=.true.), `scf.in`(自洽输入文件la2F=.false.), `s5_PhAssignQ.sh`(提交任务的脚本), `split_ph.in`(分q点计算的脚本)。特别注意：
+   ```shell
+   Electron-phonon coefficients for Nb4H14
+    &inputph
+    tr2_ph=1.0d-14,
+    prefix='Nb4H14',
+    fildvscf='dvscf',
+    electron_phonon='interpolated',
+    el_ph_sigma=0.005,
+    el_ph_nsigma=10,
+    alpha_mix(1)=0.3,
+    amass(1)=92.90638 ,
+    amass(2)=1.00794 ,
+    outdir='./tmp',
+    fildyn='Nb4H14.dyn',
+    trans=.false., # 一定要false，代表从动力学矩阵后续算电声耦合计算
+    ldisp=.false., # 一定要false，代表通过指定q点坐标的方式进行分q点计算
+    nq1=6,nq2=6,nq3=6,
+    start_q=1
+    last_q=1
+    /
+    XQ1 XQ2 XQ3
+   ```
+
+```shell
+   Error in routine initialize_grid_variables (1):
+     problems reading u
+```
+
+
+### <span style="color:yellow"> 6.3 从`2.fine`目录中拷贝记录了不可约q点坐标的`*.dyn0`文件到`3.Tc`目录中。
+   
+### <span style="color:yellow"> 6.4 准备分q点目录，并且在各个分q点目录中tmp文件中的`dv文件`和`patterns文件`。
+   
+    **这里非常重要。因为通过`ldisp=.false.`和`XQ1 XQ2 XQ3`方式指定q点，所以每一个分q点的tmp/_ph0/*.phsave/目录中patterns.*.xml都要改为tmp/_ph0/*.phsave/patterns.1.xml**
+
+    **<span style="color:lightblue"> 以上步骤都可以通过`pre.sh`准备好, 准备好之后通过`sub.sh`提交任务。**
+
+5. 后面的步骤就和`QE`计算超导的步骤一样了。
 
 ## <span style="color:red"> 7. 报错集锦
 
