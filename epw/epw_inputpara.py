@@ -53,10 +53,12 @@ class epw_inputpara(epw_base):
             logger.error("You must specify dvscf_dir")
             sys.exit(1)
         else:
-            self.dvscf_dir = Path.cwd().joinpath(self.dvscf_dir)
-            if not self.dvscf_dir.exists():
-                logger.error(f"Specified dvscf_dir: {self.dvscf_dir.absolute()} doesn't exist ")
+            if not Path.cwd().joinpath(self.dvscf_dir):
+                logger.error(f"Specified dvscf_dir: {self.dvscf_dir} doesn't exist ")
                 sys.exit(1)
+            else:
+                logger.info(f"Specified dvscf_dir: {self.dvscf_dir} exist.  ")
+        logger.info(f"You have to write it as `save/`, not `save`. If you input reletive path, then you have to input `../save/`, not `../save`.")
         
         if not hasattr(self, "etf_mem"):
             self.etf_mem = 1
