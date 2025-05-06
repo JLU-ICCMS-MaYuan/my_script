@@ -21,8 +21,11 @@ epw_main.py -i POSCAR -j bash -w epw epw_run -m mode=epw_eband execmd='mpirun -n
 # epw计算声子, 要将计算的声子freq.dat和qe计算的声子做对比
 epw_main.py -i POSCAR -j bash -w epw epw_run -m mode=epw_phono  execmd='mpirun -np 8' npool=8 dvscf_dir='./save' nbndsub=7 bands_skipped='1:12' dis_froz_min=-7.635175  dis_froz_max=23 dis_win_max=60  proj='H:s S:s S:p'  nk='8 8 8' nq='4 4 4'  queue=lhy
 
-# epw计算超导性质
+# epw计算电声耦合插值
 epw_main.py -i POSCAR -j bash -w epw epw_run -m mode=epw_elph  execmd='mpirun -np 8' npool=8 dvscf_dir='./save' nbndsub=7 bands_skipped='1:12' dis_froz_min=-7.635175  dis_froz_max=23 dis_win_max=60  proj='H:s S:s S:p'  nk='8 8 8' nq='4 4 4' nkf='12 12 12' nqf='6 6 6' fsthick=0.4 degaussw=0.1 degaussq=0.5  queue=local
+
+# epw计算超导
+epw_main.py -i POSCAR -j bash -w epw epw_run -m mode=epw_sc  execmd='mpirun -np 8' npool=8 dvscf_dir='./save' nbndsub=7 bands_skipped='1:12' dis_froz_min=-7.635175  dis_froz_max=23 dis_win_max=60  proj='H:s S:s S:p'  nk='8 8 8' nq='4 4 4' nkf='12 12 12' nqf='6 6 6' fsthick=0.4 degaussw=0.1 degaussq=0.5  queue=local
 ```
 
 ### <span style="color:lightgreen"> 1.自洽计算
