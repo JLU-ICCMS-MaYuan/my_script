@@ -13,8 +13,8 @@ import sscha, sscha.Ensemble
 POPULATION = 14
 DATA_DIR ="ensembles"
 N_RANDOM = 1000
-DYN_PREFIX =  f'dyn_pop{POPULATION}_'      # dyn mat that generated the last population
-FINAL_DYN  =  f'dyn_pop{POPULATION-1}_'    # SSCHA dyn mat obtained with the last minimization 
+FINAL_DYN =  f'dyn_pop{POPULATION}_'      # dyn mat that generated the last population
+DYN_PREFIX =  f'dyn_pop{POPULATION-1}_'    # SSCHA dyn mat obtained with the last minimization 
 SAVE_PREFIX = 'V3_Hessian.dyn'  # Free energy Hessian dynamical matrices
 NQIRR = 3
 Tg = 0
