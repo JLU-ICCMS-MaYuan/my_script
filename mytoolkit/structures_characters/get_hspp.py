@@ -36,7 +36,7 @@ def write_interpolated_points(path_name_coords, num_points):
 
 
 
-def get_hspp(ase_atom:Atom):
+def get_hspp(ase_atom:Atom, get_hspp:bool=False):
     """
     This method is to get high symmetry paths and points
     """ 
@@ -125,7 +125,7 @@ def write4tdep_type(path_name_coords):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Process high symmetry paths.')
-    parser.add_argument('filename', help='Input filename for ASE atom')
+    parser.add_argument('-f', '--filename', help='Input filename for ASE atom')
     parser.add_argument('-n', '--num_points', type=int, default=0, help='Number of interpolation points between high symmetry points')
     
     args = parser.parse_args()
