@@ -2,6 +2,18 @@
 
 import numpy as np
 
+print("hspp.dat file format. You can copy the b(1), b(2), b(3) vectors from the output of pw.x and paste them here.")
+format_module = """
+1.000000  0.000000  0.000000
+0.000000  1.000000  0.000000
+0.000000  0.000000  1.000000
+0.5             0.0             0.0          X                       
+0.5             0.5             0.5          R                       
+0.5             0.5             0.0          M                       
+0               0               0            G                       
+0.5             0.5             0.5          R
+"""
+
 with open("hspp.dat", "r") as file:
     lines = file.readlines()
 

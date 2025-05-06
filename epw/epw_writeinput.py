@@ -240,8 +240,6 @@ class epw_writeinput:
             epw.write(" ! only read electron-phonon matrix elements in the coarse Wannier representation\n")
             epw.write("\n")
             epw.write(" lifc = {}\n".format(self.epw_inputpara.lifc))
-            epw.write("\n")
-            epw.write(" lifc = {}\n".format(self.epw_inputpara.lifc))
             epw.write(" wannierize  = {}\n".format(self.epw_inputpara.wannierize))
             epw.write(" nbndsub     = {}\n".format(self.epw_inputpara.nbndsub))
             if self.epw_inputpara.bands_skipped is not None:
