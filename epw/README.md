@@ -126,7 +126,8 @@ mpirun -np N $EPWBIN/epw.x -npool N < epw.in > epw.out
 ```fortran
   iverbosity  = 2         ! 2 = 罗嗦的输出针对超导部分
                           ! 3 = 罗嗦的输出针对电声耦合部分
-  fsthick     = 0.4       ! 考虑自能δ函数的费米表面窗口宽度，单位是eV。缩小这个值可以减少自能量计算中包含的带数量。
+  fsthick     = 0.4       ! 考虑自能δ函数的费米表面窗口宽度，单位是eV。缩小这个值可以减少自能量计算中包含的带数量。 
+                          ! 4 times the maximum phonon frequency (and also please set your degaussw to 1/4 of fsthick)
   degaussw    = 0.10      ! Smearing in the energy-conserving delta functions in [eV]，默认0.025
   nsmear      = 1         ! 用于计算声子自能的不同smearings。
   delta_smear = 0.04      ! 声子自能计算时每一次额外的smearing的改变量，单位时eV
@@ -154,6 +155,7 @@ mpirun -np N $EPWBIN/epw.x -npool N < epw.in > epw.out
   conv_thr_iaxis = 1.0d-4 ! 虚轴Eliashberg方程迭代解的收敛阈值。
 
   wscut = 1.0      ! 单位eV，在求解Elisashberg 方程时的频率上限，必须搭配limag = .true.使用。如果设置了nswi为不为0的值，wscut被忽略。
+                   ! 10 times the maximum phonon frequency
 
   nstemp   = 1     ! 用于超导、传输、惯性等的温度点 数目。
                    ! 如果nstemp为空，或者等于temps(:)中的条目数，则使用temps(:)中提供的温度。
@@ -461,3 +463,10 @@ ph_restart.f90:821:    SUBROUTINE read_disp_pattern_only(iunpun, filename, curre
 
 ### <span style="color:lightgreen"> 16. q-vec not commensurate
 这是因为nk=8 8 8, nq=6 6 6, k网格和q网格不相称，所以报错。可以尝试将nk=8 8 8改为nk=6 6 6
+
+
+### <span style="color:lightgreen"> 17. Non-zero rdw is found in epwdata.fmt. lifc may have changed since the last calculation.
+在算超导的时候遇到了这个问题，这是因为前面一直设置lifc=.false.，后面设置了lifc=.true.。重新把lifc设置为.false.即可。
+
+### <span style="color:lightgreen"> 18. Error in routine estimate_tc_gap (1):  initial guess for gap edge should be > 0.d0
+首先在epw_iso_sc.out中看到``

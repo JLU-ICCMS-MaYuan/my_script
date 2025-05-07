@@ -128,9 +128,9 @@ class qe_inputpara(qe_base):
             self.charge_density_dat   = f"tmp/{self.system_name}.save/charge-density.dat"
             self.paw_txt              = f"tmp/{self.system_name}.save/paw.txt"
         else:
-            self.data_file_schema_xml = Path(self.tmp).joinpath(f"{self.system_name}.save/data-file-schema.xml")
-            self.charge_density_dat   = Path(self.tmp).joinpath(f"{self.system_name}.save/charge-density.dat")
-            self.paw_txt              = Path(self.tmp).joinpath(f"{self.system_name}.save/paw.txt")
+            self.data_file_schema_xml = Path(self.tmp).joinpath(f"{self.system_name}.save/data-file-schema.xml").absolute()
+            self.charge_density_dat   = Path(self.tmp).joinpath(f"{self.system_name}.save/charge-density.dat").absolute()
+            self.paw_txt              = Path(self.tmp).joinpath(f"{self.system_name}.save/paw.txt").absolute()
             
         # &CELL
         if not hasattr(self, "press_conv_thr"):
