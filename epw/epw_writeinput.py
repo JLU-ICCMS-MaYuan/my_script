@@ -210,9 +210,9 @@ class epw_writeinput:
             epw.write("0\n")
             epw.write("0 50\n")
             epw.write("\n\n\n")
-            epw.write("# Second line is min and max value in your spectrum\n")
-            epw.write("# Meanwhile, another file named band.eig is eletron spectrum.\n")
-            epw.write("# band.eig also can be plotted by plotband.x, detailed in Tue.6.Lafuente.pdf.\n") 
+            # epw.write("# Second line is min and max value in your spectrum\n")
+            # epw.write("# Meanwhile, another file named band.eig is eletron spectrum.\n")
+            # epw.write("# band.eig also can be plotted by plotband.x, detailed in Tue.6.Lafuente.pdf.\n") 
         return inputfilename
 
     def write_epw_elph_in(self, work_directory:Path):
@@ -260,7 +260,6 @@ class epw_writeinput:
             epw.write(" fsthick  = {}       ! Fermi window thickness [eV]\n".format(self.epw_inputpara.fsthick))
             epw.write(" degaussw = {}       ! smearing in energy-conserving delta functions in [eV]\n".format(self.epw_inputpara.degaussw))
             epw.write(" degaussq = {}       ! smearing for sum over q in the e-ph coupling in [meV]\n".format(self.epw_inputpara.degaussq))
-            epw.write(" ephwrite  = .true.  ! write ephmatXX, egnv, freq, and ikmap files in prefix.ephmat directory\n")
 
             epw.write("\n")
             epw.write(" nk1 = {}\n nk2 = {}\n nk3 = {}\n".format(self.epw_inputpara.nk[0], self.epw_inputpara.nk[1], self.epw_inputpara.nk[2]))
@@ -291,8 +290,8 @@ class epw_writeinput:
             epw.write("\n")
             epw.write(" etf_mem     ={} !1 include the whole band 3 only in the window band will be calculated \n".format(self.epw_inputpara.etf_mem))
             epw.write("\n")
-            epw.write(" ep_coupling = .false.\n")
-            epw.write(" elph        = .false.\n")
+            epw.write(" ep_coupling = .true.\n")
+            epw.write(" elph        = .true.\n")
             epw.write(" epbwrite    = .false.  ! electron-phonon matrix elements in the coarse Bloch representation and relevant data (dyn matrices)\n")
             epw.write(" epbread     = .false.  ! electron-phonon matrix elements in the coarse Bloch representation and relevant data (dyn matrices)\n")
             epw.write(" epwwrite    = .false.  ! electron-phonon matrix elements in the coarse Wannier representation and relevant data (dyn matrices)\n")
@@ -321,7 +320,7 @@ class epw_writeinput:
             epw.write(" fsthick  = {}       ! Fermi window thickness [eV]\n".format(self.epw_inputpara.fsthick))
             epw.write(" degaussw = {}       ! smearing in energy-conserving delta functions in [eV]\n".format(self.epw_inputpara.degaussw))
             epw.write(" degaussq = {}       ! smearing for sum over q in the e-ph coupling in [meV]\n".format(self.epw_inputpara.degaussq))
-            epw.write(" ephwrite = .false.  ! write ephmatXX, egnv, freq, and ikmap files in prefix.ephmat directory\n")
+            epw.write(" ephwrite = .true.   ! write ephmatXX, egnv, freq, and ikmap files in prefix.ephmat directory\n")
             epw.write("\n")
             epw.write(" eliashberg     = .true.  ! calculate Eliashberg spectral function\n")
             epw.write(" liso           = .true.  ! solve isotropic ME eqs.\n")
@@ -409,7 +408,7 @@ class epw_writeinput:
             epw.write(" fsthick  = {}       ! Fermi window thickness [eV]\n".format(self.epw_inputpara.fsthick))
             epw.write(" degaussw = {}       ! smearing in energy-conserving delta functions in [eV]\n".format(self.epw_inputpara.degaussw))
             epw.write(" degaussq = {}       ! smearing for sum over q in the e-ph coupling in [meV]\n".format(self.epw_inputpara.degaussq))
-            epw.write(" ephwrite = .false.  ! write ephmatXX, egnv, freq, and ikmap files in prefix.ephmat directory\n")
+            epw.write(" ephwrite = .true.   ! write ephmatXX, egnv, freq, and ikmap files in prefix.ephmat directory\n")
             epw.write("\n")
             
             epw.write(" eliashberg     = .true.  ! calculate Eliashberg spectral function\n")

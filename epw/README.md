@@ -470,3 +470,5 @@ ph_restart.f90:821:    SUBROUTINE read_disp_pattern_only(iunpun, filename, curre
 
 ### <span style="color:lightgreen"> 18. Error in routine estimate_tc_gap (1):  initial guess for gap edge should be > 0.d0
 首先在epw_iso_sc.out中看到``
+
+### <span style="color:lightgreen"> 19. Error in routine read_kqmap (367):  Error: ixkff(ik) is not equal to ixkf(bztoibz(ik)).
