@@ -321,7 +321,9 @@ class epw_writeinput:
             epw.write(" degaussw = {}       ! smearing in energy-conserving delta functions in [eV]\n".format(self.epw_inputpara.degaussw))
             epw.write(" degaussq = {}       ! smearing for sum over q in the e-ph coupling in [meV]\n".format(self.epw_inputpara.degaussq))
             epw.write(" ephwrite = .true.   ! write ephmatXX, egnv, freq, and ikmap files in prefix.ephmat directory\n")
+            epw.write(" selecqread = .true. ! If .true. then restart from the selecq.fmt file\n")
             epw.write("\n")
+            
             epw.write(" eliashberg     = .true.  ! calculate Eliashberg spectral function\n")
             epw.write(" liso           = .true.  ! solve isotropic ME eqs.\n")
             epw.write(" limag          = .true.  ! solve ME eqs. on imaginary axis\n")
@@ -409,6 +411,7 @@ class epw_writeinput:
             epw.write(" degaussw = {}       ! smearing in energy-conserving delta functions in [eV]\n".format(self.epw_inputpara.degaussw))
             epw.write(" degaussq = {}       ! smearing for sum over q in the e-ph coupling in [meV]\n".format(self.epw_inputpara.degaussq))
             epw.write(" ephwrite = .true.   ! write ephmatXX, egnv, freq, and ikmap files in prefix.ephmat directory\n")
+            epw.write(" selecqread = .true. ! If .true. then restart from the selecq.fmt file\n")
             epw.write("\n")
             
             epw.write(" eliashberg     = .true.  ! calculate Eliashberg spectral function\n")

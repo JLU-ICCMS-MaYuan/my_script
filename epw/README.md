@@ -469,6 +469,6 @@ ph_restart.f90:821:    SUBROUTINE read_disp_pattern_only(iunpun, filename, curre
 在算超导的时候遇到了这个问题，这是因为前面一直设置lifc=.false.，后面设置了lifc=.true.。重新把lifc设置为.false.即可。
 
 ### <span style="color:lightgreen"> 18. Error in routine estimate_tc_gap (1):  initial guess for gap edge should be > 0.d0
-首先在epw_iso_sc.out中看到``
+首先在epw_iso_sc.out中看到`Electron-phonon coupling strength =          NaN`, 其次检查prefix.a2f中看到了一大堆的NAN，说明电声耦合计算的就有问题。
 
 ### <span style="color:lightgreen"> 19. Error in routine read_kqmap (367):  Error: ixkff(ik) is not equal to ixkf(bztoibz(ik)).
