@@ -475,4 +475,16 @@ ph_restart.f90:821:    SUBROUTINE read_disp_pattern_only(iunpun, filename, curre
 ### <span style="color:lightgreen"> 19. Error in routine read_kqmap (367):  Error: ixkff(ik) is not equal to ixkf(bztoibz(ik)).
 
 ### <span style="color:lightgreen"> 20. Error in routine ep_coarse_unfolding (1): cannot open file for reading or writing
+ep_coarse_unfolding.f90的源代码中显示当出现无法读取patters.*.xml文件时，就会报错Error in routine ep_coarse_unfolding。此时你要检查你的save文件中是否还存在东西！！！！有可能save中的内容意见被你删掉了。
+```fortran
+      IF (u_from_file) THEN
+         ierr = 0
+         dirname = TRIM(dvscf_dir) // TRIM(prefix) // '.phsave'
+         filename = TRIM(dirname) // '/patterns.' // TRIM(int_to_char(iq_irr)) // '.xml'
+         INQUIRE(FILE = TRIM(filename), EXIST = exst)
+         IF (.NOT. exst) CALL errore('ep_coarse_unfolding', &
+                   'cannot open file for reading or writing', 1)
+```
+还有一种可能性就是你的dvscf_dir写成了诸如`dvscf_dir='./save`这样的错误形式。也会爆出这个错。总之就是无法正常读取save目录时就会报错。
+
 
