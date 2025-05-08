@@ -143,6 +143,9 @@ class epw_writesubmit:
         with open(_script_filepath, "w") as j:
             j.writelines(self.jobtitle)
             epw_iso_sc_in, epw_iso_sc_out = next(input_output)
+            j.write('echo "rm a2f a2f_proj"\n')
+            j.write('rm {}.a2f {}.a2f_proj\n'.format(self.epw_inputpara.system_name, self.epw_inputpara.system_name))
+            
             j.write('echo "epw_iso_sc"\n')
             j.write('{} {}/epw.x -npool {} <{}> {}  \n'.format(self.epw_inputpara.execmd, epwbin_path, self.epw_inputpara.npool, epw_iso_sc_in, epw_iso_sc_out))
         

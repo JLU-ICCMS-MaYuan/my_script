@@ -470,5 +470,6 @@ ph_restart.f90:821:    SUBROUTINE read_disp_pattern_only(iunpun, filename, curre
 
 ### <span style="color:lightgreen"> 18. Error in routine estimate_tc_gap (1):  initial guess for gap edge should be > 0.d0
 首先在epw_iso_sc.out中看到`Electron-phonon coupling strength =          NaN`, 其次检查prefix.a2f中看到了一大堆的NAN，说明电声耦合计算的就有问题。
+再回到epw_iso_sc.out中可以看到这样一个信息`a2f file is not found to estimate initial gap: calculating a2f files`, 找到这个字符串的在源码中的位置我们发现, 在源码中epw调用了`CALL evaluate_a2f_lambda`来计算a2f. 
 
 ### <span style="color:lightgreen"> 19. Error in routine read_kqmap (367):  Error: ixkff(ik) is not equal to ixkf(bztoibz(ik)).

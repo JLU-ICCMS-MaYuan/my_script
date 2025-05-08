@@ -135,7 +135,7 @@ class epw_inputpara(epw_base):
             logger.debug(f'degaussw = {self.degaussw}\n')
         
         if not hasattr(self, "degaussq"):
-            self.degaussq = 0.5
+            self.degaussq = 0.05
             logger.debug(f'degaussq = {self.degaussq}\n')
         
         if not hasattr(self, "nk"):
