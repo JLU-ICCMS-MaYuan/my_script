@@ -60,7 +60,7 @@ class epw_writeinput:
             epw.write(" etf_mem     = {}       ! 1 include the whole band 3 only in the window band will be calculated \n".format(self.epw_inputpara.etf_mem))
             epw.write("\n")
             epw.write(" use_ws      = .true.\n")
-            epw.write(" wannierize  = .true.\n")
+            epw.write(" wannierize  = .true.   ! If .false., read *.ukk file\n")
             epw.write(" nbndsub     = {}\n".format(self.epw_inputpara.nbndsub))
             if self.epw_inputpara.bands_skipped is not None:
                 epw.write(" bands_skipped = 'exclude_bands = {}'\n".format(self.epw_inputpara.bands_skipped))
@@ -109,11 +109,13 @@ class epw_writeinput:
             epw.write(" epbread     = .false.  ! electron-phonon matrix elements in the coarse Bloch representation and relevant data (dyn matrices)\n")
             epw.write(" epwwrite    = .true.   ! electron-phonon matrix elements in the coarse Wannier representation and relevant data (dyn matrices)\n")
             epw.write(" epwread     = .false.  ! electron-phonon matrix elements in the coarse Wannier representation and relevant data (dyn matrices). ! It is used for a restart calculation and requires kmaps = .true.  prefix.epmatwp, crystal.fmt, vmedata.fmt, wigner.fmt, and epwdata.fmt are all needed for restarting a calculation.\n")
+            
             epw.write("\n")
             epw.write(" lifc = {}\n".format(self.epw_inputpara.lifc))
             epw.write("\n")
+            
             epw.write(" use_ws      = .true.\n")
-            epw.write(" wannierize  = {}\n".format(self.epw_inputpara.wannierize))
+            epw.write(" wannierize  = {}       ! If .false., read *.ukk file\n".format(self.epw_inputpara.wannierize))
             epw.write(" nbndsub     = {}\n".format(self.epw_inputpara.nbndsub))
             if self.epw_inputpara.bands_skipped is not None:
                 epw.write(" bands_skipped = 'exclude_bands = {}'\n".format(self.epw_inputpara.bands_skipped))
@@ -165,11 +167,13 @@ class epw_writeinput:
             epw.write(" epwwrite    = .false.  ! write electron-phonon matrix elements in the coarse Wannier representation and relevant data (dyn matrices)\n")
             epw.write(" epwread     = .true.   ! read e-ph matrices from 'prefix.epmatwp' file. electron-phonon matrix elements in the coarse Wannier representation and relevant data (dyn matrices). \n")
             epw.write("                        ! It is used for a restart calculation, and doesn't set kmaps = .true. kmaps may appear in EPW website, it's out of date.  prefix.epmatwp, crystal.fmt, vmedata.fmt, wigner.fmt, and epwdata.fmt are all needed for restarting a calculation.\n")
+            
             epw.write("\n")
             epw.write(" lifc = {}\n".format(self.epw_inputpara.lifc))
             epw.write("\n")
+            
             epw.write(" use_ws      = .true.\n")
-            epw.write(" wannierize  = {}\n".format(self.epw_inputpara.wannierize))
+            epw.write(" wannierize  = {}       ! If .false., read *.ukk file\n".format(self.epw_inputpara.wannierize))
             epw.write(" nbndsub     = {}\n".format(self.epw_inputpara.nbndsub))
             if self.epw_inputpara.bands_skipped is not None:
                 epw.write(" bands_skipped = 'exclude_bands = {}'\n".format(self.epw_inputpara.bands_skipped))
@@ -239,9 +243,13 @@ class epw_writeinput:
             epw.write(" epwwrite    = .false.  ! write electron-phonon matrix elements in the coarse Wannier representation and relevant data (dyn matrices)\n")
             epw.write(" epwread     = .true.   ! read e-ph matrices from 'prefix.epmatwp' file. electron-phonon matrix elements in the coarse Wannier representation and relevant data (dyn matrices). \n")
             epw.write("                        ! It is used for a restart calculation, and doesn't set kmaps = .true. kmaps may appear in EPW website, it's out of date.  prefix.epmatwp, crystal.fmt, vmedata.fmt, wigner.fmt, and epwdata.fmt are all needed for restarting a calculation.\n")
+            
             epw.write("\n")
             epw.write(" lifc = {}\n".format(self.epw_inputpara.lifc))
-            epw.write(" wannierize  = {}\n".format(self.epw_inputpara.wannierize))
+            epw.write("\n")
+            
+            epw.write(" use_ws      = .true.\n")
+            epw.write(" wannierize  = {}       ! If .false., read *.ukk file\n".format(self.epw_inputpara.wannierize))
             epw.write(" nbndsub     = {}\n".format(self.epw_inputpara.nbndsub))
             if self.epw_inputpara.bands_skipped is not None:
                 epw.write(" bands_skipped = 'exclude_bands = {}'\n".format(self.epw_inputpara.bands_skipped))
@@ -298,12 +306,13 @@ class epw_writeinput:
             epw.write(" epwwrite    = .false.  ! write electron-phonon matrix elements in the coarse Wannier representation and relevant data (dyn matrices)\n")
             epw.write(" epwread     = .true.   ! read e-ph matrices from 'prefix.epmatwp' file. electron-phonon matrix elements in the coarse Wannier representation and relevant data (dyn matrices). \n")
             epw.write("                        ! It is used for a restart calculation, and doesn't set kmaps = .true. kmaps may appear in EPW website, it's out of date.  prefix.epmatwp, crystal.fmt, vmedata.fmt, wigner.fmt, and epwdata.fmt are all needed for restarting a calculation.\n")
-            epw.write("\n")
             
+            epw.write("\n")
             epw.write(" lifc = {}\n".format(self.epw_inputpara.lifc))
             epw.write("\n")
+            
             epw.write(" use_ws      = .true.\n")
-            epw.write(" wannierize  = {}\n".format(self.epw_inputpara.wannierize))
+            epw.write(" wannierize  = {}       ! If .false., read *.ukk file\n".format(self.epw_inputpara.wannierize))
             epw.write(" nbndsub     = {}\n".format(self.epw_inputpara.nbndsub))
             if self.epw_inputpara.bands_skipped is not None:
                 epw.write(" bands_skipped = 'exclude_bands = {}'\n".format(self.epw_inputpara.bands_skipped))
@@ -394,12 +403,13 @@ class epw_writeinput:
             epw.write(" epwwrite    = .false.  ! write electron-phonon matrix elements in the coarse Wannier representation and relevant data (dyn matrices)\n")
             epw.write(" epwread     = .true.   ! read e-ph matrices from 'prefix.epmatwp' file. electron-phonon matrix elements in the coarse Wannier representation and relevant data (dyn matrices). \n")
             epw.write("                        ! It is used for a restart calculation, and doesn't set kmaps = .true. kmaps may appear in EPW website, it's out of date.  prefix.epmatwp, crystal.fmt, vmedata.fmt, wigner.fmt, and epwdata.fmt are all needed for restarting a calculation.\n")
-            epw.write("\n")
+           
             epw.write("\n")
             epw.write(" lifc = {}\n".format(self.epw_inputpara.lifc))
             epw.write("\n")
+            
             epw.write(" use_ws      = .true.\n")
-            epw.write(" wannierize  = {}\n".format(self.epw_inputpara.wannierize))
+            epw.write(" wannierize  = {}       ! If .false., read *.ukk file\n".format(self.epw_inputpara.wannierize))
             epw.write(" nbndsub     = {}\n".format(self.epw_inputpara.nbndsub))
             if self.epw_inputpara.bands_skipped is not None:
                 epw.write(" bands_skipped = 'exclude_bands = {}'\n".format(self.epw_inputpara.bands_skipped))
