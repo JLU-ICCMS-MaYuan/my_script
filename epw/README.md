@@ -473,3 +473,6 @@ ph_restart.f90:821:    SUBROUTINE read_disp_pattern_only(iunpun, filename, curre
 再回到epw_iso_sc.out中可以看到这样一个信息`a2f file is not found to estimate initial gap: calculating a2f files`, 找到这个字符串的在源码中的位置我们发现, 在源码中epw调用了`CALL evaluate_a2f_lambda`来计算a2f. 
 
 ### <span style="color:lightgreen"> 19. Error in routine read_kqmap (367):  Error: ixkff(ik) is not equal to ixkf(bztoibz(ik)).
+
+### <span style="color:lightgreen"> 20. Error in routine ep_coarse_unfolding (1): cannot open file for reading or writing
+
