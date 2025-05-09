@@ -338,7 +338,7 @@ class epw_writeinput:
             epw.write("                      ! egnv file containing the eigenvalues within the Fermi window on the dense k grid\n")
             epw.write("                      ! ikmap file containing the index of the k-points on the dense (irreducible) grid within the Fermi window\n")
             epw.write(" selecqread = .false. ! If .true. then restart from the selecq.fmt file.\n")
-            epw.write("                      ! selecq.fmt only needed if selecqread = .true. otherwise it will be re-created")
+            epw.write("                      ! selecq.fmt only needed if selecqread=.true. otherwise it will be re-created")
             epw.write("\n")
             
             epw.write(" eliashberg     = .true.  ! calculate Eliashberg spectral function\n")
@@ -435,7 +435,7 @@ class epw_writeinput:
             epw.write("                      ! egnv file containing the eigenvalues within the Fermi window on the dense k grid\n")
             epw.write("                      ! ikmap file containing the index of the k-points on the dense (irreducible) grid within the Fermi window\n")
             epw.write(" selecqread = .false. ! If .true. then restart from the selecq.fmt file.\n")
-            epw.write("                      ! selecq.fmt only needed if selecqread = .true. otherwise it will be re-created")
+            epw.write("                      ! selecq.fmt only needed if selecqread=.true. otherwise it will be re-created")
             epw.write("\n")
             
             epw.write(" eliashberg     = .true.  ! calculate Eliashberg spectral function\n")
