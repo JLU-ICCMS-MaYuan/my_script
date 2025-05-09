@@ -34,7 +34,7 @@ if [ -n "$abspath" ]; then
     ln -sf ${abspath}/${prefix}.ukk .
     ln -sf ${abspath}/crystal.fmt   .
     ln -sf ${abspath}/restart.fmt   .
-    ln -sf ${abspath}/selectq.fmt   .
+    ln -sf ${abspath}/selecq.fmt   .
 fi
 
 sed -i -e 's/ep_coupling = .false./ep_coupling = .true./'  \
