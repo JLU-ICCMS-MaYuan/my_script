@@ -79,7 +79,7 @@ class epw_writeinput:
                 epw.write(f" wdata({idx+3})    = '{path_name_coord}'\n")
             epw.write(f" wdata({idx+4})    = 'end kpoint_path'\n")
             epw.write("\n")
-            epw.write(" fsthick  = {}       ! Fermi window thickness [eV]\n".format(self.epw_inputpara.fsthick))
+            epw.write(" fsthick  = {}       ! Fermi window [eV] : consider only states within Fermi energy +- fsthick\n".format(self.epw_inputpara.fsthick))
             epw.write("\n")
             epw.write(" wdata({})    = 'dis_num_iter = {}'\n".format(idx+5, self.epw_inputpara.dis_num_iter))
             epw.write("\n")
@@ -130,7 +130,7 @@ class epw_writeinput:
                 
             epw.write(" wdata({})    = 'dis_num_iter = {}'\n".format(idx+1, self.epw_inputpara.dis_num_iter))
             epw.write("\n")
-            epw.write(" fsthick  = {}       ! Fermi window thickness [eV]\n".format(self.epw_inputpara.fsthick))
+            epw.write(" fsthick  = {}       ! Fermi window [eV] : consider only states within Fermi energy +- fsthick\n".format(self.epw_inputpara.fsthick))
             epw.write("\n")
             epw.write(" band_plot    = .true.   \n")
             epw.write(" filkf        = '{}'     \n".format(self.epw_inputpara.filkf))
@@ -188,7 +188,7 @@ class epw_writeinput:
                 
             epw.write(" wdata({})    = 'dis_num_iter = {}'\n".format(idx+1, self.epw_inputpara.dis_num_iter))
             epw.write("\n")
-            epw.write(" fsthick  = {}       ! Fermi window thickness [eV]\n".format(self.epw_inputpara.fsthick))
+            epw.write(" fsthick  = {}       ! Fermi window [eV] : consider only states within Fermi energy +- fsthick\n".format(self.epw_inputpara.fsthick))
             epw.write("\n")
             epw.write(" band_plot    = .true.   \n")
             epw.write(" filkf        = '{}'     \n".format(self.epw_inputpara.filkf))
@@ -266,7 +266,7 @@ class epw_writeinput:
             epw.write("\n")
             
             epw.write(" iverbosity  = 2     ! 2 = verbose output for the superconducting part only.\n")
-            epw.write(" fsthick  = {}       ! Fermi window thickness [eV]\n".format(self.epw_inputpara.fsthick))
+            epw.write(" fsthick  = {}       ! Fermi window [eV] : consider only states within Fermi energy +- fsthick\n".format(self.epw_inputpara.fsthick))
             epw.write(" degaussw = {}       ! smearing in energy-conserving delta functions in [eV]\n".format(self.epw_inputpara.degaussw))
             epw.write(" degaussq = {}       ! smearing for sum over q in the e-ph coupling in [meV]\n".format(self.epw_inputpara.degaussq))
 
@@ -329,7 +329,7 @@ class epw_writeinput:
             epw.write("\n")
             epw.write(" iverbosity  = 2     ! 2 = verbose output for the superconducting part only.\n")
             epw.write("\n")
-            epw.write(" fsthick  = {}        ! Fermi window thickness [eV]\n".format(self.epw_inputpara.fsthick))
+            epw.write(" fsthick  = {}        ! Fermi window [eV] : consider only states within Fermi energy +- fsthick\n".format(self.epw_inputpara.fsthick))
             epw.write(" degaussw = {}        ! smearing in energy-conserving delta functions in [eV]\n".format(self.epw_inputpara.degaussw))
             epw.write(" degaussq = {}        ! smearing for sum over q in the e-ph coupling in [meV]\n".format(self.epw_inputpara.degaussq))
             epw.write(" ephwrite = .true.    ! write ephmatXX, egnv, freq, and ikmap files in prefix.ephmat directory\n")
@@ -426,7 +426,7 @@ class epw_writeinput:
             epw.write("\n")
             
             epw.write(" iverbosity  = 2      ! 2 = verbose output for the superconducting part only.\n")
-            epw.write(" fsthick  = {}        ! Fermi window thickness [eV]\n".format(self.epw_inputpara.fsthick))
+            epw.write(" fsthick  = {}        ! Fermi window [eV] : consider only states within Fermi energy +- fsthick\n".format(self.epw_inputpara.fsthick))
             epw.write(" degaussw = {}        ! smearing in energy-conserving delta functions in [eV]\n".format(self.epw_inputpara.degaussw))
             epw.write(" degaussq = {}        ! smearing for sum over q in the e-ph coupling in [meV]\n".format(self.epw_inputpara.degaussq))
             epw.write(" ephwrite = .true.    ! write ephmatXX, egnv, freq, and ikmap files in prefix.ephmat directory\n")
