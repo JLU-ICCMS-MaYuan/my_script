@@ -333,6 +333,8 @@ In this case *.ephmat, *.freq, *.egnv, and *.ikmap files are not required.
 ### <span style="color:lightgreen"> 5. Error in routine epw_readin (1):  must use same w90 rotation matrix for entire run
 这是因为你在一个完整的epw都没有算完的情况下就贸然开了`epwread = .true.`, 切记不要贸然打开。你都没有epwwrite，怎么epwread呢？
 
+或者是 你在一个新目录下从epw的细网格插值开始续算，但是你莫名其妙打开了wannierize=.true.
+
 ### <span style="color:lightgreen"> 6. Error in routine ephwann_shuffle (1): Error allocating epmatwe
 
 <span style="color:lightyellow"> **这个错是卡在计算完所有的不可以q点之后，Bloch2wane之前。在修改参数开始跑之前，最好搞清楚怎么续算？
