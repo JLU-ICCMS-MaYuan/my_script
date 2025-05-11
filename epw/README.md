@@ -488,5 +488,5 @@ ep_coarse_unfolding.f90的源代码中显示当出现无法读取patters.*.xml�
                    'cannot open file for reading or writing', 1)
 ```
 还有一种可能性就是你的dvscf_dir写成了诸如`dvscf_dir='./save`这样的错误形式。也会爆出这个错。总之就是无法正常读取save目录时就会报错。
-
+或者当前目录下忘记拷贝save
 
