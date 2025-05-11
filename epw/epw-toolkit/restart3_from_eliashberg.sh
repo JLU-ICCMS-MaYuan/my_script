@@ -37,21 +37,23 @@ if [ -n "$abspath" ]; then
     ln -sf ${abspath}/selecq.fmt   .
 fi
 
-sed -i -e 's/ep_coupling = .false./ep_coupling = .true./'  \
-       -e 's/elph        = .false./elph        = .true./'  \
+sed -i -e 's/ep_coupling = .true./ep_coupling = .false./'  \
+       -e 's/elph        = .true./elph        = .false./'  \
        -e 's/epbwrite    = .true./epbwrite    = .false./'  \
        -e 's/epwwrite    = .true./epwwrite    = .false./'  \
        -e 's/epwread     = .false./epwread     = .true./'  \
+       -e 's/ephwrite = .true./ephwrite = .false./'        \
        -e 's/wannierize  = .true./wannierize  = .false./'  \
        -e 's/selecqread = .true./selecqread = .false./'    \
        epw_iso_sc.in 
 
 
-sed -i -e 's/ep_coupling = .false./ep_coupling = .true./'  \
-       -e 's/elph        = .false./elph        = .true./'  \
+sed -i -e 's/ep_coupling = .true./ep_coupling = .false./'  \
+       -e 's/elph        = .true./elph        = .false./'  \
        -e 's/epbwrite    = .true./epbwrite    = .false./'  \
        -e 's/epwwrite    = .true./epwwrite    = .false./'  \
        -e 's/epwread     = .false./epwread     = .true./'  \
+       -e 's/ephwrite = .true./ephwrite = .false./'        \
        -e 's/wannierize  = .true./wannierize  = .false./'  \
        -e 's/selecqread = .true./selecqread = .false./'    \
        epw_aniso_sc.in 

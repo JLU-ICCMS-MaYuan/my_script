@@ -301,10 +301,10 @@ class epw_writeinput:
             epw.write("\n")
             epw.write(" ep_coupling = .true.   ! run e-ph coupling calculation. ephwrite requires ep_coupling=.TRUE., elph=.TRUE.\n")
             epw.write(" elph        = .true.   ! calculate e-ph coefficients.   ephwrite requires ep_coupling=.TRUE., elph=.TRUE.\n")
-            epw.write(" epbwrite    = .false.  ! electron-phonon matrix elements in the coarse Bloch representation and relevant data (dyn matrices)\n")
+            epw.write(" epbwrite    = .true.  ! electron-phonon matrix elements in the coarse Bloch representation and relevant data (dyn matrices)\n")
             epw.write(" epbread     = .false.  ! electron-phonon matrix elements in the coarse Bloch representation and relevant data (dyn matrices)\n")
-            epw.write(" epwwrite    = .false.  ! write electron-phonon matrix elements in the coarse Wannier representation and relevant data (dyn matrices)\n")
-            epw.write(" epwread     = .true.   ! read e-ph matrices from 'prefix.epmatwp' file. electron-phonon matrix elements in the coarse Wannier representation and relevant data (dyn matrices). \n")
+            epw.write(" epwwrite    = .true.  ! write electron-phonon matrix elements in the coarse Wannier representation and relevant data (dyn matrices)\n")
+            epw.write(" epwread     = .false.   ! read e-ph matrices from 'prefix.epmatwp' file. electron-phonon matrix elements in the coarse Wannier representation and relevant data (dyn matrices). \n")
             epw.write("                        ! It is used for a restart calculation, and doesn't set kmaps = .true. kmaps may appear in EPW website, it's out of date.  prefix.epmatwp, crystal.fmt, vmedata.fmt, wigner.fmt, and epwdata.fmt are all needed for restarting a calculation.\n")
             
             epw.write("\n")
