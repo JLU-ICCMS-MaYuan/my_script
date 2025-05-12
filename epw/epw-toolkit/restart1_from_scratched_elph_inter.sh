@@ -1,6 +1,17 @@
 #!/bin/bash
-prefix=$(grep "prefix" epw_iso_sc.in | sed -n "s/.*prefix *= *'\(.*\)'.*/\1/p")
 
+if [ -f epw_iso_sc.in ]; then
+    prefix=$(grep "prefix" epw_iso_sc.in | sed -n "s/.*prefix *= *'\(.*\)'.*/\1/p")
+    echo "prefix from epw_iso_sc.in: $prefix"
+elif [ -f epw_aniso_sc.in ]; then
+    prefix=$(grep "prefix" epw_aniso_sc.in | sed -n "s/.*prefix *= *'\(.*\)'.*/\1/p")
+    echo "prefix from epw_aniso_sc.in: $prefix"
+elif [ -f epw_elph.out ]; then
+    prefix=$(grep "prefix" epw_elph.in | sed -n "s/.*prefix *= *'\(.*\)'.*/\1/p")
+    echo "prefix from epw_elph.in: $prefix"
+else
+    echo "No relevant input or output files found."
+fi
 
 echo "Restart by reading ${prefix}.epmatwp and epwdata.fmt.
 
