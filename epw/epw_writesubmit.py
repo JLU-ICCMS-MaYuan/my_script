@@ -156,7 +156,15 @@ class epw_writesubmit:
             j.writelines(self.jobtitle)
             j.write('echo "rm a2f a2f_proj"\n')
             j.write('rm {}.a2f {}.a2f_proj\n'.format(self.epw_inputpara.system_name, self.epw_inputpara.system_name))
-            
+            j.write('abspath=`realpath ..`\n')
+            j.write('mkdir -p ./tmp/${}.ephmat\n')  # 保证目录存.format(self.epw)在
+            j.write('ln -sf ${abspath}/tmp/${}.ephmat/* ./tmp/${}.ephmat/\n'.format(self.epw_inputpara.system_name, self.epw_inputpara.system_name))
+            j.write('ln -sf ${abspath}/tmp/${}.epmatwp  ./tmp/\n'.format(self.epw_inputpara.system_name))
+            j.write('ln -sf ${abspath}/${}.ukk          . \n'.format(self.epw_inputpara.system_name))
+            j.write('ln -sf ${abspath}/crystal.fmt            .\n')
+            j.write('ln -sf ${abspath}/restart.fmt            .\n')
+            j.write('ln -sf ${abspath}/selecq.fmt             .\n')
+            j.write('echo "epw_aniso_sc"\n')
             j.write('echo "epw_iso_sc"\n')
             j.write('{} {}/epw.x -npool {} <{}> {}  \n'.format(self.epw_inputpara.execmd, epwbin_path, self.epw_inputpara.npool, _inpufilename, _outputfilename))
         
@@ -171,7 +179,14 @@ class epw_writesubmit:
             j.writelines(self.jobtitle)
             j.write('echo "rm a2f a2f_proj"\n')
             j.write('rm {}.a2f {}.a2f_proj\n'.format(self.epw_inputpara.system_name, self.epw_inputpara.system_name))
-            
+            j.write('abspath=`realpath ..`\n')
+            j.write('mkdir -p ./tmp/${}.ephmat\n')  # 保证目录存.format(self.epw)在
+            j.write('ln -sf ${abspath}/tmp/${}.ephmat/* ./tmp/${}.ephmat/\n'.format(self.epw_inputpara.system_name, self.epw_inputpara.system_name))
+            j.write('ln -sf ${abspath}/tmp/${}.epmatwp  ./tmp/\n'.format(self.epw_inputpara.system_name))
+            j.write('ln -sf ${abspath}/${}.ukk          . \n'.format(self.epw_inputpara.system_name))
+            j.write('ln -sf ${abspath}/crystal.fmt            .\n')
+            j.write('ln -sf ${abspath}/restart.fmt            .\n')
+            j.write('ln -sf ${abspath}/selecq.fmt             .\n')
             j.write('echo "epw_aniso_sc"\n')
             j.write('{} {}/epw.x -npool {} <{}> {}  \n'.format(self.epw_inputpara.execmd, epwbin_path, self.epw_inputpara.npool, _inpufilename, _outputfilename))
 
