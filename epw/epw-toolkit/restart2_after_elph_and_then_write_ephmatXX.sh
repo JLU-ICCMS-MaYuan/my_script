@@ -48,20 +48,15 @@ if [ -n "$abspath" ]; then
     ln -sf ${abspath}/selecq.fmt    .
 fi
 
-sed -i -e 's/ep_coupling = .false./ep_coupling = .true./'  \
-       -e 's/elph        = .false./elph        = .true./'  \
-       -e 's/epbwrite    = .true./epbwrite    = .false./'  \
-       -e 's/epwwrite    = .true./epwwrite    = .false./'  \
-       -e 's/epwread     = .false./epwread     = .true./'  \
-       -e 's/wannierize  = .true./wannierize  = .false./'  \
-       -e 's/selecqread = .true./selecqread = .false./'    \
-    epw_iso_sc.in
-
-sed -i -e 's/ep_coupling = .false./ep_coupling = .true./'  \
-       -e 's/elph        = .false./elph        = .true./'  \
-       -e 's/epbwrite    = .true./epbwrite    = .false./'  \
-       -e 's/epwwrite    = .true./epwwrite    = .false./'  \
-       -e 's/epwread     = .false./epwread     = .true./'  \
-       -e 's/wannierize  = .true./wannierize  = .false./'  \
-       -e 's/selecqread = .true./selecqread = .false./'    \
-    epw_aniso_sc.in 
+for infile in epw_iso_sc.in epw_aniso_sc.in epw_elph.in; do
+    if [ -f "$infile" ]; then
+    sed -i -e 's/ep_coupling = .false./ep_coupling = .true./'  \
+           -e 's/elph        = .false./elph        = .true./'  \
+           -e 's/epbwrite    = .true./epbwrite    = .false./'  \
+           -e 's/epwwrite    = .true./epwwrite    = .false./'  \
+           -e 's/epwread     = .false./epwread     = .true./'  \
+           -e 's/wannierize  = .true./wannierize  = .false./'  \
+           -e 's/selecqread = .true./selecqread = .false./'    \
+               "$infile"
+    fi
+done
