@@ -65,11 +65,7 @@ class epw_inputpara(epw_base):
         
         if not hasattr(self, "lifc"):
             self.lifc = ".true."
-        
-        if not hasattr(self, "wannierize"):
-            self.wannierize = '.false.'
-            logger.debug(f'wannierize = {self.wannierize}\n')
-        
+                
         if not hasattr(self, "nbndsub"):
             logger.error(f"You must specify nbndsub!")
             sys.exit(1)
@@ -165,7 +161,16 @@ class epw_inputpara(epw_base):
         else:
             self.nqf = self.check_kgrid_qgird(self.nqf)
             logger.debug(f'nqf = {self.nqf}\n')
-    
+            
+        if not hasattr(self, "lacon"):
+            self.lacon = ".false."
+            logger.debug(f'lacon = {self.lacon}, analytic continuation of ME eqs. from imaginary to real axis. it takes very long time, if you need it, you can turn it on!\n')
+        
+        if not hasattr(self, "npade"):
+            self.npade = 20
+            logger.debug(f'npade = {self.npade}\n')
+            
+            
         if not hasattr(self, "wscut"):
             self.wscut = 3.0
             logger.debug(f'wscut = {self.wscut}\n')
@@ -173,10 +178,6 @@ class epw_inputpara(epw_base):
         if not hasattr(self, "muc"):
             self.muc = 0.13
             logger.debug(f'muc = {self.muc}\n')
-        
-        if not hasattr(self, "npade"):
-            self.npade = 20
-            logger.debug(f'npade = {self.npade}\n')
             
         if not hasattr(self, "nstemp"):
             self.nstemp = 1
@@ -191,7 +192,82 @@ class epw_inputpara(epw_base):
         else:
             self.temps = self.temps.split()
             logger.debug(f'temps = {self.temps}\n') 
-            
+        
+        if hasattr(self, "from_scratched") and eval(self.from_scratched) == True:
+            self.ep_coupling = ".true."
+            self.elph        = ".true."
+            self.epbwrite    = ".true."
+            self.epbread     = ".false."
+            self.epwwrite    = ".true."
+            self.epwread     = ".false."
+            self.ephwrite    = ".true."
+            self.wannierize  = ".true."
+            logger.info("You specify from_scratched, so the program will run wannierize and phonon and elph interplation")
+        elif hasattr(self, "restart1") and eval(self.restart1) == True:
+            self.ep_coupling = ".true."
+            self.elph        = ".true."
+            self.epbwrite    = ".false."
+            self.epbread     = ".false."
+            self.epwwrite    = ".false."
+            self.epwread     = ".true."
+            self.ephwrite    = ".true."
+            self.wannierize  = ".false."
+            logger.info("You specify restart1, so the program will run elph interplation, its functional is the same to `restart1_from_elph_inter.sh`")
+            logger.info("These files have to exist:")
+            logger.info(f"1. tmp/{self.system_name}.epmatwp")
+            logger.info(f"2. {self.system_name}.ukk")
+            logger.info("3. crystal.fmt")
+            logger.info("4. epwdata.fmt")
+            logger.info("5. vmedata.fmt (or dmedata.fmt)")
+            logger.info("These files have to be deleted:")
+            logger.info(f"1. tmp/{self.system_name}.ephmat")
+            logger.info("2. restart.fmt")
+            logger.info("3. selecq.fmt")
+            logger.info(f"4. {self.system_name}.a2f")
+        elif hasattr(self, "restart2"):
+            self.ep_coupling = ".true."
+            self.elph        = ".true."
+            self.epbwrite    = ".false."
+            self.epbread     = ".false."
+            self.epwwrite    = ".false."
+            self.epwread     = ".true."
+            self.ephwrite    = ".true."
+            self.wannierize  = ".false."
+            logger.info("You specify restart2, so the program will restart from an interrupted q-point while writing ephmatXX files., its functional is the same to `restart2_after_elph_and_then_write_ephmatXX.sh`")
+            logger.info("These files have to exist:")
+            logger.info(f"1. tmp/{self.system_name}.epmatwp")
+            logger.info(f"2. {self.system_name}.ukk")
+            logger.info("3. crystal.fmt")
+            logger.info("4. epwdata.fmt")
+            logger.info("5. vmedata.fmt (or dmedata.fmt)")
+            logger.info("6. restart.fmt")
+            logger.info("7. selecq.fmt (selecq.fmt only needed if selecqread = .true. otherwise it will be re-created)")
+        elif hasattr(self, "restart3"):
+            self.ep_coupling = ".true."
+            self.elph        = ".true."
+            self.epbwrite    = ".false."
+            self.epbread     = ".false."
+            self.epwwrite    = ".false."
+            self.epwread     = ".true."
+            self.ephwrite    = ".false."
+            self.wannierize  = ".false."
+            logger.info(f"You specify restart3, so the program will restart by reading ephmatXX files in {self.system_name}.ephmat, its functional is the same to `restart3_from_eliashberg.sh`")
+            logger.info("These files have to exist:")
+            logger.info(f"1. tmp/${self.system_name}.ephmat/*   ${self.system_name}.ephmat directory (which contains egnv, freq, ikmap, ephmatXX files)")
+            logger.info(f"2. ${self.system_name}.dos")
+            logger.info("3. crystal.fmt")
+            logger.info("4. selecq.fmt")
+        else:
+            logger.error("You must specify ")
+        
+        
+        if not hasattr(self, "wannierize"):
+            self.wannierize = '.false.'
+            logger.debug("Again, you can recover the wannierize even though you have set from_scratched, restart1, restart2, restart3")
+            logger.info(f'wannierize = {self.wannierize}\n')
+        else:
+            logger.info(f'wannierize = {self.wannierize}\n')
+
     @classmethod
     def init_from_config(cls, config: dict):
 
