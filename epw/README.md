@@ -25,7 +25,7 @@ epw_main.py -i POSCAR -j bash -w epw epw_run -m mode=epw_phono  execmd='mpirun -
 epw_main.py -i POSCAR -j bash -w epw epw_run -m mode=epw_elph  execmd='mpirun -np 8' npool=8 dvscf_dir='./save' nbndsub=7 bands_skipped='1:12' dis_froz_min=-7.635175  dis_froz_max=23 dis_win_max=60  proj='H:s S:s S:p'  nk='8 8 8' nq='4 4 4' nkf='12 12 12' nqf='6 6 6' fsthick=0.4 degaussw=0.1 degaussq=0.5  queue=local
 
 # epw计算超导
-epw_main.py -i POSCAR -j bash -w epw epw_run -m mode=epw_sc  execmd='mpirun -np 8' npool=8 dvscf_dir='./save' nbndsub=7 bands_skipped='1:12' dis_froz_min=-7.635175  dis_froz_max=23 dis_win_max=60  proj='H:s S:s S:p'  nk='8 8 8' nq='4 4 4' nkf='12 12 12' nqf='6 6 6' fsthick=0.4 degaussw=0.1 degaussq=0.5  queue=local
+epw_main.py -i ../1.epwband/CONTCAR -j slurm epw_run -m mode=epw_sc  execmd='srun --mpi=pmi2' npool=64 dvscf_dir='./save/' nbndsub=19 bands_skipped='1:5' dis_froz_min=-0.84  dis_froz_max=30.406 dis_win_max=42.5  proj='Li:s;p Hf:s;p;d H:s'  nk='6 6 6' nq='6 6 6' nkf='12 12 12' nqf='12 12 12' fsthick=3.0 degaussw=0.01 degaussq=0.8  queue=lhy lifc=.false. nstemp='21' temps='10 100' restart3=True
 ```
 
 ### <span style="color:lightgreen"> 1.自洽计算
