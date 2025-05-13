@@ -34,18 +34,24 @@ for mu in 0.1 0.13 0.16; do
             echo "Data found in ${iso_sc_dir}    Stopping script."
             cat ${prefix}.IMAG_ISO_MUC_${mu}_GAP0
             exit 0
+        else
+           rm -f "${prefix}.IMAG_ISO_MUC_${mu}_GAP0"
         fi
+     fi
 
     echo "aniso_muc_${mu}"
     aniso_sc_dir="aniso_muc_${mu}"
     if [ -d "$aniso_sc_dir" ]; then
-        cat ${aniso_sc_dir}/${prefix}.imag_aniso_gap0_* > ${prefix}.IMAG_ANISO_MUC_${mu}_GAP0
+        find "${aniso_sc_dir}" -maxdepth 1 -type f -name "${prefix}.imag_aniso_gap0_*" ! -name '*.cube' ! -name '*.frmsf' -exec cat {} + > ${prefix}.IMAG_ANISO_MUC_${mu}_GAP0
     else
         echo "Warning: Directory $sc_dir not found. Trying current directory..."
-        cat ${prefix}.imag_aniso_gap0_* > ${prefix}.IMAG_ANISO_MUC_${mu}_GAP0
+        find . -maxdepth 1 -type f -name "${prefix}.imag_aniso_gap0_*" ! -name '*.cube' ! -name '*.frmsf' -exec cat {} + > ${prefix}.IMAG_ANISO_MUC_${mu}_GAP0
         if [ -s "${prefix}.IMAG_ANISO_MUC_${mu}_GAP0" ]; then
             echo "Data found in ${aniso_sc_dir}    Stopping script."
-            cat ${prefix}.IMAG_ANISO_MUC_${mu}_GAP0
+            #cat ${prefix}.IMAG_ANISO_MUC_${mu}_GAP0
             exit 0
+        else
+           rm -f "${prefix}.IMAG_ANISO_MUC_${mu}_GAP0"
         fi
+     fi
 done
