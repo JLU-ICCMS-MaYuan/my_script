@@ -176,9 +176,12 @@ class epw_inputpara(epw_base):
             logger.debug(f'wscut = {self.wscut}\n')
             
         if not hasattr(self, "muc"):
-            self.muc = 0.13
-            logger.debug(f'muc = {self.muc}\n')
-            
+            self.muc = [0.1, 0.13, 0.16]
+            logger.info(f'muc = {self.muc}\n')
+        else:
+            self.muc = float(self.muc)
+            logger.info(f'muc = {self.muc}\n')
+        
         if not hasattr(self, "nstemp"):
             self.nstemp = 1
             logger.debug(f'nstemp = {self.nstemp}\n')
@@ -243,8 +246,8 @@ class epw_inputpara(epw_base):
             logger.info("6. restart.fmt")
             logger.info("7. selecq.fmt (selecq.fmt only needed if selecqread = .true. otherwise it will be re-created)")
         elif hasattr(self, "restart3"):
-            self.ep_coupling = ".true."
-            self.elph        = ".true."
+            self.ep_coupling = ".false."
+            self.elph        = ".false."
             self.epbwrite    = ".false."
             self.epbread     = ".false."
             self.epwwrite    = ".false."

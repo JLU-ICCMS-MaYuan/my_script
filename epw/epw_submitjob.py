@@ -63,6 +63,41 @@ class epw_submitjob:
         if not jobids:
             raise ValueError(f"The *.x of epw didn't run ! Because the jobids={jobids}. The program will exit! The order you use is {self.submit_order} {jobname}")
         return jobids
+    
+    def submit_mode3(self, inputfilename, jobname):
+        """专门用来提交计算超导任务"""
+        jobids = []
+        iso_jobname = jobname[0]
+        aniso_jobname = jobname[1]
+        for mu in self.epw_inputpara.muc:
+            iso_mu_path = self.epw_inputpara.work_path.joinpath("iso_muc_{}".format(mu))
+            aniso_mu_path = self.epw_inputpara.work_path.joinpath("aniso_muc_{}".format(mu))
+            cwd = os.getcwd()
+            # 提交iso的超导计算
+            os.chdir(iso_mu_path)
+            if self.epw_inputpara.submit_job_system == "bash":
+                logger.debug(f"nohup {self.submit_order} {iso_jobname} > bash.log 2>&1 &")
+                res = os.popen(f"nohup {self.submit_order} {iso_jobname} > bash.log 2>&1 &").read()
+                jobids = self.getpid()
+            else:
+                logger.debug(f"{self.submit_order} {iso_jobname}")
+                res = os.popen(f"{self.submit_order} {iso_jobname}").read()
+                jobids = re.findall(r"\d+", res)
+            logger.info(f"finish submit {iso_jobname}, jobids = {' '.join(jobids)}")
+            os.chdir(cwd)
+            
+            # 提交aniso的超导计算
+            os.chdir(aniso_mu_path) 
+            if self.epw_inputpara.submit_job_system == "bash":
+                logger.debug(f"nohup {self.submit_order} {aniso_jobname} > bash.log 2>&1 &")
+                res = os.popen(f"nohup {self.submit_order} {aniso_jobname} > bash.log 2>&1 &").read()
+                jobids = self.getpid()
+            else:
+                logger.debug(f"{self.submit_order} {aniso_jobname}")
+                res = os.popen(f"{self.submit_order} {aniso_jobname}").read()
+                jobids = re.findall(r"\d+", res)
+            logger.info(f"finish submit {aniso_jobname}, jobids = {' '.join(jobids)}")
+            os.chdir(cwd)
 
     @staticmethod
     def getpid():

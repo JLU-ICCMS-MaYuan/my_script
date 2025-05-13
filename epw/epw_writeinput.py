@@ -40,9 +40,23 @@ class epw_writeinput:
             inputfilename = self.write_epw_elph_in(self.epw_inputpara.work_path)
             return inputfilename
         if mode == "epw_sc":
-            inputfilename1 = self.write_epw_iso_sc_in(self.epw_inputpara.work_path)
-            inputfilename2 = self.write_epw_aniso_sc_in(self.epw_inputpara.work_path)
-            return inputfilename1, inputfilename2
+            if len(self.epw_inputpara.muc) > 1:
+                for mu in self.epw_inputpara.muc:
+                    iso_mu_path = self.epw_inputpara.work_path.joinpath("iso_muc_{}".format(mu))
+                    aniso_mu_path = self.epw_inputpara.work_path.joinpath("aniso_muc_{}".format(mu))
+                    os.makedirs(iso_mu_path, exist_ok=True)
+                    os.makedirs(aniso_mu_path, exist_ok=True)
+                    inputfilename1 = self.write_epw_iso_sc_in(iso_mu_path, muc=mu)
+                    inputfilename2 = self.write_epw_aniso_sc_in(aniso_mu_path, muc=mu)
+                return inputfilename1, inputfilename2
+            else:
+                iso_mu_path = self.epw_inputpara.work_path.joinpath("iso_muc_{}".format(self.epw_inputpara.muc))
+                aniso_mu_path = self.epw_inputpara.work_path.joinpath("aniso_muc_{}".format(self.epw_inputpara.muc))
+                os.makedirs(iso_mu_path, exist_ok=True)
+                os.makedirs(aniso_mu_path, exist_ok=True)
+                inputfilename1 = self.write_epw_iso_sc_in(iso_mu_path, muc=self.epw_inputpara.muc)
+                inputfilename2 = self.write_epw_aniso_sc_in(aniso_mu_path, muc=self.epw_inputpara.muc)
+                return inputfilename1, inputfilename2
 
     def write_epw_eband_in(self, work_directory:Path):
         inputfilename = "epw_eband.in"
@@ -288,7 +302,7 @@ class epw_writeinput:
 
         return inputfilename
 
-    def write_epw_iso_sc_in(self, work_directory:Path):
+    def write_epw_iso_sc_in(self, work_directory:Path, muc=None):
         inputfilename = "epw_iso_sc.in"
         epw_phonodata_in = work_directory.joinpath(inputfilename)
         with open(epw_phonodata_in, "w") as epw:
@@ -356,7 +370,7 @@ class epw_writeinput:
             epw.write(" conv_thr_iaxis = 1.0d-3  ! convergence threshold for solving ME eqs. on imaginary axis\n")
             epw.write(" conv_thr_racon = 1.0d-3  ! convergence threshold for solving ME eqs. on real axis\n")
             epw.write(" wscut          = {}      ! upper limit over Matsubara freq. summation in ME eqs on imag.axis in [eV]\n".format(self.epw_inputpara.wscut))
-            epw.write(" muc            = {}      ! effective Coulomb potential used in the ME eqs.\n".format(self.epw_inputpara.muc))
+            epw.write(" muc            = {}      ! effective Coulomb potential used in the ME eqs.\n".format(muc))
             if  len(self.epw_inputpara.temps) == 2 and \
                 float(self.epw_inputpara.temps[0]) < float(self.epw_inputpara.temps[1]) and \
                 self.epw_inputpara.nstemp > 2:
@@ -385,7 +399,7 @@ class epw_writeinput:
         return inputfilename
 
     
-    def write_epw_aniso_sc_in(self, work_directory:Path):
+    def write_epw_aniso_sc_in(self, work_directory:Path, muc=None):
         inputfilename = "epw_aniso_sc.in"
         epw_phonodata_in = work_directory.joinpath(inputfilename)
         with open(epw_phonodata_in, "w") as epw:
@@ -453,7 +467,7 @@ class epw_writeinput:
             epw.write(" conv_thr_iaxis = 1.0d-3  ! convergence threshold for solving ME eqs. on imaginary axis\n")
             epw.write(" conv_thr_racon = 1.0d-3  ! convergence threshold for solving ME eqs. on real axis\n")
             epw.write(" wscut          = {}      ! upper limit over Matsubara freq. summation in ME eqs on imag.axis in [eV]\n".format(self.epw_inputpara.wscut))
-            epw.write(" muc            = {}      ! effective Coulomb potential used in the ME eqs.\n".format(self.epw_inputpara.muc))
+            epw.write(" muc            = {}      ! effective Coulomb potential used in the ME eqs.\n".format(muc))
             if  len(self.epw_inputpara.temps) == 2 and \
                 float(self.epw_inputpara.temps[0]) < float(self.epw_inputpara.temps[1]) and \
                 self.epw_inputpara.nstemp > 2:

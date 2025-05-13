@@ -73,8 +73,21 @@ class epw_writesubmit:
             jobname = self.j4_epw_elph(self.epw_inputpara.work_path, inpufilename)
             return jobname
         if mode == "epw_sc":
-            jobname = self.j5_epw_sc(self.epw_inputpara.work_path, inpufilename)
-            return jobname
+            if len(self.epw_inputpara.muc) > 1:
+                jobname = []
+                for mu in self.epw_inputpara.muc:
+                    iso_mu_path = self.epw_inputpara.work_path.joinpath("iso_muc_{}".format(mu))
+                    iso_jobname = self.j5_epw_iso_sc(iso_mu_path, inpufilename[0])
+                    aniso_mu_path = self.epw_inputpara.work_path.joinpath("aniso_muc_{}".format(mu))
+                    aniso_jobname = self.j6_epw_aniso_sc(aniso_mu_path, inpufilename[1])
+                jobname.extend([iso_jobname, aniso_jobname])
+                return jobname
+            else:
+                iso_mu_path = self.epw_inputpara.work_path.joinpath("iso_muc_{}".format(self.epw_inputpara.muc))
+                jobname = self.j5_epw_iso_sc(iso_mu_path, inpufilename[0])
+                aniso_mu_path = self.epw_inputpara.work_path.joinpath("aniso_muc_{}".format(self.epw_inputpara.muc))
+                jobname = self.j6_epw_aniso_sc(aniso_mu_path, inpufilename[1])
+                return jobname
 
  
     def j1_epw_energyband(self,  _dirpath, inputfilename):
@@ -134,23 +147,32 @@ class epw_writesubmit:
             j.write('{} {}/epw.x -npool {} <{}> {}  \n'.format(self.epw_inputpara.execmd, epwbin_path, self.epw_inputpara.npool, _inpufilename, _outputfilename))
         return jobname
 
-    def j5_epw_sc(self,  _dirpath, inputfilenames):
-        _inpufilename   = inputfilenames
-        _outputfilename = [ipname.split(".")[0] + ".out" for ipname in _inpufilename]
-        input_output    = zip(_inpufilename, _outputfilename)
-        jobname = "j5_epw_sc.sh"
+    def j5_epw_iso_sc(self,  _dirpath, inputfilename):
+        _inpufilename = inputfilename
+        _outputfilename = _inpufilename.split(".")[0] + ".out"
+        jobname = "j5_epw_iso_sc.sh"
         _script_filepath = os.path.join(_dirpath, jobname)
         with open(_script_filepath, "w") as j:
             j.writelines(self.jobtitle)
-            epw_iso_sc_in, epw_iso_sc_out = next(input_output)
             j.write('echo "rm a2f a2f_proj"\n')
             j.write('rm {}.a2f {}.a2f_proj\n'.format(self.epw_inputpara.system_name, self.epw_inputpara.system_name))
             
             j.write('echo "epw_iso_sc"\n')
-            j.write('{} {}/epw.x -npool {} <{}> {}  \n'.format(self.epw_inputpara.execmd, epwbin_path, self.epw_inputpara.npool, epw_iso_sc_in, epw_iso_sc_out))
+            j.write('{} {}/epw.x -npool {} <{}> {}  \n'.format(self.epw_inputpara.execmd, epwbin_path, self.epw_inputpara.npool, _inpufilename, _outputfilename))
         
-            epw_aniso_sc_in, epw_aniso_sc_out = next(input_output)
+        return jobname
+    
+    def j6_epw_aniso_sc(self,  _dirpath, inputfilename):
+        _inpufilename = inputfilename
+        _outputfilename = _inpufilename.split(".")[0] + ".out"
+        jobname = "j6_epw_aniso_sc.sh"
+        _script_filepath = os.path.join(_dirpath, jobname)
+        with open(_script_filepath, "w") as j:
+            j.writelines(self.jobtitle)
+            j.write('echo "rm a2f a2f_proj"\n')
+            j.write('rm {}.a2f {}.a2f_proj\n'.format(self.epw_inputpara.system_name, self.epw_inputpara.system_name))
+            
             j.write('echo "epw_aniso_sc"\n')
-            j.write('{} {}/epw.x -npool {} <{}> {}  \n'.format(self.epw_inputpara.execmd, epwbin_path, self.epw_inputpara.npool, epw_aniso_sc_in, epw_aniso_sc_out))
+            j.write('{} {}/epw.x -npool {} <{}> {}  \n'.format(self.epw_inputpara.execmd, epwbin_path, self.epw_inputpara.npool, _inpufilename, _outputfilename))
 
         return jobname

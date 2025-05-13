@@ -135,6 +135,7 @@ class epw_run:
         logger.info(inputfilename2)
         # init the submit job script
         jobname = self.epw_writesubmit.write_submit_scripts([inputfilename1, inputfilename2], mode="epw_sc")
+        print(jobname); input()
         # submit the job
         if self.epw_inputpara.queue is not None:
-            self.epw_submitjob.submit_mode1(inputfilename1, jobname)
+            self.epw_submitjob.submit_mode3(inputfilename1, jobname)
