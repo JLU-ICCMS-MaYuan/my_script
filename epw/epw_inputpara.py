@@ -36,12 +36,12 @@ class epw_inputpara(epw_base):
 
         if not hasattr(self, "npool"):
             self.npool = 1
-            logger.debug(f'npool = {self.npool}\n')
+            logger.debug(f'npool = {self.npool}')
         logger.debug("You must guarantee that `npool` equal `cores, namly, -np`")
 
         if not hasattr(self, "queue"):
             self.queue = None
-            logger.debug(f'queue = {self.queue}\n')
+            logger.debug(f'queue = {self.queue}')
         
         if not hasattr(self, "mode"):
             logger.error("You must specify mode, such as 'epw_eband', 'epw_phono', 'epw_elph', 'epw_aniso_sc'")
@@ -70,13 +70,13 @@ class epw_inputpara(epw_base):
             logger.error(f"You must specify nbndsub!")
             sys.exit(1)
         else:
-            logger.debug(f'nbndsub = {self.nbndsub}\n')
+            logger.debug(f'nbndsub = {self.nbndsub}')
 
         if not hasattr(self, "bands_skipped"):
             logger.warning(f"You had better specify bands_skipped! For example, bands_skipped='1:10'")
             self.bands_skipped = None
         else:
-            logger.debug(f'bands_skipped = {self.bands_skipped}\n')
+            logger.debug(f'bands_skipped = {self.bands_skipped}')
         
         if not hasattr(self, "num_iter"):
             self.num_iter = 500
@@ -88,19 +88,19 @@ class epw_inputpara(epw_base):
             logger.error(f"You must specify dis_froz_min !")
             sys.exit(1)
         else:
-            logger.debug(f'dis_froz_min = {self.dis_froz_min}\n')
+            logger.debug(f'dis_froz_min = {self.dis_froz_min}')
 
         if not hasattr(self, "dis_froz_max"):
             logger.error(f"You must specify dis_froz_max !")
             sys.exit(1)
         else:
-            logger.debug(f'dis_froz_max = {self.dis_froz_max}\n')
+            logger.debug(f'dis_froz_max = {self.dis_froz_max}')
 
         if not hasattr(self, "dis_win_max"):
             logger.error(f"You must specify dis_win_max !")
             sys.exit(1)
         else:
-            logger.debug(f'dis_win_max = {self.dis_win_max}\n')
+            logger.debug(f'dis_win_max = {self.dis_win_max}')
 
         if not hasattr(self, "proj"):
             logger.error(f"You must specify proj! Just like: proj='Nb:d  H:s'  (Attention: No space before or after the equal sign)")
@@ -108,7 +108,7 @@ class epw_inputpara(epw_base):
         else:
             self.proj = self.proj.split()
             for idx, pj in enumerate(self.proj):
-                logger.debug(f'proj({idx+1}) = {pj}\n')
+                logger.debug(f'proj({idx+1}) = {pj}')
         
         if not hasattr(self, "filkf") or not hasattr(self, "filqf"):
             logger.info("You didn't specify filkf or filqf, so the program will get it from modified_{}_band.kpt that is obtained from {}_band.kpt".format(self.system_name, self.system_name)) 
@@ -120,81 +120,82 @@ class epw_inputpara(epw_base):
 
         if not hasattr(self, "asr_typ"):
             self.asr_typ = "simple"
-            logger.debug(f'asr_typ = {self.asr_typ}\n')
+            logger.debug(f'asr_typ = {self.asr_typ}')
         
         if not hasattr(self, "fsthick"):
             self.fsthick = 10
-            logger.debug(f'fsthick = {self.fsthick}\n')
+            logger.debug(f'fsthick = {self.fsthick}')
         
         if not hasattr(self, "degaussw"):
             self.degaussw = 0.1
-            logger.debug(f'degaussw = {self.degaussw}\n')
+            logger.debug(f'degaussw = {self.degaussw}')
         
         if not hasattr(self, "degaussq"):
             self.degaussq = 0.05
-            logger.debug(f'degaussq = {self.degaussq}\n')
+            logger.debug(f'degaussq = {self.degaussq}')
         
         if not hasattr(self, "nk"):
             logger.warning(f"You must specify nk! Just like: nk='4 4 4'  (Attention: No space before or after the equal sign)")
             self.nk = [4,4,4]
         else:
             self.nk = self.check_kgrid_qgird(self.nk)
-            logger.debug(f'nk = {self.nk}\n')
+            logger.debug(f'nk = {self.nk}')
         
         if not hasattr(self, "nq"):
             logger.warning(f"You must specify nk! Just like: nk='4 4 4'  (Attention: No space before or after the equal sign)")
             self.nq = [4,4,4]
         else:
             self.nq = self.check_kgrid_qgird(self.nq)
-            logger.debug(f'nq = {self.nq}\n')
+            logger.debug(f'nq = {self.nq}')
             
         if not hasattr(self, "nkf"):
             logger.warning(f"You must specify nfk! Just like: nfk='4 4 4'  (Attention: No space before or after the equal sign)")
             self.nkf = [1,1,1]
         else:
             self.nkf = self.check_kgrid_qgird(self.nkf)
-            logger.debug(f'nkf = {self.nkf}\n')
+            logger.debug(f'nkf = {self.nkf}')
             
         if not hasattr(self, "nqf"):
             logger.warning(f"You must specify nqf! Just like: nqf='4 4 4'  (Attention: No space before or after the equal sign)")
             self.nqf = [1,1,1]
         else:
             self.nqf = self.check_kgrid_qgird(self.nqf)
-            logger.debug(f'nqf = {self.nqf}\n')
+            logger.debug(f'nqf = {self.nqf}')
             
         if not hasattr(self, "lacon"):
             self.lacon = ".false."
-            logger.debug(f'lacon = {self.lacon}, analytic continuation of ME eqs. from imaginary to real axis. it takes very long time, if you need it, you can turn it on!\n')
+            logger.debug(f'lacon = {self.lacon}, analytic continuation of ME eqs. from imaginary to real axis. it takes very long time, if you need it, you can turn it on!')
         
         if not hasattr(self, "npade"):
             self.npade = 20
-            logger.debug(f'npade = {self.npade}\n')
+            logger.debug(f'npade = {self.npade}')
             
             
         if not hasattr(self, "wscut"):
             self.wscut = 3.0
-            logger.debug(f'wscut = {self.wscut}\n')
+            logger.debug(f'wscut = {self.wscut}')
             
         if not hasattr(self, "muc"):
             self.muc = [0.1, 0.13, 0.16]
-            logger.info(f'muc = {self.muc}\n')
+            logger.info(f'muc = {self.muc}')
         else:
             self.muc = float(self.muc)
-            logger.info(f'muc = {self.muc}\n')
+            logger.info(f'muc = {self.muc}')
         
         if not hasattr(self, "nstemp"):
             self.nstemp = 1
-            logger.debug(f'nstemp = {self.nstemp}\n')
+            logger.info(f'nstemp = {self.nstemp}')
+            logger.info("temps(2) - temps(1)) / (nstemp-1), so if temps=60 70, you had better set nstemp=11")
         else:
             self.nstemp = int(self.nstemp)
-            logger.debug(f'nstemp = {self.nstemp}\n')
+            logger.info(f'nstemp = {self.nstemp}')
         
         if not hasattr(self, "temps"):
             self.temps = []
-            logger.debug(f'temps = {self.temps}\n')
+            logger.info(f'temps = {self.temps}')
         else:
             self.temps = self.temps.split()
-            logger.debug(f'temps = {self.temps}\n') 
+            logger.info(f'temps = {self.temps}') 
         
         if hasattr(self, "from_scratched") and eval(self.from_scratched) == True:
             self.ep_coupling = ".true."
@@ -261,15 +262,15 @@ class epw_inputpara(epw_base):
             logger.info("3. crystal.fmt")
             logger.info("4. selecq.fmt")
         else:
-            logger.error("You must specify ")
+            logger.error("You must specify one among from_scratched=True, restart1=True, restart2=True or restart3=True.")
         
         
         if not hasattr(self, "wannierize"):
             self.wannierize = '.false.'
             logger.debug("Again, you can recover the wannierize even though you have set from_scratched, restart1, restart2, restart3")
-            logger.info(f'wannierize = {self.wannierize}\n')
+            logger.info(f'wannierize = {self.wannierize}')
         else:
-            logger.info(f'wannierize = {self.wannierize}\n')
+            logger.info(f'wannierize = {self.wannierize}')
 
     @classmethod
     def init_from_config(cls, config: dict):
