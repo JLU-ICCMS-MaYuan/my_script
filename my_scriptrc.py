@@ -25,6 +25,22 @@ slurmtitle = '''#!/bin/sh
 #SBATCH  --ntasks-per-node=48                          
 #SBATCH  --cpus-per-task=1                         
 
+##These parameters of slurm is for many nodes parallel.
+##You use 4 nodes, occupy 8 cores for each node, the rest cores for restore the data.
+##exclusive means only you can use these 4 nodes, nobody can use them with you together.
+##SBATCH  --job-name=mayuan
+##SBATCH  --output=log.out                       
+##SBATCH  --error=log.err                       
+##SBATCH  --partition=public
+##SBATCH  --nodes=4
+##SBATCH  --ntasks=32
+##SBATCH  --ntasks-per-node=8
+##SBATCH  --cpus-per-task=1                         
+##SBATCH  --exclude=node98
+##SBATCH  --exclusive
+
+## mpirun -np 32 /work/home/mayuan/software/qe-7.1/EPW/bin/epw.x -npool 32 <epw_elph.in> epw_elph.out
+
 source /work/home/mayuan/intel/oneapi/setvars.sh --force      
 ulimit -s unlimited
 export I_MPI_ADJUST_REDUCE=3
