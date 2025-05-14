@@ -91,11 +91,11 @@ mpirun -np N $EPWBIN/epw.x -npool N < epw.in > epw.out
   ep_coupling = .true.  ! 计算电声耦合
   elph        = .true.  ! 计算电声耦合系数
   ephwrite    = .true. ! 如果设置了Eliasberg = .true.，那么设置 ephwrite = .true.
-                      !  ephwrite = .true. 会产生4个文件，这4个文件都需要在求解 Eliashberg equations 计算超导温度时被用到
-                      ! ‘ephmatXX’  (XX: pool dependent files) files with e-ph matrix elements within the Fermi window (fsthick) on fine k and q meshes on the disk
-                      ! ‘freq’ file contains the phonon frequencies
-                      ! ‘egnv’ file contains the eigenvalues within the Fermi window
-                      ! ‘ikmap’ file contains the index of the k-point on the irreducible grid within the Fermi window.
+                       !  ephwrite = .true. 会产生4个文件，这4个文件都需要在求解 Eliashberg equations 计算超导温度时被用到
+                       ! ‘ephmatXX’  (XX: pool dependent files) files with e-ph matrix elements within the Fermi window (fsthick) on   fine k and q meshes on the disk
+                       ! ‘freq’ file contains the phonon frequencies
+                       ! ‘egnv’ file contains the eigenvalues within the Fermi window
+                       ! ‘ikmap’ file contains the index of the k-point on the irreducible grid within the Fermi window.
 
   epbwrite    = .true.  ! 粗糙布洛赫表示的电声耦合矩阵元和相关的数据（比如动力学矩阵）写入磁盘，存储为prefix.epb
   epbread     = .false. ! 粗糙布洛赫表示的电声耦合矩阵元和相关的数据从prefix.epb文件中读取
@@ -135,6 +135,11 @@ mpirun -np N $EPWBIN/epw.x -npool N < epw.in > epw.out
 ```
 
 关于超导计算
+
+超导计算中fsthick是非常重要的一个值，它决定了多宽的能量范围内计算电声子散射。估算fsthick的一般思路为：假设你的声子谱的最高频率是200 meV(即：1613 cm-1), 也就说经过散射后电子的最大能量变化范围为费米能级上下0.2eV的范围内。所以你可以大概先设置fsthick=0.2, 然后在此基础上再增加fsthick，检查Tc是否随着fsthick的增加而变化。
+
+degaussw和nkf严格绑定，degaussq和nqf严格绑定。展宽设置的意义是为了避免网格不够密时因为采样不准确而导致的计算误差。一般来说，当网格足够密的时候，是不需要那么大的展宽。
+
 ```fortran
   ! eps_acustic = 2.0    ! 在进行电声耦合计算和a2f计算时的声子频率的下边界，单位时cm-1
   ! degaussq     = 0.5      ! 对q的所有电声耦合求和时的Smearing，起始值是0.5 ，单位是meV

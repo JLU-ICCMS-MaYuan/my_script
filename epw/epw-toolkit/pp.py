@@ -215,7 +215,7 @@ for iqpt in range(1, nqpt+1):
                               '.dvscf_paw1 save/'+prefix+'.dvscf_paw_q'+label)
         # Case without XML format
         else:
-            print("# Case calculation in seq. # Case without XML format.")
+            # print("# Case calculation in seq. # Case without XML format.")
             print('cp '+prefix+'.dyn'+str(iqpt)+' save/'+prefix+'.dyn_q' +
                       label)
             os.system('cp '+prefix+'.dyn'+str(iqpt)+' save/'+prefix+'.dyn_q' +
