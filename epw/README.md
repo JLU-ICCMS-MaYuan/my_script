@@ -9,17 +9,22 @@ qe_main.py -i POSCAR -j bash -p 200 -w scf  scf -m mode=scf ecutwfc=80 ecutrho=9
 
 # qe计算能带
 qe_main.py -i POSCAR -j bash -w band eletron -m mode=eleband  ecutwfc=80 ecutrho=960 execmd='mpirun -np 8' npool=4 queue=local kinserted=200 charge_density_dat='scf/tmp/H3S1.save/charge-density.dat' data_file_schema_xml='scf/tmp/H3S1.save/data-file-schema.xml' nbnd=50
+# qe的能带高对称路径可以通过下面的命令获得
+qe_main.py -i V3_Hessian.dyn1 -j bash eletron -m mode=hspp  execmd=''
 
 # qe计算nscf
-qe_main.py -i POSCAR -j bash -w epw  scf  -m mode=nscf ecutwfc=80 ecutrho=960 kpoints_dense='8 8 8'  degauss=0.02 execmd='mpirun -np 8' npool=4  charge_density_dat='scf/tmp/H3S1.save/charge-density.dat' data_file_schema_xml='scf/tmp/H3S1.save/data-file-schema.xml'  k_automatic=False wan=False  occupations=smearing  queue=lhy
+qe_main.py -i POSCAR -j bash -w epw  scf  -m mode=nscf ecutwfc=80 ecutrho=960 kpoints_dense='8 8 8'  degauss=0.02 execmd='mpirun -np 8' npool=4  tmp='./' k_automatic=False wan=False  occupations=smearing  queue=lhy
 
 # epw计算能带，其实是epw调用wannier计算能带, 要将计算的wannier的能带和qe计算的能带做对比
-epw_main.py -i POSCAR -j bash -w epw epw_run -m mode=epw_eband execmd='mpirun -np 8' npool=8 dvscf_dir='./save' nbndsub=7 bands_skipped='1:12' dis_froz_min=-7.635175  dis_froz_max=23 dis_win_max=60  proj='H:s S:s S:p' queue=local nk='8 8 8' bands_skipped=1:1
+epw_main.py -i POSCAR -j bash -w epw epw_run -m mode=epw_eband execmd='mpirun -np 8' npool=8 dvscf_dir='./save' nbndsub=7 bands_skipped='1:12' dis_froz_min=-7.635175  dis_froz_max=23 dis_win_max=60  proj='H:s S:s S:p' queue=local nk='8 8 8'
 # proj='Li:s;p Hf:s;p;d H:s'
-
+# epw能带的高对称路径可以通过wannier90的计算结果获得，此时的高对称路径与qe的能带的高对称路径不一致。
+cat *_band.labelinfo.dat | awk '{print $1,  $3}'
 
 # epw计算声子, 要将计算的声子freq.dat和qe计算的声子做对比
 epw_main.py -i POSCAR -j bash -w epw epw_run -m mode=epw_phono  execmd='mpirun -np 8' npool=8 dvscf_dir='./save' nbndsub=7 bands_skipped='1:12' dis_froz_min=-7.635175  dis_froz_max=23 dis_win_max=60  proj='H:s S:s S:p'  nk='8 8 8' nq='4 4 4'  queue=lhy
+# 这一步计算声子，除了可以输出声子谱(phband.freq)，也可以输出电子的能带(band.eig). 
+# 此时的phband.freq和band.eig的高对称路径与qe的能带的高对称路径一致。
 
 # epw计算电声耦合插值
 epw_main.py -i POSCAR -j bash -w epw epw_run -m mode=epw_elph  execmd='mpirun -np 8' npool=8 dvscf_dir='./save' nbndsub=7 bands_skipped='1:12' dis_froz_min=-7.635175  dis_froz_max=23 dis_win_max=60  proj='H:s S:s S:p'  nk='8 8 8' nq='4 4 4' nkf='12 12 12' nqf='6 6 6' fsthick=0.4 degaussw=0.1 degaussq=0.5  queue=local
@@ -91,11 +96,11 @@ mpirun -np N $EPWBIN/epw.x -npool N < epw.in > epw.out
   ep_coupling = .true.  ! 计算电声耦合
   elph        = .true.  ! 计算电声耦合系数
   ephwrite    = .true. ! 如果设置了Eliasberg = .true.，那么设置 ephwrite = .true.
-                      !  ephwrite = .true. 会产生4个文件，这4个文件都需要在求解 Eliashberg equations 计算超导温度时被用到
-                      ! ‘ephmatXX’  (XX: pool dependent files) files with e-ph matrix elements within the Fermi window (fsthick) on fine k and q meshes on the disk
-                      ! ‘freq’ file contains the phonon frequencies
-                      ! ‘egnv’ file contains the eigenvalues within the Fermi window
-                      ! ‘ikmap’ file contains the index of the k-point on the irreducible grid within the Fermi window.
+                       !  ephwrite = .true. 会产生4个文件，这4个文件都需要在求解 Eliashberg equations 计算超导温度时被用到
+                       ! ‘ephmatXX’  (XX: pool dependent files) files with e-ph matrix elements within the Fermi window (fsthick) on   fine k and q meshes on the disk
+                       ! ‘freq’ file contains the phonon frequencies
+                       ! ‘egnv’ file contains the eigenvalues within the Fermi window
+                       ! ‘ikmap’ file contains the index of the k-point on the irreducible grid within the Fermi window.
 
   epbwrite    = .true.  ! 粗糙布洛赫表示的电声耦合矩阵元和相关的数据（比如动力学矩阵）写入磁盘，存储为prefix.epb
   epbread     = .false. ! 粗糙布洛赫表示的电声耦合矩阵元和相关的数据从prefix.epb文件中读取
@@ -135,6 +140,11 @@ mpirun -np N $EPWBIN/epw.x -npool N < epw.in > epw.out
 ```
 
 关于超导计算
+
+超导计算中fsthick是非常重要的一个值，它决定了多宽的能量范围内计算电声子散射。估算fsthick的一般思路为：假设你的声子谱的最高频率是200 meV(即：1613 cm-1), 也就说经过散射后电子的最大能量变化范围为费米能级上下0.2eV的范围内。所以你可以大概先设置fsthick=0.2, 然后在此基础上再增加fsthick，检查Tc是否随着fsthick的增加而变化。
+
+degaussw和nkf严格绑定，degaussq和nqf严格绑定。展宽设置的意义是为了避免网格不够密时因为采样不准确而导致的计算误差。一般来说，当网格足够密的时候，是不需要那么大的展宽。
+
 ```fortran
   ! eps_acustic = 2.0    ! 在进行电声耦合计算和a2f计算时的声子频率的下边界，单位时cm-1
   ! degaussq     = 0.5      ! 对q的所有电声耦合求和时的Smearing，起始值是0.5 ，单位是meV
@@ -475,6 +485,7 @@ ph_restart.f90:821:    SUBROUTINE read_disp_pattern_only(iunpun, filename, curre
 再回到epw_iso_sc.out中可以看到这样一个信息`a2f file is not found to estimate initial gap: calculating a2f files`, 找到这个字符串的在源码中的位置我们发现, 在源码中epw调用了`CALL evaluate_a2f_lambda`来计算a2f. 
 
 ### <span style="color:lightgreen"> 19. Error in routine read_kqmap (367):  Error: ixkff(ik) is not equal to ixkf(bztoibz(ik)).
+这是因为你在执行``
 
 ### <span style="color:lightgreen"> 20. Error in routine ep_coarse_unfolding (1): cannot open file for reading or writing
 ep_coarse_unfolding.f90的源代码中显示当出现无法读取patters.*.xml文件时，就会报错Error in routine ep_coarse_unfolding。此时你要检查你的save文件中是否还存在东西！！！！有可能save中的内容意见被你删掉了。
