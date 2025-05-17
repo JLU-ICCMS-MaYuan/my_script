@@ -31,7 +31,7 @@ class epw_inputpara(epw_base):
             setattr(self, key, value)
 
         if not hasattr(self, "execmd"):
-            logger.debug("You must specify execute command, such as 'mpirun -np 48', 'bash', 'srun', 'srun --mpi=pmi2'")
+            logger.error("You must specify execute command, such as 'mpirun -np 48', 'bash', 'srun', 'srun --mpi=pmi2'")
             sys.exit(1)
 
         if not hasattr(self, "npool"):
