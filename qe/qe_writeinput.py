@@ -794,11 +794,11 @@ class qe_writeinput:
         q2r_in = work_directory.joinpath(inputfilename)
         with open(q2r_in, "w") as qe:
             qe.write("&input                      \n")             
-            qe.write("  la2F = {},                \n".format(self.qe_inputpara.la2F))
             qe.write("  zasr = 'simple',          \n")                         
             qe.write("  fildyn = '{}.dyn'         \n".format(self.qe_inputpara.system_name))                               
             qe.write("  flfrc = '{}.fc',          \n".format(self.qe_inputpara.system_name))
             if self.qe_inputpara.EPC_flag == True:                    
+                qe.write("  la2F = {},                \n".format(self.qe_inputpara.la2F))
                 qe.write("  el_ph_nsigma={},      \n".format(str(self.qe_inputpara.el_ph_nsigma)))
             if self.qe_inputpara.SCTK_flag == True:
                 qe.write("  lshift_q = .true.     \n") # 移动q网格以避免Γ点的奇点。SCTK软件要求用四面体方法计算声子，这个是必须加的。
@@ -819,11 +819,11 @@ class qe_writeinput:
                 qe.write(" amass({})={},                                 \n".format(i+1, species_mass))                                   
             qe.write(" flfrc = '{}.fc',                                 \n".format(self.qe_inputpara.system_name))                              
             qe.write(" flfrq='{}.freq',                                 \n".format(self.qe_inputpara.system_name))                              
-            qe.write(" la2F = {},                                       \n".format(self.qe_inputpara.la2F))
             qe.write(" dos=.false.,                                     \n")                     
             qe.write(" q_in_band_form=.true.,                           \n")                                 
             qe.write(" q_in_cryst_coord=.true.,                         \n")
-            if self.qe_inputpara.EPC_flag == True:                  
+            if self.qe_inputpara.EPC_flag == True: 
+                qe.write(" la2F = {},                                       \n".format(self.qe_inputpara.la2F))                 
                 qe.write(" el_ph_nsigma={},                                 \n".format(str(self.qe_inputpara.el_ph_nsigma)))
             if self.qe_inputpara.SCTK_flag == True:
                 qe.write("  lshift_q = .true.                            \n") # 移动q网格以避免Γ点的奇点。SCTK软件要求用四面体方法计算声子，这个是必须加的。
