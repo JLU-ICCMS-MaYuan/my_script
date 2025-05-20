@@ -13,8 +13,8 @@ def dyn_done(q):
     # 如果文件名包含 "dyn" 关键字
         if   'dyn'+q in filename and os.path.getsize(q+'/'+filename) != 0:
             return True
-        elif 'dyn'   in filename and os.path.getsize(q+'/'+filename) != 0:
-            return True
+        elif 'dyn'   in filename and os.path.getsize(q+'/'+filename) == 0:
+            return False
     else:
         return False
 
