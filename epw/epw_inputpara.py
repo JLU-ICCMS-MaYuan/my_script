@@ -134,6 +134,14 @@ class epw_inputpara(epw_base):
             self.degaussq = 0.05
             logger.debug(f'degaussq = {self.degaussq}')
         
+        if not hasattr(self, "delta_qsmear"):
+            self.delta_qsmear = 0.05
+            logger.debug(f'delta_qsmear = {self.delta_qsmear}')
+
+        if not hasattr(self, "nqsmear"):
+            self.nqsmear = 10
+            logger.debug(f'nqsmear = {self.nqsmear}')            
+
         if not hasattr(self, "nk"):
             logger.warning(f"You must specify nk! Just like: nk='4 4 4'  (Attention: No space before or after the equal sign)")
             self.nk = [4,4,4]

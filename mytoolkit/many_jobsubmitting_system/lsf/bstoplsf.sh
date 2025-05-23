@@ -1,6 +1,6 @@
 #!/bin/bash
 
-for tkid in `awk '{print $1}' tasks`; do
+for tkid in `awk '{print $2}' tasks`; do
     bstop $tkid
 done
 

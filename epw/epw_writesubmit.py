@@ -164,7 +164,6 @@ class epw_writesubmit:
             j.write('ln -sf ${abspath}/crystal.fmt            .\n')
             j.write('ln -sf ${abspath}/restart.fmt            .\n')
             j.write('ln -sf ${abspath}/selecq.fmt             .\n')
-            j.write('echo "epw_aniso_sc"\n')
             j.write('echo "epw_iso_sc"\n')
             j.write('{} {}/epw.x -npool {} <{}> {}  \n'.format(self.epw_inputpara.execmd, epwbin_path, self.epw_inputpara.npool, _inpufilename, _outputfilename))
         

@@ -501,3 +501,18 @@ ep_coarse_unfolding.f90的源代码中显示当出现无法读取patters.*.xml�
 还有一种可能性就是你的dvscf_dir写成了诸如`dvscf_dir='./save`这样的错误形式。也会爆出这个错。总之就是无法正常读取save目录时就会报错。
 或者当前目录下忘记拷贝save
 
+### <span style="color:lightgreen"> 21. Error in routine ktokpmq (1): is this a uniform k-mesh?
+这是因为在使用from_scratch=True参数时，该参数会令wannier=.true., 那么epw在调用wannier90进行插值时，就会遇到粗网格nk的k点数小于核数的情况。
+比如你只有6x6x6的粗网格216个k点，但是你的`-np 256`参数指定了超过216个核。
+所以会报这个错，原因是使用的核数太多了。
+
+
+可以先用小核数进行wannier90插值，然后再使用wannierize=.false.并配合大的核数核节点数进行声子和电声耦合的插值。
+
+### <span style="color:lightgreen"> 22.  Error in routine read_frequencies (1):  e-ph mat elements were not calculated on the nqf1, nqf2, nqf3 mesh
+qe.7.3.1开始使用的epw.5.8可以使用不同与from_scratch模式下的npool来读取ephmatXXX目录下的文件来续算。
+所以在使用低于qe.7.3.1的版本的epw时，必须保证在epw_iso_sc和epw_aniso_sc中使用的并行参数和节点数和epw_elph中的一致。
+
+
+### <span style="color:lightgreen"> 23.  Error in routine readdvscf (80): ./save/Li1Ti1H6.dvscf_q1 too short, check ecut
+这是因为
