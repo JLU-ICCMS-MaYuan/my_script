@@ -134,6 +134,14 @@ class epw_inputpara(epw_base):
             self.degaussq = 0.05
             logger.debug(f'degaussq = {self.degaussq}')
         
+        if not hasattr(self, "delta_qsmear"):
+            self.delta_qsmear = 0.05
+            logger.debug(f'delta_qsmear = {self.delta_qsmear}')
+
+        if not hasattr(self, "nqsmear"):
+            self.nqsmear = 10
+            logger.debug(f'nqsmear = {self.nqsmear}')            
+
         if not hasattr(self, "nk"):
             logger.warning(f"You must specify nk! Just like: nk='4 4 4'  (Attention: No space before or after the equal sign)")
             self.nk = [4,4,4]
@@ -197,7 +205,7 @@ class epw_inputpara(epw_base):
             self.temps = self.temps.split()
             logger.info(f'temps = {self.temps}') 
         
-        if hasattr(self, "from_scratched") and eval(self.from_scratched) == True:
+        if hasattr(self, "from_scratch") and eval(self.from_scratch) == True:
             self.ep_coupling = ".true."
             self.elph        = ".true."
             self.epbwrite    = ".true."
@@ -206,7 +214,7 @@ class epw_inputpara(epw_base):
             self.epwread     = ".false."
             self.ephwrite    = ".true."
             self.wannierize  = ".true."
-            logger.info("You specify from_scratched, so the program will run wannierize and phonon and elph interplation")
+            logger.info("You specify from_scratch, so the program will run wannierize and phonon and elph interplation")
         elif hasattr(self, "restart1") and eval(self.restart1) == True:
             self.ep_coupling = ".true."
             self.elph        = ".true."
@@ -262,12 +270,12 @@ class epw_inputpara(epw_base):
             logger.info("3. crystal.fmt")
             logger.info("4. selecq.fmt")
         else:
-            logger.error("You must specify one among from_scratched=True, restart1=True, restart2=True or restart3=True.")
+            logger.error("You must specify one among from_scratch=True, restart1=True, restart2=True or restart3=True.")
         
         
         if not hasattr(self, "wannierize"):
             self.wannierize = '.false.'
-            logger.debug("Again, you can recover the wannierize even though you have set from_scratched, restart1, restart2, restart3")
+            logger.debug("Again, you can recover the wannierize even though you have set from_scratch, restart1, restart2, restart3")
             logger.info(f'wannierize = {self.wannierize}')
         else:
             logger.info(f'wannierize = {self.wannierize}')
