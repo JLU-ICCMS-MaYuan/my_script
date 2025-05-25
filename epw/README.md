@@ -501,3 +501,7 @@ ep_coarse_unfolding.f90的源代码中显示当出现无法读取patters.*.xml�
 还有一种可能性就是你的dvscf_dir写成了诸如`dvscf_dir='./save`这样的错误形式。也会爆出这个错。总之就是无法正常读取save目录时就会报错。
 或者当前目录下忘记拷贝save
 
+### <span style="color:lightgreen"> 21. Error in routine read_xml_file (4): fatal error reading xml file
+很有可能是你的nscf用的qe版本和epw的版本对不上。建议全部删掉用统一的版本的qe和epw重新计算。
+
+### <span style="color:lightgreen"> 22. Error in routine ktokpmq (1): is this a uniform k-mesh?
