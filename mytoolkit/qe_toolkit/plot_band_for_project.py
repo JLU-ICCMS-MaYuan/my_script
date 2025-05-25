@@ -201,18 +201,21 @@ if __name__ == '__main__':
     info = '''
 Some notes:
 I'll give you an example of using this scripts:
+
 python plot_band_for_project.py pjband.png --ielem 4 14 --label 'Nb d' 'H s' --color r g --efermi 23.4483 --oo '4 5 6 7 8 17 18 19 20 21 30 31 32 33 34 43 44 45 46 47' '52 53 54 55 56 57 58 59 60 61 62 63 64 65'
+
+plot_band_for_project.py pjband.png --ielem 1 1 6 --label 'Li 1S' --color r --efermi 11.47 --oo '0'
 
 The most important part is to specify the number of orbis for each element.
 
 You can get it with the following code:
-grep '[a-zA-Z]'  elefatbandpro.projwfc_up 
+grep '[a-zA-Z]'  elebandprojdata.projwfc_up 
 
-grep '[a-zA-Z]'  elefatbandpro.projwfc_up | grep 1S | awk '{print $1-1}' | xargs
+grep '[a-zA-Z]'  elebandprojdata.projwfc_up | grep 1S | awk '{print $1-1}' | xargs
 52 53 54 55 56 57 58 59 60 61 62 63 64 65 
 There are 14 H's in the system, and each H has 1 1s orbital, so there are 14 numbers
 
-grep '[a-zA-Z]'  elefatbandpro.projwfc_up | grep "Nb  4D" | awk '{print $1-1}' | xargs
+grep '[a-zA-Z]'  elebandprojdata.projwfc_up | grep "Nb  4D" | awk '{print $1-1}' | xargs
 4 5 6 7 8 17 18 19 20 21 30 31 32 33 34 43 44 45 46 47
 There are 4 Nb's in the system, and each Nb's 4d orbital has 5 magnetic quantum number components, so there are 20 numbers
 '''
@@ -231,7 +234,7 @@ There are 4 Nb's in the system, and each Nb's 4d orbital has 5 magnetic quantum 
     oo = [list(map(int, group.split())) for group in args.oo]
 
     # Default file paths
-    proj_file = 'elefatbandpro.projwfc_up'
+    proj_file = 'elebandprojdata.projwfc_up'
     bd_file = 'elebanddata.dat'
     kpoints_file = 'eleband.in'
 
