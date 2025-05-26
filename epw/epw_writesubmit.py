@@ -22,7 +22,7 @@ class epw_writesubmit:
         elif self.epw_inputpara.submit_job_system == "pbs":
             self.jobtitle = pbstitle
         elif self.epw_inputpara.submit_job_system == "lsf":
-            self.jobtitle = lsftitle
+            self.jobtitle = self.update_lsfinfo(lsftitle, epw_inputpara.ntasks, epw_inputpara.ntasks_per_node)
         elif self.epw_inputpara.submit_job_system == "bash":
             self.jobtitle = bashtitle
         else:
@@ -47,6 +47,18 @@ class epw_writesubmit:
             updated_title = re.sub(r'--cpus-per-task=\S+', f'--cpus-per-task={cpus_per_task}', updated_title)
         return updated_title
     
+    def update_lsfinfo(self, title:str, ntasks:int, ntasks_per_node:int):
+        updated_title = title
+        if ntasks is not None:
+            updated_title = re.sub(r"#BSUB -n\s+.*",    f'#BSUB -n {ntasks}', updated_title)
+            # '.*' 是正则表达式中的核心：
+            # .：匹配任意一个字符（除了换行符）
+            # *：表示“零个或多个”前面的字符
+        if ntasks_per_node is not None:
+            updated_title = re.sub(r"#BSUB -R\s+'.*'" , f"#BSUB -R 'span[ptile={ntasks_per_node}]'", updated_title)
+        return updated_title
+
+
     
     def check_partition_exists(self, new_partition: str) -> bool:
         """检查队列是否存在"""
