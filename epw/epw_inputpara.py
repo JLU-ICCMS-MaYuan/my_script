@@ -43,6 +43,15 @@ class epw_inputpara(epw_base):
             self.queue = None
             logger.debug(f'queue = {self.queue}')
         
+        if not hasattr(self, "nodes"):
+            self.nodes = None
+        if not hasattr(self, "ntasks"):
+            self.ntasks = None
+        if not hasattr(self, "ntasks_per_node"):
+            self.ntasks_per_node = None
+        if not hasattr(self, "cpus_per_task"):
+            self.cpus_per_task = None
+        
         if not hasattr(self, "mode"):
             logger.error("You must specify mode, such as 'epw_eband', 'epw_phono', 'epw_elph', 'epw_aniso_sc'")
             sys.exit(1)

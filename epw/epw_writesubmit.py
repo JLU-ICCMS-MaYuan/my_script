@@ -18,7 +18,7 @@ class epw_writesubmit:
         self.epw_inputpara = epw_inputpara
 
         if self.epw_inputpara.submit_job_system == "slurm":
-            self.jobtitle = self.update_slurmPartition(slurmtitle, epw_inputpara.queue)
+            self.jobtitle = self.update_slurminfo(slurmtitle, epw_inputpara.queue, epw_inputpara.nodes, epw_inputpara.ntasks, epw_inputpara.ntasks_per_node, epw_inputpara.cpus_per_task)
         elif self.epw_inputpara.submit_job_system == "pbs":
             self.jobtitle = pbstitle
         elif self.epw_inputpara.submit_job_system == "lsf":
@@ -28,16 +28,26 @@ class epw_writesubmit:
         else:
             self.jobtitle = ''
             
-    def update_slurmPartition(self, title:str, new_partition:str):
+    def update_slurminfo(self, title:str, new_partition:str, nodes:int, ntasks:int, ntasks_per_node:int, cpus_per_task:int):
         if self.check_partition_exists(new_partition):
             # 使用正则表达式替换 --partition 后面的内容
             updated_title = re.sub(r'--partition=\S+', f'--partition={new_partition}', title)
             logger.info(f"Partition exist! {new_partition}")
-            return updated_title
         else:
             logger.info(f"{new_partition} doesn't exist! Keep partition name in ~/.my_scripts.py")
-            return title
-        
+            updated_title = title
+            
+        if nodes is not None:
+            updated_title = re.sub(r'--nodes=\S+', f'--nodes={nodes}', updated_title)
+        if ntasks is not None:
+            updated_title = re.sub(r'--ntasks=\S+', f'--ntasks={ntasks}', updated_title)
+        if ntasks_per_node is not None:
+            updated_title = re.sub(r'--ntasks-per-node=\S+', f'--ntasks-per-node={ntasks_per_node}', updated_title)
+        if cpus_per_task is not None:
+            updated_title = re.sub(r'--cpus-per-task=\S+', f'--cpus-per-task={cpus_per_task}', updated_title)
+        return updated_title
+    
+    
     def check_partition_exists(self, new_partition: str) -> bool:
         """检查队列是否存在"""
         try:
@@ -93,7 +103,7 @@ class epw_writesubmit:
     def j1_epw_energyband(self,  _dirpath, inputfilename):
         _inpufilename = inputfilename
         _outputfilename = _inpufilename.split(".")[0] + ".out"
-        jobname = "j1_epw_energyband.sh"
+        jobname = "j1_epw_eband.sh"
         _script_filepath = os.path.join(_dirpath, jobname)
         with open(_script_filepath, "w") as j:
             j.writelines(self.jobtitle)
