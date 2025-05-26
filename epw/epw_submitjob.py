@@ -64,6 +64,35 @@ class epw_submitjob:
             raise ValueError(f"The *.x of epw didn't run ! Because the jobids={jobids}. The program will exit! The order you use is {self.submit_order} {jobname}")
         return jobids
     
+    def submit_mode2(self, inputfilename, jobname, submit_task_path):
+        """专门用来提交计算prtgkk任务和fermi_nesting任务"""
+        if not submit_task_path.exists():
+            raise FileExistsError(f" {submit_task_path} doesn't exist")
+        if not submit_task_path.joinpath(inputfilename).exists():
+            raise FileExistsError(f" {inputfilename} doesn't exist")
+        if not submit_task_path.joinpath(jobname).exists():
+            raise FileExistsError(f" {jobname} doesn't exist")
+        
+        cwd = submit_task_path.cwd()
+        dst_dir = submit_task_path.parent.absolute()
+        os.chdir(dst_dir)
+        if self.epw_inputpara.submit_job_system == "bash":
+            logger.debug(f"nohup {self.submit_order} {jobname} > bash.log 2>&1 &")
+            res = os.popen(f"nohup {self.submit_order} {jobname} > bash.log 2>&1 &").read()
+            jobids = self.getpid()
+        else:
+            logger.debug(f"{self.submit_order} {jobname}")
+            res = os.popen(f"{self.submit_order} {jobname}").read()
+            jobids = re.findall(r"\d+", res)
+
+        logger.info(f"{jobname} is executed. pid or jobids = {jobids}")
+        os.chdir(cwd)
+        # 检查任务是否成功提交，成功提交的话，应该会有进程号或者任务号返回。
+        # 如果没有成功提交任务就跳出程序
+        if not jobids:
+            raise ValueError(f"The *.x of epw didn't run ! Because the jobids={jobids}. The program will exit! The order you use is {self.submit_order} {jobname}")
+        return jobids
+
     def submit_mode3(self, inputfilename, jobname):
         """专门用来提交计算超导任务"""
         jobids = []

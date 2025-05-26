@@ -110,8 +110,15 @@ class epw_writesubmit:
                 aniso_mu_path = self.epw_inputpara.work_path.joinpath("aniso_muc_{}".format(self.epw_inputpara.muc))
                 jobname = self.j6_epw_aniso_sc(aniso_mu_path, inpufilename[1])
                 return jobname
-
- 
+        if mode == "epw_prtgkk":
+            prtgkk_path = self.epw_inputpara.work_path.joinpath("prtgkk")
+            jobname = self.j7_epw_prtgkk(prtgkk_path, inpufilename)
+            return jobname
+        if mode == "epw_fermi_nest":
+            fermi_nest = self.epw_inputpara.work_path.joinpath("fermi_nest")
+            jobname = self.j8_epw_fermi_nest(fermi_nest, inpufilename)
+            return jobname
+        
     def j1_epw_energyband(self,  _dirpath, inputfilename):
         _inpufilename = inputfilename
         _outputfilename = _inpufilename.split(".")[0] + ".out"
@@ -212,3 +219,47 @@ class epw_writesubmit:
             j.write('{} {}/epw.x -npool {} <{}> {}  \n'.format(self.epw_inputpara.execmd, epwbin_path, self.epw_inputpara.npool, _inpufilename, _outputfilename))
 
         return jobname
+    
+    def j7_epw_prtgkk(self,  _dirpath, inputfilename):
+        _inpufilename = inputfilename
+        _outputfilename = _inpufilename.split(".")[0] + ".out"
+        jobname = "j7_epw_prtgkk.sh"
+        _script_filepath = os.path.join(_dirpath, jobname)
+        with open(_script_filepath, "w") as j:
+            j.writelines(self.jobtitle)
+            j.write('echo "calcualte el-ph matrix elements"\n')
+            j.write('abspath=`realpath ..`\n')
+            j.write('mkdir -p ./tmp/{}.ephmat\n'.format(self.epw_inputpara.system_name))  # 保证目录存.format(self.epw)在
+            j.write('ln -sf ${abspath}' + '/tmp/{}.ephmat/* ./tmp/{}.ephmat/\n'.format(self.epw_inputpara.system_name, self.epw_inputpara.system_name))
+            j.write('ln -sf ${abspath}' + '/tmp/{}.epmatwp  ./tmp/\n'.format(self.epw_inputpara.system_name))
+            j.write('ln -sf ${abspath}' + '/{}.ukk          . \n'.format(self.epw_inputpara.system_name))
+            j.write('ln -sf ${abspath}/crystal.fmt            .\n')
+            j.write('ln -sf ${abspath}/restart.fmt            .\n')
+            j.write('ln -sf ${abspath}/selecq.fmt             .\n')
+            j.write('echo "epw_aniso_sc"\n')
+            j.write('{} {}/epw.x -npool {} <{}> {}  \n'.format(self.epw_inputpara.execmd, epwbin_path, self.epw_inputpara.npool, _inpufilename, _outputfilename))
+        return jobname
+    
+    def j8_epw_fermi_nest(self,  _dirpath, inputfilename):
+        _inpufilename = inputfilename
+        _outputfilename = _inpufilename.split(".")[0] + ".out"
+        jobname = "j8_epw_fermi_nest.sh"
+        _script_filepath = os.path.join(_dirpath, jobname)
+        with open(_script_filepath, "w") as j:
+            j.writelines(self.jobtitle)
+            j.write('echo "calcualte fermi nest"\n')
+            j.write('abspath=`realpath..`\n')
+            j.write('mkdir -p ./tmp/{}.ephmat\n'.format(self.epw_inputpara.system_name))  # 保证目录存.format(self.epw)在
+            j.write('ln -sf ${abspath}' + '/tmp/{}.ephmat/* ./tmp/{}.ephmat/\n'.format(self.epw_inputpara.system_name, self.epw_inputpara.system_name))
+            j.write('ln -sf ${abspath}' + '/tmp/{}.epmatwp  ./tmp/\n'.format(self.epw_inputpara.system_name))
+            j.write('ln -sf ${abspath}' + '/{}.ukk          . \n'.format(self.epw_inputpara.system_name))
+            j.write('ln -sf ${abspath}/crystal.fmt            .\n')
+            j.write('ln -sf ${abspath}/restart.fmt            .\n')
+            j.write('ln -sf ${abspath}/selecq.fmt             .\n')
+            j.write('echo "epw_aniso_sc"\n')
+            j.write('{} {}/epw.x -npool {} <{}> {}  \n'.format(self.epw_inputpara.execmd, epwbin_path, self.epw_inputpara.npool, _inpufilename, _outputfilename))
+        return jobname
+
+    
+    
+    

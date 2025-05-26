@@ -57,7 +57,20 @@ class epw_writeinput:
                 inputfilename1 = self.write_epw_iso_sc_in(iso_mu_path, muc=self.epw_inputpara.muc)
                 inputfilename2 = self.write_epw_aniso_sc_in(aniso_mu_path, muc=self.epw_inputpara.muc)
                 return inputfilename1, inputfilename2
-
+        if mode == "epw_prtgkk":
+            logger.info("the electron-phonon matrix elements:")
+            logger.info(f"the initial electronic states only at k = Gamma(nkf1=nkf2=nkf3=1,  filqf=modified_{self.epw_inputpara.system_name}_band.kpt)")
+            prtgkk_path = self.epw_inputpara.work_path.joinpath("prtgkk")
+            os.makedirs(prtgkk_path, exist_ok=True)
+            inputfilename = self.write_epw_prtgkk_in(prtgkk_path)
+            return inputfilename
+        if mode == "epw_fermi_nest":
+            logger.info("calculate fermi nest:")
+            fermi_nest = self.epw_inputpara.work_path.joinpath("fermi_nest")
+            os.makedirs(fermi_nest, exist_ok=True)
+            inputfilename = self.write_epw_fermi_nest_in(fermi_nest)     
+            return inputfilename
+        
     def write_epw_eband_in(self, work_directory:Path):
         inputfilename = "epw_eband.in"
         epw_energyband_in = work_directory.joinpath(inputfilename)
@@ -217,7 +230,6 @@ class epw_writeinput:
 
         return inputfilename
 
-
     def write_epw_phonodata_plot_in(self, work_directory:Path):
         inputfilename = "epw_phonodata_plot.in"
         epw_phonodata_plot_in = work_directory.joinpath(inputfilename)
@@ -236,8 +248,8 @@ class epw_writeinput:
 
     def write_epw_elph_in(self, work_directory:Path):
         inputfilename = "epw_elph.in"
-        epw_phonodata_in = work_directory.joinpath(inputfilename)
-        with open(epw_phonodata_in, "w") as epw:
+        epw_elph_in = work_directory.joinpath(inputfilename)
+        with open(epw_elph_in, "w") as epw:
             
             epw.write("&inputepw\n")
             epw.write(" prefix      ='{}',\n".format(self.epw_inputpara.system_name))
@@ -306,8 +318,8 @@ class epw_writeinput:
 
     def write_epw_iso_sc_in(self, work_directory:Path, muc=None):
         inputfilename = "epw_iso_sc.in"
-        epw_phonodata_in = work_directory.joinpath(inputfilename)
-        with open(epw_phonodata_in, "w") as epw:
+        epw_iso_sc_in = work_directory.joinpath(inputfilename)
+        with open(epw_iso_sc_in, "w") as epw:
             
             epw.write("&inputepw\n")
             epw.write(" prefix      ='{}',\n".format(self.epw_inputpara.system_name))
@@ -402,11 +414,10 @@ class epw_writeinput:
 
         return inputfilename
 
-    
     def write_epw_aniso_sc_in(self, work_directory:Path, muc=None):
         inputfilename = "epw_aniso_sc.in"
-        epw_phonodata_in = work_directory.joinpath(inputfilename)
-        with open(epw_phonodata_in, "w") as epw:
+        epw_aniso_sc_in = work_directory.joinpath(inputfilename)
+        with open(epw_aniso_sc_in, "w") as epw:
             
             epw.write("&inputepw\n")
             epw.write(" prefix      ='{}',\n".format(self.epw_inputpara.system_name))
@@ -501,3 +512,97 @@ class epw_writeinput:
 
         return inputfilename
 
+    def write_epw_prtgkk_in(self, work_directory:Path):
+        inputfilename = "epw_prtgkk.in"
+        epw_prtgkk_in = work_directory.joinpath(inputfilename)
+        with open(epw_prtgkk_in, "w") as epw:
+
+            epw.write("&inputepw\n")
+            epw.write(" prefix      ='{}',\n".format(self.epw_inputpara.system_name))
+            for i, species_name in enumerate(self.epw_inputpara.composition.keys()):
+                element      = Element(species_name)
+                species_mass = str(element.atomic_mass).strip("amu")
+                epw.write(" amass({})    ={},\n".format(i+1, species_mass))          
+            epw.write(" outdir      ='./tmp'\n")
+            epw.write(" dvscf_dir   ='{}'      ! directory where .dyn, .dvscf and prefix.phsave/patterns.xx.yy'\n".format(self.epw_inputpara.dvscf_dir))
+            epw.write("\n")
+            epw.write(" etf_mem     = {}       ! 1 include the whole band 3 only in the window band will be calculated \n".format(self.epw_inputpara.etf_mem))
+            epw.write("\n")
+            epw.write(" elph        = .true.       ! calculate e-ph coefficients.   ephwrite requires ep_coupling=.TRUE., elph=.TRUE.\n".format(self.epw_inputpara.elph))
+            epw.write(" epwwrite    = .false.      ! write electron-phonon matrix elements in the coarse Wannier representation and relevant data (dyn matrices)\n".format(self.epw_inputpara.epwwrite))
+            epw.write(" epwread     = .true.       ! read e-ph matrices from 'prefix.epmatwp' file. electron-phonon matrix elements in the coarse Wannier representation and relevant data (dyn matrices). \n".format(self.epw_inputpara.epwread))
+            epw.write("\n")
+            
+            epw.write(" prtgkk =    = .true.  ")
+            
+            epw.write(" use_ws      = .true.\n")
+            epw.write(" wannierize  = .false.      ! If .false., read *.ukk file\n".format(self.epw_inputpara.wannierize))
+            epw.write("\n")  
+            epw.write(" iverbosity  = 2     ! 2 = verbose output for the superconducting part only.\n")
+            epw.write("\n")
+            epw.write(" nk1 = {}\n nk2 = {}\n nk3 = {}\n".format(self.epw_inputpara.nk[0], self.epw_inputpara.nk[1], self.epw_inputpara.nk[2]))
+            epw.write("\n")
+            epw.write(" nq1 = {}\n nq2 = {}\n nq3 = {}\n".format(self.epw_inputpara.nq[0], self.epw_inputpara.nq[1], self.epw_inputpara.nq[2]))
+            epw.write("\n")
+
+            epw.write(" nkf1 = {}\n nkf2 = {}\n nkf3 = {}\n".format(self.epw_inputpara.nkf[0], self.epw_inputpara.nkf[1], self.epw_inputpara.nkf[2]))
+            epw.write("\n")
+            epw.write("! nqf1 = {}\n nqf2 = {}\n nqf3 = {}\n".format(self.epw_inputpara.nqf[0], self.epw_inputpara.nqf[1], self.epw_inputpara.nqf[2]))
+            epw.write(" filqf        = '{}'     \n".format(self.epw_inputpara.filqf))
+            epw.write("/                           \n")                                                                
+
+        return inputfilename
+
+    def write_epw_fermi_nest_in(self, work_directory:Path):
+        inputfilename = "epw_fermi_nest.in"
+        epw_fermi_nest_in = work_directory.joinpath(inputfilename)
+        with open(epw_fermi_nest_in, "w") as epw:
+
+            epw.write("&inputepw\n")
+            epw.write(" prefix      ='{}',\n".format(self.epw_inputpara.system_name))
+            for i, species_name in enumerate(self.epw_inputpara.composition.keys()):
+                element      = Element(species_name)
+                species_mass = str(element.atomic_mass).strip("amu")
+                epw.write(" amass({})    ={},\n".format(i+1, species_mass))          
+            epw.write(" outdir      ='./tmp'\n")
+            epw.write(" dvscf_dir   ='{}'      ! directory where .dyn, .dvscf and prefix.phsave/patterns.xx.yy'\n".format(self.epw_inputpara.dvscf_dir))
+            epw.write("\n")
+            epw.write(" etf_mem     = {}       ! 1 include the whole band 3 only in the window band will be calculated \n".format(self.epw_inputpara.etf_mem))
+            epw.write("\n")
+            epw.write(" elph        = .true.       ! calculate e-ph coefficients.   ephwrite requires ep_coupling=.TRUE., elph=.TRUE.\n".format(self.epw_inputpara.elph))
+            epw.write(" epwwrite    = .false.      ! write electron-phonon matrix elements in the coarse Wannier representation and relevant data (dyn matrices)\n".format(self.epw_inputpara.epwwrite))
+            epw.write(" epwread     = .true.       ! read e-ph matrices from 'prefix.epmatwp' file. electron-phonon matrix elements in the coarse Wannier representation and relevant data (dyn matrices). \n".format(self.epw_inputpara.epwread))
+            epw.write("\n")
+            
+            epw.write(" prtgkk =    = .true.  ")
+            
+            epw.write(" use_ws      = .true.\n")
+            epw.write(" wannierize  = .false.      ! If .false., read *.ukk file\n".format(self.epw_inputpara.wannierize))
+            epw.write("\n")  
+            
+            epw.write(" fsthick  = {}        ! Fermi window [eV] : consider only states within Fermi energy +- fsthick\n".format(self.epw_inputpara.fsthick))
+            epw.write(" degaussw = {}        ! smearing in energy-conserving delta functions in [eV]\n".format(self.epw_inputpara.degaussw))
+            epw.write(" degaussq = {}        ! smearing for sum over q in the e-ph coupling in [meV]\n".format(self.epw_inputpara.degaussq))
+            epw.write(" delta_qsmear = {} \n".format(self.epw_inputpara.delta_qsmear))
+            epw.write(" nqsmear = {} \n".format(self.epw_inputpara.nqsmear))  
+            epw.write(" phonselfen    = .true. ! calculate the phonon self-energy\n")
+            epw.write(" delta_approx  = .true. ! apply the double delta approximation ! for phonon selfenergy.\n")
+            epw.write(" nest_fn       = .true. !calculate the nesting function.\n")
+            epw.write(" selecqread = .false. ! If .true. then restart from the selecq.fmt file.\n")
+            epw.write("                      ! selecq.fmt only needed if selecqread=.true. otherwise it will be re-created")
+            epw.write("\n")
+
+            epw.write(" iverbosity  = 2     ! 2 = verbose output for the superconducting part only.\n")
+            epw.write("\n")
+            epw.write(" nk1 = {}\n nk2 = {}\n nk3 = {}\n".format(self.epw_inputpara.nk[0], self.epw_inputpara.nk[1], self.epw_inputpara.nk[2]))
+            epw.write("\n")
+            epw.write(" nq1 = {}\n nq2 = {}\n nq3 = {}\n".format(self.epw_inputpara.nq[0], self.epw_inputpara.nq[1], self.epw_inputpara.nq[2]))
+            epw.write("\n")
+
+            epw.write(" nkf1 = {}\n nkf2 = {}\n nkf3 = {}\n".format(self.epw_inputpara.nkf[0], self.epw_inputpara.nkf[1], self.epw_inputpara.nkf[2]))
+            epw.write("\n")
+            epw.write("! nqf1 = {}\n nqf2 = {}\n nqf3 = {}\n".format(self.epw_inputpara.nqf[0], self.epw_inputpara.nqf[1], self.epw_inputpara.nqf[2]))
+            epw.write(" filqf        = '{}'     \n".format(self.epw_inputpara.filqf))
+            epw.write("/                           \n")                                                                
+
+        return inputfilename

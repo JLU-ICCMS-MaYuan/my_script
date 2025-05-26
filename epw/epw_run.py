@@ -138,3 +138,23 @@ class epw_run:
         # submit the job
         if self.epw_inputpara.queue is not None:
             self.epw_submitjob.submit_mode3(inputfilename1, jobname)
+            
+    def epw_prtgkk(self):
+        # init the input file
+        inputfilename = self.epw_writeinput.writeinput(mode="epw_prtgkk")
+        logger.info(inputfilename)
+        # init the submit job script
+        jobname = self.epw_writesubmit.write_submit_scripts(inputfilename, mode="epw_prtgkk")
+        # submit the job
+        if self.epw_inputpara.queue is not None:
+            self.epw_submitjob.submit_mode2(inputfilename, jobname, "prtgkk")
+            
+    def epw_fermit_nest(self):
+        # init the input file
+        inputfilename = self.epw_writeinput.writeinput(mode="epw_fermit_nest")
+        logger.info(inputfilename)
+        # init the submit job script
+        jobname = self.epw_writesubmit.write_submit_scripts(inputfilename, mode="epw_fermit_nest")
+        # submit the job
+        if self.epw_inputpara.queue is not None:
+            self.epw_submitjob.submit_mode2(inputfilename, jobname, "fermi_nest")
