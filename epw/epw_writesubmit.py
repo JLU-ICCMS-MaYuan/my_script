@@ -118,7 +118,18 @@ class epw_writesubmit:
             fermi_nest = self.epw_inputpara.work_path.joinpath("fermi_nest")
             jobname = self.j8_epw_fermi_nest(fermi_nest, inpufilename)
             return jobname
-        
+        if mode == "epw_linearized_iso":
+            if len(self.epw_inputpara.muc) > 1:
+                jobname = []
+                for mu in self.epw_inputpara.muc:
+                    iso_mu_path = self.epw_inputpara.work_path.joinpath("linearized_iso_{}".format(mu))
+                    iso_jobname = self.j9_epw_linearized_iso(iso_mu_path, inpufilename[0])
+                jobname.extend([iso_jobname])
+                return jobname
+            else:
+                iso_mu_path = self.epw_inputpara.work_path.joinpath("linearized_iso_{}".format(self.epw_inputpara.muc))
+                jobname = self.j9_epw_linearized_iso(iso_mu_path, inpufilename[0])
+                return jobname
     def j1_epw_energyband(self,  _dirpath, inputfilename):
         _inpufilename = inputfilename
         _outputfilename = _inpufilename.split(".")[0] + ".out"
@@ -260,6 +271,12 @@ class epw_writesubmit:
             j.write('{} {}/epw.x -npool {} <{}> {}  \n'.format(self.epw_inputpara.execmd, epwbin_path, self.epw_inputpara.npool, _inpufilename, _outputfilename))
         return jobname
 
-    
-    
-    
+    def j9_epw_linearized_iso(self,  _dirpath, inputfilename):
+        _inpufilename = inputfilename
+        _outputfilename = _inpufilename.split(".")[0] + ".out"
+        jobname = "j9_epw_linearized_iso.sh"
+        _script_filepath = os.path.join(_dirpath, jobname)
+        with open(_script_filepath, "w") as j:
+            j.writelines(self.jobtitle)
+            j.write('echo "epw_linearized_iso"\n')
+            j.write('{} {}/epw.x -npool {} <{}> {}  \n'.format(self.epw_inputpara.execmd, epwbin_path, self.epw_inputpara.npool, _inpufilename, _outputfilename))

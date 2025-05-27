@@ -162,3 +162,13 @@ class epw_run:
         # submit the job
         if self.epw_inputpara.queue is not None:
             self.epw_submitjob.submit_mode2(inputfilename, jobname, "fermi_nest")
+
+    def epw_linearized_iso(self):
+        # init the input file
+        inputfilename1 = self.epw_writeinput.writeinput(mode="epw_linearized_iso")
+        logger.info(inputfilename1)
+        # init the submit job script
+        jobname = self.epw_writesubmit.write_submit_scripts([inputfilename1], mode="epw_linearized_iso")
+        # submit the job
+        if self.epw_inputpara.queue is not None:
+            self.epw_submitjob.submit_mode3(inputfilename1, jobname)
