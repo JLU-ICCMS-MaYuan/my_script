@@ -211,6 +211,7 @@ degaussw和nkf严格绑定，degaussq和nqf严格绑定。展宽设置的意义�
   filqf = 'path.dat'
 ```
 **特别注意:nkf1, nkf2, nkf3和filkf是互斥的一组参数, nqf1, nqf2, nqf3和filqf是互斥的一组参数**
+
 ## <span style="color:red"> 输出文件的说明
 
 ### <span style="color:lightgreen"> prefix.a2f
@@ -302,6 +303,23 @@ perl kmesh.pl 4 4 4
 上述脚本产生的k点是分数坐标的，需要再成倒格矢变为支教坐标
 
 特别注意：六角格子的第一布里渊区是正六边形，但是kmesh.pl撒点时会在一个平行四边形里面撒点，这就会导致绘制电声耦合强度图不在第一布里渊区内。
+
+### 关于FermiNesting的计算的细节要求
+1. 如果使用了delta_approx=.true., 那么电声耦合强度$\lambda_{q\nu}$的表达式为：
+$$
+\lambda_{q\nu} = \frac{2}{N_{F}}\sum_{nm} \int \frac{d\mathbf{k}}{\Omega_{BZ}} \frac{|g_{mn\nu}(\mathbf{k},\mathbf{q})|^{2}}{\omega_{\mathbf{q} \nu}} \delta(\epsilon_{n\mathbf{k}}-\epsilon_{F}) \delta(\epsilon_{m\mathbf{k}+\mathbf{q}}-\epsilon_{F})
+$$
+
+**The default temperature is 300 K,so $\lambda_{q\nu}$ is output for 300 K. However,as long as the double delta approximation is applied, $\lambda_{q\nu}$ does not depend on temperature. 
+$\lambda_{q\nu}$ is output in lambda.phself.300.000K. Similarly, the nesting function $f_{nest}(q)$ is defined as follows:**
+
+上面的话翻译为中文就是：默认温度为 300 K，因此 $\lambda_{q\nu}$ 是在 300 K 下输出的。然而，只要采用双 delta 近似，$\lambda_{q\nu}$ 就与温度无关。 $\lambda_{q\nu}$ 输出于 lambda.phself.300.000K 文件中。同样，嵌套函数 $f_{nest}(q)$ 定义如下：
+
+$$
+f_{nest}(\mathbf{q}) = \sum_{nm} \int \frac{d\mathbf{k}}{\Omega_{BZ}}  \delta(\epsilon_{n\mathbf{k}}-\epsilon_{F}) \delta(\epsilon_{m\mathbf{k}+\mathbf{q}}-\epsilon_{F})
+$$
+
+2. 是关于自能计算的，epw的官网教程写道：Note: If any of elecselfen, phonselfen, specfun_el, or specfun_ph is true, mp_mesh_k must be false. The default value is false.
 
 ### EPW也可以处理出各向同性的超导温度
 
