@@ -119,9 +119,15 @@ class epw_inputpara(epw_base):
             for idx, pj in enumerate(self.proj):
                 logger.debug(f'proj({idx+1}) = {pj}')
         
-        if not hasattr(self, "filkf") or not hasattr(self, "filqf"):
-            logger.info("You didn't specify filkf or filqf, so the program will get it from modified_{}_band.kpt that is obtained from {}_band.kpt".format(self.system_name, self.system_name)) 
+        if not hasattr(self, "filkf"):
+            logger.info("You didn't specify filkf, so the program will get it from modified_{}_band.kpt that is obtained from {}_band.kpt".format(self.system_name, self.system_name)) 
             self.filkf = "modified_{}_band.kpt".format(self.system_name)
+            old_band_kpt = self.work_path.joinpath("{}_band.kpt".format(self.system_name))
+            new_band_kpt = self.work_path.joinpath("modified_{}_band.kpt".format(self.system_name))
+            os.system("sed '1s/$/    crystal/' {} >  {}".format(old_band_kpt, new_band_kpt))
+
+        if not hasattr(self, "filqf"):
+            logger.info("You didn't specify filqf, so the program will get it from modified_{}_band.kpt that is obtained from {}_band.kpt".format(self.system_name, self.system_name)) 
             self.filqf = "modified_{}_band.kpt".format(self.system_name)
             old_band_kpt = self.work_path.joinpath("{}_band.kpt".format(self.system_name))
             new_band_kpt = self.work_path.joinpath("modified_{}_band.kpt".format(self.system_name))

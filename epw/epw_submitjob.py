@@ -66,15 +66,16 @@ class epw_submitjob:
     
     def submit_mode2(self, inputfilename, jobname, submit_task_path):
         """专门用来提交计算prtgkk任务和fermi_nesting任务"""
+        submit_task_path = Path(submit_task_path)
         if not submit_task_path.exists():
             raise FileExistsError(f" {submit_task_path} doesn't exist")
         if not submit_task_path.joinpath(inputfilename).exists():
             raise FileExistsError(f" {inputfilename} doesn't exist")
         if not submit_task_path.joinpath(jobname).exists():
             raise FileExistsError(f" {jobname} doesn't exist")
-        
-        cwd = submit_task_path.cwd()
-        dst_dir = submit_task_path.parent.absolute()
+
+        cwd = Path.cwd()
+        dst_dir = submit_task_path.absolute()
         os.chdir(dst_dir)
         if self.epw_inputpara.submit_job_system == "bash":
             logger.debug(f"nohup {self.submit_order} {jobname} > bash.log 2>&1 &")

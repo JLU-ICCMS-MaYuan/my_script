@@ -31,9 +31,12 @@ for mu in 0.1 0.13 0.16; do
         awk 'FNR==2 {n=split(FILENAME,a,"_"); temp=a[length(a)]; print FILENAME, temp, $4*1000}' ${iso_sc_dir}/${prefix}.acon_iso_* > ${prefix}.ACON_ISO_MUC_${mu}_GAP0
     else
         echo "Warning: Directory $sc_dir not found. Trying current directory..."
-        awk 'FNR==2 {n=split(FILENAME,a,"_"); temp=a[length(a)]; print FILENAME, temp, $3*1000}' ${prefix}.imag_iso_* > ${prefix}.IMAG_ISO_MUC_${mu}_GAP0
-        awk 'FNR==2 {n=split(FILENAME,a,"_"); temp=a[length(a)]; print FILENAME, temp, $4*1000}' ${prefix}.pade_iso_* > ${prefix}.PADE_ISO_MUC_${mu}_GAP0
-        awk 'FNR==2 {n=split(FILENAME,a,"_"); temp=a[length(a)]; print FILENAME, temp, $4*1000}' ${prefix}.acon_iso_* > ${prefix}.ACON_ISO_MUC_${mu}_GAP0
+        if [ -f "epw_iso_sc.in" ]; then
+            new_mu=$(grep "muc" epw_iso_sc.in | sed -n "s/.*muc *= *\([0-9.eE+-]*\).*/\1/p")
+            awk 'FNR==2 {n=split(FILENAME,a,"_"); temp=a[length(a)]; print FILENAME, temp, $3*1000}' ${prefix}.imag_iso_* > ${prefix}.IMAG_ISO_MUC_${new_mu}_GAP0
+            awk 'FNR==2 {n=split(FILENAME,a,"_"); temp=a[length(a)]; print FILENAME, temp, $4*1000}' ${prefix}.pade_iso_* > ${prefix}.PADE_ISO_MUC_${new_mu}_GAP0
+            awk 'FNR==2 {n=split(FILENAME,a,"_"); temp=a[length(a)]; print FILENAME, temp, $4*1000}' ${prefix}.acon_iso_* > ${prefix}.ACON_ISO_MUC_${new_mu}_GAP0
+         fi
      fi
 
     echo "aniso_muc_${mu}"
@@ -43,10 +46,13 @@ for mu in 0.1 0.13 0.16; do
         find "${aniso_sc_dir}" -maxdepth 1 -type f -name "${prefix}.pade_aniso_gap0_*"  -exec cat {} + > ${prefix}.PADE_ANISO_MUC_${mu}_GAP0
         find "${aniso_sc_dir}" -maxdepth 1 -type f -name "${prefix}.acon_aniso_gap0_*"  -exec cat {} + > ${prefix}.ACON_ANISO_MUC_${mu}_GAP0
     else
-        echo "Warning: Directory $sc_dir not found. Trying current directory..."
-        find . -maxdepth 1 -type f -name "${prefix}.imag_aniso_gap0_*" ! -name '*.cube' ! -name '*.frmsf' -exec cat {} + > ${prefix}.IMAG_ANISO_MUC_${mu}_GAP0
-        find . -maxdepth 1 -type f -name "${prefix}.pade_aniso_gap0_*"  -exec cat {} + > ${prefix}.PADE_ANISO_MUC_${mu}_GAP0
-        find . -maxdepth 1 -type f -name "${prefix}.acon_aniso_gap0_*"  -exec cat {} + > ${prefix}.ACON_ANISO_MUC_${mu}_GAP0
+        if [ -f "epw_aniso_sc.in" ]; then
+            echo "Warning: Directory $sc_dir not found. Trying current directory..."
+            new_mu=$(grep "muc" epw_aniso_sc.in | sed -n "s/.*muc *= *\([0-9.eE+-]*\).*/\1/p")
+            find . -maxdepth 1 -type f -name "${prefix}.imag_aniso_gap0_*" ! -name '*.cube' ! -name '*.frmsf' -exec cat {} + > ${prefix}.IMAG_ANISO_MUC_${new_mu}_GAP0
+            find . -maxdepth 1 -type f -name "${prefix}.pade_aniso_gap0_*"  -exec cat {} + > ${prefix}.PADE_ANISO_MUC_${new_mu}_GAP0
+            find . -maxdepth 1 -type f -name "${prefix}.acon_aniso_gap0_*"  -exec cat {} + > ${prefix}.ACON_ANISO_MUC_${new_mu}_GAP0
+        fi
      fi
 done
 

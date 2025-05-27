@@ -229,14 +229,14 @@ class epw_writesubmit:
             j.writelines(self.jobtitle)
             j.write('echo "calcualte el-ph matrix elements"\n')
             j.write('abspath=`realpath ..`\n')
-            j.write('mkdir -p ./tmp/{}.ephmat\n'.format(self.epw_inputpara.system_name))  # 保证目录存.format(self.epw)在
-            j.write('ln -sf ${abspath}' + '/tmp/{}.ephmat/* ./tmp/{}.ephmat/\n'.format(self.epw_inputpara.system_name, self.epw_inputpara.system_name))
+            j.write('mkdir -p ./tmp\n')  
             j.write('ln -sf ${abspath}' + '/tmp/{}.epmatwp  ./tmp/\n'.format(self.epw_inputpara.system_name))
             j.write('ln -sf ${abspath}' + '/{}.ukk          . \n'.format(self.epw_inputpara.system_name))
             j.write('ln -sf ${abspath}/crystal.fmt            .\n')
             j.write('ln -sf ${abspath}/restart.fmt            .\n')
             j.write('ln -sf ${abspath}/selecq.fmt             .\n')
-            j.write('echo "epw_aniso_sc"\n')
+            j.write('ln -sf ${abspath}/epwdata.fmt            .\n')
+            j.write('ln -sf ${abspath}/vmedata.fmt            .\n')
             j.write('{} {}/epw.x -npool {} <{}> {}  \n'.format(self.epw_inputpara.execmd, epwbin_path, self.epw_inputpara.npool, _inpufilename, _outputfilename))
         return jobname
     
@@ -248,15 +248,15 @@ class epw_writesubmit:
         with open(_script_filepath, "w") as j:
             j.writelines(self.jobtitle)
             j.write('echo "calcualte fermi nest"\n')
-            j.write('abspath=`realpath..`\n')
-            j.write('mkdir -p ./tmp/{}.ephmat\n'.format(self.epw_inputpara.system_name))  # 保证目录存.format(self.epw)在
-            j.write('ln -sf ${abspath}' + '/tmp/{}.ephmat/* ./tmp/{}.ephmat/\n'.format(self.epw_inputpara.system_name, self.epw_inputpara.system_name))
+            j.write('abspath=`realpath ..`\n')
+            j.write('mkdir -p ./tmp\n')  
             j.write('ln -sf ${abspath}' + '/tmp/{}.epmatwp  ./tmp/\n'.format(self.epw_inputpara.system_name))
             j.write('ln -sf ${abspath}' + '/{}.ukk          . \n'.format(self.epw_inputpara.system_name))
             j.write('ln -sf ${abspath}/crystal.fmt            .\n')
             j.write('ln -sf ${abspath}/restart.fmt            .\n')
             j.write('ln -sf ${abspath}/selecq.fmt             .\n')
-            j.write('echo "epw_aniso_sc"\n')
+            j.write('ln -sf ${abspath}/epwdata.fmt            .\n')
+            j.write('ln -sf ${abspath}/vmedata.fmt            .\n')
             j.write('{} {}/epw.x -npool {} <{}> {}  \n'.format(self.epw_inputpara.execmd, epwbin_path, self.epw_inputpara.npool, _inpufilename, _outputfilename))
         return jobname
 
