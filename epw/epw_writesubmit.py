@@ -102,14 +102,13 @@ class epw_writesubmit:
                     iso_jobname = self.j5_epw_iso_sc(iso_mu_path, inpufilename[0])
                     aniso_mu_path = self.epw_inputpara.work_path.joinpath("aniso_muc_{}".format(mu))
                     aniso_jobname = self.j6_epw_aniso_sc(aniso_mu_path, inpufilename[1])
-                jobname.extend([iso_jobname, aniso_jobname])
-                return jobname
+                return iso_jobname, aniso_jobname
             else:
                 iso_mu_path = self.epw_inputpara.work_path.joinpath("iso_muc_{}".format(self.epw_inputpara.muc))
-                jobname = self.j5_epw_iso_sc(iso_mu_path, inpufilename[0])
+                iso_jobname = self.j5_epw_iso_sc(iso_mu_path, inpufilename[0])
                 aniso_mu_path = self.epw_inputpara.work_path.joinpath("aniso_muc_{}".format(self.epw_inputpara.muc))
-                jobname = self.j6_epw_aniso_sc(aniso_mu_path, inpufilename[1])
-                return jobname
+                aniso_jobname = self.j6_epw_aniso_sc(aniso_mu_path, inpufilename[1])
+                return iso_jobname, aniso_jobname
         if mode == "epw_prtgkk":
             prtgkk_path = self.epw_inputpara.work_path.joinpath("prtgkk")
             jobname = self.j7_epw_prtgkk(prtgkk_path, inpufilename)
@@ -122,14 +121,13 @@ class epw_writesubmit:
             if len(self.epw_inputpara.muc) > 1:
                 jobname = []
                 for mu in self.epw_inputpara.muc:
-                    iso_mu_path = self.epw_inputpara.work_path.joinpath("linearized_iso_{}".format(mu))
+                    iso_mu_path = self.epw_inputpara.work_path.joinpath("iso_muc_{}".format(mu))
                     iso_jobname = self.j9_epw_linearized_iso(iso_mu_path, inpufilename[0])
-                jobname.extend([iso_jobname])
-                return jobname
+                return iso_jobname
             else:
-                iso_mu_path = self.epw_inputpara.work_path.joinpath("linearized_iso_{}".format(self.epw_inputpara.muc))
-                jobname = self.j9_epw_linearized_iso(iso_mu_path, inpufilename[0])
-                return jobname
+                iso_mu_path = self.epw_inputpara.work_path.joinpath("iso_muc_{}".format(self.epw_inputpara.muc))
+                iso_jobname = self.j9_epw_linearized_iso(iso_mu_path, inpufilename[0])
+                return iso_jobname
     def j1_epw_energyband(self,  _dirpath, inputfilename):
         _inpufilename = inputfilename
         _outputfilename = _inpufilename.split(".")[0] + ".out"
@@ -194,16 +192,17 @@ class epw_writesubmit:
         _script_filepath = os.path.join(_dirpath, jobname)
         with open(_script_filepath, "w") as j:
             j.writelines(self.jobtitle)
-            j.write('echo "rm a2f a2f_proj"\n')
-            j.write('rm {}.a2f {}.a2f_proj\n'.format(self.epw_inputpara.system_name, self.epw_inputpara.system_name))
-            j.write('abspath=`realpath ..`\n')
-            j.write('mkdir -p ./tmp/{}.ephmat\n'.format(self.epw_inputpara.system_name))  # 保证目录存.format(self.epw)在
-            j.write('ln -sf ${abspath}' + '/tmp/{}.ephmat/* ./tmp/{}.ephmat/\n'.format(self.epw_inputpara.system_name, self.epw_inputpara.system_name))
-            j.write('ln -sf ${abspath}' + '/tmp/{}.epmatwp  ./tmp/\n'.format(self.epw_inputpara.system_name))
-            j.write('ln -sf ${abspath}' + '/{}.ukk          . \n'.format(self.epw_inputpara.system_name))
-            j.write('ln -sf ${abspath}/crystal.fmt            .\n')
-            j.write('ln -sf ${abspath}/restart.fmt            .\n')
-            j.write('ln -sf ${abspath}/selecq.fmt             .\n')
+            if self.epw_inputpara.keep_a2f:
+                j.write('echo "rm a2f a2f_proj"\n')
+                j.write('rm {}.a2f {}.a2f_proj\n'.format(self.epw_inputpara.system_name, self.epw_inputpara.system_name))
+                j.write('abspath=`realpath ..`\n')
+                j.write('mkdir -p ./tmp/{}.ephmat\n'.format(self.epw_inputpara.system_name))  # 保证目录存.format(self.epw)在
+                j.write('ln -sf ${abspath}' + '/tmp/{}.ephmat/* ./tmp/{}.ephmat/\n'.format(self.epw_inputpara.system_name, self.epw_inputpara.system_name))
+                j.write('ln -sf ${abspath}' + '/tmp/{}.epmatwp  ./tmp/\n'.format(self.epw_inputpara.system_name))
+                j.write('ln -sf ${abspath}' + '/{}.ukk          . \n'.format(self.epw_inputpara.system_name))
+                j.write('ln -sf ${abspath}/crystal.fmt            .\n')
+                j.write('ln -sf ${abspath}/restart.fmt            .\n')
+                j.write('ln -sf ${abspath}/selecq.fmt             .\n')
             j.write('echo "epw_iso_sc"\n')
             j.write('{} {}/epw.x -npool {} <{}> {}  \n'.format(self.epw_inputpara.execmd, epwbin_path, self.epw_inputpara.npool, _inpufilename, _outputfilename))
         
@@ -216,16 +215,17 @@ class epw_writesubmit:
         _script_filepath = os.path.join(_dirpath, jobname)
         with open(_script_filepath, "w") as j:
             j.writelines(self.jobtitle)
-            j.write('echo "rm a2f a2f_proj"\n')
-            j.write('rm {}.a2f {}.a2f_proj\n'.format(self.epw_inputpara.system_name, self.epw_inputpara.system_name))
-            j.write('abspath=`realpath ..`\n')
-            j.write('mkdir -p ./tmp/{}.ephmat\n'.format(self.epw_inputpara.system_name))  # 保证目录存.format(self.epw)在
-            j.write('ln -sf ${abspath}' + '/tmp/{}.ephmat/* ./tmp/{}.ephmat/\n'.format(self.epw_inputpara.system_name, self.epw_inputpara.system_name))
-            j.write('ln -sf ${abspath}' + '/tmp/{}.epmatwp  ./tmp/\n'.format(self.epw_inputpara.system_name))
-            j.write('ln -sf ${abspath}' + '/{}.ukk          . \n'.format(self.epw_inputpara.system_name))
-            j.write('ln -sf ${abspath}/crystal.fmt            .\n')
-            j.write('ln -sf ${abspath}/restart.fmt            .\n')
-            j.write('ln -sf ${abspath}/selecq.fmt             .\n')
+            if self.epw_inputpara.keep_a2f:
+                j.write('echo "rm a2f a2f_proj"\n')
+                j.write('rm {}.a2f {}.a2f_proj\n'.format(self.epw_inputpara.system_name, self.epw_inputpara.system_name))
+                j.write('abspath=`realpath ..`\n')
+                j.write('mkdir -p ./tmp/{}.ephmat\n'.format(self.epw_inputpara.system_name))  # 保证目录存.format(self.epw)在
+                j.write('ln -sf ${abspath}' + '/tmp/{}.ephmat/* ./tmp/{}.ephmat/\n'.format(self.epw_inputpara.system_name, self.epw_inputpara.system_name))
+                j.write('ln -sf ${abspath}' + '/tmp/{}.epmatwp  ./tmp/\n'.format(self.epw_inputpara.system_name))
+                j.write('ln -sf ${abspath}' + '/{}.ukk          . \n'.format(self.epw_inputpara.system_name))
+                j.write('ln -sf ${abspath}/crystal.fmt            .\n')
+                j.write('ln -sf ${abspath}/restart.fmt            .\n')
+                j.write('ln -sf ${abspath}/selecq.fmt             .\n')
             j.write('echo "epw_aniso_sc"\n')
             j.write('{} {}/epw.x -npool {} <{}> {}  \n'.format(self.epw_inputpara.execmd, epwbin_path, self.epw_inputpara.npool, _inpufilename, _outputfilename))
 
@@ -280,3 +280,4 @@ class epw_writesubmit:
             j.writelines(self.jobtitle)
             j.write('echo "epw_linearized_iso"\n')
             j.write('{} {}/epw.x -npool {} <{}> {}  \n'.format(self.epw_inputpara.execmd, epwbin_path, self.epw_inputpara.npool, _inpufilename, _outputfilename))
+        return jobname

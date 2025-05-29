@@ -80,6 +80,8 @@ class epw_run:
             self.epw_prtgkk()
         elif self.epw_inputpara.mode == "epw_fermi_nest":
             self.epw_fermi_nest()
+        elif self.epw_inputpara.mode == "epw_linearized_iso":
+            self.epw_linearized_iso()
         else:
             raise ValueError("Invalid mode selected.")
     
@@ -138,10 +140,10 @@ class epw_run:
         logger.info(inputfilename1)
         logger.info(inputfilename2)
         # init the submit job script
-        jobname = self.epw_writesubmit.write_submit_scripts([inputfilename1, inputfilename2], mode="epw_sc")
+        jobname1, jobname2 = self.epw_writesubmit.write_submit_scripts([inputfilename1, inputfilename2], mode="epw_sc")
         # submit the job
         if self.epw_inputpara.queue is not None:
-            self.epw_submitjob.submit_mode3(inputfilename1, jobname)
+            self.epw_submitjob.submit_mode3([jobname1, jobname2])
             
     def epw_prtgkk(self):
         # init the input file
@@ -168,7 +170,7 @@ class epw_run:
         inputfilename1 = self.epw_writeinput.writeinput(mode="epw_linearized_iso")
         logger.info(inputfilename1)
         # init the submit job script
-        jobname = self.epw_writesubmit.write_submit_scripts([inputfilename1], mode="epw_linearized_iso")
+        jobname = self.epw_writesubmit.write_submit_scripts([inputfilename1, None], mode="epw_linearized_iso")
         # submit the job
         if self.epw_inputpara.queue is not None:
-            self.epw_submitjob.submit_mode3(inputfilename1, jobname)
+            self.epw_submitjob.submit_mode3([jobname, None])

@@ -60,16 +60,16 @@ class qe_base:
                 self.work_path.mkdir(parents=True, exist_ok=True)
         logger.info(f"work_path: {self.work_path.absolute()}")
 
-        try:
-            logger.info(f"work_path: {self.input_file_path.name}")
-            if "V3_Hessian.dyn" in self.input_file_path.name:
-                symbols, celldm1, cell, coords = get_struct_info_from_V3_hessian(self.input_file_path)
-                self.ase_type = Atoms(symbols=symbols, cell=cell*celldm1*0.529177210903, positions=coords*celldm1*0.529177210903, pbc=True)
-            else:
-                self.ase_type = read(self.input_file_path)
-        except:
-            logger.error("When reading `{}` file, the program get something wrong, you need to check it !!!".format(self.input_file_path))
-            sys.exit(1)
+        logger.info(f"input_file_name: {self.input_file_path.name}")
+        if "V3_Hessian.dyn" in self.input_file_path.name:
+            symbols, celldm1, cell, coords = get_struct_info_from_V3_hessian(self.input_file_path)
+            self.ase_type = Atoms(symbols=symbols, cell=cell*celldm1*0.529177210903, positions=coords*celldm1*0.529177210903, pbc=True)
+        else:
+            logger.info("The V3_Hessian.dyn doesn't exist, so the program will get structure infomation from {}.".format(self.input_file_path))
+            logger.info("You have to pay attention:")
+            logger.info("1. there have to be no blank line at the end of POSCAR, *.vasp or CONTCAR.")
+            logger.info("2. there have to be three columns of atomic coordinates, No elements and 'T T T', 'F F F' can exist at each rows of coordinates.")
+            self.ase_type = read(self.input_file_path)
 
         self.struct_type = AseAtomsAdaptor.get_structure(self.ase_type)
         self.get_struct_info(self.struct_type, self.work_path)

@@ -94,7 +94,7 @@ class epw_submitjob:
             raise ValueError(f"The *.x of epw didn't run ! Because the jobids={jobids}. The program will exit! The order you use is {self.submit_order} {jobname}")
         return jobids
 
-    def submit_mode3(self, inputfilename, jobname):
+    def submit_mode3(self, jobname):
         """专门用来提交计算超导任务"""
         jobids = []
         iso_jobname = jobname[0]
@@ -104,30 +104,36 @@ class epw_submitjob:
             aniso_mu_path = self.epw_inputpara.work_path.joinpath("aniso_muc_{}".format(mu))
             cwd = os.getcwd()
             # 提交iso的超导计算
-            os.chdir(iso_mu_path)
-            if self.epw_inputpara.submit_job_system == "bash":
-                logger.debug(f"nohup {self.submit_order} {iso_jobname} > bash.log 2>&1 &")
-                res = os.popen(f"nohup {self.submit_order} {iso_jobname} > bash.log 2>&1 &").read()
-                jobids = self.getpid()
+            if iso_jobname is not None:
+                os.chdir(iso_mu_path)
+                if self.epw_inputpara.submit_job_system == "bash":
+                    logger.debug(f"nohup {self.submit_order} {iso_jobname} > bash.log 2>&1 &")
+                    res = os.popen(f"nohup {self.submit_order} {iso_jobname} > bash.log 2>&1 &").read()
+                    jobids = self.getpid()
+                else:
+                    logger.debug(f"{self.submit_order} {iso_jobname}")
+                    res = os.popen(f"{self.submit_order} {iso_jobname}").read()
+                    jobids = re.findall(r"\d+", res)
+                logger.info(f"finish submit {iso_jobname}, jobids = {' '.join(jobids)}")
+                os.chdir(cwd)
             else:
-                logger.debug(f"{self.submit_order} {iso_jobname}")
-                res = os.popen(f"{self.submit_order} {iso_jobname}").read()
-                jobids = re.findall(r"\d+", res)
-            logger.info(f"finish submit {iso_jobname}, jobids = {' '.join(jobids)}")
-            os.chdir(cwd)
+                logger.info(f"iso_jobname = None")
             
             # 提交aniso的超导计算
-            os.chdir(aniso_mu_path) 
-            if self.epw_inputpara.submit_job_system == "bash":
-                logger.debug(f"nohup {self.submit_order} {aniso_jobname} > bash.log 2>&1 &")
-                res = os.popen(f"nohup {self.submit_order} {aniso_jobname} > bash.log 2>&1 &").read()
-                jobids = self.getpid()
+            if aniso_jobname is not None:
+                os.chdir(aniso_mu_path) 
+                if self.epw_inputpara.submit_job_system == "bash":
+                    logger.debug(f"nohup {self.submit_order} {aniso_jobname} > bash.log 2>&1 &")
+                    res = os.popen(f"nohup {self.submit_order} {aniso_jobname} > bash.log 2>&1 &").read()
+                    jobids = self.getpid()
+                else:
+                    logger.debug(f"{self.submit_order} {aniso_jobname}")
+                    res = os.popen(f"{self.submit_order} {aniso_jobname}").read()
+                    jobids = re.findall(r"\d+", res)
+                logger.info(f"finish submit {aniso_jobname}, jobids = {' '.join(jobids)}")
+                os.chdir(cwd)
             else:
-                logger.debug(f"{self.submit_order} {aniso_jobname}")
-                res = os.popen(f"{self.submit_order} {aniso_jobname}").read()
-                jobids = re.findall(r"\d+", res)
-            logger.info(f"finish submit {aniso_jobname}, jobids = {' '.join(jobids)}")
-            os.chdir(cwd)
+                logger.info(f"aniso_jobname = None")
 
     @staticmethod
     def getpid():

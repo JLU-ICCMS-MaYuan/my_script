@@ -402,15 +402,14 @@ class epw_writeinput:
             if  len(self.epw_inputpara.temps) == 2 and \
                 float(self.epw_inputpara.temps[0]) < float(self.epw_inputpara.temps[1]) and \
                 self.epw_inputpara.nstemp > 2:
-                epw.write(" temps      = {} {}   ! number of scf temperature\n".format(self.epw_inputpara.temps[0], self.epw_inputpara.temps[1]))
-                epw.write(" nstemp     = {}".format(self.epw_inputpara.nstemp))
+                epw.write(" temps      = {} {}   \n".format(self.epw_inputpara.temps[0], self.epw_inputpara.temps[1]))
+                epw.write(" nstemp     = {}      ! number of scf temperature".format(self.epw_inputpara.nstemp))
             elif len(self.epw_inputpara.temps) > 2 and len(self.epw_inputpara.temps) <= 50:
-                epw.write(" temps      = {}      ! number of scf temperature\n".format('  '.join(self.epw_inputpara.temps)))
+                epw.write(" temps      = {}      ! many values of scf temperature\n".format('  '.join(self.epw_inputpara.temps)))
             elif len(self.epw_inputpara.temps) == 1:
-                epw.write(" temps      = {}      ! number of scf temperature\n".format(self.epw_inputpara.temps[0]))
+                epw.write(" temps      = {}      ! only one value scf temperature\n".format(self.epw_inputpara.temps[0]))
                 
                 
-            #TODO 温度的读取还没写！！！！
             epw.write("\n")
             
             epw.write("\n")
@@ -447,31 +446,58 @@ class epw_writeinput:
             epw.write(" epbwrite    = .false.       ! electron-phonon matrix elements in the coarse Bloch representation and relevant data (dyn matrices)\n")
             epw.write(" epbread     = .false.       ! electron-phonon matrix elements in the coarse Bloch representation and relevant data (dyn matrices)\n")
             epw.write(" epwwrite    = .false.       ! write electron-phonon matrix elements in the coarse Wannier representation and relevant data (dyn matrices)\n")
-            epw.write(" epwread     = .false.       ! read e-ph matrices from 'prefix.epmatwp' file. electron-phonon matrix elements in the coarse Wannier representation and relevant data (dyn matrices). \n")
+            epw.write(" epwread     = .true.        ! read e-ph matrices from 'prefix.epmatwp' file. electron-phonon matrix elements in the coarse Wannier representation and relevant data (dyn matrices). \n")
             epw.write("                             ! It is used for a restart calculation, and doesn't set kmaps = .true. kmaps may appear in EPW website, it's out of date.  prefix.epmatwp, crystal.fmt, vmedata.fmt, wigner.fmt, and epwdata.fmt are all needed for restarting a calculation.\n")
             epw.write(" ephwrite    = .false.       ! write ephmatXX, egnv, freq, and ikmap files in prefix.ephmat directory\n")
             epw.write("\n")
             
-            epw.write(" use_ws      = .true.\n")
-            epw.write(" wannierize  = .false.\n")
             epw.write("\n")
-            epw.write(" iverbosity  = 2     ! 2 = verbose output for the superconducting part only.\n")
+            epw.write(" lifc = {}\n".format(self.epw_inputpara.lifc))
+            epw.write("\n")
+            
+            epw.write(" use_ws      = .true.\n")
+            epw.write(" wannierize  = {}       ! If .false., read *.ukk file\n".format(self.epw_inputpara.wannierize))
+            epw.write(" nbndsub     = {}\n".format(self.epw_inputpara.nbndsub))
+            if self.epw_inputpara.bands_skipped is not None:
+                epw.write(" bands_skipped = 'exclude_bands = {}'\n".format(self.epw_inputpara.bands_skipped))
+            epw.write(" num_iter    = {}\n".format(self.epw_inputpara.num_iter))
+            epw.write("\n")
+            epw.write(" dis_win_max = {} \n".format(self.epw_inputpara.dis_win_max))
+            epw.write(" dis_froz_min = {}\n".format(self.epw_inputpara.dis_froz_min))
+            epw.write(" dis_froz_max = {}\n".format(self.epw_inputpara.dis_froz_max))
+            epw.write("\n")
+            for idx, pj in enumerate(self.epw_inputpara.proj):
+                epw.write(" proj({})     = {}\n".format(idx+1, pj))
+                
+            epw.write(" wdata({})    = 'dis_num_iter = {}'\n".format(idx+1, self.epw_inputpara.dis_num_iter))
+            epw.write("\n")
+            epw.write(" iverbosity  = 2      ! 2 = verbose output for the superconducting part only.\n")
             epw.write("\n")
             epw.write(" fsthick  = {}        ! Fermi window [eV] : consider only states within Fermi energy +- fsthick\n".format(self.epw_inputpara.fsthick))
             epw.write(" degaussw = {}        ! smearing in energy-conserving delta functions in [eV]\n".format(self.epw_inputpara.degaussw))
             epw.write(" degaussq = {}        ! smearing for sum over q in the e-ph coupling in [meV]\n".format(self.epw_inputpara.degaussq))
-            epw.write(" delta_qsmear = {} \n".format(self.epw_inputpara.delta_qsmear))
-            epw.write(" nqsmear = {} \n".format(self.epw_inputpara.nqsmear))    
+            epw.write(" delta_qsmear = {}    \n".format(self.epw_inputpara.delta_qsmear))
+            epw.write(" nqsmear = {}         \n".format(self.epw_inputpara.nqsmear))    
             epw.write(" selecqread = .false. ! If .true. then restart from the selecq.fmt file.\n")
             epw.write("                      ! selecq.fmt only needed if selecqread=.true. otherwise it will be re-created")
             epw.write("\n")
             
+            epw.write(" eliashberg       = .true.  ! calculate Eliashberg spectral function\n")
+            epw.write(" liso             = .true.  ! solve isotropic ME eqs.\n")
+            epw.write(" limag            = .true.  ! solve ME eqs. on imaginary axis\n")
             epw.write(" lpade            = .false. ! solve ME eqs. on real axis using Pade approximants\n")
             epw.write(" lacon            = .false. ! analytic continuation of ME eqs. from imaginary to real axis. it takes very long time, if you need it, you can turn it on!\n".format(self.epw_inputpara.lacon))
+            epw.write(" nsiter           = 500     ! number of self-consistent iterations when solving ME eqs.\n")
+            epw.write(" npade            = {}      ! percentage of Matsubara points used in Pade continuation.\n".format(self.epw_inputpara.npade))
+            epw.write(" conv_thr_iaxis   = 1.0d-3  ! convergence threshold for solving ME eqs. on imaginary axis\n")
+            epw.write(" conv_thr_racon   = 1.0d-3  ! convergence threshold for solving ME eqs. on real axis\n")
             epw.write(" fila2f           = {}.a2f  ! read the a2f file\n".format(self.epw_inputpara.system_name))
-            epw.write(" tc_linear        = .true. solve linearized ME eqn. for Tc\n")
+            epw.write(" tc_linear        = .true.  ! solve linearized ME eqn. for Tc\n")
             epw.write(" tc_linear_solver ='power'  ! algorithm to solve Tc eigenvalue problem: 'power' OR 'lapack'\n")
-            epw.write(" muc            = {}        ! effective Coulomb potential used in the ME eqs.\n".format(muc))
+            epw.write(" wscut            = {}      ! upper limit over Matsubara freq. summation in ME eqs on imag.axis in [eV]\n".format(self.epw_inputpara.wscut))
+            epw.write(" muc              = {}      ! effective Coulomb potential used in the ME eqs.\n".format(muc))
+            epw.write("\n")
+
             if  len(self.epw_inputpara.temps) == 2 and \
                 float(self.epw_inputpara.temps[0]) < float(self.epw_inputpara.temps[1]) and \
                 self.epw_inputpara.nstemp > 2:
@@ -481,7 +507,17 @@ class epw_writeinput:
                 epw.write(" temps      = {}      ! number of scf temperature\n".format('  '.join(self.epw_inputpara.temps)))
             elif len(self.epw_inputpara.temps) == 1:
                 epw.write(" temps      = {}      ! number of scf temperature\n".format(self.epw_inputpara.temps[0]))
-                
+
+            epw.write("\n")
+            epw.write("\n")
+            epw.write(" nk1 = {}\n nk2 = {}\n nk3 = {}\n".format(self.epw_inputpara.nk[0], self.epw_inputpara.nk[1], self.epw_inputpara.nk[2]))
+            epw.write("\n")
+            epw.write(" nq1 = {}\n nq2 = {}\n nq3 = {}\n".format(self.epw_inputpara.nq[0], self.epw_inputpara.nq[1], self.epw_inputpara.nq[2]))
+            epw.write("\n")
+            epw.write(" mp_mesh_k = .true.\n")
+            epw.write(" nkf1 = {}\n nkf2 = {}\n nkf3 = {}\n".format(self.epw_inputpara.nkf[0], self.epw_inputpara.nkf[1], self.epw_inputpara.nkf[2]))
+            epw.write("\n")
+            epw.write(" nqf1 = {}\n nqf2 = {}\n nqf3 = {}\n".format(self.epw_inputpara.nqf[0], self.epw_inputpara.nqf[1], self.epw_inputpara.nqf[2]))
             epw.write("/\n")                                                                
 
         return inputfilename
