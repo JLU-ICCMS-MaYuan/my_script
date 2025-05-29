@@ -20,4 +20,9 @@ alias sqlhy='/bin/squeue -p liuhanyu'
 alias sqmayuan='/bin/squeue -u mayuan'
 alias geticohp="awk '\$1 == 0.00000 {print \$1, \$3; exit}' COHPCAR.lobster"
 
-sacctmgr show user mayuan withassoc
+alias sq6513="/bin/squeue -p amd7513"
+alias sq6430="/bin/squeue -p intel6430"
+alias sq9654="/bin/squeue -p amd9654"
+alias sq6430_2t="/bin/squeue -p intel6430_2t"
+
+alias mynode='sacctmgr show user mayuan withassoc'
