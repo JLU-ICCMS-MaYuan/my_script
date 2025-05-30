@@ -1,5 +1,10 @@
 #!/bin/bash
+
+
 echo "./get_dyn.sh <sparse_qmesh> <sparse_dyns> <fine_qmesh> <fine_dyns> <prefix>"
+
+rm *.dyn*  *_dyn_*
+
 sparse_qmesh=$1
 sparse_dyns=$2
 fine_qmesh=$3

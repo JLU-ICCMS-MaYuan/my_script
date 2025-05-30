@@ -2,22 +2,27 @@
 
 ## <span style="color:red">  EPW计算超导流程
 
-### <span style="coler:lightgreen"> 0.提交任务的命令
+### <span style="coler:lightgreen"> 0.提交任务的命令以及基本的计算顺序
+只要你按照我下面的顺序计算，一定能算出来
 ```shell
 # qe计算自洽
-qe_main.py -i POSCAR -j bash -p 200 -w scf  scf -m mode=scf ecutwfc=80 ecutrho=960 kpoints_sparse='8 8 8'  degauss=0.02 execmd='mpirun -np 8' npool=4 queue=lhy nbnd=50
+qe_main.py -i POSCAR -j bash -p 200 -w epw scf -m mode=scf ecutwfc=80 ecutrho=960 kpoints_sparse='8 8 8'  degauss=0.02 execmd='mpirun -np 8' npool=4 queue=lhy nbnd=50
 
 # qe计算能带
-qe_main.py -i POSCAR -j bash -w band eletron -m mode=eleband  ecutwfc=80 ecutrho=960 execmd='mpirun -np 8' npool=4 queue=local kinserted=200 charge_density_dat='scf/tmp/H3S1.save/charge-density.dat' data_file_schema_xml='scf/tmp/H3S1.save/data-file-schema.xml' nbnd=50
+qe_main.py -i POSCAR -j bash -w band eletron -m mode=eleband  ecutwfc=80 ecutrho=960 execmd='mpirun -np 8' npool=4 queue=local kinserted=200 tmp='./tmp/H3S1.save/' nbnd=50
+
 # qe的能带高对称路径可以通过下面的命令获得
 qe_main.py -i V3_Hessian.dyn1 -j bash eletron -m mode=hspp  execmd=''
 
+# qe的声子和电声耦合
+
+
 # qe计算nscf
-qe_main.py -i POSCAR -j bash -w epw  scf  -m mode=nscf ecutwfc=80 ecutrho=960 kpoints_dense='8 8 8'  degauss=0.02 execmd='mpirun -np 8' npool=4  tmp='./' k_automatic=False wan=False  occupations=smearing  queue=lhy
+qe_main.py -i POSCAR -j bash -w epw  scf  -m mode=nscf ecutwfc=80 ecutrho=960 kpoints_dense='8 8 8'  degauss=0.02 execmd='mpirun -np 8' npool=4  tmp='./' k_automatic=False wan=False  occupations=smearing  queue=lhy  nbnd=50
 
 # epw计算能带，其实是epw调用wannier计算能带, 要将计算的wannier的能带和qe计算的能带做对比
-epw_main.py -i POSCAR -j bash -w epw epw_run -m mode=epw_eband execmd='mpirun -np 8' npool=8 dvscf_dir='./save' nbndsub=7 bands_skipped='1:12' dis_froz_min=-7.635175  dis_froz_max=23 dis_win_max=60  proj='H:s S:s S:p' queue=local nk='8 8 8'
-# proj='Li:s;p Hf:s;p;d H:s'
+epw_main.py -i CONTCAR -j slurm epw_run -m mode=epw_sc dis_win_max=59.04 dis_froz_min=-2.094 dis_froz_max=30.66 proj='Li:s;p Ti:s;p;d H:s' nbndsub=19 bands_skipped=1:5 nk='6 6 6' nq='6 6 6' nkf='12 12 12' nqf='12 12 12' fsthick=0.4 degaussw=0.05 degauss=0.05  queue=lhy execmd='srun --mpi=pmi2' npool=64 dvscf_dir='./save/'  restart3=True
+# proj='Li:s;p Ti:s;p;d H:s'
 # epw能带的高对称路径可以通过wannier90的计算结果获得，此时的高对称路径与qe的能带的高对称路径不一致。
 cat *_band.labelinfo.dat | awk '{print $1,  $3}'
 
