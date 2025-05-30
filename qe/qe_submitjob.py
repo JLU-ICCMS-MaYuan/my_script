@@ -122,7 +122,7 @@ class qe_submitjob:
                     # 然后检查dyn0文件是否存在，一旦产生就退出ph.x的运行。
                     # time.sleep(3)
                     if self.checksuffix(self.qe_inputpara.work_path, ".dyn0"):
-                        logger.error("The *.dyn0 has been created just now !!! The program will run `killall -9 ph.x`")
+                        logger.info("The {}.dyn0 does appear! The program will run `killall -9 ph.x`. ".format(self.qe_inputpara.system_name))
                         os.system("killall -9 ph.x")
                         sys.exit(0)
                     if self.checkerror(self.qe_inputpara.work_path, outputfilename):

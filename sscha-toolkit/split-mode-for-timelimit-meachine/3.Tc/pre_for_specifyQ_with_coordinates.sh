@@ -37,7 +37,7 @@ for Q in `seq 1 $nq`; do
     > $Q/split_ph.in
 done
 
-for i in {1..47}; do
+for i in `seq 1 $nq`; do
     # 创建目录结构
     mkdir -p "${i}/tmp/_ph0/${system_name}.phsave"
     
