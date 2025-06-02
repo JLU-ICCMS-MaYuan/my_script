@@ -36,7 +36,7 @@ slurmtitle = '''#!/bin/sh
 ##SBATCH  --ntasks=32
 ##SBATCH  --ntasks-per-node=8
 ##SBATCH  --cpus-per-task=1                         
-##SBATCH  --exclude=node98
+##SBATCH  --exclude=node98, cpu9, cpu58
 ##SBATCH  --exclusive
 
 ## mpirun -np 32 /work/home/mayuan/software/qe-7.1/EPW/bin/epw.x -npool 32 <epw_elph.in> epw_elph.out

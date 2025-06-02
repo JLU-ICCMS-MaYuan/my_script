@@ -6,74 +6,43 @@
 只要你按照我下面的顺序计算，一定能算出来
 ```shell
 # qe计算自洽
-qe_main.py -i POSCAR -j bash -p 200 -w epw scf -m mode=scf ecutwfc=80 ecutrho=960 kpoints_sparse='8 8 8'  degauss=0.02 execmd='mpirun -np 8' npool=4 queue=lhy nbnd=50
+qe_main.py -i POSCAR -j slurm -w qescf scf -m mode=scf ecutwfc=80 ecutrho=960 kpoints_sparse='8 8 8'  degauss=0.02 execmd='mpirun -np 8' npool=4 queue=lhy nbnd=50
 
 # qe计算能带
-qe_main.py -i POSCAR -j bash -w band eletron -m mode=eleband  ecutwfc=80 ecutrho=960 execmd='mpirun -np 8' npool=4 queue=local kinserted=200 tmp='./tmp/H3S1.save/' nbnd=50
+qe_main.py -i POSCAR -j slurm -w qeband eletron -m mode=eleband  ecutwfc=80 ecutrho=960 execmd='mpirun -np 8' npool=4 queue=local kinserted=200 tmp='./tmp/H3S1.save/' nbnd=50
 
 # qe的能带高对称路径可以通过下面的命令获得
-qe_main.py -i V3_Hessian.dyn1 -j bash eletron -m mode=hspp  execmd=''
+qe_main.py -i POSCAR -j slurm -w qeband eletron -m mode=hspp  execmd=''
 
 # qe的声子和电声耦合
-
+qe_main.py -i POSCAR -j bash -w phonons phono -m mode=nosplit EPC_flag=True dyn0_flag=True execmd='' queue=lhy qpoints='l m n'
+qe_main.py -i POSCAR -j slurm -w phonons phono -m mode=split_dyn0 EPC_flag=True degauss=0.02 ecutwfc=80 ecutrho=960  execmd='mpirun -np 48' npool=4
 
 # qe计算nscf
-qe_main.py -i POSCAR -j bash -w epw  scf  -m mode=nscf ecutwfc=80 ecutrho=960 kpoints_dense='8 8 8'  degauss=0.02 execmd='mpirun -np 8' npool=4  tmp='./' k_automatic=False wan=False  occupations=smearing  queue=lhy  nbnd=50
+qe_main.py -i POSCAR -j slurm -w epw scf -m mode=nscf ecutwfc=80 ecutrho=960 kpoints_dense='6 6 6'  degauss=0.02 execmd='mpirun -np 8' npool=4  tmp='./' k_automatic=False wan=False  occupations=smearing  queue=lhy  nbnd=50
 
 # epw计算能带，其实是epw调用wannier计算能带, 要将计算的wannier的能带和qe计算的能带做对比
-epw_main.py -i CONTCAR -j slurm epw_run -m mode=epw_sc dis_win_max=59.04 dis_froz_min=-2.094 dis_froz_max=30.66 proj='Li:s;p Ti:s;p;d H:s' nbndsub=19 bands_skipped=1:5 nk='6 6 6' nq='6 6 6' nkf='12 12 12' nqf='12 12 12' fsthick=0.4 degaussw=0.05 degauss=0.05  queue=lhy execmd='srun --mpi=pmi2' npool=64 dvscf_dir='./save/'  restart3=True
+epw_main.py -i POSCAR -j slurm -w epw epw_run -m mode=epw_eband dis_win_max=59.04 dis_froz_min=-2.094 dis_froz_max=30.66 proj='Li:s;p Ti:s;p;d H:s' nbndsub=19 bands_skipped=1:5 nk='6 6 6' queue=lhy execmd='srun --mpi=pmi2' npool=64
 # proj='Li:s;p Ti:s;p;d H:s'
 # epw能带的高对称路径可以通过wannier90的计算结果获得，此时的高对称路径与qe的能带的高对称路径不一致。
 cat *_band.labelinfo.dat | awk '{print $1,  $3}'
 
-# epw计算声子, 要将计算的声子freq.dat和qe计算的声子做对比
-epw_main.py -i POSCAR -j bash -w epw epw_run -m mode=epw_phono  execmd='mpirun -np 8' npool=8 dvscf_dir='./save' nbndsub=7 bands_skipped='1:12' dis_froz_min=-7.635175  dis_froz_max=23 dis_win_max=60  proj='H:s S:s S:p'  nk='8 8 8' nq='4 4 4'  queue=lhy
+# epw计算电声耦合粗网格插值并且完成bloch2wannier和wannier2bloch的转变, 此时会在tmp目录下产生epb文件, 它非常重要, 对于后面你重新做均匀网格的插值非常重要，你那个时候要读取这些epb文件，
+# epw_phono这一步会产生epw插值的声子谱，此时要将epw计算的声子phband.freq和qe计算的声子做对比
+epw_main.py -i POSCAR -j slurm -w epw epw_run -m mode=epw_phono execmd='mpirun -np 8' npool=8 dvscf_dir='./save' nbndsub=7 bands_skipped='1:12' dis_froz_min=-7.635175  dis_froz_max=23 dis_win_max=60  proj='H:s S:s S:p'  nk='8 8 8' nq='4 4 4'  queue=lhy from_scratch=True
 # 这一步计算声子，除了可以输出声子谱(phband.freq)，也可以输出电子的能带(band.eig). 
 # 此时的phband.freq和band.eig的高对称路径与qe的能带的高对称路径一致。
 
-# epw计算电声耦合插值
-epw_main.py -i POSCAR -j bash -w epw epw_run -m mode=epw_elph  execmd='mpirun -np 8' npool=8 dvscf_dir='./save' nbndsub=7 bands_skipped='1:12' dis_froz_min=-7.635175  dis_froz_max=23 dis_win_max=60  proj='H:s S:s S:p'  nk='8 8 8' nq='4 4 4' nkf='12 12 12' nqf='6 6 6' fsthick=0.4 degaussw=0.1 degaussq=0.5  queue=local
+# epw计算电声耦合细网格插值
+# 如果你已经产生了epb文件，那么就用restart1=True的模式, 此时说明你已经完成了wannier90的计算（即：当前目录下已经存在了prefix.ukk），那么你就可以设置wannierize=.false.
+# 如果你想从头（即：从电声耦合的粗网格插值开始插值），那么就用from_scratch=True模式. 在这种模式下，我非常建议你先做好wannier90的计算，然后再进行电声耦合细网格插值
+# 原因如下：wannier90计算在nk=6 6 6（216个k点）的网格上，最多你只能用128核并行，而不能用256核并行，因为216无法分配在256个核上。此时epw会报错！
+#          但是nkf=12 12 12（7296个k点）的网格上，你可以用256核并行，因为7296可以分配在256个核上。
+epw_main.py -i POSCAR -j slurm -w epw epw_run -m mode=epw_elph  execmd='mpirun -np 8' npool=8 dvscf_dir='./save' nbndsub=7 bands_skipped='1:12' dis_froz_min=-7.635175  dis_froz_max=23 dis_win_max=60  proj='H:s S:s S:p'  nk='8 8 8' nq='4 4 4' nkf='12 12 12' nqf='6 6 6' fsthick=0.4 degaussw=0.1 degaussq=0.5  queue=local
 
 # epw计算超导
-epw_main.py -i ../1.epwband/CONTCAR -j slurm epw_run -m mode=epw_sc  execmd='srun --mpi=pmi2' npool=64 dvscf_dir='./save/' nbndsub=19 bands_skipped='1:5' dis_froz_min=-0.84  dis_froz_max=30.406 dis_win_max=42.5  proj='Li:s;p Hf:s;p;d H:s'  nk='6 6 6' nq='6 6 6' nkf='12 12 12' nqf='12 12 12' fsthick=3.0 degaussw=0.01 degaussq=0.8  queue=lhy lifc=.false. nstemp='21' temps='10 100' restart3=True
-```
-
-### <span style="color:lightgreen"> 1.自洽计算
-```shell
-mkdir 0.phonon
-cd 0.phonon
-mpirun -np N $QEBIN/pw.x -npool N < scf.in > scf.out
-```
-
-### <span style="color:lightgreen"> 2.声子计算
-```shell
-cd 0.phonon
-mpirun -np N $QEBIN/ph.x  -npool N < ph.in > ph.out
-```
-
-### <span style="color:lightgreen"> 3.QE能带计算，其实也是一种非自洽计算，只不过k点是高对称路径的
-```shell
-mkdir -p tmp/Nb4H14.save
-cp ../phonon/tmp/Nb4H14.save/charge-density.dat     tmp/Nb4H14.save/
-cp ../phonon/tmp/Nb4H14.save/data-file-schema.xml   tmp/Nb4H14.save/
-mpirun -np 48 /work/home/mayuan/software/qe-7.1/bin/pw.x -npool 4 <eleband.in> eleband.out
-```
-
-### <span style="color:lightgreen"> 4.准备QE动力学矩阵和受力
-```shell
-python pp.py
-```
-
-### <span style="color:lightgreen"> 5.非自洽计算, k点是均匀网格点
-```shell
-cp ../phonon/tmp/Nb4H14.save/charge-density.dat     tmp/Nb4H14.save/
-cp ../phonon/tmp/Nb4H14.save/data-file-schema.xml   tmp/Nb4H14.save/
-mpirun -np 48 /work/home/mayuan/software/qe-7.1/bin/pw.x  -npool 4 <nscf.in> nscf.out
-```
-
-### <span style="color:lightgreen"> 6. EPW计算声子
-```shell
-mpirun -np N $EPWBIN/epw.x -npool N < epw.in > epw.out
+# 此时必须使用restart3=True模式，因为你要读取上一步的epw_elph的结果
+epw_main.py -i ../1.epwband/POSCAR -j slurm epw_run -m mode=epw_sc  execmd='srun --mpi=pmi2' npool=64 dvscf_dir='./save/' nbndsub=19 bands_skipped='1:5' dis_froz_min=-0.84  dis_froz_max=30.406 dis_win_max=42.5  proj='Li:s;p Hf:s;p;d H:s'  nk='6 6 6' nq='6 6 6' nkf='12 12 12' nqf='12 12 12' fsthick=3.0 degaussw=0.01 degaussq=0.8  queue=lhy lifc=.false. nstemp='21' temps='10 100' restart3=True
 ```
 
 计算超导时相关的epw.in参数设置总览

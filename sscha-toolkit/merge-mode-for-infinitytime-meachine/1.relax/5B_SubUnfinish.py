@@ -1,8 +1,25 @@
 from numpy import *
+import sys
+import subprocess
 import numpy as np
 import time
 
 import os
+def get_que_num():
+    """获取当前目录下正在运行的任务数量"""
+    current_directory = os.getcwd()  # 获取当前工作目录
+    
+    # 使用 squeue 命令并过滤包含当前目录的任务
+    command = f"squeue -h --format '%Z' | grep {current_directory}"
+    try:
+        squeue_output = subprocess.check_output(command, shell=True).decode('utf-8').strip()
+        # print(squeue_output)  # 打印当前队列输出，便于调试
+        # 返回匹配的行数（即正在运行的任务数量）
+        return len(squeue_output.splitlines()), squeue_output.splitlines()
+    except subprocess.CalledProcessError:
+        #print('Error fetching queue data')  # 错误处理
+        return 0, []  # 如果 squeue 没有输出或其他错误，返回 0
+
 directory = "run_calculation"
 output_filenames = [f for f in os.listdir(directory) if f.endswith(".pwo")] # We select only the output files
 output_files = [os.path.join(directory, f) for f in output_filenames] # We add the directory/outpufilename to load them correctly
@@ -46,7 +63,7 @@ for file in output_files:
 sort_num = sorted(id_nums)
 sort_num.append(10897654)
 j=0
-for i in range(0,3000):
+for i in range(0,800):
     if i==sort_num[j]:
        j=j+1
     else:
@@ -61,31 +78,29 @@ header="""#!/bin/sh
 #SBATCH  --job-name=myjob
 #SBATCH  --output=log.out                       
 #SBATCH  --error=log.err                       
-#SBATCH  --partition=liuhanyu
+#SBATCH  --partition=cpu
 #SBATCH  --nodes=1
-#SBATCH  --ntasks=48
-#SBATCH  --ntasks-per-node=48                          
+#SBATCH  --ntasks=56
+#SBATCH  --ntasks-per-node=56                          
 #SBATCH  --cpus-per-task=1                         
-#SBATCH  --exclude=node98
+#SBATCH  --exclude=cpu9
 
-source /work/home/mayuan/intel/oneapi/setvars.sh --force      
+source /public/home/mayuan/intel/oneapi/setvars.sh --force      
 ulimit -s unlimited
 export I_MPI_ADJUST_REDUCE=3
 export MPIR_CVAR_COLL_ALIAS_CHECK=0
 """
 
-i=50
+MAX_RUNNING_JOBS = 8
 for id_unfinish in unfinish:
-    i=i+1
-    filename= "un_sub_{}.sh".format(i)
-    run_line="mpirun -np 48 /work/home/mayuan/software/qe-7.1/bin/pw.x -nk 4 -in  ESP_{}.pwi > ESP_{}.pwo 2>&1".format(id_unfinish,id_unfinish)
-
-    with open(filename, "w") as f:
-        f.write(header)
-        print(run_line,file=f)
-
-    os.system(rf"mv {filename} run_calculation && cd run_calculation && sbatch {filename} && cd ../")
-    time.sleep(3)
-    if i > 2000:
-       break
-
+    que_num, queue_path = get_que_num()
+    print(que_num)
+    if que_num < MAX_RUNNING_JOBS:
+        filename= "un_sub_{}.sh".format(i)
+        run_line="mpirun -np 56 /public/home/mayuan/software/qe-7.1/bin/pw.x -nk 4 -in  ESP_{}.pwi > ESP_{}.pwo 2>&1".format(id_unfinish,id_unfinish)
+        with open(filename, "w") as f:
+            f.write(header)
+            print(run_line,file=f)
+        os.system(rf"mv {filename} run_calculation && cd run_calculation && sbatch {filename} && cd ../")
+    else:
+        time.sleep(20)

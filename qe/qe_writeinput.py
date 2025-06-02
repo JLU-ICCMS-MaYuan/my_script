@@ -982,12 +982,13 @@ class qe_writeinput:
                 qe.write("   amass({})={},                               \n".format(i+1, species_mass))                                    
             qe.write("   flfrc = '{}.fc',         \n".format(self.qe_inputpara.system_name))
             qe.write("   flfrq = '{}.freq',       \n".format(self.qe_inputpara.system_name))                                         
-            qe.write("   la2F = {},               \n".format(self.qe_inputpara.la2F))
+            if self.qe_inputpara.EPC_flag == True: 
+                qe.write(" la2F = {},                                       \n".format(self.qe_inputpara.la2F))                 
+                qe.write(" el_ph_nsigma={},                                 \n".format(str(self.qe_inputpara.el_ph_nsigma)))
             qe.write("   dos = .true.,            \n")  # 计算声子态密度,dos必须设置为.true.                           
             qe.write("   fldos = '{}.dos',        \n".format(self.qe_inputpara.system_name+"_phono"))                                       
             qe.write("   nk1={}, nk2={}, nk3={},  \n".format(self.qe_inputpara.qpoints[0], self.qe_inputpara.qpoints[1], self.qe_inputpara.qpoints[2]))  # 计算态密度时要用更密的q点网格，这需设置nk1, nk2, nk3
             qe.write("   ndos={},                 \n".format(self.qe_inputpara.ndos))  # 态密度的能量刻度上的点的数目                       
-            qe.write("   el_ph_nsigma={},         \n".format(self.qe_inputpara.el_ph_nsigma))
             qe.write("/                           \n")                                                                
         return inputfilename
 
