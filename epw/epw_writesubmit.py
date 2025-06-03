@@ -192,8 +192,10 @@ class epw_writesubmit:
         _script_filepath = os.path.join(_dirpath, jobname)
         with open(_script_filepath, "w") as j:
             j.writelines(self.jobtitle)
+            j.write('cp {}.a2f backup_{}.a2f\n'.format(self.epw_inputpara.system_name, self.epw_inputpara.system_name))
+            j.write('cp {}.a2f backup_{}.a2f_proj\n'.format(self.epw_inputpara.system_name, self.epw_inputpara.system_name))
             if self.epw_inputpara.keep_a2f:
-                j.write('echo "rm a2f a2f_proj"\n')
+                j.write('echo "romove a2f a2f_proj"\n')
                 j.write('rm {}.a2f {}.a2f_proj\n'.format(self.epw_inputpara.system_name, self.epw_inputpara.system_name))
                 j.write('abspath=`realpath ..`\n')
                 j.write('mkdir -p ./tmp/{}.ephmat\n'.format(self.epw_inputpara.system_name))  # 保证目录存.format(self.epw)在
@@ -215,8 +217,10 @@ class epw_writesubmit:
         _script_filepath = os.path.join(_dirpath, jobname)
         with open(_script_filepath, "w") as j:
             j.writelines(self.jobtitle)
+            j.write('cp {}.a2f backup_{}.a2f\n'.format(self.epw_inputpara.system_name, self.epw_inputpara.system_name))
+            j.write('cp {}.a2f backup_{}.a2f_proj\n'.format(self.epw_inputpara.system_name, self.epw_inputpara.system_name))
             if self.epw_inputpara.keep_a2f:
-                j.write('echo "rm a2f a2f_proj"\n')
+                j.write('echo "romove a2f a2f_proj"\n')
                 j.write('rm {}.a2f {}.a2f_proj\n'.format(self.epw_inputpara.system_name, self.epw_inputpara.system_name))
                 j.write('abspath=`realpath ..`\n')
                 j.write('mkdir -p ./tmp/{}.ephmat\n'.format(self.epw_inputpara.system_name))  # 保证目录存.format(self.epw)在

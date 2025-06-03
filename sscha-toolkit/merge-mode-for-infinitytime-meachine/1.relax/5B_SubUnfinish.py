@@ -63,7 +63,7 @@ for file in output_files:
 sort_num = sorted(id_nums)
 sort_num.append(10897654)
 j=0
-for i in range(0,800):
+for i in range(0,len(output_files)):
     if i==sort_num[j]:
        j=j+1
     else:
@@ -92,10 +92,13 @@ export MPIR_CVAR_COLL_ALIAS_CHECK=0
 """
 
 MAX_RUNNING_JOBS = 8
-for id_unfinish in unfinish:
+#for id_unfinish in unfinish:
+while True:
     que_num, queue_path = get_que_num()
     print(que_num)
+    # 从任务队列中取出下一个任务目录
     if que_num < MAX_RUNNING_JOBS:
+        id_unfinish = unfinish.pop(0)
         filename= "un_sub_{}.sh".format(i)
         run_line="mpirun -np 56 /public/home/mayuan/software/qe-7.1/bin/pw.x -nk 4 -in  ESP_{}.pwi > ESP_{}.pwo 2>&1".format(id_unfinish,id_unfinish)
         with open(filename, "w") as f:
