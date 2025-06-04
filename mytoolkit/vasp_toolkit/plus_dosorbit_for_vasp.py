@@ -10,6 +10,8 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description="Process PDOS data for multiple elements")
     parser.add_argument('-e', '--elements', type=str, nargs='+', 
                         help="List of elements with their orbitals, e.g., 'La:s,p,d,f' or 'H:s,p'.")
+    parser.add_argument('-pv', '--per-volume', action='store_true', default=True,
+                        help="Flag to indicate if the PDOS should be divided by the volume.")
     return parser.parse_args()
 
 def plus_spdf(e, orbitals_to_read):
@@ -83,24 +85,40 @@ def main():
         s_orb, p_orb, d_orb, f_orb, tot = plus_spdf(e, orbitals_to_read)
         
         # 将每个元素的 spdf 轨道和 tot 轨道添加到结果 DataFrame 中
-        if s_orb is not None:
+        if s_orb is not None and args.per_volume:
             result_df[f'{e}_s'] = s_orb / vol
             pdos_at_ef[f'{e}_s'] = [interpolate_and_predict(result_df['Energy(eV)'], result_df[f'{e}_s'])]
-
-        if p_orb is not None:
+        else:
+            result_df[f'{e}_s'] = s_orb
+            pdos_at_ef[f'{e}_s'] = [interpolate_and_predict(result_df['Energy(eV)'], result_df[f'{e}_s'])]
+            
+        if p_orb is not None and args.per_volume:
             result_df[f'{e}_p'] = p_orb / vol
             pdos_at_ef[f'{e}_p'] = [interpolate_and_predict(result_df['Energy(eV)'], result_df[f'{e}_p'])]
-
-        if d_orb is not None:
+        else:
+            result_df[f'{e}_p'] = p_orb
+            pdos_at_ef[f'{e}_p'] = [interpolate_and_predict(result_df['Energy(eV)'], result_df[f'{e}_p'])]
+            
+        if d_orb is not None and args.per_volume:
             result_df[f'{e}_d'] = d_orb / vol
             pdos_at_ef[f'{e}_d'] = [interpolate_and_predict(result_df['Energy(eV)'], result_df[f'{e}_d'])]
+        else:
+            result_df[f'{e}_d'] = d_orb
+            pdos_at_ef[f'{e}_d'] = [interpolate_and_predict(result_df['Energy(eV)'], result_df[f'{e}_d'])]
 
-        if f_orb is not None:
+        if f_orb is not None and args.per_volume:
             result_df[f'{e}_f'] = f_orb / vol
             pdos_at_ef[f'{e}_f'] = [interpolate_and_predict(result_df['Energy(eV)'], result_df[f'{e}_f'])]
-
-        result_df[f'{e}'] = tot / vol
-        pdos_at_ef[f'{e}'] = [interpolate_and_predict(result_df['Energy(eV)'], result_df[f'{e}'])]
+        else:
+            result_df[f'{e}_f'] = f_orb
+            pdos_at_ef[f'{e}_f'] = [interpolate_and_predict(result_df['Energy(eV)'], result_df[f'{e}_f'])]
+        
+        if args.per_volume:    
+            result_df[f'{e}'] = tot / vol
+            pdos_at_ef[f'{e}'] = [interpolate_and_predict(result_df['Energy(eV)'], result_df[f'{e}'])]
+        else:
+            result_df[f'{e}'] = tot
+            pdos_at_ef[f'{e}'] = [interpolate_and_predict(result_df['Energy(eV)'], result_df[f'{e}'])]
 
 
     # 将能量为0时的PDOS值写入文件
@@ -112,11 +130,16 @@ def main():
     energy_tdos = tdos_df['#Energy']
     tdos = tdos_df['TDOS']
     # 使用插值函数插值计算能量为0时的 TDOS
-    tdos_at_fermi = interpolate_and_predict(energy_tdos, tdos) / vol
+    if args.per_volume:
+        tdos_at_fermi = interpolate_and_predict(energy_tdos, tdos) / vol
+        # 将 TDOS 数据添加到 result_df 最后一列
+        result_df['TDOS'] = tdos/vol
+    else:
+        tdos_at_fermi = interpolate_and_predict(energy_tdos, tdos)
+        # 将 TDOS 数据添加到 result_df 最后一列
+        result_df['TDOS'] = tdos
     print(f"TDOS at Fermi level: {tdos_at_fermi}")
     
-    # 将 TDOS 数据添加到 result_df 最后一列
-    result_df['TDOS'] = tdos/vol
     # 保存结果到 spdf_orbit.csv
     result_df.to_csv('spdf_orbit.csv', index=False)
     print("Result saved to spdf_orbit.csv")
