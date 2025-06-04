@@ -5,164 +5,126 @@ from ase.io import read
 import argparse
 from scipy import interpolate
 
-# 设置命令行参数解析器
+# 命令行参数解析
 def parse_arguments():
-    parser = argparse.ArgumentParser(description="Process PDOS data for multiple elements")
-    parser.add_argument('-e', '--elements', type=str, nargs='+', 
+    parser = argparse.ArgumentParser(description="Process PDOS data for multiple elements.")
+    parser.add_argument('-e', '--elements', type=str, nargs='+',
                         help="List of elements with their orbitals, e.g., 'La:s,p,d,f' or 'H:s,p'.")
-    parser.add_argument('-pv', '--per-volume', action='store_true', default=True,
+    parser.add_argument('-pv', '--per-volume', action='store_true',
                         help="Flag to indicate if the PDOS should be divided by the volume.")
     return parser.parse_args()
 
+# 读取单个元素的 spdf 投影数据
 def plus_spdf(e, orbitals_to_read):
-    t_s_orb, t_p_orb, t_d_orb, t_f_orb, tot = [0, 0, 0, 0, 0]
-    df = pd.read_table(f"PDOS_{e}.dat", sep='\s+')
-    
-    # 动态判断读取哪些轨道
+    df = pd.read_table(f"PDOS_{e}.dat", sep=r'\s+')
+    s = p = d = f = None
+
     if 's' in orbitals_to_read:
-        s_orb = df['s']
-        t_s_orb += s_orb
-    else:
-        s_orb = None
-
+        s = df['s']
     if 'p' in orbitals_to_read:
-        p_orb = df['py'] + df['pz'] + df['px']
-        t_p_orb += p_orb
-    else:
-        p_orb = None
-
+        p = df['py'] + df['pz'] + df['px']
     if 'd' in orbitals_to_read:
-        d_orb = df['dxy'] + df['dyz'] + df['dz2'] + df['dxz'] + df['dx2']
-        t_d_orb += d_orb
-    else:
-        d_orb = None
-
+        d = df['dxy'] + df['dyz'] + df['dz2'] + df['dxz'] + df['dx2']
     if 'f' in orbitals_to_read:
-        f_orb = df['fy3x2'] + df['fxyz'] + df['fyz2'] + df['fz3'] + df['fxz2'] + df['fzx2'] + df['fx3']
-        t_f_orb += f_orb
-    else:
-        f_orb = None
-    
+        f = (df['fy3x2'] + df['fxyz'] + df['fyz2'] + df['fz3'] +
+             df['fxz2'] + df['fzx2'] + df['fx3'])
     tot = df['tot']
-    return t_s_orb, t_p_orb, t_d_orb, t_f_orb, tot
+    return s, p, d, f, tot
 
-# 拟合并返回能量为0时的预测值，使用插值函数
+# 插值获取 E=0 处的值
 def interpolate_and_predict(energy, pdos):
-    tck = interpolate.make_interp_spline(x=energy, y=pdos, k=1)  # k=1 for linear spline
-    return tck(0)  # 计算能量为0时的值
+    try:
+        tck = interpolate.make_interp_spline(x=energy, y=pdos, k=1)
+        return tck(0)
+    except Exception:
+        idx = np.abs(energy).argmin()
+        return pdos.iloc[idx]
+
+# 统一处理每个轨道
+def process_orbital(orb, label, element, vol, per_volume, energy, result_df, pdos_at_ef):
+    if orb is not None:
+        column_name = f'{element}_{label}'
+        if per_volume:
+            result_df[column_name] = orb / vol
+        else:
+            result_df[column_name] = orb
+        pdos_at_ef[column_name] = [interpolate_and_predict(energy, result_df[column_name])]
 
 def main():
-    # 解析命令行参数
     args = parse_arguments()
 
-    # 创建一个字典，存储元素与轨道类型的映射
+    # 解析元素与轨道映射
     orbitals_dict = {}
-    for element_info in args.elements:
-        element, orbitals = element_info.split(':')
-        orbitals_dict[element] = orbitals.split(',')
+    for item in args.elements:
+        try:
+            element, orbitals = item.split(':')
+            orbitals_dict[element] = orbitals.split(',')
+        except ValueError:
+            raise ValueError(f"Invalid format for element input: {item}. Expected format like 'La:s,p,d'.")
 
-    # 读取POSCAR文件并计算体积
+    # 获取体积
     atoms = read('POSCAR')
     vol = atoms.get_volume()
-    print('vol=', vol)
+    print(f'Volume of cell: {vol:.3f} Å³')
 
-    eles = list(orbitals_dict.keys())  # 从字典中获取元素列表
-
-    # 选择一个元素来获取 'Energy' 列
-    sample_element = eles[0]
-    sample_df = pd.read_table(f"PDOS_{sample_element}.dat", sep='\s+')
-    energy = sample_df['#Energy']
-    
-    # 创建一个空 DataFrame 用于存储结果，并添加 'Energy' 列
+    # 读入参考 energy 列
+    sample_element = list(orbitals_dict.keys())[0]
+    df_sample = pd.read_table(f"PDOS_{sample_element}.dat", sep=r'\s+')
+    energy = df_sample[df_sample.columns[0]]  # 自动适配 #Energy 或 Energy 等列名
     result_df = pd.DataFrame({'Energy(eV)': energy})
+    pdos_at_ef = {'Energy(eV)': [0]}
 
-    # 用于存储能量为0时的PDOS值，初始化时使用 'Energy(eV)' 作为行索引
-    pdos_at_ef = {'Energy(eV)': [0]}  # 初始化为能量列
-    
-    # 遍历元素
-    for e in eles:
-        orbitals_to_read = orbitals_dict[e]  # 获取该元素的轨道类型
-        s_orb, p_orb, d_orb, f_orb, tot = plus_spdf(e, orbitals_to_read)
-        
-        # 将每个元素的 spdf 轨道和 tot 轨道添加到结果 DataFrame 中
-        if s_orb is not None and args.per_volume:
-            result_df[f'{e}_s'] = s_orb / vol
-            pdos_at_ef[f'{e}_s'] = [interpolate_and_predict(result_df['Energy(eV)'], result_df[f'{e}_s'])]
-        else:
-            result_df[f'{e}_s'] = s_orb
-            pdos_at_ef[f'{e}_s'] = [interpolate_and_predict(result_df['Energy(eV)'], result_df[f'{e}_s'])]
-            
-        if p_orb is not None and args.per_volume:
-            result_df[f'{e}_p'] = p_orb / vol
-            pdos_at_ef[f'{e}_p'] = [interpolate_and_predict(result_df['Energy(eV)'], result_df[f'{e}_p'])]
-        else:
-            result_df[f'{e}_p'] = p_orb
-            pdos_at_ef[f'{e}_p'] = [interpolate_and_predict(result_df['Energy(eV)'], result_df[f'{e}_p'])]
-            
-        if d_orb is not None and args.per_volume:
-            result_df[f'{e}_d'] = d_orb / vol
-            pdos_at_ef[f'{e}_d'] = [interpolate_and_predict(result_df['Energy(eV)'], result_df[f'{e}_d'])]
-        else:
-            result_df[f'{e}_d'] = d_orb
-            pdos_at_ef[f'{e}_d'] = [interpolate_and_predict(result_df['Energy(eV)'], result_df[f'{e}_d'])]
+    # 遍历元素处理
+    for e, orbitals in orbitals_dict.items():
+        s, p, d, f, tot = plus_spdf(e, orbitals)
+        process_orbital(s, 's', e, vol, args.per_volume, energy, result_df, pdos_at_ef)
+        process_orbital(p, 'p', e, vol, args.per_volume, energy, result_df, pdos_at_ef)
+        process_orbital(d, 'd', e, vol, args.per_volume, energy, result_df, pdos_at_ef)
+        process_orbital(f, 'f', e, vol, args.per_volume, energy, result_df, pdos_at_ef)
 
-        if f_orb is not None and args.per_volume:
-            result_df[f'{e}_f'] = f_orb / vol
-            pdos_at_ef[f'{e}_f'] = [interpolate_and_predict(result_df['Energy(eV)'], result_df[f'{e}_f'])]
+        colname = f'{e}'
+        if args.per_volume:
+            result_df[colname] = tot / vol
         else:
-            result_df[f'{e}_f'] = f_orb
-            pdos_at_ef[f'{e}_f'] = [interpolate_and_predict(result_df['Energy(eV)'], result_df[f'{e}_f'])]
-        
-        if args.per_volume:    
-            result_df[f'{e}'] = tot / vol
-            pdos_at_ef[f'{e}'] = [interpolate_and_predict(result_df['Energy(eV)'], result_df[f'{e}'])]
-        else:
-            result_df[f'{e}'] = tot
-            pdos_at_ef[f'{e}'] = [interpolate_and_predict(result_df['Energy(eV)'], result_df[f'{e}'])]
+            result_df[colname] = tot
+        pdos_at_ef[colname] = [interpolate_and_predict(energy, result_df[colname])]
 
-
-    # 将能量为0时的PDOS值写入文件
+    # 保存 Ef 插值值
     pdos_at_ef_df = pd.DataFrame(pdos_at_ef)
     pdos_at_ef_df.to_csv('PDOS_atEf.csv', index=False)
 
-    # 获取费米能级处的 TDOS 值
-    tdos_df = pd.read_table("TDOS.dat", sep='\s+')
-    energy_tdos = tdos_df['#Energy']
-    tdos = tdos_df['TDOS']
-    # 使用插值函数插值计算能量为0时的 TDOS
+    # TDOS 插值
+    tdos_df = pd.read_table("TDOS.dat", sep=r'\s+')
+    energy_col = tdos_df.columns[0]
+    energy_tdos = tdos_df[energy_col]
+    tdos = tdos_df.iloc[:, 1]
     if args.per_volume:
         tdos_at_fermi = interpolate_and_predict(energy_tdos, tdos) / vol
-        # 将 TDOS 数据添加到 result_df 最后一列
-        result_df['TDOS'] = tdos/vol
+        result_df['TDOS'] = tdos / vol
     else:
         tdos_at_fermi = interpolate_and_predict(energy_tdos, tdos)
-        # 将 TDOS 数据添加到 result_df 最后一列
         result_df['TDOS'] = tdos
-    print(f"TDOS at Fermi level: {tdos_at_fermi}")
-    
-    # 保存结果到 spdf_orbit.csv
-    if args.per_volume:
-        result_df.to_csv('spdf_orbit_per_volume.csv', index=False)
-        print("Result saved to spdf_orbit_per_volume.csv")
-    else:
-        result_df.to_csv('spdf_orbit.csv', index=False)
-        print("Result saved to spdf_orbit.csv")
-        
-    nearest_to_zero_index = result_df['Energy(eV)'].abs().idxmin()
-    # 获取最接近0的行的上下5行索引范围
-    start_index = max(0, nearest_to_zero_index - 3)
-    end_index = min(len(result_df), nearest_to_zero_index + 3)
-    # 输出选取的行
-    print("上下5行数据:")
-    print(result_df.iloc[start_index:end_index])
-    
-    # 计算所有元素的 PDOS 值之和
-    total_pdos_at_fermi = sum([pdos_at_ef_df[ele] for ele in eles])
-    print(f"Sum of PDOS at Fermi level: {total_pdos_at_fermi.item()}")
+    print(f"TDOS at Fermi level: {tdos_at_fermi:.6f}")
 
-    # 比较 TDOS 和 PDOS 之和
-    diff = tdos_at_fermi - total_pdos_at_fermi
-    print(f"Difference between TDOS and sum of PDOS: {diff.item()}")
+    # 保存总表
+    output_file = 'spdf_orbit_per_volume.csv' if args.per_volume else 'spdf_orbit.csv'
+    result_df.to_csv(output_file, index=False)
+    print(f"Result saved to {output_file}")
+
+    # 打印能量最接近 0 附近的数据
+    idx_zero = result_df['Energy(eV)'].abs().idxmin()
+    start = max(0, idx_zero - 3)
+    end = min(len(result_df), idx_zero + 3)
+    print("Around Fermi level (±3 rows):")
+    print(result_df.iloc[start:end])
+
+    # 计算 PDOS 总和 vs TDOS 差异
+    columns_to_sum = [col for col in pdos_at_ef_df.columns if col not in ['Energy(eV)', 'TDOS']]
+    pdos_sum_at_fermi = pdos_at_ef_df[columns_to_sum].sum(axis=1).item()
+    diff = tdos_at_fermi - pdos_sum_at_fermi
+    print(f"Sum of PDOS at Fermi level: {pdos_sum_at_fermi:.6f}")
+    print(f"Difference (TDOS - sum of PDOS): {diff:.6f}")
 
 if __name__ == "__main__":
     main()
+
