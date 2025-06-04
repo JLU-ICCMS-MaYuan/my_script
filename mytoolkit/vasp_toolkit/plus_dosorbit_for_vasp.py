@@ -141,8 +141,13 @@ def main():
     print(f"TDOS at Fermi level: {tdos_at_fermi}")
     
     # 保存结果到 spdf_orbit.csv
-    result_df.to_csv('spdf_orbit.csv', index=False)
-    print("Result saved to spdf_orbit.csv")
+    if args.per_volume:
+        result_df.to_csv('spdf_orbit_per_volume.csv', index=False)
+        print("Result saved to spdf_orbit_per_volume.csv")
+    else:
+        result_df.to_csv('spdf_orbit.csv', index=False)
+        print("Result saved to spdf_orbit.csv")
+        
     nearest_to_zero_index = result_df['Energy(eV)'].abs().idxmin()
     # 获取最接近0的行的上下5行索引范围
     start_index = max(0, nearest_to_zero_index - 3)
