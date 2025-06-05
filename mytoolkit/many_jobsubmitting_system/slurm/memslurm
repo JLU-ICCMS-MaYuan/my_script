@@ -1,6 +1,6 @@
 #!/bin/bash
   
-job_id = $1
+job_id=$1
 
 echo "sstat命令用于查看正在运行的作业的资源使用情况"
 sstat -a --format="JobId,Pids,AveCPU,AveRSS,MaxRSS" $job_id
