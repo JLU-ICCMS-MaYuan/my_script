@@ -19,6 +19,7 @@ scripts_names = [
     'mytoolkit/job_tasks_submit/slurm',
     'mytoolkit/job_tasks_submit/pbs',
     'mytoolkit/job_tasks_submit/lsf',
+    'mytoolkit/job_tasks_submit',
     'mytoolkit/pieces',
     'mytoolkit/qe_toolkit',
     'mytoolkit/structures_characters',
