@@ -16,6 +16,9 @@ alias getfromriken='getfromriken() { scp -r -i ~/.ssh/riken_id_rsa.pub h240012@h
 alias sendtoriken='sendtoriken() { scp -r -i  ~/.ssh/riken_id_rsa.pub "$1" h240012@hokusai.riken.jp:"$2"; }; sendtoriken'
 alias sendtohpwsl='sendtohpwsl() { scp -r -i  ~/.ssh/hp_wsl_rsa.pub "$1" may@172.28.252.248:"$2"; }; sendtohpwsl'
 
+alias chem2inspur='chem2inspur() { scp -r "$1" mayuan@172.17.64.1:"$2"; }; chem2inspur'
+alias sugon2inspur='sugon2inspur() { scp -r "$1" mayuan@172.17.64.1:"$2"; }; sugon2inspur'
+
 alias sqlhy='/bin/squeue -p liuhanyu'
 alias sqmayuan='/bin/squeue -u mayuan'
 alias geticohp="awk '\$1 == 0.00000 {print \$1, \$3; exit}' COHPCAR.lobster"

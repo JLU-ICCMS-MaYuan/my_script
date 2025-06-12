@@ -25,15 +25,15 @@ setup(
         'Programming Language :: Python :: 3.10',
     ],
     install_requires=[
-        "pymatgen>=2022.9.21",
-        "ase>=3.22.1",
+        "pymatgen==2022.9.21",
+        "ase==3.25.0", # 我之前安装了3.24.1的ase的版本，无法读取relax.out文件，所以这里我强制要求安装3.22.1的版本
         "matplotlib",
         "f90wrap",
         "Cython",
         "scikit-learn",
         "pyfiglet==1.0.2",
         "spglib==2.5.0",
-        "phonopy>=2.28.0",
+        "phonopy==2.28.0",
     ],
     scripts=[
         'qe/qe_main.py',
