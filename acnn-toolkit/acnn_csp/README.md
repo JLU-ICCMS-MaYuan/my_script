@@ -11,6 +11,13 @@ https://bonjour221.github.io/notes.github.io/external/external-utilities/
 1. https://www.mtg.msm.cam.ac.uk/Codes/AIRSS;
 2. https://plasma-gate.weizmann.ac.il/pub/grace/src/; 
 3. https://www.openblas.net
+
+安装提醒：ase, pymatgen, qhull, airss 都可以使用 conda install 安装，具体命令为：
+```shell
+conda install -c conda-forge ase, pymatgen, qhull, airss
+```
+离线安装方法为：在有线小机器上conda安装，使用 conda pack 打包，上传即可
+* 如果ase 无法使用conda安装，单独使用pip install 安装即可
  
 ###  <span style="font-size: 30px; color: red;">  编译流程：
 
