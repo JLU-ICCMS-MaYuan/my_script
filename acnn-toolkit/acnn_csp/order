@@ -1,0 +1,5 @@
+#!/bin/bash
+cd RSS
+nohup airss.pl -build -max 50000 -seed CeSCH &
+echo $! > ../taskids
+cd ..

@@ -288,7 +288,7 @@ POT中的sub.sh是训练势函数的提交任务脚本。`#SBATCH --ntasks-per-n
 acnn使用的是多进程并行，可以共享内存，提高并行效率。mpirun是多线程并行，无法共享内存但是可以跨节点并行。
 ```shell
 #!/bin/bash
-#SBATCH --job-name=TRAINCeScH
+#SBATCH --job-name=TRAINCeScHd
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=16
 #SBATCH --cpus-per-task=1
@@ -301,4 +301,31 @@ export OMP_NUM_THREADS=16
 export KMP_AFFINITY=granularity=fine,compact,1,0    # Thread affinity
 acnn -debug in.acnn
 
+```
+##### <span style="font-size: 20px; color: lightblue;"> 3. 关于lammps优化参数的设置
+torchdemo-v3/interface/airss/relax_lammps 文件里面包含了lammps结构优化的参数
+
+这里为了加速lammps结构优化，我们注释了第1，3步优化，只保留了2，4步优化。
+```shell
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# step 1
+# min_style           cg              # sd ...
+# group               ept empty
+# fix                 1 ept box/relax tri \${pp} dilate partial
+# minimize            1.0e-4 1.0e-1 5000 10000
+
+# step 2
+min_style           cg              # sd ...
+minimize            1.0e-5 1.0e-2 5000 10000
+ 
+# # step 3
+# min_style           cg              # sd ...
+# fix                 1 all box/relax iso \${pp}
+# minimize            1.0e-6 1.0e-3 10000 20000
+
+# step 4
+min_style           cg              # sd ...
+fix                 1 all box/relax tri \${pp}
+minimize            1.0e-8 1.0e-4 20000 20000
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ```
