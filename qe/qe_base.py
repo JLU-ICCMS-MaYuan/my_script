@@ -215,11 +215,12 @@ class qe_base:
         relax_out_path = self.work_path.joinpath("relax.out")
         
         res_path = None
-        if scffit_out_path.exists() and qe_check(scffit_out_path, "scf"):
+        if scffit_out_path.exists() and qe_check(scffit_out_path, "scf").check_results:
+            print(qe_check(scffit_out_path, "scf"))
             res_path = scffit_out_path
-        elif scf_out_path.exists() and qe_check(scf_out_path, "scf"):
+        elif scf_out_path.exists() and qe_check(scf_out_path, "scf").check_results:
             res_path = scf_out_path
-        elif relax_out_path.exists() and qe_check(relax_out_path, "relax"):
+        elif relax_out_path.exists() and qe_check(relax_out_path, "relax").check_results:
             res_path = relax_out_path
         else:
             logger.warning("scffit.out, scf.out and relax.out all don't exist. The program can't get reciprocal lattice from them.")

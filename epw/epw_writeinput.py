@@ -35,7 +35,7 @@ class epw_writeinput:
         if mode == "epw_phonodata":
             inputfilename1 = self.write_epw_phonodata_in(self.epw_inputpara.work_path)
             inputfilename2 = self.write_epw_phonodata_plot_in(self.epw_inputpara.work_path)
-            return inputfilename
+            return inputfilename1, inputfilename2
         if mode == "epw_elph":
             inputfilename = self.write_epw_elph_in(self.epw_inputpara.work_path)
             return inputfilename

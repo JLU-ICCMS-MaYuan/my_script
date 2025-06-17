@@ -15,11 +15,11 @@ class qe_check:
         self.content = self._read_output_file()
         
         self.check_file_type = check_file_type
-        
+        self.check_results = False
         if self.check_file_type == "scf":
-            self.check_scf()
+            self.check_results = self.check_scf()
         elif self.check_file_type == "relax":
-            self.check_relax()
+            self.check_results = self.check_relax()
             
     def _read_output_file(self):
         """
