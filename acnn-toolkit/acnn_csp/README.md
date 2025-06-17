@@ -11,6 +11,13 @@ https://bonjour221.github.io/notes.github.io/external/external-utilities/
 1. https://www.mtg.msm.cam.ac.uk/Codes/AIRSS;
 2. https://plasma-gate.weizmann.ac.il/pub/grace/src/; 
 3. https://www.openblas.net
+
+安装提醒：ase, pymatgen, qhull, airss 都可以使用 conda install 安装，具体命令为：
+```shell
+conda install -c conda-forge ase, pymatgen, qhull, airss
+```
+离线安装方法为：在有线小机器上conda安装，使用 conda pack 打包，上传即可
+* 如果ase 无法使用conda安装，单独使用pip install 安装即可
  
 ###  <span style="font-size: 30px; color: red;">  编译流程：
 
@@ -147,7 +154,7 @@ cmake --build build --target acnn
 
 <span style="font-size: 20px; color: lightblue;"> 2. 安装
 
-自己下载个压缩包(lammps-2Aug2023.tar.gz)，更改build_lammps_interface.sh中的压缩文件名之后，
+自己下载个压缩包(lammps-2Aug2023.tar.gz)，更改build_lammps_interface.sh中的压缩文件名之后
 
 激活intel进行编译（sh build_lammps_interface.sh build 核数），lmp_mpi在文件夹lammps-acnn/build里
 ```shell
@@ -161,7 +168,14 @@ sh build_lammps_interface.sh build 8
 ####  <span style="font-size: 25px; color: blue;"> 8. 安装qhull(安装完成后必须添加export路径)
 直接下载好代码，make安装之后添加bin目录到bashrc
 
-####  <span style="font-size: 25px; color: blue;"> 9. 范例：所有添加了PATH路径的代码
+####  <span style="font-size: 25px; color: blue;"> 9. 安装bfgs
+```shell
+cd torchdemo/interface/bfgs
+cmake -B build
+cmake --build build --target acnn_relax
+```
+
+####  <span style="font-size: 25px; color: blue;"> 10. 范例：所有添加了PATH路径的代码
 ```shell
 export PATH=$PATH:/work/home/mayuan/software/airss/bin
 export PATH=$PATH:/work/home/mayuan/software/grace-5.1.25/anzhuang/grace/bin
@@ -174,7 +188,7 @@ export PATH=$PATH:/work/home/mayuan/software/torchdemo-v3-old/interface/airss
 export PATH=/work/home/mayuan/software/torchdemo-v3/interface/bfgs/build:$PATH
 ```
 
-####  <span style="font-size: 25px; color: blue;"> 10. 使用acnn+CSP
+####  <span style="font-size: 25px; color: blue;"> 11. 使用acnn+CSP
 
 <span style="font-size: 20px; color: lightblue;"> 1. 创建任务：
 ```shell
@@ -252,3 +266,66 @@ airss.pl -build -max 5000 -seed ScZrB (即SEED_NAME)
 
 (2) 提交结构预测到集群
 
+####  <span style="font-size: 25px; color: blue;"> 注意事项
+
+##### <span style="font-size: 20px; color: lightblue;"> 1. 如果前几代的POT目录下训练机器学习势都失败了，那么后面在训练势的时候，就会爆出如下错误.
+```shell
+terminate called after throwing an instance of 'c10::Error'
+  what():  open file failed because of errno 2 on fopen: No such file or directory, file path:
+  ....
+Aborted (core dumped)
+```
+这是因为在训练势的时候要找前一代的势模型，但是没找到，所以报错了。
+
+具体的代码在POT目录的tr脚本中写到了是否续算，只有第0代是不需要续算的，后面的都需要续算并且续算需要用到的模型是其前一代的模型。
+
+##### <span style="font-size: 20px; color: lightblue;"> 2. 关于训练acnn时，并行参数的设置
+
+POT中的sub.sh是训练势函数的提交任务脚本。`#SBATCH --ntasks-per-node=16`和`export OMP_NUM_THREADS=16`必须保持一致。
+它的含义是：通过slurm申请16个core进行计算，在拿到这16个core之后用16个进程进行计算。如果设置的OMP_NUM_THREADS小于16，
+意味着使用了更少的进程进行计算。
+
+acnn使用的是多进程并行，可以共享内存，提高并行效率。mpirun是多线程并行，无法共享内存但是可以跨节点并行。
+```shell
+#!/bin/bash
+#SBATCH --job-name=TRAINCeScHd
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=16
+#SBATCH --cpus-per-task=1
+#SBATCH --partition=amd9654
+##SBATCH --exclude=node21
+
+source /data/home/mayuan/bin/env_gcc-9.2.0
+
+export OMP_NUM_THREADS=16
+export KMP_AFFINITY=granularity=fine,compact,1,0    # Thread affinity
+acnn -debug in.acnn
+
+```
+##### <span style="font-size: 20px; color: lightblue;"> 3. 关于lammps优化参数的设置
+torchdemo-v3/interface/airss/relax_lammps 文件里面包含了lammps结构优化的参数
+
+这里为了加速lammps结构优化，我们注释了第1，3步优化，只保留了2，4步优化。
+```shell
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# step 1
+# min_style           cg              # sd ...
+# group               ept empty
+# fix                 1 ept box/relax tri \${pp} dilate partial
+# minimize            1.0e-4 1.0e-1 5000 10000
+
+# step 2
+min_style           cg              # sd ...
+minimize            1.0e-5 1.0e-2 5000 10000
+ 
+# # step 3
+# min_style           cg              # sd ...
+# fix                 1 all box/relax iso \${pp}
+# minimize            1.0e-6 1.0e-3 10000 20000
+
+# step 4
+min_style           cg              # sd ...
+fix                 1 all box/relax tri \${pp}
+minimize            1.0e-8 1.0e-4 20000 20000
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+```

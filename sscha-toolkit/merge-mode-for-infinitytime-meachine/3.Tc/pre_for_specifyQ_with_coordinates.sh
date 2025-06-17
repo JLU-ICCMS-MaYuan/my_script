@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # 定义系统名称变量, 你需要修改的唯一参数
-system_name="H12La2B1"
+system_name="Ce1Sc2H24"
 
 # 定义要检查的文件
-files=("scffit.in" "scf.in" "s5_PhAssignQ.sh" "split_ph.in")
+files=("scffit.in" "scf.in" "s5_PhSplitDyn0.sh" "split_ph.in")
 
 # 遍历每个文件并检查是否存在
 for file in "${files[@]}"; do
@@ -27,7 +27,7 @@ done
 
 # 处理每个 Q 点
 for Q in `seq 1 $nq`; do
-    cp scffit.in scf.in s5_PhAssignQ.sh $Q
+    cp scffit.in scf.in s5_PhSplitDyn0.sh $Q
     Q1=$(head ./qlist.dat -n${Q} | tail -n1 | awk '{ print $1 }')
     Q2=$(head ./qlist.dat -n${Q} | tail -n1 | awk '{ print $2 }')
     Q3=$(head ./qlist.dat -n${Q} | tail -n1 | awk '{ print $3 }')
@@ -37,7 +37,7 @@ for Q in `seq 1 $nq`; do
     > $Q/split_ph.in
 done
 
-for i in {1..47}; do
+for i in `seq 1 $nq`; do
     # 创建目录结构
     mkdir -p "${i}/tmp/_ph0/${system_name}.phsave"
     
