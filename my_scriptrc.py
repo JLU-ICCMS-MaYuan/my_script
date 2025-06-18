@@ -160,8 +160,15 @@ if __name__ == "__main__":
             vasp.write(content)
     
     my_scriptrc_ini = Path.home().joinpath(".my_scriptrc.py")
-    qebin_path      = Path.home().joinpath("code/my_script/qe/qebin.py")
-    vaspbin_path    = Path.home().joinpath("code/my_script/vasp/vaspbin.py")
-    epwbin_path     = Path.home().joinpath("code/my_script/epw/epwbin.py")
+    try:
+        qebin_path      = Path("你放置my_script目录的路径").joinpath("qe/qebin.py")
+        vaspbin_path    = Path("你放置my_script目录的路径").joinpath("vasp/vaspbin.py")
+        epwbin_path     = Path("你放置my_script目录的路径").joinpath("epw/epwbin.py")
+        Write_Tobin(my_scriptrc_ini, qebin_path, vaspbin_path, epwbin_path)
+    except:
+        qebin_path      = Path.home().joinpath("code/my_script/qe/qebin.py")
+        vaspbin_path    = Path.home().joinpath("code/my_script/vasp/vaspbin.py")
+        epwbin_path     = Path.home().joinpath("code/my_script/epw/epwbin.py")
+        Write_Tobin(my_scriptrc_ini, qebin_path, vaspbin_path, epwbin_path)
     
-    Write_Tobin(my_scriptrc_ini, qebin_path, vaspbin_path, epwbin_path, )
+
