@@ -22,6 +22,7 @@ class qe_inputpara(qe_base):
         press: int,
         submit_job_system: str,
         input_file_path: str,
+        pp_dir: str,
         **kwargs: dict, # 这里非常重要, 因为qe_inputpara的__init__需要读入kwargs, 其它需要继承这个类的子类也需要保有这个参数kwargs
         ):
         
@@ -29,7 +30,8 @@ class qe_inputpara(qe_base):
             work_path,
             press,
             submit_job_system,
-            input_file_path
+            input_file_path,
+            pp_dir,
         )
         
         logger.info('Run `inputpara`')
@@ -335,14 +337,16 @@ class qephono_inputpara(qe_inputpara):
         work_path: str, 
         press: int, 
         submit_job_system: str, 
-        input_file_path: str, 
+        input_file_path: str,
+        pp_dir: str,
         **kwargs: dict, # 这里非常重要, 因为 qephono_inputpara 的__init__需要读入kwargs, 其它需要继承这个类的子类也需要保有这个参数kwargs
         ):
         super(qephono_inputpara, self).__init__(
             work_path, 
             press, 
             submit_job_system, 
-            input_file_path, 
+            input_file_path,
+            pp_dir,
             **kwargs, # 这里非常重要, 因为qephono_inputpara的__init__需要读入kwargs
             )
         
@@ -1003,6 +1007,7 @@ class qeeletron_inputpara(qe_inputpara):
         press: int, 
         submit_job_system: str, 
         input_file_path: str, 
+        pp_dir: str,
         **kwargs: dict,
         ):
         super(qeeletron_inputpara, self).__init__(
@@ -1010,7 +1015,8 @@ class qeeletron_inputpara(qe_inputpara):
             press, 
             submit_job_system, 
             input_file_path, 
-            **kwargs  # 这里非常重要, 因为 qeeletron_inputpara 的__init__需要读入kwargs, 其它需要继承这个类的子类也需要保有这个参数kwargs
+            pp_dir,
+            **kwargs,  # 这里非常重要, 因为 qeeletron_inputpara 的__init__需要读入kwargs, 其它需要继承这个类的子类也需要保有这个参数kwargs
             )
 
         logger.info("Run `eletron`")
@@ -1059,14 +1065,16 @@ class qesc_inputpara(qephono_inputpara):
         work_path: str, 
         press: int, 
         submit_job_system: str, 
-        input_file_path: str, 
+        input_file_path: str,
+        pp_dir: str,
         **kwargs: dict, 
     ):
         super(qesc_inputpara, self).__init__(
             work_path, 
             press, 
             submit_job_system, 
-            input_file_path, 
+            input_file_path,
+            pp_dir,
             **kwargs, # 这里非常重要, 因为 qesc_inputpara 的__init__需要读入kwargs, 其它需要继承这个类的子类也需要保有这个参数kwargs
             )
         logger.info("run `superconduct`")
@@ -1361,6 +1369,7 @@ class qebatch_inputpara(qephono_inputpara):
         press: int,
         submit_job_system: str,
         input_file_path: str,
+        pp_dir: str,
         **kwargs: dict, 
         ):
 
@@ -1368,7 +1377,8 @@ class qebatch_inputpara(qephono_inputpara):
             work_path, 
             press, 
             submit_job_system, 
-            input_file_path, 
+            input_file_path,
+            pp_dir, 
             **kwargs, # 这里非常重要, 因为 qeprepare_inputpara 的__init__需要读入kwargs, 其它需要继承这个类的子类也需要保有这个参数kwargs
             )
         logger.info("run `batch`")
@@ -1382,6 +1392,7 @@ class qesctk_inputpara(qephono_inputpara):
         press: int,
         submit_job_system: str,
         input_file_path: str,
+        pp_dir: str,
         **kwargs: dict,
     ):
         super(qesctk_inputpara, self).__init__(
@@ -1389,6 +1400,7 @@ class qesctk_inputpara(qephono_inputpara):
             press,
             submit_job_system,
             input_file_path,
+            pp_dir,
             **kwargs # 这里非常重要, 因为qephono_inputpara的__init__需要读入kwargs, 其它需要继承这个类的子类也需要保有这个参数kwargs
         )
         logger.info("run `SCTK`")

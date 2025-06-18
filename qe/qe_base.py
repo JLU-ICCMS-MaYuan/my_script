@@ -26,6 +26,7 @@ class qe_base:
         press: int,
         submit_job_system: str,
         input_file_path: Path,
+        pp_dir: str,
     ) -> None:
         '''
         qe_main.py -i 输入文件路径 -w 工作目录 -p 压强 -j 运行方式
@@ -49,6 +50,7 @@ class qe_base:
         self.press             = press          
         self.submit_job_system = submit_job_system
         self.input_file_path   = Path(input_file_path)
+        self.pp_dir            = pp_dir
 
         # if ("relax.out" in self.input_file_path.name) or ("scf.out" in self.input_file_path.name) or ("scffit.out" in self.input_file_path.name):
             # self.work_path = Path(self.input_file_path).parent
@@ -74,13 +76,23 @@ class qe_base:
         self.struct_type = AseAtomsAdaptor.get_structure(self.ase_type)
         self.get_struct_info(self.struct_type, self.work_path)
         ############################ prepare pp directory #########################
-        logger.info(f"Create pp in {self.work_path.absolute()}")
-        logger.info(f"Pick up UPF from: {qe_pseudopotential_dir}")
-        self.workpath_pppath = Path(self.work_path).joinpath("pp")
-        if not self.workpath_pppath.exists():
-            self.workpath_pppath.mkdir(parents=True)
-        # 准备赝势 
-        self.get_USPP(self.workpath_pppath)   
+        if self.pp_dir is None:
+            logger.info(f"Create pp_dir in {self.work_path.absolute()}")
+            logger.info(f"Pick up UPF from: {qe_pseudopotential_dir}")
+            self.workpath_pppath = Path(self.work_path).joinpath("pp")
+            if not self.workpath_pppath.exists():
+                self.workpath_pppath.mkdir(parents=True)
+            # 准备赝势 
+            self.get_USPP(self.workpath_pppath)   
+        else:
+            self.pp_dir = Path(self.pp_dir)
+            if self.pp_dir.exists() and self.work_path.exists(): 
+                os.system(f"cp -fr {self.pp_dir}  {self.work_path}")
+                logger.debug(f"You have copy {self.pp_dir} to {self.work_path}")
+            else:
+                logger.warning(f"You have no {self.pp_dir} or {self.work_path}")
+
+
         ############################# done pp directory ##########################        
         
     def get_struct_info(self, struct, output_poscar):

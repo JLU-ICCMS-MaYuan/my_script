@@ -57,7 +57,14 @@ def set_more_args(parser: ArgumentParser):
         help="please tell me the output infomation level \n"
              "such as, DEBUG, INFO, WARNING, ERROR, CRITICAL\n"
     ) 
-    
+    parser.add_argument(
+        '-pp',
+        '-pp-dir',
+        type=str,
+        default=None,
+        dest='pp_dir',
+        help="please tell me the pp_dir path that you have specified for your system\n"
+    ) 
     subparsers = parser.add_subparsers(help="subparsers")
 
     # 结构弛豫
