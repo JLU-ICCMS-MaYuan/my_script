@@ -87,12 +87,13 @@ class qe_base:
             if self.pp_dir.exists() and self.work_path.exists(): 
                 os.system(f"cp -fr {self.pp_dir}  {self.work_path}")
                 logger.debug(f"You have copy {self.pp_dir} to {self.work_path}")
+                # 准备赝势 
+                self.workpath_pppath = Path(self.work_path).joinpath("pp")
+                self.get_USPP(self.workpath_pppath) 
             else:
                 logger.error(f"You have no {self.pp_dir} or {self.work_path}. So the program will exit!")
                 sys.exit(1)
-        # 准备赝势 
-        self.workpath_pppath = Path(self.work_path).joinpath("pp")
-        self.get_USPP(self.workpath_pppath)   
+
         ############################# done pp directory ##########################        
         
     def get_struct_info(self, struct, output_poscar):
