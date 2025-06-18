@@ -38,13 +38,7 @@ class qe_inputpara(qe_base):
 
         for key, value in kwargs.items():
             setattr(self, key, value)
-        
-        if not hasattr(self, "pp_dir"):
-            self.pp_dir = None
-            logger.debug(f'pp_dir = {self.pp_dir}\n')
-        else:
-            shutil.copy(self.pp_dir, self.work_path)
-        
+           
         if not hasattr(self, "mode"):
             logger.error("You must specify mode")
             sys.exit(1)
@@ -199,12 +193,13 @@ class qe_inputpara(qe_base):
         press             = config['press']                ; del config['press']
         submit_job_system = config['submit_job_system']    ; del config['submit_job_system']
         input_file_path   = config['input_file_path']      ; del config['input_file_path']
-        
+        pp_dir            = config['pp_dir']               ; del config['pp_dir']
         self = cls(
             work_path=work_path,
             press=press,
             submit_job_system=submit_job_system,
             input_file_path=input_file_path,
+            pp_dir=pp_dir,
             **config,
         )
         return self
@@ -1469,23 +1464,6 @@ class qesctk_inputpara(qephono_inputpara):
         
         if not hasattr(self, "spin_fluc"):
             self.spin_fluc = ".true."
-
-    @classmethod
-    def init_from_config(cls, config: dict):
-
-        work_path         = config['work_path']            ; del config['work_path']
-        press             = config['press']                ; del config['press']
-        submit_job_system = config['submit_job_system']    ; del config['submit_job_system']
-        input_file_path   = config['input_file_path']      ; del config['input_file_path']
-
-        self = cls(
-            work_path=work_path,
-            press=press,
-            submit_job_system=submit_job_system,
-            input_file_path=input_file_path,
-            **config,
-        )
-        return self
     
     def get_kmesh_justlike_twingrid_x(self, kpoints):
         # Print the header
