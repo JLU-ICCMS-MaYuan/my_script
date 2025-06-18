@@ -86,7 +86,7 @@ class qe_base:
             self.pp_dir = Path(self.pp_dir)
             if self.pp_dir.exists() and self.work_path.exists(): 
                 os.system(f"cp -fr {self.pp_dir}  {self.work_path}")
-                logger.debug(f"You have copy {self.pp_dir} to {self.work_path}")
+                logger.info(f"You have copy {self.pp_dir} to {self.work_path}")
                 # 准备赝势 
                 self.workpath_pppath = Path(self.work_path).joinpath("pp")
                 self.get_USPP(self.workpath_pppath) 
@@ -236,7 +236,7 @@ class qe_base:
         elif relax_out_path.exists() and qe_check(relax_out_path, "relax").check_results:
             res_path = relax_out_path
         else:
-            logger.warning("scffit.out, scf.out and relax.out all don't exist. The program can't get reciprocal lattice from them.")
+            logger.warning("scffit.out, scf.out and relax.out all don't exist. The program can't get reciprocal lattice from them. So we will get it from pymatgen")
 
         if res_path:
             # 从scffit.out中获得alat
@@ -253,7 +253,6 @@ class qe_base:
                 reciprocal_lattice.append(b)
             return np.array(reciprocal_lattice)
         else:
-            logger.warning("The program fail to get reciprocal lattice from scffit.out, scf.out and relax.out. So it will get reciprocal lattice from pymatgen, which unit is the same to the QE result.")
             reciprocal_plattice = struct.lattice.reciprocal_lattice.matrix*0.529177 
             return np.array(reciprocal_plattice)
 
@@ -282,9 +281,7 @@ class qe_base:
             cell_parameters = [line.strip() for line in lines[4:7]]
             return cell_parameters
         else:
-            logger.warning("You didn't specify relax.out as inputfile")
-            logger.warning("So We will get cell-information in the way of PYMATGEN")
-            logger.warning("cell_parameters")
+            logger.warning("You didn't specify relax.out, POSCAR, or CONTCAR as inputfile. So We will get cell-information in the way of PYMATGEN")
             cell_parameters = struct.lattice.matrix
             cell_parameters = ['{:>20.16f}    {:>20.16f}    {:>20.16f}'.format(cell[0], cell[1], cell[2]) for cell in cell_parameters]
             return cell_parameters
@@ -302,8 +299,7 @@ class qe_base:
             celldm1 = float(f"{celldm1:.16f}")
             return celldm1
         else:
-            logger.warning("You didn't specify V3_Hessian.dyn* as inputfile")
-            logger.warning("So the program let celldm1=None")
+            logger.warning("You didn't specify V3_Hessian.dyn* as inputfile. So the program let celldm1=None")
             return celldm1
         
     def get_coords(self, struct):
@@ -358,8 +354,7 @@ class qe_base:
             fractional_sites = ['     '.join([elename[int(coord[0])], str(coord[1]), str(coord[2]), str(coord[3])]) for coord in fractional_sites]
             return fractional_sites
         else:
-            logger.warning("You didn't specify relax.out as inputfile")
-            logger.warning("So We will get coords-information in the way of PYMATGEN")
+            logger.warning("You didn't specify relax.out, POSCAR, or CONTCAR as inputfile. So We will get coords-information in the way of PYMATGEN")
             fractional_sites = struct.sites
             element_names = [re.search(r"[A-Za-z]+", str(site.species)).group() for site in fractional_sites]
             fractional_sites = [
