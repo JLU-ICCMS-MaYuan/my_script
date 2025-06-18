@@ -37,6 +37,12 @@ class qe_inputpara(qe_base):
         for key, value in kwargs.items():
             setattr(self, key, value)
         
+        if not hasattr(self, "pp_dir"):
+            self.pp_dir = None
+            logger.debug(f'pp_dir = {self.pp_dir}\n')
+        else:
+            shutil.copy(self.pp_dir, self.work_path)
+        
         if not hasattr(self, "mode"):
             logger.error("You must specify mode")
             sys.exit(1)
