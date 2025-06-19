@@ -25,7 +25,7 @@ class qe_base:
         work_path: str,
         press: int,
         submit_job_system: str,
-        input_file_path: Path,
+        input_file_path: str,
         pp_dir: str,
     ) -> None:
         '''
@@ -49,11 +49,10 @@ class qe_base:
         self.work_path         = work_path
         self.press             = press          
         self.submit_job_system = submit_job_system
-        self.input_file_path   = Path(input_file_path)
+        self.input_file_path   = input_file_path
         self.pp_dir            = pp_dir
-
-        # if ("relax.out" in self.input_file_path.name) or ("scf.out" in self.input_file_path.name) or ("scffit.out" in self.input_file_path.name):
-            # self.work_path = Path(self.input_file_path).parent
+        
+        self.input_file_path = Path(self.input_file_path)
         if self.work_path is None:
             self.work_path = Path.cwd()
         else:
@@ -84,11 +83,9 @@ class qe_base:
                 self.workpath_pppath.mkdir(parents=True)
         else:
             self.pp_dir = Path(self.pp_dir)
-            if self.pp_dir.exists() and self.work_path.exists(): 
-                os.system(f"cp -fr {self.pp_dir}  {self.work_path}")
-                logger.info(f"You have copy {self.pp_dir} to {self.work_path}")
-                # 准备赝势 
-                self.workpath_pppath = Path(self.work_path).joinpath("pp")
+            if self.pp_dir.exists(): 
+                self.workpath_pppath = self.pp_dir
+                # 在已有的赝势库中挑选准备赝势
                 self.get_USPP(self.workpath_pppath) 
             else:
                 logger.error(f"You have no {self.pp_dir} or {self.work_path}. So the program will exit!")

@@ -26,7 +26,7 @@ class vasp_inputpara(vasp_base):
         press: int,
         submit_job_system: str,
         input_file_path: str,
-        mode: str,
+        pp_dir: str,
         **kwargs: dict,
         ):
         super(vasp_inputpara, self).__init__(
@@ -34,7 +34,7 @@ class vasp_inputpara(vasp_base):
             press, 
             submit_job_system, 
             input_file_path,
-            mode,
+            pp_dir,
             )
 
         self.set_default_inputpara(kwargs)
@@ -164,14 +164,14 @@ class vasp_inputpara(vasp_base):
         work_path         = config['work_path']            ; del config['work_path']
         press             = config['press']                ; del config['press']
         submit_job_system = config['submit_job_system']    ; del config['submit_job_system']
+        pp_dir            = config['pp_dir']               ; del config['pp_dir']
         input_file_path   = Path(config['input_file_path']); del config['input_file_path']
-        mode              = config['mode']                 ; del config['mode']
         self = cls(
             work_path=work_path,
             press=press,
             submit_job_system=submit_job_system,
             input_file_path=input_file_path,
-            mode=mode,
+            pp_dir=pp_dir,
             **config,
         )
         return self
@@ -194,7 +194,7 @@ class vasp_phonopara(vasp_inputpara):
         press: int, 
         submit_job_system: str, 
         input_file_path: str, 
-        mode: str, 
+        pp_dir: str,
         **kwargs: dict
         ):
         super(vasp_phonopara, self).__init__(
@@ -202,7 +202,7 @@ class vasp_phonopara(vasp_inputpara):
             press, 
             submit_job_system, 
             input_file_path, 
-            mode, 
+            pp_dir,
             **kwargs
             )
         
@@ -268,7 +268,7 @@ class vasp_eletronpara(vasp_inputpara):
         press: int,
         submit_job_system: str,
         input_file_path: str,
-        mode: str,
+        pp_dir: str,
         **kwargs: dict,
         ):
         super(vasp_inputpara, self).__init__(
@@ -276,7 +276,8 @@ class vasp_eletronpara(vasp_inputpara):
             press, 
             submit_job_system, 
             input_file_path,
-            mode,
+            pp_dir,
+            **kwargs,
             )
         
         self.set_default_inputpara(kwargs)
@@ -296,6 +297,7 @@ class vasp_eletronpara(vasp_inputpara):
         else:
             self.autoselect = eval(self.autoselect)
 
+
 class vaspbatch_inputpara(vaspbatch_base, vasp_inputpara):
 
     def __init__(
@@ -304,7 +306,7 @@ class vaspbatch_inputpara(vaspbatch_base, vasp_inputpara):
         press: int, 
         submit_job_system: str, 
         input_file_path: Path, 
-        mode: str,
+        pp_dir: str,
         **kwargs: dict,
         ) -> None:
 
@@ -312,7 +314,8 @@ class vaspbatch_inputpara(vaspbatch_base, vasp_inputpara):
             work_path, 
             press, 
             submit_job_system, 
-            input_file_path, mode
+            input_file_path, 
+            pp_dir, # 这里不需要加  **kwargs, 因为被继承的函数没有这个变量
             )
         
         '''
@@ -343,7 +346,7 @@ class vaspbatch_phonopara(vaspbatch_base, vasp_phonopara):
         press: int, 
         submit_job_system: str, 
         input_file_path: Path, 
-        mode: str,
+        pp_dir: str,
         **kwargs: dict,
         ) -> None:
 
@@ -351,7 +354,9 @@ class vaspbatch_phonopara(vaspbatch_base, vasp_phonopara):
             work_path, 
             press, 
             submit_job_system, 
-            input_file_path, mode
+            input_file_path,
+            pp_dir,
+            **kwargs,
             )
         
         self.set_default_inputpara(kwargs)
@@ -366,15 +371,15 @@ class vasp_mdpara(vasp_inputpara):
         press: int, 
         submit_job_system: str, 
         input_file_path: str, 
-        mode: str, 
+        pp_dir: str,
         **kwargs: dict
         ):
         super(vasp_mdpara, self).__init__(
             work_path, 
-            press, 
+            press,
             submit_job_system, 
             input_file_path, 
-            mode, 
+            pp_dir, 
             **kwargs
             )
         

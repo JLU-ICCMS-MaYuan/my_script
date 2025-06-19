@@ -375,7 +375,7 @@ class vaspbatch:
             press             = _config['press']            ; del _config['press']
             submit_job_system = _config['submit_job_system']; del _config['submit_job_system']
             pass                                            ; del _config['input_file_path']
-            mode              = _config['mode']             ; del _config['mode']
+            pp_dir            = _config['pp_dir']           ; del _config['pp_dir']
             for input_file_path in input_files_path:
                 # prepare the POSCAR POTCAR  
                 logger.info(f"Create directory for {input_file_path} file !!!")
@@ -387,7 +387,7 @@ class vaspbatch:
                             press=press,
                             submit_job_system=submit_job_system,
                             input_file_path=input_file_path,
-                            mode=mode,
+                            pp_dir=pp_dir,
                             **_config
                             )
                         # init the INCAR
@@ -406,7 +406,7 @@ class vaspbatch:
                         press=presses, # 此时presses = None, 在set_args.py中默认值设置的
                         submit_job_system=submit_job_system,
                         input_file_path=input_file_path,
-                        mode=mode,
+                        pp_dir=pp_dir,
                         **_config
                         )
                     # init the INCAR
@@ -435,7 +435,7 @@ class vaspbatch_phono:
             press             = _config['press']            ; del _config['press']
             submit_job_system = _config['submit_job_system']; del _config['submit_job_system']
             pass                                            ; del _config['input_file_path']
-            mode              = _config['mode']             ; del _config['mode']
+            pp_dir            = _config['pp_dir']           ; del _config['pp_dir']
             for input_file_path in input_files_path:
                 # prepare the POSCAR POTCAR  
                 phono_inputpara  = vaspbatch_phonopara(
@@ -443,7 +443,7 @@ class vaspbatch_phono:
                     press=press,
                     submit_job_system=submit_job_system,
                     input_file_path=input_file_path,
-                    mode=mode,
+                    pp_dir=pp_dir,
                     **_config
                     )
 

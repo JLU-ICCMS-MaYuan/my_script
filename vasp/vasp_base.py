@@ -31,16 +31,17 @@ class vasp_base:
         work_path: str,
         press: int,
         submit_job_system: str,
-        input_file_path: Path,
-        mode: str,
+        input_file_path: str,
+        pp_dir:str,
     ) -> None:
 
         self.work_path         = work_path
         self.press             = press          
         self.submit_job_system = submit_job_system
         self.input_file_path   = input_file_path
-        self.mode              = mode
+        self.pp_dir            = pp_dir
 
+        self.input_file_path   = Path(input_file_path)
         self.input_file_name   = self.input_file_path.name.split(".")[0]
         self.ase_type          = read(self.input_file_path)
         try:
@@ -61,14 +62,26 @@ class vasp_base:
         
         logger.info("Prepare the POSCAR and its coresponding primitive and conventional cell.")
         self.get_struct_info(self.struct_type, self.work_path)
+        
+        if self.pp_dir is None:
+            logger.info("Prepare the directory of `potcar_lib` and merge POTCARs ")
+            logger.info(f"Pick up POTCARs from: {potcar_dir}")
+            self.workpath_pppath = Path(self.work_path).joinpath("potcar_lib")
+            if not self.workpath_pppath.exists():
+                self.workpath_pppath.mkdir() 
+            self.get_potcar(self.work_path)
+            logger.info(f"potcar_lib is in {self.workpath_pppath}")
+        else:
+            self.pp_dir = Path(self.pp_dir)
+            if self.pp_dir.exists(): 
+                self.workpath_pppath = self.pp_dir
+                # 在已有的赝势库中挑选准备赝势
+                self.get_potcar(self.work_path)
+                logger.info(f"potcar_lib is in {self.workpath_pppath}")
+            else:
+                logger.error(f"You have no {self.pp_dir} or {self.work_path}. So the program will exit!")
+                sys.exit(1)
 
-        logger.info("Prepare the directory of `potcar_lib` and merge POTCARs ")
-        logger.info(f"Pick up POTCARs from: {potcar_dir}")
-        self.workpath_pppath = Path(self.work_path).joinpath("potcar_lib")
-        if not self.workpath_pppath.exists():
-            self.workpath_pppath.mkdir() 
-        self.get_potcar(self.work_path)
-        logger.info(f"potcar_lib is in {self.workpath_pppath}")
 
 
     def get_struct_info(self, struct, output_poscar):
@@ -430,16 +443,17 @@ class vaspbatch_base(vasp_base):
         work_path: str,
         press: int,
         submit_job_system: str,
-        input_file_path: Path,
-        mode: str,
+        input_file_path: str,
+        pp_dir: str,
     ) -> None:
 
         self.work_path         = work_path
         self.press             = press          
         self.submit_job_system = submit_job_system
         self.input_file_path   = input_file_path
-        self.mode              = mode
+        self.pp_dir            = pp_dir
         
+        self.input_file_path   = Path(input_file_path)
         if self.input_file_path.name.endswith('.vasp'):
             self.input_file_name   = self.input_file_path.name.strip('.vasp')
         elif self.input_file_path.name.endswith('.cif'):
@@ -468,9 +482,28 @@ class vaspbatch_base(vasp_base):
         self.get_struct_info(self.struct_type, self.work_path)
         
         ############################ prepare pp directory #########################
+        
         self.workpath_pppath = Path(self.work_path).parent.parent.joinpath("potcar_lib")
         logger.info(f"To create potcar dir in \n {self.workpath_pppath}, it's convenient for you to choose POTCARs once.")
         if not self.workpath_pppath.exists():
             self.workpath_pppath.mkdir()
         # 准备赝势 
-        self.get_potcar(self.work_path)   
+        self.get_potcar(self.work_path)  
+         
+        if self.pp_dir is None:
+            self.workpath_pppath = Path(self.work_path).parent.parent.joinpath("potcar_lib")
+            logger.info(f"To create potcar dir in \n {self.workpath_pppath}, it's convenient for you to choose POTCARs once.")
+            if not self.workpath_pppath.exists():
+                self.workpath_pppath.mkdir()
+            # 准备赝势 
+            self.get_potcar(self.work_path)  
+        else:
+            self.pp_dir = Path(self.pp_dir)
+            if self.pp_dir.exists(): 
+                self.workpath_pppath = self.pp_dir
+                # 在已有的赝势库中挑选准备赝势
+                self.get_potcar(self.work_path)
+                logger.info(f"potcar_lib is in {self.workpath_pppath}")
+            else:
+                logger.error(f"You have no {self.pp_dir} or {self.work_path}. So the program will exit!")
+                sys.exit(1)

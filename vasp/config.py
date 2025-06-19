@@ -14,7 +14,9 @@ class config:
         config["submit_job_system"] = self.args.submit_job_system
         
         config["logging_level"] = self.args.logging_level
-
+        
+        config["pp_dir"]         = self.args.pp_dir
+        
         config["vasp_workflow_type"] = self.args.vasp_workflow
         for other_arg in self.args.more_args:
             # arg_name, value = other_arg.split("=")
