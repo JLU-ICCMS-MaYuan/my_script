@@ -22,9 +22,7 @@ import os
 import phonopy
 import numpy as np
 
-
-from phonopy import Phonopy
-from phonopy.file_IO import parse_FORCE_SETS
+from phonopy.interface.vasp import read_vasp, Vasprun
 from phonopy.interface.qe import PH_Q2R, read_pwscf
 from phonopy.interface.vasp import read_vasp
 
@@ -32,33 +30,25 @@ from phonopy.interface.vasp import read_vasp
 
 
 def load_phonon_from_vasp(
-    poscar: str = "POSCAR-init",
+    poscar_in: str = "POSCAR-init",
     force_sets: str = "FORCE_SETS",
-    supercell_matrix: Sequence[Sequence[int]] | None = None,
-    primitive_matrix: Sequence[Sequence[float]] | None = None,
-) -> Phonopy:
-    """
-    从 VASP 输出读取并返回 Phonopy 对象。
+    supercell_matrix: list[int] | None = None,
+):
+    cell = read_vasp(poscar_in)
 
-    Parameters
-    ----------
-    poscar : str
-        VASP 原胞文件名
-    force_sets : str
-        Phonopy FORCE_SETS 文件名
-    supercell_matrix : 3×3
-        超胞矩阵
-    primitive_matrix : 3×3
-        原胞矩阵
-    """
-    unitcell = read_vasp(poscar)
-    phonon = Phonopy(
-        unitcell=unitcell,
-        supercell_matrix=supercell_matrix or [[2, 0, 0], [0, 2, 0], [0, 0, 2]],
-        primitive_matrix=primitive_matrix or np.eye(3),
+    # 2. 处理力常数
+    fc_file = Path(force_sets)
+
+    # 3. 构建 Phonopy 对象
+    phonon = phonopy.load(
+        supercell_matrix=supercell_matrix,
+        unitcell=cell,
+        force_sets_filename=fc_file,
+        calculator="vasp",
     )
-    phonon.set_displacement_dataset(parse_FORCE_SETS(force_sets))
-    phonon.produce_force_constants()
+
+    # 4. 保存 yaml 备份
+    phonon.save(settings={"force_constants": True})
     print("[INFO] Phonopy object built from VASP files.")
     return phonon
 
@@ -67,7 +57,7 @@ def load_phonon_from_qe(
     scf_in: str = "scf.in",
     fc_raw: str = "Ce1Sc2H24.fc",
     supercell_matrix: Sequence[int] | None = None,
-) -> Phonopy:
+):
     """
     从 QE 输出读取并返回 Phonopy 对象。
 
@@ -87,7 +77,7 @@ def load_phonon_from_qe(
     q2r.run(cell)
     q2r.write_force_constants()
     phonon = phonopy.load(
-        supercell_matrix=supercell_matrix or [6, 6, 6],
+        supercell_matrix=supercell_matrix,
         calculator="qe",
         unitcell=cell,
         force_constants_filename="force_constants.hdf5",
@@ -98,7 +88,7 @@ def load_phonon_from_qe(
     return phonon
 
 
-def load_phonon_from_yaml(yaml_file: str = "phonopy_params.yaml") -> Phonopy:
+def load_phonon_from_yaml(yaml_file: str = "phonopy_params.yaml"):
     """
     直接从 phonopy YAML 恢复 Phonopy 对象。
 
@@ -114,12 +104,14 @@ def load_phonon_from_yaml(yaml_file: str = "phonopy_params.yaml") -> Phonopy:
 
 
 def run_modulation(
-    phonon: Phonopy,
+    soft,
+    phonon,
     qpt: Sequence[float] | np.ndarray,
     amplitude_list: Sequence[float] | np.ndarray,
     nmode: int,
     dim: Sequence[int],
     natoms_in_primitive: int | None = None,
+    
 ) -> None:
     """
     计算并写出调制后的 POSCAR & YAML。
@@ -149,7 +141,8 @@ def run_modulation(
     phonon.set_modulations(dim, phonon_modes)
     phonon.write_yaml_modulations()
     phonon.write_modulations()
-    os.system('sed -i "s/   1.0/    0.529177/g" MPOSCAR*')
+    if soft == "qe":
+        os.system('sed -i "s/   1.0/    0.529177/g" MPOSCAR*')
     print(f"[INFO] Modulation finished → {Path.cwd()}")
     
 
@@ -157,27 +150,40 @@ def run_modulation(
 
 
 def main(
-    qpt: Sequence[float] | np.ndarray = (0.0, 0.0, 0.0),
-    amplitude_list: Sequence[float] | np.ndarray = (0.00, 0.01, 0.02),
-    nmode: int = 0,
-    dim: Sequence[int] = (1, 1, 1),
+    qpt: Sequence[float],
+    amplitude_list: Sequence[float],
+    nmode: int,
+    dim: Sequence[int],
+    input_structure: str,
+    input_fc_name: str,
+    input_supercell_matrix: Sequence[float],
 ) -> None:
     """
     指定调制参数，然后调用 run_modulation。
     若以后接入 argparse，只需把四个形参换成解析结果即可。
     """
-    SOFT = "qe"  # 选择 'vasp' / 'qe' / 'yaml'
+    SOFT = "vasp"  # 选择 'vasp' / 'qe' / 'yaml'
 
     if SOFT == "vasp":
-        phonon = load_phonon_from_vasp()
+        phonon = load_phonon_from_vasp(
+            poscar_in=input_structure,
+            force_sets=input_fc_name,
+            supercell_matrix=input_supercell_matrix,
+        )
+        
     elif SOFT == "qe":
-        phonon = load_phonon_from_qe()
+        phonon = load_phonon_from_qe(
+            scf_in=input_structure,
+            fc_raw=input_fc_name,
+            supercell_matrix=input_supercell_matrix,
+        )
     elif SOFT == "yaml":
         phonon = load_phonon_from_yaml()
     else:
         raise ValueError("SOFT must be 'vasp', 'qe' or 'yaml'.")
 
     run_modulation(
+        soft=SOFT,
         phonon=phonon,
         qpt=list(qpt),
         amplitude_list=np.asarray(amplitude_list),
@@ -190,9 +196,20 @@ def main(
 
 if __name__ == "__main__":
     # 在此处手动设置调制参数；如需命令行解析，替换成 argparse 即可
-    qpt_ = [0.5, 0.5, 0.5]          # Γ 点
-    amps_ = np.linspace(start=-10, stop=10, num=20)      # 三个振幅
-    nmode_ = 0                      # 第一条声子带
-    dim_ = [2, 2, 2]                # 2×2×2 超胞
+    qpt_   = [0., 0., 0.]          # Γ 点
+    amps_  = np.linspace(start=-10, stop=10, num=20)      # 三个振幅
+    nmode_ = 1                    # 第一条声子带
+    dim_   = [1,1,1]                # 2×2×2 超胞
+    input_structure_ = "POSCAR-init"
+    input_fc_name_ = "FORCE_SETS"
+    input_supercell_matrix_ = [2., 2., 2.]
+    main(
+        qpt=qpt_, 
+        amplitude_list=amps_, 
+        nmode=nmode_, 
+        dim=dim_, 
+        input_structure=input_structure_, 
+        input_fc_name=input_fc_name_, 
+        input_supercell_matrix=input_supercell_matrix_,
+        )
 
-    main(qpt=qpt_, amplitude_list=amps_, nmode=nmode_, dim=dim_)

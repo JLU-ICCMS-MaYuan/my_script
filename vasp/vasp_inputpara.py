@@ -203,7 +203,6 @@ class vasp_phonopara(vasp_inputpara):
             submit_job_system, 
             input_file_path, 
             pp_dir,
-            **kwargs
             )
         
         self.set_default_inputpara(kwargs)
@@ -277,7 +276,6 @@ class vasp_eletronpara(vasp_inputpara):
             submit_job_system, 
             input_file_path,
             pp_dir,
-            **kwargs,
             )
         
         self.set_default_inputpara(kwargs)
@@ -356,7 +354,6 @@ class vaspbatch_phonopara(vaspbatch_base, vasp_phonopara):
             submit_job_system, 
             input_file_path,
             pp_dir,
-            **kwargs,
             )
         
         self.set_default_inputpara(kwargs)
@@ -379,8 +376,7 @@ class vasp_mdpara(vasp_inputpara):
             press,
             submit_job_system, 
             input_file_path, 
-            pp_dir, 
-            **kwargs
+            pp_dir,
             )
         
         self.set_default_inputpara(kwargs)
