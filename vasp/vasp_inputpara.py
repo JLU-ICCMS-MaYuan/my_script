@@ -203,6 +203,7 @@ class vasp_phonopara(vasp_inputpara):
             submit_job_system, 
             input_file_path, 
             pp_dir,
+            **kwargs,
             )
         
         self.set_default_inputpara(kwargs)
@@ -270,12 +271,13 @@ class vasp_eletronpara(vasp_inputpara):
         pp_dir: str,
         **kwargs: dict,
         ):
-        super(vasp_inputpara, self).__init__(
+        super(vasp_eletronpara, self).__init__(  # 这里特别重要，必须在super里面写vasp_eletronpara，而不是vasp_inputpara
             work_path, 
             press, 
             submit_job_system, 
             input_file_path,
             pp_dir,
+            **kwargs, # 这里也特别重要，必须写**kwargs,因为vasp_eletronpara继承的函数vasp_inputpara有kwargs这个参数
             )
         
         self.set_default_inputpara(kwargs)
@@ -377,6 +379,7 @@ class vasp_mdpara(vasp_inputpara):
             submit_job_system, 
             input_file_path, 
             pp_dir,
+            **kwargs,
             )
         
         self.set_default_inputpara(kwargs)
