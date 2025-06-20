@@ -1,77 +1,127 @@
 #!/usr/bin/env python3
 import argparse
-import subprocess
 import os
 import re
+import subprocess
+from typing import Optional
 
-def get_num_atoms(outcar_path):
+# ---------- 解析函数 ---------- #
+def get_num_atoms_vasp(outcar_path: str) -> Optional[int]:
+    """从 VASP OUTCAR 里解析原子数（出现错误返回 None）"""
     try:
-        result = subprocess.run(f'grep -n -s "position of ions in cartesian coordinates" {outcar_path}', 
-                                shell=True, capture_output=True, text=True)
-        begin_id = int(result.stdout.split(":")[0])
-
-        N = 0
-        with open(outcar_path, 'r') as f:
-            for i, line in enumerate(f, start=1):
+        res = subprocess.run(
+            r'grep -n -s "position of ions in cartesian coordinates" ' + outcar_path,
+            shell=True, capture_output=True, text=True,
+        )
+        if not res.stdout:
+            return None
+        begin_id = int(res.stdout.split(":")[0])
+        natoms = 0
+        with open(outcar_path) as f:
+            for i, line in enumerate(f, 1):
                 if i > begin_id:
-                    coords = re.findall(r"[-+]?\d+\.\d+", line.strip())
+                    coords = re.findall(r"[-+]?\d+\.\d+", line)
                     if len(coords) == 3:
-                        N += 1
+                        natoms += 1
                     else:
                         break
-        return N
+        return natoms or None
     except Exception:
-        return 1
+        return None
 
 
-def get_free_energy(outcar_path):
-    """Extract the free energy (TOTEN) from an OUTCAR file."""
+def get_num_atoms_qe(scf_path: str) -> Optional[int]:
+    """从 QE scf.out 里解析原子数（出现错误返回 None）"""
     try:
-        result = subprocess.run(
-            f'grep -s "free  energy   TOTEN" {outcar_path} | tail -n 1 | awk \'{{print $5}}\'',
-            shell=True, capture_output=True, text=True
-        )
-        dE = result.stdout.strip()
-        return float(dE) if dE else 1e14  # Return a large number if no energy is found
+        with open(scf_path) as f:
+            for line in f:
+                if "number of atoms/cell" in line:
+                    # 例如：  number of atoms/cell =  20
+                    m = re.search(r"=\s*([0-9]+)", line)
+                    if m:
+                        return int(m.group(1))
+        return None
     except Exception:
-        return 1e14  # Return a large number if an error occurs
+        return None
 
 
+def get_energy_vasp(outcar_path: str) -> Optional[float]:
+    """最后一次 free‑energy TOTEN (eV)"""
+    try:
+        res = subprocess.run(
+            r'grep -s "free  energy   TOTEN" ' + outcar_path + " | tail -1 | awk '{print $5}'",
+            shell=True, capture_output=True, text=True,
+        )
+        return float(res.stdout.strip()) if res.stdout.strip() else None
+    except Exception:
+        return None
+
+
+def get_energy_qe(scf_path: str) -> Optional[float]:
+    """最后一次 “!    total energy” 行的能量 (Ry -> eV)"""
+    try:
+        # grep, 取最后一行
+        res = subprocess.run(
+            r'grep -s "!    total energy" ' + scf_path + " | tail -1 | awk '{print $5}'",
+            shell=True, capture_output=True, text=True,
+        )
+        en_ry = res.stdout.strip()
+        return float(en_ry) * 13.6056980659 if en_ry else None  # Ry→eV
+    except Exception:
+        return None
+
+
+# ---------- 振幅生成 ---------- #
 def generate_amplitudes(start: float, stop: float, step: float) -> list[float]:
-    """Generate a list of amplitudes based on start, stop, and step."""
-    amplitudes = []
-    current = start
-    while current <= stop:
-        amplitudes.append(current)
-        current += step
-    return amplitudes
+    a = []
+    cur = start
+    # 解决浮点误差，保证包含 stop
+    while (step > 0 and cur <= stop + 1e-12) or (step < 0 and cur >= stop - 1e-12):
+        a.append(round(cur, 10))  # 避免累积误差
+        cur += step
+    return a
 
 
+# ---------- 主程序 ---------- #
 def main():
-    # Set up argparse
-    parser = argparse.ArgumentParser(description="Generate force constants and modulation for a given POSCAR.")
-    parser.add_argument(
-        "-amp",
-        "--amplitudes",
-        nargs=3,
-        type=float,
-        default=[-3.0, 3.0, 0.1],
-        help="Three values: start, stop, and step for amplitudes (default: -3.0 3.0 0.1).",
+    parser = argparse.ArgumentParser(
+        description="Collect energies from MPOSCAR_* directories."
     )
+    parser.add_argument("-amp", "--amplitudes",
+                        nargs=3, type=float, default=[-3.0, 3.0, 0.1],
+                        help="start stop step (default: -3.0 3.0 0.1)")
+    parser.add_argument("--code", choices=["vasp", "qe", "auto"],
+                        default="auto",
+                        help="Which code to parse: vasp | qe | auto (default auto)")
     args = parser.parse_args()
 
-    # Generate amplitudes based on start, stop, and step
-    amplitudes = generate_amplitudes(args.amplitudes[0], args.amplitudes[1], args.amplitudes[2])
+    amps = generate_amplitudes(*args.amplitudes)
+    print(f"{'Amplitude':>10}  {'Natoms':>6}  {'Energy (eV/atom)':>18}  {'Source':>8}")
 
-    # Scan the current directory for OUTCAR files and extract free energy
-    outcar_files = [f for f in os.listdir() if f.startswith("OUTCAR")]
-    print("{:>30}, {:>9}, {:>6}, {:>15}".format("OUTCAR_file", "Amplitude", "natoms", "total Energy"))
-    for idx, amp in enumerate(amplitudes):
-        # outcar_file = os.path.join(f"{idx+1}.modu_delta{amp:.2f}", "OUTCAR")
-        outcar_file = os.path.join(f"modu_delta{amp:.2f}", "OUTCAR")
-        energy = get_free_energy(outcar_file)
-        natoms = get_num_atoms(outcar_file)
-        print("{:>30}, {:>9.2f}, {:>6}, {:>15.8f}".format(outcar_file, amp, natoms, energy/natoms))
+    for amp in amps:
+        d = f"MPOSCAR_{amp:0.2f}"
+        outcar  = os.path.join(d, "OUTCAR")
+        scfout  = os.path.join(d, "scf.out")
+
+        energy, natoms, src = 1e14, 1, "None"   # 默认失败
+
+        if args.code in ("vasp", "auto") and os.path.isfile(outcar):
+            e = get_energy_vasp(outcar)
+            n = get_num_atoms_vasp(outcar)
+            if e is not None:
+                energy, src = e, "VASP"
+            if n is not None:
+                natoms = n
+
+        if args.code in ("qe", "auto") and src == "None" and os.path.isfile(scfout):
+            e = get_energy_qe(scfout)
+            n = get_num_atoms_qe(scfout)
+            if e is not None:
+                energy, src = e, "QE"
+            if n is not None:
+                natoms = n
+
+        print(f"{amp:10.2f}  {natoms:6d}  {energy/natoms:18.8f}  {src:>8}")
 
 
 if __name__ == "__main__":

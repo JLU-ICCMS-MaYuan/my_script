@@ -142,20 +142,19 @@ def run_modulation(
     phonon.write_yaml_modulations()
     # phonon.write_modulations()
     
-    base_fname = get_default_cell_filename(interface_mode=None)
     deltas = []
     for amp, u in zip(amplitude_list, phonon._modulation._u):
         cell = phonon._modulation._get_cell_with_modulation(u)
-        write_vasp(filename=f"M{base_fname}_{(amp):2.2f}", cell=cell)
+        write_vasp(filename=f"MPOSCAR_{(amp):2.2f}", cell=cell)
         deltas.append(u)
     
         sum_of_deltas = np.sum(deltas, axis=0)
         cell = phonon._modulation._get_cell_with_modulation(sum_of_deltas)
-        write_vasp(filename=f"M{base_fname}", cell=cell)
+        write_vasp(filename=f"MPOSCAR", cell=cell)
         
         no_modulations = np.zeros(sum_of_deltas.shape, dtype=complex)
         cell = phonon._modulation._get_cell_with_modulation(no_modulations)
-        write_vasp(filename=f"M{base_fname}-orig", cell=cell)
+        write_vasp(filename=f"MPOSCAR-orig", cell=cell)
 
         
     if soft == "qe":
