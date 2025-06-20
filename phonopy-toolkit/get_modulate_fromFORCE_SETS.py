@@ -9,7 +9,7 @@ Phonon modulation workflow (VASP / QE).
    - VASP: 需要 `POSCAR-init`、`FORCE_SETS`
    - QE  : 需要 `scf.in`、`*.fc` (此处默认 `Ce1Sc2H24.fc`)
    - YAML: 需要 `phonopy_params.yaml`
-2. 根据需要修改 `SOFT`（'vasp' / 'qe' / 'yaml'）以及入口处的调制参数。
+2. 根据需要修改 `soft`（'vasp' / 'qe' / 'yaml'）以及入口处的调制参数。
 3. 运行： `python modulation.py`
 """
 
@@ -22,7 +22,7 @@ import os
 import phonopy
 import numpy as np
 
-from phonopy.interface.vasp import read_vasp, Vasprun
+from phonopy.interface.vasp import read_vasp
 from phonopy.interface.qe import PH_Q2R, read_pwscf
 from phonopy.interface.vasp import read_vasp
 
@@ -157,33 +157,31 @@ def main(
     input_structure: str,
     input_fc_name: str,
     input_supercell_matrix: Sequence[float],
+    soft,
 ) -> None:
     """
     指定调制参数，然后调用 run_modulation。
     若以后接入 argparse，只需把四个形参换成解析结果即可。
     """
-    SOFT = "vasp"  # 选择 'vasp' / 'qe' / 'yaml'
-
-    if SOFT == "vasp":
+    if soft == "vasp":
         phonon = load_phonon_from_vasp(
             poscar_in=input_structure,
             force_sets=input_fc_name,
             supercell_matrix=input_supercell_matrix,
         )
-        
-    elif SOFT == "qe":
+    elif soft == "qe":
         phonon = load_phonon_from_qe(
             scf_in=input_structure,
             fc_raw=input_fc_name,
             supercell_matrix=input_supercell_matrix,
         )
-    elif SOFT == "yaml":
+    elif soft == "yaml":
         phonon = load_phonon_from_yaml()
     else:
-        raise ValueError("SOFT must be 'vasp', 'qe' or 'yaml'.")
+        raise ValueError("soft must be 'vasp', 'qe' or 'yaml'.")
 
     run_modulation(
-        soft=SOFT,
+        soft=soft,
         phonon=phonon,
         qpt=list(qpt),
         amplitude_list=np.asarray(amplitude_list),
@@ -199,10 +197,14 @@ if __name__ == "__main__":
     qpt_   = [0., 0., 0.]          # Γ 点
     amps_  = np.linspace(start=-10, stop=10, num=20)      # 三个振幅
     nmode_ = 1                    # 第一条声子带
-    dim_   = [1,1,1]                # 2×2×2 超胞
-    input_structure_ = "POSCAR-init"
-    input_fc_name_ = "FORCE_SETS"
-    input_supercell_matrix_ = [2., 2., 2.]
+    dim_   = [1, 1, 1]                # 2×2×2 超胞
+    # input_structure_ = "POSCAR-init"
+    # input_fc_name_ = "FORCE_SETS"
+    # soft = 'vasp'
+    input_structure_ = "scf.in"
+    input_fc_name_ = "Ce1Sc2H24.fc"
+    input_supercell_matrix_ = [6., 6., 6.]
+    soft='qe'
     main(
         qpt=qpt_, 
         amplitude_list=amps_, 
@@ -211,5 +213,6 @@ if __name__ == "__main__":
         input_structure=input_structure_, 
         input_fc_name=input_fc_name_, 
         input_supercell_matrix=input_supercell_matrix_,
+        soft=soft,
         )
 
