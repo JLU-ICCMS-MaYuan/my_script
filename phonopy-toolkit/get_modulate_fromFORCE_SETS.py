@@ -204,7 +204,7 @@ if __name__ == "__main__":
     input_structure_ = "scf.in"
     input_fc_name_ = "Ce1Sc2H24.fc"
     input_supercell_matrix_ = [6., 6., 6.]
-    soft='qe'
+    soft='yaml'
     main(
         qpt=qpt_, 
         amplitude_list=amps_, 

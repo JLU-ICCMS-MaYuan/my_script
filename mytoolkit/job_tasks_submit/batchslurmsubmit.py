@@ -32,8 +32,10 @@ run_que = []
 
 def sub_job(pth):
     """提交任务的函数"""
+    print(rf'cp {SUBMIT_COMMAND} {pth}')
     os.system(rf'cp {SUBMIT_COMMAND} {pth}')
-    os.system(rf'cd {pth} && sbatch {SUBMIT_COMMAND} && cd {cwd}')
+    print(rf'cd {pth} && sbatch {SUBMIT_COMMAND} && cd {cwd}')
+    os.system(rf'cd {pth} && sbatch {os.path.basename(SUBMIT_COMMAND)} && cd {cwd}')
 
 def get_que_num():
     """获取当前目录下正在运行的任务数量"""
@@ -82,4 +84,3 @@ while True:
         
     if start_que == 0:
         sys.exit(1)
-
