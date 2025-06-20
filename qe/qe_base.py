@@ -81,6 +81,7 @@ class qe_base:
             self.workpath_pppath = Path(self.work_path).joinpath("pp")
             if not self.workpath_pppath.exists():
                 self.workpath_pppath.mkdir(parents=True)
+            self.get_USPP(self.workpath_pppath) 
         else:
             self.pp_dir = Path(self.pp_dir)
             if self.pp_dir.exists(): 
