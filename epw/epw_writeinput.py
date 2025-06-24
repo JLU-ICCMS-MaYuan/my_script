@@ -643,11 +643,22 @@ class epw_writeinput:
             
             epw.write(" prtgkk      = .true.     \n")
             
-            epw.write(" use_ws      = .true.     \n")
-            epw.write(" wannierize  = .false.      ! If .false., read *.ukk file\n".format(self.epw_inputpara.wannierize))
-            epw.write("\n")  
+            epw.write(" use_ws      = .true.\n")
+            epw.write(" wannierize  = {}       ! If .false., read *.ukk file\n".format(self.epw_inputpara.wannierize))
+            epw.write(" nbndsub     = {}\n".format(self.epw_inputpara.nbndsub))
+            if self.epw_inputpara.bands_skipped is not None:
+                epw.write(" bands_skipped = 'exclude_bands = {}'\n".format(self.epw_inputpara.bands_skipped))
+            epw.write(" num_iter    = {}\n".format(self.epw_inputpara.num_iter))
+            epw.write("\n")
+
+            for idx, pj in enumerate(self.epw_inputpara.proj):
+                epw.write(" proj({})     = {}\n".format(idx+1, pj))
+                
+            epw.write(" wdata({})    = 'dis_num_iter = {}'\n".format(idx+1, self.epw_inputpara.dis_num_iter))
+            epw.write("\n")
             epw.write(" iverbosity  = 2     ! 2 = verbose output for the superconducting part only.\n")
             epw.write("\n")
+            
             epw.write(" nk1 = {}\n nk2 = {}\n nk3 = {}\n".format(self.epw_inputpara.nk[0], self.epw_inputpara.nk[1], self.epw_inputpara.nk[2]))
             epw.write("\n")
             epw.write(" nq1 = {}\n nq2 = {}\n nq3 = {}\n".format(self.epw_inputpara.nq[0], self.epw_inputpara.nq[1], self.epw_inputpara.nq[2]))
@@ -677,21 +688,18 @@ class epw_writeinput:
             epw.write("\n")
             epw.write(" etf_mem     = {}       ! 1 include the whole band 3 only in the window band will be calculated \n".format(self.epw_inputpara.etf_mem))
             epw.write("\n")
+            epw.write(" ep_coupling = .true.       ! run e-ph coupling calculation. ephwrite requires ep_coupling=.TRUE., elph=.TRUE.\n".format(self.epw_inputpara.ep_coupling))
             epw.write(" elph        = .true.       ! calculate e-ph coefficients.   ephwrite requires ep_coupling=.TRUE., elph=.TRUE.\n")
             epw.write(" epwwrite    = .false.      ! write electron-phonon matrix elements in the coarse Wannier representation and relevant data (dyn matrices)\n")
             epw.write(" epwread     = .true.       ! read e-ph matrices from 'prefix.epmatwp' file. electron-phonon matrix elements in the coarse Wannier representation and relevant data (dyn matrices). \n")
             epw.write("\n")
             
+            epw.write(" use_ws      = .true.\n")
             epw.write(" wannierize  = {}       ! If .false., read *.ukk file\n".format(self.epw_inputpara.wannierize))
             epw.write(" nbndsub     = {}\n".format(self.epw_inputpara.nbndsub))
             if self.epw_inputpara.bands_skipped is not None:
                 epw.write(" bands_skipped = 'exclude_bands = {}'\n".format(self.epw_inputpara.bands_skipped))
             epw.write(" num_iter    = {}\n".format(self.epw_inputpara.num_iter))
-            epw.write("\n")
-            epw.write(" dis_win_max = {} \n".format(self.epw_inputpara.dis_win_max))
-            epw.write(" dis_froz_min = {}\n".format(self.epw_inputpara.dis_froz_min))
-            epw.write(" dis_froz_max = {}\n".format(self.epw_inputpara.dis_froz_max))
-            epw.write("\n")  
             
             epw.write(" fsthick  = {}             ! Fermi window [eV] : consider only states within Fermi energy +- fsthick\n".format(self.epw_inputpara.fsthick))
             epw.write(" degaussw      = {}        ! smearing in energy-conserving delta functions in [eV]\n".format(self.epw_inputpara.degaussw))
