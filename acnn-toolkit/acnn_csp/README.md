@@ -329,3 +329,14 @@ fix                 1 all box/relax tri \${pp}
 minimize            1.0e-8 1.0e-4 20000 20000
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ```
+
+##### <span style="font-size: 20px; color: lightblue;"> 4. 如何增加每代的结构数量，提升结构预测的效率？
+
+首先，从第10代开始，增加`RELAX/dyn_batch_relax`中的`range="1 1000"`的结构数量。可以尝试从1000增加到10000或者20000.
+其次，从第10代开始，在增加结构数之后，修改`RELAX/ppr`的CAU_FILE和RES. 
+```shell
+CAU_FILE=$(match_cau $(head -n 200 cac-log|awk '{print $9}'))
+RES=$(dedup -s ../../../PD/IT$IT -t 3 $CAU_FILE |grep out || true)
+```
+这两个变量代表的含义是：挑选出200个能量较低的组分保存至`CAU_FILE`，并且挑选每个组分的前三个能量更低结构保留下来保存到`RES`。
+可以在增加结构数之后增加200到500，同时减小RES中每个组分的结构数，保持效率不变。
