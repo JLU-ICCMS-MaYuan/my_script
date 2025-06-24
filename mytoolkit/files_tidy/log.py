@@ -7,7 +7,9 @@ def main():
     if len(sys.argv) > 1:
         # 如果有参数，使用参数作为补充说明
         additon_info = sys.argv[1]
-    
+    else:
+        additon_info = ''
+        
     # 确定目标文件路径
     home_dir = os.path.expanduser('~')
     workdir_file = os.path.join(home_dir, 'mylog')
