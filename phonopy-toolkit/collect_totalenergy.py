@@ -100,7 +100,7 @@ def main():
 
     for amp in amps:
         d = f"MPOSCAR_{amp:0.2f}"
-        outcar  = os.path.join(d, "OUTCAR")
+        outcar  = os.path.join(d, "scf/OUTCAR")
         scfout  = os.path.join(d, "scf.out")
 
         energy, natoms, src = 1e14, 1, "None"   # 默认失败

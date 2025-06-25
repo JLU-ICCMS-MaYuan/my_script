@@ -44,6 +44,8 @@ qe_main.py -i CONTCAR -j slurm -p PRESS scf -m mode=scf ecutwfc=80 ecutrho=960 k
 
 qe_main.py -i CONTCAR -j bash phono -m mode=nosplit EPC_flag=True dyn0_flag=True execmd='' queue=lhy qpoints='l m n'
 
+qe_main.py -i CONTCAR -j slurm phono -m mode=nosplit EPC_flag=True dyn0_flag=False execmd='mpirun -np 48' queue=lhy qpoints='2 2 2' npool=4
+
 qe_main.py -i CONTCAR -j slurm phono -m mode=split_assignQ EPC_flag=True degauss=0.02 ecutwfc=80 ecutrho=960  execmd='mpirun -np 48' npool=4
 
 qe_main.py -i CONTCAR -j slurm phono -m mode=split_dyn0 EPC_flag=True degauss=0.02 ecutwfc=80 ecutrho=960  execmd='mpirun -np 48' npool=4
