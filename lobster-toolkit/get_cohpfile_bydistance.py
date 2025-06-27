@@ -31,7 +31,7 @@ def write_lobsterin(dirname, mode=5, COHPstartEnergy=None, COHPendEnergy=None, s
             f.write('COHPendEnergy    {}\n'.format(COHPendEnergy))
             f.write('usebasisset pbeVaspFit2015\n')  # 基组
             for spe in struct.types_of_specie:
-                f.write('basisfunctions {} {}\n'.format(spe.name, zval_dict[spe.name]))   # 基组（直接使用根据vasp拟合的基组以及默认的基函数）
+                f.write('basisfunctions {} {} \n'.format(spe.name, zval_dict[spe.name]))   # 基组（直接使用根据vasp拟合的基组以及默认的基函数）
             # 这里会出现一个非常严重的计算问题！！！！！！！！！！！！！！
             # lobster认为你指定的原子对是不具有周期性的
             # 你用pymatgen脚本找到的距离是包含周期性的，把这原子对输入给lobsterin
@@ -41,7 +41,7 @@ def write_lobsterin(dirname, mode=5, COHPstartEnergy=None, COHPendEnergy=None, s
             # for pair, idx, d in pairs_idxs_d:
             #     if lower_d <= d <= upper_d:
             #         f.write("cohpbetween atom {} and atom {}\n".format(idx[0], idx[1]))
-            f.write("cohpGenerator from {} to {} type {} type {}\n".format(lower_d, upper_d, species_custom1, species_custom2))
+            f.write("cohpGenerator from {} to {} type {} type {} orbitalWise\n".format(lower_d, upper_d, species_custom1, species_custom2))
     elif mode == 0:
         lobsterin_path = os.path.join(dirname, "lobsterin")
         with open(lobsterin_path, "w") as f:
@@ -60,7 +60,7 @@ def write_lobsterin(dirname, mode=5, COHPstartEnergy=None, COHPendEnergy=None, s
             # for pair, idx, d in pairs_idxs_d:
             #     if lower_d <= d <= upper_d:
             #         f.write("cohpbetween atom {} and atom {}\n".format(idx[0], idx[1]))
-            f.write("cohpGenerator from {} to {} type {} type {}\n".format(lower_d, upper_d, species_custom1, species_custom2))
+            f.write("cohpGenerator from {} to {} type {} type {} orbitalWise\n".format(lower_d, upper_d, species_custom1, species_custom2))
     else:
         print(f"mode = {mode}, The scripts doesn't support it")
 # 主函数
