@@ -68,10 +68,10 @@ qe_main.py -i CONTCAR -j bash sc -m mode=Tc execmd='' npool=1 queue=local temper
 
 
 # qe能带计算
-qe_main.py -i PPOSCAR -j bash -w band eletron -m mode=eleband  ecutwfc=80 ecutrho=960 execmd='mpirun -np 2 ' npool=1 queue=local kinserted=200 tmp='../qeband/tmp/'
+qe_main.py -i CONTCAR -j bash -w band eletron -m mode=eleband  ecutwfc=80 ecutrho=960 execmd='mpirun -np 2 ' npool=1 queue=local kinserted=200 tmp='../qeband/tmp/'
 
 # 获得能带的高对称路径二维投影 
-qe_main.py -i PPOSCAR -j bash eletron -m mode=hspp  execmd=''
+qe_main.py -i CONTCAR -j bash eletron -m mode=hspp  execmd=''
 
 # 特别注意nbnd的设置, 不要太高了, 不然根本算不动。
 # nbnd=500
@@ -82,10 +82,10 @@ qe_main.py -i CONTCAR -j slurm eletron -m mode=eledos execmd='' npool=1 queue=lo
 
 
 # 适用于EPW计算前的nscf计算，这里的展开方式是高斯展宽，因为EPW要求nscf的K点是自定义坐标的，而自定义坐标的nscf不支持四面体方法
-qe_main.py -i ../phonon/PPOSCAR -j bash scf -m mode=nscf ecutwfc=80 ecutrho=960 kpoints_dense='8 8 8'  degauss=0.02 execmd='mpirun -np 4' npool=4  tmp='../qeband/tmp/' k_automatic=False wan=False  occupations=smearing  queue=lhy
+qe_main.py -i ../phonon/CONTCAR -j bash scf -m mode=nscf ecutwfc=80 ecutrho=960 kpoints_dense='8 8 8'  degauss=0.02 execmd='mpirun -np 4' npool=4  tmp='../qeband/tmp/' k_automatic=False wan=False  occupations=smearing  queue=lhy
 
 # 四面体方法计算nscf
-qe_main.py -i ../phonon/PPOSCAR -j bash scf -m mode=nscf ecutwfc=80 ecutrho=960 kpoints_dense='8 8 8'  degauss=0.02 execmd='mpirun -np 4' npool=4  tmp='../qeband/tmp/' k_automatic=True   occupations=tetrahedra  queue=lhy
+qe_main.py -i ../phonon/CONTCAR -j bash scf -m mode=nscf ecutwfc=80 ecutrho=960 kpoints_dense='8 8 8'  degauss=0.02 execmd='mpirun -np 4' npool=4  tmp='../qeband/tmp/' k_automatic=True   occupations=tetrahedra  queue=lhy
 
 
 
@@ -95,7 +95,7 @@ for i in {1..18}; do cd \$i; echo \$i; pl \$i; cd ..; done
 for i in {1..18}; do cd \$i; echo \$i; ls elph_dir; cd ..; done
 
 # EPW的wannir90部分计算能带
-qe_main.py -i origin-PPOSCAR -j bash -w . epw -m mode=epw_energyband execmd='mpirun -np 2' npool=2 dvscf_dir='../phonon/save'  nbndsub=10  bands_skipped=5  dis_froz_min=-5 dis_froz_max=0 proj='S:p  H:s' 
+qe_main.py -i origin-CONTCAR -j bash -w . epw -m mode=epw_energyband execmd='mpirun -np 2' npool=2 dvscf_dir='../phonon/save'  nbndsub=10  bands_skipped=5  dis_froz_min=-5 dis_froz_max=0 proj='S:p  H:s' 
 
 
 # SCTK计算超导

@@ -2,6 +2,7 @@
 import argparse
 import os
 import re
+import glob
 import subprocess
 from typing import Optional
 
@@ -58,7 +59,6 @@ def get_energy_vasp(outcar_path: str) -> Optional[float]:
 
 
 def get_energy_qe(scf_path: str) -> Optional[float]:
-    """最后一次 “!    total energy” 行的能量 (Ry -> eV)"""
     try:
         # grep, 取最后一行
         res = subprocess.run(
@@ -66,20 +66,33 @@ def get_energy_qe(scf_path: str) -> Optional[float]:
             shell=True, capture_output=True, text=True,
         )
         en_ry = res.stdout.strip()
-        return float(en_ry) * 13.6056980659 if en_ry else None  # Ry→eV
+        return float(en_ry) if en_ry else None  # Ry→eV
     except Exception:
         return None
 
 
 # ---------- 振幅生成 ---------- #
 def generate_amplitudes(start: float, stop: float, step: float) -> list[float]:
-    a = []
-    cur = start
-    # 解决浮点误差，保证包含 stop
-    while (step > 0 and cur <= stop + 1e-12) or (step < 0 and cur >= stop - 1e-12):
-        a.append(round(cur, 10))  # 避免累积误差
-        cur += step
-    return a
+    if start == 0. and stop == 0. and step == 0.:
+        a = []
+        # 匹配所有 MPOSCAR_* 开头的目录
+        for path in glob.glob("MPOSCAR_*"):
+            if os.path.isdir(path):
+                try:
+                    val = float(path.split("_")[1])
+                    a.append(val)
+                except (IndexError, ValueError):
+                    continue
+        return sorted(a)
+    
+    elif start != 0. and stop != 0. and step != 0.:
+        a = []
+        cur = start
+        # 解决浮点误差，保证包含 stop
+        while (step > 0 and cur <= stop + 1e-12) or (step < 0 and cur >= stop - 1e-12):
+            a.append(round(cur, 10))  # 避免累积误差
+            cur += step
+        return a
 
 
 # ---------- 主程序 ---------- #
@@ -87,41 +100,38 @@ def main():
     parser = argparse.ArgumentParser(
         description="Collect energies from MPOSCAR_* directories."
     )
-    parser.add_argument("-amp", "--amplitudes",
-                        nargs=3, type=float, default=[-3.0, 3.0, 0.1],
+    parser.add_argument("-a", "--amplitudes",
+                        nargs=3, type=float, default=[0., 0., 0.],
                         help="start stop step (default: -3.0 3.0 0.1)")
-    parser.add_argument("--code", choices=["vasp", "qe", "auto"],
-                        default="auto",
-                        help="Which code to parse: vasp | qe | auto (default auto)")
+    parser.add_argument("-c", "--code", choices=["vasp", "qe"],
+                        default="vasp",
+                        help="Which code to parse: vasp | qe ")
     args = parser.parse_args()
 
     amps = generate_amplitudes(*args.amplitudes)
-    print(f"{'Amplitude':>10}  {'Natoms':>6}  {'Energy (eV/atom)':>18}  {'Source':>8}")
 
-    for amp in amps:
-        d = f"MPOSCAR_{amp:0.2f}"
-        outcar  = os.path.join(d, "scf/OUTCAR")
-        scfout  = os.path.join(d, "scf.out")
-
-        energy, natoms, src = 1e14, 1, "None"   # 默认失败
-
-        if args.code in ("vasp", "auto") and os.path.isfile(outcar):
-            e = get_energy_vasp(outcar)
-            n = get_num_atoms_vasp(outcar)
-            if e is not None:
-                energy, src = e, "VASP"
-            if n is not None:
-                natoms = n
-
-        if args.code in ("qe", "auto") and src == "None" and os.path.isfile(scfout):
-            e = get_energy_qe(scfout)
-            n = get_num_atoms_qe(scfout)
-            if e is not None:
-                energy, src = e, "QE"
-            if n is not None:
-                natoms = n
-
-        print(f"{amp:10.2f}  {natoms:6d}  {energy/natoms:18.8f}  {src:>8}")
+    if args.code == "qe":
+        print(f"{'Amplitude':>10}    {'Energy (Ry/atom)':>18}")
+        for amp in amps:
+            d = f"MPOSCAR_{amp:0.2f}"
+            scfout  = os.path.join(d, "scf.out")
+            energy, natoms = 1e14, 1
+            if os.path.isfile(scfout):
+                energy = get_energy_qe(scfout)
+                natoms = get_num_atoms_qe(scfout)
+            print(f"{amp:10.2f} {energy/natoms:18.8f}")
+    elif args.code == "vasp":
+        print(f"{'Amplitude':>10}    {'Energy (eV/atom)':>18}")
+        for amp in amps:
+            d = f"MPOSCAR_{amp:0.2f}"
+            outcar  = os.path.join(d, "scf/OUTCAR")
+            energy, natoms = 1e14, 1
+            if os.path.isfile(outcar):
+                energy = get_energy_vasp(outcar)
+                natoms = get_num_atoms_vasp(outcar)
+            print(f"{amp:10.2f} {energy/natoms:18.8f}")
+    else:
+        print("You have to specify qe or vasp")
 
 
 if __name__ == "__main__":
