@@ -122,9 +122,6 @@ class qe_inputpara(qe_base):
             self.electron_maxstep = "200"
             logger.debug("You didn't set the `electron_maxstep`! The program will use default value: electron_maxstep=200")
 
-        if not hasattr(self, "charge_density_dat"):
-            self.charge_density_dat = "tmp/H3S1.save/charge-density.dat"
-
         if not hasattr(self, "tmp"):
             self.data_file_schema_xml = f"tmp/{self.system_name}.save/data-file-schema.xml"
             self.charge_density_dat   = f"tmp/{self.system_name}.save/charge-density.dat"
