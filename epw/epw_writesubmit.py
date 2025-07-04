@@ -252,6 +252,7 @@ class epw_writesubmit:
             j.write('ln -sf ${abspath}/epwdata.fmt            .\n')
             j.write('ln -sf ${abspath}/vmedata.fmt            .\n')
             j.write('{} {}/epw.x -npool {} <{}> {}  \n'.format(self.epw_inputpara.execmd, epwbin_path, self.epw_inputpara.npool, _inpufilename, _outputfilename))
+            j.write('mv  epw_prtgkk.out  epw_prtgkk_backup.out\n')
         return jobname
     
     def j8_epw_fermi_nest(self,  _dirpath, inputfilename):
@@ -269,7 +270,8 @@ class epw_writesubmit:
             j.write('ln -sf ${abspath}/crystal.fmt            .\n')
             j.write('ln -sf ${abspath}/epwdata.fmt            .\n')
             j.write('ln -sf ${abspath}/vmedata.fmt            .\n')
-            j.write('{} {}/epw.x -npool {} <{}> {}  \n'.format(self.epw_inputpara.execmd, epwbin_path, self.epw_inputpara.npool, _inpufilename, _outputfilename))
+            j.write('{} {}/epw.x -npool {} <{}> {}            \n'.format(self.epw_inputpara.execmd, epwbin_path, self.epw_inputpara.npool, _inpufilename, _outputfilename))
+            j.write('mv  epw_fermi_nest.out  epw_fermi_nest_backup.out\n')
         return jobname
 
     def j9_epw_linearized_iso(self,  _dirpath, inputfilename):
