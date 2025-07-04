@@ -20,12 +20,13 @@ def get_que_num():
         #print('Error fetching queue data')  # 错误处理
         return 0, []  # 如果 squeue 没有输出或其他错误，返回 0
 
+num = int(sys.argv[1])
 directory = "run_calculation"
 output_filenames = [f for f in os.listdir(directory) if f.endswith(".pwo")] # We select only the output files
 output_files = [os.path.join(directory, f) for f in output_filenames] # We add the directory/outpufilename to load them correctly
 
-print("number of output",len(output_files))
-
+print("You get number of output",len(output_files))
+print("Check these output right or wrong")
 energies = np.zeros(len(output_files))
 id_nums = []
 unfinish = []
@@ -63,35 +64,35 @@ for file in output_files:
 sort_num = sorted(id_nums)
 sort_num.append(10897654)
 j=0
-for i in range(0,len(output_files)):
+for i in range(0,num):
     if i==sort_num[j]:
        j=j+1
     else:
        print("without",i)
        unfinish.append(i)
 
-print(unfinish)
+# print(unfinish)
 n_sub = len(unfinish)
 
 #all_scf_files = [os.path.join("run_calculation", f) for f in os.listdir("run_calculation") if f.startswith("espresso_run_")]
 header="""#!/bin/sh 
-#SBATCH  --job-name=myjob
+#SBATCH  --job-name=mayqe                      
 #SBATCH  --output=log.out                       
 #SBATCH  --error=log.err                       
-#SBATCH  --partition=cpu
-#SBATCH  --nodes=1
-#SBATCH  --ntasks=56
-#SBATCH  --ntasks-per-node=56                          
+#SBATCH  --partition=intel6430
+#SBATCH  --nodes=1                          
+#SBATCH  --ntasks-per-node=64
 #SBATCH  --cpus-per-task=1                         
-#SBATCH  --exclude=cpu9
 
-source /public/home/mayuan/intel/oneapi/setvars.sh --force      
+source /data/home/mayuan/intel-2024/oneapi/intel2024_setvars.sh --force
+
+export OMP_NUM_THREADS=1
+export MKL_NUM_THREADS=1
+
 ulimit -s unlimited
-export I_MPI_ADJUST_REDUCE=3
-export MPIR_CVAR_COLL_ALIAS_CHECK=0
 """
 
-MAX_RUNNING_JOBS = 8
+MAX_RUNNING_JOBS = 4
 #for id_unfinish in unfinish:
 while True:
     que_num, queue_path = get_que_num()
@@ -100,7 +101,7 @@ while True:
     if que_num < MAX_RUNNING_JOBS:
         id_unfinish = unfinish.pop(0)
         filename= "un_sub_{}.sh".format(i)
-        run_line="mpirun -np 56 /public/home/mayuan/software/qe-7.1/bin/pw.x -nk 4 -in  ESP_{}.pwi > ESP_{}.pwo 2>&1".format(id_unfinish,id_unfinish)
+        run_line="mpirun -np 64 /data/home/mayuan/soft/qe-7.3.1-intel-oneAPI2024/bin/pw.x  -nk 4 -in  ESP_{}.pwi > ESP_{}.pwo 2>&1".format(id_unfinish,id_unfinish)
         with open(filename, "w") as f:
             f.write(header)
             print(run_line,file=f)

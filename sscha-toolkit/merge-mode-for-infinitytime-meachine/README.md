@@ -95,8 +95,9 @@ DYN_PREFIX =  'dyn_pop11_' # 达到收敛的那一代动力学矩阵的前一代
 FINAL_DYN =   'dyn_pop12_' # 达到收敛的那一代动力学矩阵
 SAVE_PREFIX = 'V3_Hessian.dyn' # 计算出的Hessian矩阵的结果
 NQIRR = 4 # 总的动力学矩阵的数量
-Tg = 0 # 温度
-T =  0 # 温度
+# The temperature of the simulation
+Tg = 0 # Temperature at which the ensemble was generated
+T = 0 # Temperature at which you want to perform the simulation
 POPULATION = 12 # 达到收敛的那一代动力学矩阵的编号, 程序从DATA_DIR="data_ensemble_manual"中读取那一代动力学矩阵计算出的受力和能量
 ens.load(DATA_DIR, population = POPULATION , N=N_RANDOM ) # 注意这里load函数加载的文件格式是.dat, 如果DATA_DIR目录中存放的文件格式是.npy, 
 #ens.load_bin(DATA_DIR, population_id = POPULATION), 特别的load_bin函数没有 N=N_RANDOM 这个参数.

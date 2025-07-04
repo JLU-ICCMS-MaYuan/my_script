@@ -17,8 +17,9 @@ FINAL_DYN =  f'dyn_pop{POPULATION}_'      # dyn mat that generated the last popu
 DYN_PREFIX =  f'dyn_pop{POPULATION-1}_'    # SSCHA dyn mat obtained with the last minimization 
 SAVE_PREFIX = 'V3_Hessian.dyn'  # Free energy Hessian dynamical matrices
 NQIRR = 3
-Tg = 0
-T =  0
+# The temperature of the simulation
+Tg = 0 # Temperature at which the ensemble was generated
+T = 0 # Temperature at which you want to perform the simulation
 INCLUDE_V4 = False # True to include the 4th-order SSCHA FC term to calculate the Hessian 
 print("Loading the original dynamical matrix...")
 dyn = CC.Phonons.Phonons(DYN_PREFIX, NQIRR)
