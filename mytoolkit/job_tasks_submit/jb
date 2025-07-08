@@ -36,7 +36,7 @@ qe_main.py -i CONTCAR -j slurm -p PRESS batch -m mode=preparescf ecutwfc=80 ecut
 
 qe_main.py -i CONTCAR -j slurm -p PRESS batch -m mode=prepareall ecutwfc=80 ecutrho=960 qpoints='l m n'  degauss=0.02 execmd='mpirun -np 48' npool=4 queue=lhy
 
-qe_main.py -i CONTCAR -j bash batch -m mode=processphono autoselect=True execmd='mpirun -np 48' qpoints='8 8 8' el_ph_nsigma=10 npool=4 queue=lhy
+qe_main.py -i CONTCAR -j slurm batch -m mode=processphono autoselect=True execmd='mpirun -np 48' qpoints='8 8 8' el_ph_nsigma=10 npool=4 queue=lhy
 
 qe_main.py -i CONTCAR -j slurm -p PRESS scf -m mode=scffit ecutwfc=80 ecutrho=960 kpoints_dense='20 20 16'  degauss=0.02 execmd='mpirun -np 48' npool=4 queue=lhy
 

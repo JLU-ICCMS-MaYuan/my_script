@@ -14,9 +14,11 @@ def append_to_record(content):
         writer = csv.writer(file)
         # 如果文件为空，则写入表头
         if file.tell() == 0:  # 检查文件是否为空
-            writer.writerow(["Date", "Time", "Content"])
+            # writer.writerow(["Date", "Time", "Content"])
+            writer.writerow("log")
         # 写入当前日期、时间和内容
-        writer.writerow([current_date, current_time_str, ' '.join(content)])
+        # writer.writerow([current_date, current_time_str, ' '.join(content)])
+        writer.writerow([' '.join(content)])
 
 def main():
     # 使用 argparse 解析命令行输入
