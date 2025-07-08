@@ -91,7 +91,8 @@ def main():
 
     # 保存 Ef 插值值
     pdos_at_ef_df = pd.DataFrame(pdos_at_ef)
-    pdos_at_ef_df.to_csv('PDOS_atEf.csv', index=False)
+    PDOS_atEF_output_file = 'PDOS_atEf_per_volume.csv' if args.per_volume else 'PDOS_atEf.csv'
+    pdos_at_ef_df.to_csv(PDOS_atEF_output_file, index=False)
 
     # TDOS 插值
     tdos_df = pd.read_table("TDOS.dat", sep=r'\s+')
