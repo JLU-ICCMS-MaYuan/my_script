@@ -106,7 +106,7 @@ ens.load(DATA_DIR, population = POPULATION , N=N_RANDOM ) # 注意这里load函�
 在提交完计算任务后，可以通过`python check_sscha_efv.py sscha.out`命令检查计算是否收敛。
 如果做的是NPT系综，需要检查FC, gibbs, STRESS TENSOR是否收敛。即：FC是否收敛到1e-4数量级，gibbs是否收敛到1meV/atom，STRESS TENSOR是否收敛到指定压强附近0.1GPa.
 
-如果做的是NVT习总，只需要同理需要关注上述三个物理量的，但是STRESS TENSOR只要稳定到程序自动计算的压强点即可。
+如果做的是NVT系综，只需要同理需要关注上述三个物理量的，但是STRESS TENSOR只要稳定到程序自动计算的压强点即可。
 
 
 ### <span style="color:yellow"> 3.2 如果计算完成收敛，通过CalHess.py计算出HESS矩阵
