@@ -340,7 +340,7 @@ class vasp_md:
 
         # init the KPOINTS
         if md_inputpara.kspacing is not None:
-            supercell_lattice = md_inputpara.sposcar_struct_type.lattice.matrix
+            supercell_lattice = md_inputpara.struct_type.lattice.matrix
             md_inputpara.write_evenly_kpoints(
                 lattice = supercell_lattice,
                 kspacing=md_inputpara.kspacing, 
@@ -357,7 +357,7 @@ class vasp_md:
 
         # submit the job
         _vasp_submitjob = vasp_submitjob(md_inputpara)
-        if self.md_inputpara.queue is not None:
+        if md_inputpara.queue is not None:
             _vasp_submitjob.submit_mode1(jobname)
 
 

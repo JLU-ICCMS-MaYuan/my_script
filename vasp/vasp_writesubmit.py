@@ -269,7 +269,7 @@ class vasp_writesubmit:
         submit_script_filepath = os.path.join(submit_dirpath, jobname)
         with open(submit_script_filepath, "w") as submit:
             submit.writelines(self.jobtitle)
-            if vasp_inputpara.kspacing is not None:
+            if self.vasp_inputpara.kspacing is not None:
                 submit.write('{} {} > vasp.log 2>&1               \n'.format(self.vasp_inputpara.execmd, vaspstd_path))  
             else:
                 submit.write('{} {} > vasp.log 2>&1               \n'.format(self.vasp_inputpara.execmd, vaspgam_path))                                                                       
@@ -280,10 +280,10 @@ class vasp_writesubmit:
         submit_script_filepath = os.path.join(submit_dirpath, jobname)
         with open(submit_script_filepath, "w") as submit:
             submit.writelines(self.jobtitle)
-            if vasp_inputpara.kspacing is not None:
-                submit.write('{} {} > vasp.log 2>&1               \n'.format(self.vasp_inputpara.execmd, vaspstd_path))  
+            if self.vasp_inputpara.kspacing is not None:
+                submit.write('{} {} > vasp.log 2>&1               \n'.format(self.vasp_inputpara.execmd,vaspstd_path))  
             else:
-                submit.write('{} {} > vasp.log 2>&1               \n'.format(self.vasp_inputpara.execmd, vaspgam_path))                                                                       
+                submit.write('{} {} > vasp.log 2>&1               \n'.format(self.vasp_inputpara.execmd,vaspgam_path))                                                   
         return jobname
     
     def md_npt(self, submit_dirpath):
@@ -291,7 +291,7 @@ class vasp_writesubmit:
         submit_script_filepath = os.path.join(submit_dirpath, jobname)
         with open(submit_script_filepath, "w") as submit:
             submit.writelines(self.jobtitle)
-            if vasp_inputpara.kspacing is not None:
+            if self.vasp_inputpara.kspacing is not None:
                 submit.write('{} {} > vasp.log 2>&1               \n'.format(self.vasp_inputpara.execmd, vaspstd_path))  
             else:
                 submit.write('{} {} > vasp.log 2>&1               \n'.format(self.vasp_inputpara.execmd, vaspgam_path))                                                      

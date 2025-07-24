@@ -481,7 +481,7 @@ class vasp_writeincar:
             incar.write("TEBEG   = {}           \n".format(self.vasp_inputpara.tebeg))
             incar.write("TEEND   = {}           \n".format(self.vasp_inputpara.teend))
             incar.write("PMASS   = {}           \n".format(self.vasp_inputpara.pmass))
-            incar.write("LANGEVIN_GAMMA = {}    \n".format('  '.join(self.vasp_inputpara.self.langevin_gamma)))
+            incar.write("LANGEVIN_GAMMA = {}    \n".format('  '.join(self.vasp_inputpara.langevin_gamma)))
             incar.write("LANGEVIN_GAMMA_L = {}  \n".format(self.vasp_inputpara.langevin_gamms_l))
 
 

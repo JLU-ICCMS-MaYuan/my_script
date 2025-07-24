@@ -175,7 +175,7 @@ def set_more_args(parser: ArgumentParser):
         help="more parameters about Molecular dynamics, for example\n"
             "POTIM determins the time for one step, POTIM=0.5 fs"
     )
-    parser_md.set_defaults(vasp_workflow=vasp_phono)
+    parser_md.set_defaults(vasp_workflow=vasp_md)
 
     # 批量结构弛豫
     parser_batch_relax = subparsers.add_parser("batch", formatter_class=RawTextHelpFormatter)

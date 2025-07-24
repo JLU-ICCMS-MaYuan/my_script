@@ -206,7 +206,7 @@ class vasp_phonopara(vasp_inputpara):
             **kwargs,
             )
         
-        self.set_default_inputpara(kwargs)
+        # self.set_default_inputpara(kwargs) 这里不需要启用set_default_inputpara， 因为vasp_inputpara的init方法中已经调用过set_default_inputpara
         self.set_default_phonoinputpara(kwargs)
 
     def set_default_phonoinputpara(self, kwargs):
@@ -280,7 +280,7 @@ class vasp_eletronpara(vasp_inputpara):
             **kwargs, # 这里也特别重要，必须写**kwargs,因为vasp_eletronpara继承的函数vasp_inputpara有kwargs这个参数
             )
         
-        self.set_default_inputpara(kwargs)
+        # self.set_default_inputpara(kwargs)  这里不需要启用set_default_inputpara， 因为vasp_inputpara的init方法中已经调用过set_default_inputpara
         try:
             self.mode = self.mode.split()
         except:
@@ -358,9 +358,9 @@ class vaspbatch_phonopara(vaspbatch_base, vasp_phonopara):
             pp_dir,
             )
         
-        self.set_default_inputpara(kwargs)
+        # self.set_default_inputpara(kwargs)  这里不需要启用set_default_inputpara， 因为vasp_inputpara的init方法中已经调用过set_default_inputpara
         self.set_default_phonoinputpara(kwargs)
-
+        
 
 class vasp_mdpara(vasp_inputpara):
 
@@ -382,11 +382,18 @@ class vasp_mdpara(vasp_inputpara):
             **kwargs,
             )
         
-        self.set_default_inputpara(kwargs)
+        # self.set_default_inputpara(kwargs) 这里不需要启用set_default_inputpara， 因为vasp_inputpara的init方法中已经调用过set_default_inputpara
         self.set_default_mdinputpara(kwargs)
-    
-    def set_default_mdinputpara(self):
-         
+        
+    def set_default_mdinputpara(self, kwargs):
+        
+        for key, value in kwargs.items():
+            if key != "work_path" and \
+               key != "press" and \
+               key != "submit_job_system" and \
+               key !="input_file_path":
+                setattr(self, key, value)
+                
         if not hasattr(self, "tebeg"):
             raise ValueError("You have to set tebeg(TEBEG)")
 
@@ -420,9 +427,9 @@ class vasp_mdpara(vasp_inputpara):
             self.mdalgo = 3
             self.isif = 3
             if not hasattr(self, "langevin_gamma"):
-                self.langevin_gamma = [10.0]*len(self.species)  
+                self.langevin_gamma = ["10.0"]*len(self.species)  
             else:
-                self.langevin_gamma = list(map(float, self.langevin_gamma.split()))
+                self.langevin_gamma = list(map(str, self.langevin_gamma.split()))
             if not hasattr(self, "langevin_gamms_l"):
                 self.langevin_gamms_l = 1 
             else:
