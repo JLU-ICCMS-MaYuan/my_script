@@ -11,7 +11,7 @@ def append_to_record(content):
     # Open file and append content (write in CSV format)
     with open("EXP.RECORD.csv", "a", newline='') as f:
         # Write header if file is empty
-        f.write('  '.join(content))
+        f.write('  '.join(content) + '\n')
 
 def main():
     # Check if any arguments were provided (first element is script name)
