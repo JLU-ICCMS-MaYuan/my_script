@@ -511,3 +511,9 @@ qe.7.3.1开始使用的epw.5.8可以使用不同与from_scratch模式下的npool
 ### <span style="color:lightgreen"> 21. Error in routine read_xml_file (4): fatal error reading xml file
 很有可能是你的nscf用的qe版本和epw的版本对不上。建议全部删掉用统一的版本的qe和epw重新计算。
 
+### <span style="color:lightgreen"> 22. nnk should be equal to nkfs 
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+     Error in routine read_ephmat (1):
+     nnk should be equal to nkfs
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ 这很可能是因为你用的是比qe.7.3.1更低版本的epw，此时的epw不支持计算超导使用不同于细网格插值的核数。
