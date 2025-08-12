@@ -32,7 +32,6 @@ def process_tasks(pressure):
                 # 构造输出文件名
                 output_name = f"{task_name}_{pressure}GPa.res"
                 output_path = os.path.join(task_path, output_name)
-
                 # 执行 outcar2seed 脚本
                 try:
                     subprocess.run(
@@ -53,13 +52,5 @@ def process_tasks(pressure):
 if __name__ == "__main__":
     # 可以将压力值作为命令行参数传递
     # 例如：python get_res.py 50
-    try:
-        if len(sys.argv) > 1:
-            pressure = int(sys.argv[1])
-        else:
-            pressure = 50  # 默认压力值
-    except (ValueError, IndexError):
-        print("Invalid pressure value. Using default (50).")
-        pressure = 50
-
+    pressure = sys.argv[1]
     process_tasks(pressure)
