@@ -255,6 +255,14 @@ acnn_outcar2seed /path/to/OUTCAR /path/to/seed_name.res (ScZrB-ScB2-end-1.res)
 
 
 <span style="font-size: 20px; color: lightblue;"> 3. 准备SEED文件
+```shell
+# 这种方式可以获得能量和受力
+outcar2seed OUTCAR BeH2-P-3m1_50GPa.res
+
+# 这种方式只能获得结构不能获得能量受力
+cabal poscar cell < POSCAR > BeH2-P-3m1_50GPa.res
+# 必须保证POSCAR里面的坐标形式是Direct, 并且Direct必须首字母大写
+```
 
 <span style="font-size: 20px; color: lightblue;"> 4. 提交任务
 
@@ -340,3 +348,16 @@ RES=$(dedup -s ../../../PD/IT$IT -t 3 $CAU_FILE |grep out || true)
 ```
 这两个变量代表的含义是：挑选出200个能量较低的组分保存至`CAU_FILE`，并且挑选每个组分的前三个能量更低结构保留下来保存到`RES`。
 可以在增加结构数之后增加200到500，同时减小RES中每个组分的结构数，保持效率不变。
+
+##### <span style="font-size: 20px; color: lightblue;"> 5. 关于RELAX中设置结构数的设置
+
+```shell
+frame="500" # 总结构数
+group="100" # 每个group文件里面有多少个结构
+# 因此有group_aa, group_ab, group_ac, group_ad, group_ae五个group
+
+warp="2"   # 多少个group写在一个task*.sh文件里面
+# 5/2=2……1，因此有3个task0.sh, task1.sh, task2.sh
+
+job_max=4   # 最多同时提交多少个任务。
+```
