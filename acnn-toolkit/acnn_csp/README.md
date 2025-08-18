@@ -3,6 +3,7 @@
 ## 官方文档：
 
 https://bonjour221.github.io/notes.github.io/external/external-utilities/
+https://gitee.com/wangzf22/acnn
 
 ##  <span style="font-size: 30px; color: lightgreen;"> 安装教程
 
@@ -245,10 +246,6 @@ frame="500" # 总共提取500个结构
 group="100" # 每100个为一组，相应的n_groups=5，表示有5组
 warp="12"   # 
 job_max=4
-
-
-# 准备相图端点结构的OUTCAR
-acnn_outcar2seed /path/to/OUTCAR /path/to/seed_name.res (ScZrB-ScB2-end-1.res)
 ```
 
 
@@ -258,7 +255,11 @@ acnn_outcar2seed /path/to/OUTCAR /path/to/seed_name.res (ScZrB-ScB2-end-1.res)
 ```shell
 # 这种方式可以获得能量和受力
 outcar2seed OUTCAR BeH2-P-3m1_50GPa.res
+```
+**特别注意outcar2seed获得的res文件的头写的是cable-in-out，这是有问题的，如果与文件本身的名称不一致，会导致RELAX/ppr中在获得种子文件时报错。**
+这个问题可以通过我的脚本`get_seeds_resfiles.py`解决
 
+```shell
 # 这种方式只能获得结构不能获得能量受力
 cabal poscar cell < POSCAR > BeH2-P-3m1_50GPa.res
 # 必须保证POSCAR里面的坐标形式是Direct, 并且Direct必须首字母大写
@@ -361,3 +362,21 @@ warp="2"   # 多少个group写在一个task*.sh文件里面
 
 job_max=4   # 最多同时提交多少个任务。
 ```
+
+##### <span style="font-size: 20px; color: lightblue;"> 6. 关于各个提交任务的脚本的title的设置引发的错误。
+acnn通过acnn_wait <任务名> 来控制一个模块任务的完成和下一个模块任务的进行，如果你在修改提交任务的脚本的时候，发现一个模块还没运行完毕，下一个模块已经开始运行了。那么这就说明你的`#SBATCH --job-name=TRAINAlBeH`设置的有问题（这里以slurm系统作为说明）。
+
+建议你在修改完之后，用grep好好检查一下。
+
+##### <span style="font-size: 20px; color: lightblue;"> 7. 关于RELAX目录中设置结构优化的types的参数设置问题
+
+dyn_batch_relax_bfgs中types="Al,Be"设置必须有逗号。
+```shell
+types="Al,Be"
+```
+
+dyn_batch_relax_lmp中types="Al Be"不能有逗号。
+```shell
+types="Al Be"
+```
+

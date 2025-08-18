@@ -44,10 +44,13 @@ if __name__ == "__main__":
     info = """Sum COHP for given orbital pairs.
 Such as: For the system of CeSc2H24
 
+method 1:
+analycohp.py -o 5s-1s 6s-1s 5py-1s 5pz-1s 5px-1s 5dxy-1s 5dyz-1s 5dz2-1s 5dxz-1s 5dx2-1s 4f_3-1s 4f_2-1s 4f_1-1s 4f0-1s 4f1-1s 4f2-1s 4f3-1s
+analycohp.py -o 3s-1s 3px-1s 3py-1s 3pz-1s 3dxy-1s 3dyz-1s 3dz2-1s 3dxz-1s 3dx2-1s
 
-analysiscohp.py -o '5s-1s' '6s-1s' '5py-1s' '5pz-1s' '5px-1s' '5dxy-1s' '5dyz-1s' '5dz2-1s' '5dxz-1s' '5dx2-1s' '4f_3-1s' '4f_2-1s' '4f_1-1s' '4f0-1s' '4f1-1s' '4f2-1s' '4f3-1s'
-analysiscohp.py -o 5s-1s 6s-1s 5p-1s 5d-1s 4f-1s
-
+method 2:
+analycohp.py -o 5s-1s 6s-1s 5p-1s 5d-1s 4f-1s
+analycohp.py -o 5s-3s 5s-3p 5s-3d  5s-4s   6s-3s 6s-3p 6s-3d 6s-4s   5p-3s 5p-3p 5p-3d 5p-4s   5d-3s 5d-3p 5d-3d 5d-4s  4f-3s 4f-3p 4f-3d 4f-4s
 
 num_bonds: 30
 num_orbis: 17
@@ -60,12 +63,14 @@ orbital pair of 4f-1s: 7, ICOHP at the Fermi level: -0.150,
 average ICOHP of the pair at the Fermi level: -1.130,
 If you can plus all projected orbital pair to check the results.
     """
-    parser = argparse.ArgumentParser(description=info)
+    parser = argparse.ArgumentParser(description="run cohp analysis")
     parser.add_argument("-f", "--file", type=str, default="COHPCAR.lobster", help="Path to COHPCAR.lobster file")
     parser.add_argument("-o", "--orbitals", nargs="+", required=True,
                         help="List of orbital pairs to analyze, e.g., 1s-5s 1s-6s 1s-5p 1s-5d 1s-4f")
 
     args = parser.parse_args()
+    
+    print(info)
     
     cohpcar    = Cohpcar(filename="COHPCAR.lobster")
     num_bonds  = len(cohpcar.cohp_data)-1;print(f"num_bonds: {num_bonds}")
