@@ -20,7 +20,7 @@ vasp_main.py  -i stdlibs -j slurm batch -m mode=scf sigma=0.01 encut=900 ediff=1
 
 vasp_main.py -i CONTCAR -j slurm -p PRESS -w 100 relax -m mode=rv4 execmd='mpirun -np 48' ismear=0 sigma=0.01 ediff=1e-8 ediffg=-0.001 encut=900 kspacing=0.188 ncore=4 queue=lhy
 
-vasp_main.py -i CONTCAR -j slurm -w eletron  eletron -m mode='scf eledos eband' execmd='mpirun -np 48' encut=900 ediff=1e-8 ediffg=-0.001 ncore=4 kspacing=0.188 ismear=0 sigma=0.01 vaspkitflag=False autoselect=False queue=lhy
+vasp_main.py -i CONTCAR -j slurm -w eletron  eletron -m mode='scf eledos eband cohp' execmd='mpirun -np 48' encut=900 ediff=1e-8 ediffg=-0.001 ncore=4 kspacing=0.188 ismear=0 sigma=0.01 vaspkitflag=False autoselect=False queue=lhy nbands=xxx
 
 vasp_main.py -i CONTCAR -j slurm -w d111 phono -m supercell='1 1 1' kspacing=0.189 mode=disp ismear=1 encut=800 ediff=1E-08 ediffg=-0.001 ncore=4 lreal=.FALSE. queue=lhy execmd='mpirun -np 48'
 
@@ -29,6 +29,8 @@ vasp_main.py -i POSCAR -j bash data -m mode=dispphdos supercell='2 2 2' tmin=0 t
 vasp_main.py -i POSCAR -j bash data -m mode=dispband supercell='2 2 2' mp='8 8 8'
 
 vasp_main.py -i POSCAR -j bash data -m mode=hspp
+
+vasp_main.py -i CONTCAR -j slurm -p 200 relax -m mode=rv4 execmd='mpirun -np 48' ismear=0 sigma=0.01 ediff=1e-8 ediffg=-0.001 encut=600 kspacing=0.188 ncore=4 ispin=2 magmom='3 2*0 24*0' ldau=.True. ldautype=1 ldaul=2 ldauu=4.5 ldauj=0.5 lmaxmix=6
 
 qe_main.py -i CONTCAR -j slurm -p PRESS -w . relax -m mode=relax-vc kpoints_dense='l m n' conv_thr=1.0d-8 execmd='mpirun -np 48' ecutwfc=80 ecutrho=960 degauss=0.02 npool=4 queue=lhy
 

@@ -46,7 +46,7 @@ class vasp_writeincar:
 
         if int(self.vasp_inputpara.ispin)== 2:
             self.append_magnet(incar_dirpath)
-        if self.vasp_inputpara.ldau  == ".TRUE.":
+        if self.vasp_inputpara.ldau  == ".TRUE." or self.vasp_inputpara.ldau  == "T":
             self.append_u(incar_dirpath)
 
 

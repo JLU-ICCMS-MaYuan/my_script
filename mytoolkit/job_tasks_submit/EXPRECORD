@@ -7,21 +7,31 @@ def append_to_record(content):
     current_time = datetime.now()
     current_date = current_time.strftime("%Y-%m-%d")
     current_time_str = current_time.strftime("%H:%M:%S")
-    
-    # Open file and append content (write in CSV format)
-    with open("EXP.RECORD.csv", "a", newline='') as f:
-        # Write header if file is empty
-        f.write('  '.join(content) + '\n')
+
+    # --- Start of modification ---
+    # Process arguments: if an argument contains a space, wrap it in single quotes
+    processed_content = []
+    for arg in content:
+        if ' ' in arg:
+            processed_content.append(f"'{arg}'")
+        else:
+            processed_content.append(arg)
+    # --- End of modification ---
+
+    # Open file and append content
+    with open("EXP.RECORD.csv", "a") as f:
+        # Join the PROCESSED content with spaces and write
+        f.write(' '.join(processed_content) + '\n')
 
 def main():
-    # Check if any arguments were provided (first element is script name)
+    # Check if any arguments were provided
     if len(sys.argv) < 2:
         print("Usage: ./script.py content_to_log")
         sys.exit(1)
-    
+
     # Get all arguments except the script name
     content = sys.argv[1:]
-    
+
     # Call function to append content to file
     append_to_record(content)
 

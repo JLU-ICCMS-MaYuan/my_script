@@ -361,6 +361,9 @@ warp="2"   # 多少个group写在一个task*.sh文件里面
 # 5/2=2……1，因此有3个task0.sh, task1.sh, task2.sh
 
 job_max=4   # 最多同时提交多少个任务。
+
+# 比较合理的设置方式是，要保证：
+frame/group = warp*job_max
 ```
 
 ##### <span style="font-size: 20px; color: lightblue;"> 6. 关于各个提交任务的脚本的title的设置引发的错误。
@@ -380,3 +383,15 @@ dyn_batch_relax_lmp中types="Al Be"不能有逗号。
 types="Al Be"
 ```
 
+##### <span style="font-size: 20px; color: lightblue;"> 8. 关于PD目录某一代IT${IT}没有新一代结构信息
+
+比如第四代`IT4/cam`里面找不到关于IT4_*开头的任何结构名以及它对应的res文件。
+
+1. 经过仔细的侦察，发现是因为在制作`PD/IT4`时，里面的结构需要用到种子目录`SEED`中的文件，PD中前3代的`res`文件，以及`XSF/IT4`中的`res`文件 (通过检查PD/mkpd而知)；
+2. 而`XSF/IT4`中的res来自于`DFT/IT4/SCF`中的文件(通过检查`XSF/ry`而知)
+3. 而`DFT/IT4/SCF`中的`res`文件来自于`RELAX/IT3/SCF`里面的res文件和`RELAX/IT3/OPT`里面的`res`文件
+4. 而`RELAX/IT3/SCF`和`RELAX/IT3/OPT`中的文件都是通过处理`RELAX/IT3/RES`中文件得到的(通过检查RELAX/ppr而知)， `ppr`将`RES`中每个配比能量最低的结构放入`RELAX/IT3/FPC/SCF`中，ppr将LIM中的结构放入`RELAX/IT3/FPC/OPT`中。
+5. 而`RELAX/IT3/RES`中的文件是通过`ppr`搜集`RELAX/IT3`中的所有`${seed}*-out.res`文件得到的，这个文件就是lammps结构优化结束后的文件，如果结构优化失败就没有`${seed}*-out.res`这些文件
+6. 所以现在唯一的问题源头就是检查是不是结构优化出错了！！！
+7. `lammps`的结构优化是通过·`relax_lammps "mpirun -np 1 lmp_mpi" AlBe-57325-3298-3474.res /data/home/mayuan/work/61.Al-Be/POT/IT3/model-restart/model-100000 "Al Be" 50`实现的。而其中`relax_lammps`中包含了调用lammps的命令`$exe -in "$sign".in > "$sign".conv 2>&1`(这里的exe就是lammps的绝对路径)， `"$sign".conv`就是lammps结构优化的输出文件。
+8. 通过检查`"$sign".conv`发现，确实是结构优化出现了问题，在node75中发现了结构优化有错，重新优化即可。
