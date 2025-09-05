@@ -30,7 +30,7 @@ vasp_main.py -i POSCAR -j bash data -m mode=dispband supercell='2 2 2' mp='8 8 8
 
 vasp_main.py -i POSCAR -j bash data -m mode=hspp
 
-vasp_main.py -i CONTCAR -j slurm -p 200 relax -m mode=rv4 execmd='mpirun -np 48' ismear=0 sigma=0.01 ediff=1e-8 ediffg=-0.001 encut=600 kspacing=0.188 ncore=4 ispin=2 magmom='3 2*0 24*0' ldau=.True. ldautype=1 ldaul=2 ldauu=4.5 ldauj=0.5 lmaxmix=6
+vasp_main.py -i  CONTCAR  -j  slurm  -p  150  relax  -m  mode=rv4  execmd='mpirun -np 48'  ismear=0  sigma=0.01  ediff=1e-8  ediffg=-0.001  encut=600  kspacing=0.188  ncore=4  ispin=2  magmom='3 2*0 24*0'  ldau=.TRUE.  ldautype=1  ldaul='3 -1 -1'  ldauu='4.5 0.0 0.0'  ldauj="0.5 0.0 0.0"  lmaxmix=6
 
 qe_main.py -i CONTCAR -j slurm -p PRESS -w . relax -m mode=relax-vc kpoints_dense='l m n' conv_thr=1.0d-8 execmd='mpirun -np 48' ecutwfc=80 ecutrho=960 degauss=0.02 npool=4 queue=lhy
 

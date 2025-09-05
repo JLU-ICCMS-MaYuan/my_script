@@ -1,0 +1,24 @@
+#!/bin/bash
+set -e
+
+if [ $# -eq 2 ]; then
+    outcar="$1"
+    seed_name="$2"
+else
+    echo "outcar2seed <OUTCAR> <SEED_NAME>"
+    exit -1
+fi
+
+
+H=$(grep enthalpy "$outcar" |awk '{print $5}' | tail -n 1)
+P_KB=$(grep pressure "$outcar" |awk '{print $9}'|tail -n 1)
+P_GPa=$(echo "scale = 6; $P_KB / 10"|bc -l)
+
+
+python -c "from ase.io import read; read('$outcar', index='-1').write('-', format='vasp', direct=True)" | cabal poscar res > $seed_name
+
+
+echo $H
+sign="${seed_name%.*}"
+rres $seed_name -s $sign -p $P_GPa -e $H
+

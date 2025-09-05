@@ -106,11 +106,25 @@ PyTorch官网下载: https://pytorch.org/
 
 <span style="font-size: 20px; color: lightblue;"> 2. 修改prefix.cmake
 ```shell
+# 安装CPU版本的ACNN
 # 这一部分取消注释并且修改相应的路径
-set(CMAKE_CXX_COMPILER /work/software/gcc-9.2.0/bin/g++)                 # required
-set(Torch_DIR /work/home/mayuan/software/libtorch)                       # required
-set(OpenBLAS_DIR /work/home/mayuan/software/OpenBLAS-0.3.28/anzhuang)    # required
+set(CMAKE_CXX_COMPILER /work/software/gcc-9.2.0/bin/g++)               
+set(Torch_DIR /work/home/mayuan/software/libtorch)                     
+set(OpenBLAS_DIR /work/home/mayuan/software/OpenBLAS-0.3.28/anzhuang)  
 ```
+
+在安装GPU版本的ACNN之前，需要先安装好CUDA和cuDNN, 教程：https://blog.csdn.net/K_wenry/article/details/138350564
+CUDA的版本必须是11.8是， 比11.8高的版本都不行：https://developer.nvidia.com/cuda-11-8-0-download-archive
+CUDAnn的版本：https://developer.nvidia.com/compute/cudnn/secure/8.6.0/local_installers/11.8/cudnn-linux-x86_64-8.6.0.163_cuda11-archive.tar.xz
+```shell
+# 安装GPU版本的ACNN
+# 这一部分取消注释并且修改相应的路径
+set(CUDA_TOOLKIT_ROOT_DIR /public/home/mayuan/software/cuda/bin)
+set(CMAKE_CXX_COMPILER /work/software/gcc-9.2.0/bin/g++)                
+set(Torch_DIR /work/home/mayuan/software/libtorch)                      
+set(OpenBLAS_DIR /work/home/mayuan/software/OpenBLAS-0.3.28/anzhuang)   
+```
+
 
 **同时特别注意，一定要将其它所有的部分都注释，不然会报错：**
 ```shell
@@ -142,7 +156,7 @@ CMake Error at CMakeLists.txt:44 (find_package):
 
 <span style="font-size: 20px; color: lightblue;"> 3. 安装
 
-(除前五行需要修改，后面的全注释)，创建文件夹build，进入后cmake
+(除前五行需要修改，后面的全注释)，创建文件夹build，进入后cmake.只需要激活gcc9.2或gcc9.5即可，不需要激活intel
 ```shell
 cmake -B build
 cmake --build build --target acnn
@@ -199,7 +213,73 @@ export PATH=/work/home/mayuan/software/torchdemo-v3/interface/bfgs/build:$PATH
 acnn_deploy -p 200 -s CeScH -b Ce-Ce=1.88853,Ce-Sc=1.870015,Ce-H=1.351595,Sc-Sc=1.8515,Sc-H=1.33308,H-H=0.75 -n public
 ```
 
-<span style="font-size: 20px; color: lightblue;"> 2. 修改参数：
+<span style="font-size: 20px; color: lightblue;"> 2. 如何准备airss产生结构的文件：
+
+特别注意：airss必须在每个参数前面添加#
+
+<span style="font-size: 15px; color: lightblue;"> 1. 定组分
+```shell
+#VARVOL=25
+#SPECIES=Al%NUM=1,Be%NUM=4
+#NFORM=2
+#MINSEP=1.5 Al-Al=2.86 Al-Be=2.3 Be-Be=2.25
+#COMPACT
+```
+<span style="font-size: 15px; color: lightblue;"> 2. 变组分方式一: 指定原子数
+```shell
+#SPECIES=Al,Be
+#NATOM=2-10
+#FOCUS=2
+#NFORM=1-2
+
+#VARVOL=25
+#MINSEP=2.0 Al-Al=2.86 Al-Be=2.3 Be-Be=2.25
+#COMPACT
+
+#SYMMOPS=1-48
+#SLACK=0.25
+
+######效果
+symbols    Num   1e-1             1e-5              1e-9           
+Al4Be5     9     P2/m (10)        P2/m (10)         P2/m (10)        ./AlBe-150467-5676-3.res
+Al4Be4     8     P1 (1)           P1 (1)            P1 (1)           ./AlBe-150467-5676-5.res
+Al2Be6     8     Imma (74)        Imma (74)         P-1 (2)          ./AlBe-150467-5676-9.res
+Al2Be4     6     P1 (1)           P1 (1)            P1 (1)           ./AlBe-150467-5676-1.res
+Al4Be4     8     R32 (155)        R32 (155)         C2 (5)           ./AlBe-150467-5676-7.res
+Al4Be2     6     P1 (1)           P1 (1)            P1 (1)           ./AlBe-150467-5676-8.res
+Al10Be10   20    R3m (160)        R3m (160)         R3m (160)        ./AlBe-150467-5676-6.res
+Al10Be4    14    Pmna (53)        Pmna (53)         Pmna (53)        ./AlBe-150467-5676-10.res
+Al4Be6     10    P-42_1m (113)    P-42_1m (113)     P-42_1m (113)    ./AlBe-150467-5676-2.res
+Al12Be8    20    P2 (3)           P2 (3)            P2 (3)           ./AlBe-150467-5676-4.res
+```
+<span style="font-size: 15px; color: lightblue;"> 3. 变组分方式二: 指定各个元素的比例
+```shell
+#SPECIES=Al%NUM=1-2,Be%NUM=1-2
+#NFORM=1-2
+#FOCUS=2
+
+#VARVOL=25
+#MINSEP=2.0 Al-Al=2.86 Al-Be=2.3 Be-Be=2.25
+#COMPACT
+
+#SYMMOPS=1-48
+#SLACK=0.25
+
+######效果
+symbols    Num   1e-1               1e-5              1e-9           
+Al4Be2     6     Fmm2 (42)          Fmm2 (42)         C2 (5)           ./AlBe-148612-5715-4.res
+Al2Be2     4     P-3m1 (164)        P3m1 (156)        Cm (8)           ./AlBe-148612-5715-8.res
+Al2Be4     6     P4_2/mmc (131)     P4_2/mmc (131)    P4_2/mmc (131)   ./AlBe-148612-5715-5.res
+Al4Be2     6     Iba2 (45)          Iba2 (45)         Cc (9)           ./AlBe-148612-5715-1.res
+Al4Be4     8     P6_3/mmc (194)     P6_3/mmc (194)    Cmcm (63)        ./AlBe-148612-5715-6.res
+AlBe2      3     I4mm (107)         I4mm (107)        Cm (8)           ./AlBe-148612-5715-9.res
+Al4Be2     6     P6/mmm (191)       P6/mmm (191)      Cmmm (65)        ./AlBe-148612-5715-2.res
+AlBe2      3     P4/mmm (123)       P4/mmm (123)      P4/mmm (123)     ./AlBe-148612-5715-10.res
+Al2Be2     4     Cmm2 (35)          Cmm2 (35)         Cmm2 (35)        ./AlBe-148612-5715-3.res
+AlBe2      3     I4mm (107)         I4mm (107)        Cm (8)           ./AlBe-148612-5715-7.res
+```
+
+<span style="font-size: 20px; color: lightblue;"> 3. 修改参数：
 
 ```shell
 # 修改ICNAR，ENCUT和KSPACING最重要
@@ -212,21 +292,6 @@ vi DFT/sub.sh
 
 # 准备airss生成文件的脚本CeScH.cell, 特别注意名字必须是与`acnn_deploy -s`指定的名字一致。
 vi RSS/Base/CeScH.cell
-#VARVOL=8
-#MAXTIME=0.1
-##NOCOMPACT
-
-#### FORMULA ####
-##SPECIES=Ce%NUM=1-2,Sc%NUM=1-2,H%NUM=3-30
-#SPECIES=Ce,Sc,H
-#FOCUS=3
-#NATOM=3-32
-#MINSEP=0.75 Ce-Ce=3.5 Ce-Sc=3.0 Ce-H=2.0 Sc-Sc=3.0 Sc-H=1.7 H-H=0.9
-
-#### SYMMETRY ####
-#NFORM=1
-#SYMMOPS=1-48
-##SYMMNO=2-230
 
 # 修改机器学习势提交脚本
 vi POT/sub.sh
@@ -241,6 +306,10 @@ range="1 500"
 
 # 使用ares优化结构
 vi RELAX/dyn_batch_relax_bfgs
+prj="/public/home/mayuan/work/63.Li-Pb/"  # prj="/public/home/mayuan/work/63.Li-Pb/"这是错误的，会导致无法得到正确的路径
+types="Li Pb"
+press=100
+
 # parallel hierarchy
 frame="500" # 总共提取500个结构
 group="100" # 每100个为一组，相应的n_groups=5，表示有5组
@@ -251,7 +320,7 @@ job_max=4
 
 
 
-<span style="font-size: 20px; color: lightblue;"> 3. 准备SEED文件
+<span style="font-size: 20px; color: lightblue;"> 4. 准备SEED文件
 ```shell
 # 这种方式可以获得能量和受力
 outcar2seed OUTCAR BeH2-P-3m1_50GPa.res
@@ -265,7 +334,7 @@ cabal poscar cell < POSCAR > BeH2-P-3m1_50GPa.res
 # 必须保证POSCAR里面的坐标形式是Direct, 并且Direct必须首字母大写
 ```
 
-<span style="font-size: 20px; color: lightblue;"> 4. 提交任务
+<span style="font-size: 20px; color: lightblue;"> 5. 提交任务
 
 (1) 开始产生结构：RSS中创建文件夹（与RELAX/dyn_batch_relax中的src地址一致）
 运行指令：
