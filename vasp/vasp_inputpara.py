@@ -157,6 +157,8 @@ class vasp_inputpara(vasp_base):
         if not hasattr(self, "nedos"):
             self.nedos = 2000
 
+        if not hasattr(self, "lvhar"):
+            self.lvhar = ".FALSE."
 
     @classmethod
     def init_from_config1(cls, config: dict):

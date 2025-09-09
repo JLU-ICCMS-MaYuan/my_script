@@ -299,6 +299,9 @@ class vasp_writeincar:
             incar.write("LCHARG  =.TRUE.    # For Bader  \n") # 能带计算需要将其打开  确保这个是TRUE            
             incar.write("LAECHG  =.TRUE.    # For Bader  \n")   
             incar.write("LELF    =.TRUE.    # For ELF    \n")
+            if self.vasp_inputpara.lvhar is not None:
+                incar.write("LVHAR   = {}       \n".format(self.vasp_inputpara.lvhar))
+            
         return incar_filepath
 
     def eband_incar(self, incar_dirpath):
