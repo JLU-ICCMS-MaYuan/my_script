@@ -301,24 +301,26 @@ vi POT/tr
 
 # 修改RELAX控制提交作业的脚本，该信息存储在TASK变量中, 特别：激活的环境、编译器路径，每一代优化多少个结构
 # 使用lammps优化结构
-vi RELAX/dyn_batch_relax
-range="1 500"
+vi RELAX/dyn_batch_relax_lmp
+prj="/public/home/mayuan/work/63.Li-Pb/"  # prj="/public/home/mayuan/work/63.Li-Pb/"这是错误的，会导致无法得到正确的路径
+types="Li Pb"         # 非常重要，不要逗号
+press=100             # 非常重要
+JOB_NAME="RELAXLiPb"  # 非常重要，判断结构优化任务是否完成
+
+# parallel hierarchy
+frame="500" # 总共提取500个结构
+group="100" # 每100个为一组，相应的n_groups=5，表示有5组
+warp="12"   
+job_max=4
+
 
 # 使用ares优化结构
 vi RELAX/dyn_batch_relax_bfgs
-prj="/public/home/mayuan/work/63.Li-Pb/"  # prj="/public/home/mayuan/work/63.Li-Pb/"这是错误的，会导致无法得到正确的路径
-types="Li Pb"
-press=100
-
-# parallel hierarchy
 frame="500" # 总共提取500个结构
 group="100" # 每100个为一组，相应的n_groups=5，表示有5组
 warp="12"   # 
 job_max=4
 ```
-
-
-
 
 <span style="font-size: 20px; color: lightblue;"> 4. 准备SEED文件
 ```shell
@@ -458,9 +460,22 @@ types="Al Be"
 
 1. 经过仔细的侦察，发现是因为在制作`PD/IT4`时，里面的结构需要用到种子目录`SEED`中的文件，PD中前3代的`res`文件，以及`XSF/IT4`中的`res`文件 (通过检查PD/mkpd而知)；
 2. 而`XSF/IT4`中的res来自于`DFT/IT4/SCF`中的文件(通过检查`XSF/ry`而知)
-3. 而`DFT/IT4/SCF`中的`res`文件来自于`RELAX/IT3/SCF`里面的res文件和`RELAX/IT3/OPT`里面的`res`文件
-4. 而`RELAX/IT3/SCF`和`RELAX/IT3/OPT`中的文件都是通过处理`RELAX/IT3/RES`中文件得到的(通过检查RELAX/ppr而知)， `ppr`将`RES`中每个配比能量最低的结构放入`RELAX/IT3/FPC/SCF`中，ppr将LIM中的结构放入`RELAX/IT3/FPC/OPT`中。
+3. 而`DFT/IT4/SCF`中的`res`文件来自于`RELAX/IT3/FPC/SCF`里面的res文件和`RELAX/IT3/FPC/OPT`里面的`res`文件
+4. 而`RELAX/IT3/FPC/SCF`和`RELAX/IT3/FPC/OPT`中的文件都是通过处理`RELAX/IT3/RES`中文件得到的(通过检查RELAX/ppr而知)， `ppr`将`RES`中每个配比能量最低的结构放入`RELAX/IT3/FPC/SCF`中，ppr将LIM中的结构放入`RELAX/IT3/FPC/OPT`中。
 5. 而`RELAX/IT3/RES`中的文件是通过`ppr`搜集`RELAX/IT3`中的所有`${seed}*-out.res`文件得到的，这个文件就是lammps结构优化结束后的文件，如果结构优化失败就没有`${seed}*-out.res`这些文件
+6. `ppr`是如何收集RES中的结构文件呢？
+```shell
+# 生成convex hull
+# 通过在RELAX/IT*/RES中执行下面的命令，可以知道每一代新生成的结构的convexhull的变化
+ca -m -l |sort -g -k 6 -k 5 > cam-log 2>&1
+# 这一行命令用于提取高于convex hull 2eV以内的结构，可以适当放松2eV的限制
+# $11 > 100 表示提取该组分中结构数超过100个结构的配比
+awk '$11 > 100 || $6 < 2' cam${focus}-log |sort -g -k6 -k5 > cac-log
+# 提取cac-log中前200个结构
+CAU_FILE=$(match_cau $(head -n 200 cac-log|awk '{print $9}'))
+# 在CAU_FILE中每个配比挑选5个结构
+RES=$(dedup -s ../../../PD/IT$IT -t 5 $CAU_FILE |grep out || true)
+```
 6. 所以现在唯一的问题源头就是检查是不是结构优化出错了！！！
-7. `lammps`的结构优化是通过·`relax_lammps "mpirun -np 1 lmp_mpi" AlBe-57325-3298-3474.res /data/home/mayuan/work/61.Al-Be/POT/IT3/model-restart/model-100000 "Al Be" 50`实现的。而其中`relax_lammps`中包含了调用lammps的命令`$exe -in "$sign".in > "$sign".conv 2>&1`(这里的exe就是lammps的绝对路径)， `"$sign".conv`就是lammps结构优化的输出文件。
+7. `lammps`的结构优化是通过`relax_lammps "mpirun -np 1 lmp_mpi" AlBe-57325-3298-3474.res /data/home/mayuan/work/61.Al-Be/POT/IT3/model-restart/model-100000 "Al Be" 50`实现的。而其中`relax_lammps`中包含了调用lammps的命令`$exe -in "$sign".in > "$sign".conv 2>&1`(这里的exe就是lammps的绝对路径)， `"$sign".conv`就是lammps结构优化的输出文件。
 8. 通过检查`"$sign".conv`发现，确实是结构优化出现了问题，在node75中发现了结构优化有错，重新优化即可。
