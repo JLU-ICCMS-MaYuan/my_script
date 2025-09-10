@@ -1,0 +1,5 @@
+#!/bin/bash
+  
+job_id=$1
+
+scontrol show job $job_id | grep Command | awk -F "=" '{print $2}'
