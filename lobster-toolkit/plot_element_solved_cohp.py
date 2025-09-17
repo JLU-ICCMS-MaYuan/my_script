@@ -54,8 +54,8 @@ if __name__ == "__main__":
                              "5s-1s 6s-1s 5py-1s 5pz-1s 5px-1s 5dxy-1s 5dyz-1s 5dz2-1s 5dxz-1s 5dx2-1s 4f_3-1s 4f_2-1s 4f_1-1s 4f0-1s 4f1-1s 4f2-1s 4f3-1s\n"
                              "3s-1s 3px-1s 3py-1s 3pz-1s 3dxy-1s 3dyz-1s 3dz2-1s 3dxz-1s 3dx2-1s\n"
                         )
-    parser.add_argument("-vd", "--Vd", type=float, help="Lower energy bound (Vd) for ICOHP range analysis.")
-    parser.add_argument("-vm", "--Vm", type=float, help="Upper energy bound (Vm) for ICOHP range analysis.")
+    parser.add_argument("-low", "--lower_energy", type=float, help="Lower energy bound for ICOHP range analysis.")
+    parser.add_argument("-up",  "--upper_energy", type=float, help="Upper energy bound for ICOHP range analysis.")
 
     args = parser.parse_args()
     
@@ -112,15 +112,15 @@ if __name__ == "__main__":
     print(f"  {'average-ICOHP':<20}: {average_icohp_atEF:12.6f}")
     print("-" * 55)
 
-    # --- Output ICOHP in Specified Energy Range [Vd, Vm] ---
-    if args.Vd is not None and args.Vm is not None:
-        vd_index = np.argmin(np.abs(energy_grid - args.Vd))
-        vm_index = np.argmin(np.abs(energy_grid - args.Vm))
-        actual_vd = energy_grid[vd_index]
-        actual_vm = energy_grid[vm_index]
+    # --- Output ICOHP in Specified Energy Range [low, up] ---
+    if args.lower_energy is not None and args.upper_energy is not None:
+        low_index = np.argmin(np.abs(energy_grid - args.lower_energy))
+        up_index = np.argmin(np.abs(energy_grid - args.upper_energy))
+        actual_low = energy_grid[low_index]
+        actual_up = energy_grid[up_index]
         
-        print(f"\n--- ICOHP values in energy range [{actual_vd:.3f} eV, {actual_vm:.3f} eV] ---")
-        print(f"{'Orbital Pair':<20} | {'ICOHP @ EF':>12} | {'ICOHP @ Vd':>12} | {'ICOHP @ Vm':>12} | {'ICOHP(Vm-Vd)':>14}")
+        print(f"\n--- ICOHP values in energy range [{actual_low:.3f} eV, {actual_up:.3f} eV] ---")
+        print(f"{'Orbital Pair':<20} | {'ICOHP @ EF':>12} | {'ICOHP @ low':>12} | {'ICOHP @ up':>12} | {'ICOHP(up-low)':>14}")
         print("-" * 78)
 
         # Projected orbital pairs
@@ -128,15 +128,15 @@ if __name__ == "__main__":
             label = orb_pair + '-ICOHP'
             col_index = proj_cohp_label.index(label)
             
-            icohp_at_vd = proj_cohp_matrix[vd_index, col_index]
-            icohp_at_vm = proj_cohp_matrix[vm_index, col_index]
-            icohp_diff = icohp_at_vm - icohp_at_vd
+            icohp_at_low = proj_cohp_matrix[low_index, col_index]
+            icohp_at_up = proj_cohp_matrix[up_index, col_index]
+            icohp_diff = icohp_at_up - icohp_at_low
             
-            print(f"{label:<20} | {icohp_at_EF_list[i]:12.6f} | {icohp_at_vd:12.6f} | {icohp_at_vm:12.6f} | {icohp_diff:14.6f}")
+            print(f"{label:<20} | {icohp_at_EF_list[i]:12.6f} | {icohp_at_low:12.6f} | {icohp_at_up:12.6f} | {icohp_diff:14.6f}")
 
         # Average ICOHP
-        avg_icohp_at_vd = average_icohp[vd_index]
-        avg_icohp_at_vm = average_icohp[vm_index]
-        avg_icohp_diff = avg_icohp_at_vm - avg_icohp_at_vd
-        print(f"{'average-ICOHP':<20} | {average_icohp_atEF:12.6f} | {avg_icohp_at_vd:12.6f} | {avg_icohp_at_vm:12.6f} | {avg_icohp_diff:14.6f}")
+        avg_icohp_at_low = average_icohp[low_index]
+        avg_icohp_at_up = average_icohp[up_index]
+        avg_icohp_diff = avg_icohp_at_up - avg_icohp_at_low
+        print(f"{'average-ICOHP':<20} | {average_icohp_atEF:12.6f} | {avg_icohp_at_low:12.6f} | {avg_icohp_at_up:12.6f} | {avg_icohp_diff:14.6f}")
         print("-" * 78)
