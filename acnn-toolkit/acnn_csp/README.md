@@ -479,3 +479,9 @@ RES=$(dedup -s ../../../PD/IT$IT -t 5 $CAU_FILE |grep out || true)
 6. 所以现在唯一的问题源头就是检查是不是结构优化出错了！！！
 7. `lammps`的结构优化是通过`relax_lammps "mpirun -np 1 lmp_mpi" AlBe-57325-3298-3474.res /data/home/mayuan/work/61.Al-Be/POT/IT3/model-restart/model-100000 "Al Be" 50`实现的。而其中`relax_lammps`中包含了调用lammps的命令`$exe -in "$sign".in > "$sign".conv 2>&1`(这里的exe就是lammps的绝对路径)， `"$sign".conv`就是lammps结构优化的输出文件。
 8. 通过检查`"$sign".conv`发现，确实是结构优化出现了问题，在node75中发现了结构优化有错，重新优化即可。
+
+##### <span style="font-size: 20px; color: lightblue;"> 9. 检查机器学习势的准确度。
+
+```shell
+emodel model-restart/model-100000 DT/ > ss 2>&1
+```
