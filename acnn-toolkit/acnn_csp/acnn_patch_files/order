@@ -1,0 +1,9 @@
+#!/bin/bash
+
+#acnn_deploy -p 100 -s AlBe -b Al-Al=1.40714,Al-Be=1.40714,Be-Be=1.40714 -n public
+
+source  ~/bin/env_gcc.9.5.sh 
+
+nohup ./auto > log 2>&1 &
+echo $! > taskids
+

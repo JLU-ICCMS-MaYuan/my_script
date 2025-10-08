@@ -1,0 +1,226 @@
+#!/bin/bash
+set -e
+
+
+
+source ../in.seed
+
+prj="/public/home/mayuan/work/63.Li-Pb/100/acnn"
+src="$prj/RSS/Base"
+pot_dir="$prj/POT/IT$IT"
+pot=$(ls "$pot_dir"/model*/model-*|sort -V|tail -n 1)
+
+exe="lmp_mpi"
+types="Li Pb"
+
+press=100
+
+xsf="$prj/XSF/IT$IT"
+#min_bonds="Sr-Sr=1.2"
+#bonds_scale="1.0"
+if [ -d "$xsf" ];then
+    rt=$(echo "scale=2; $(find $xsf -name "*limit*xsf"|wc -l) / ($(find $xsf -name "*limit*"|wc -l) + 0.1)"|bc)
+
+    if (( $(echo "$rt > 0.75" | bc -l) )); then
+        new_value=$(echo "scale=2;$bonds_scale * 0.95" | bc)
+    else
+        new_value=$(echo "scale=2;$bonds_scale * 1.05" | bc)
+    fi
+    sed -i "s/^bonds_scale=\"[0-9.]*\"/bonds_scale=\"$new_value\"/" ../in.seed
+fi
+
+optd="IT$IT"
+
+# parallel hierarchy
+frame="60000" # 总结构数
+group="100" # 每个group文件里面有多少个结构
+# 因此有group_aa, group_ab, group_ac, group_ad, group_ae五个group
+
+warp="1"   # 多少个group写在一个task*.sh文件里面
+# 5/2=2……1，因此有3个task0.sh, task1.sh, task2.sh
+
+job_max=6   # 最多同时提交多少个任务。
+
+JOB_NAME="RELAXLiPb"
+NCORE="[DECISION]"
+sign="[DECISION]"
+base="[DECISION]"
+
+function get_task(){
+local NCORE="$1"
+local sign="$2"
+local base="$3"
+
+TASK="""\
+#!/bin/bash
+#SBATCH --job-name="$JOB_NAME"
+#SBATCH --partition=cpu
+#SBATCH --time=08:00:00
+#SBATCH --nodes=1
+###SBATCH --ntasks-per-node="$NCORE"
+#SBATCH --ntasks-per-node=56
+#SBATCH --cpus-per-task=1
+#SBATCH --exclude=cpu58,cpu9
+
+source /public/home/mayuan/intel/oneapi/setvars.sh > /dev/null
+source /public/home/mayuan/bin/env_gcc9.2.sh
+
+export MKL_NUM_THREADS=1
+export OMP_NUM_THREADS=1
+export MKL_DYNAMIC=false
+export KMP_AFFINITY=granularity=fine,compact,1,0    # Thread affinity
+export I_MPI_PIN_DOMAIN=auto        # process binding
+export I_MPI_FABRICS=shm:ofi        # shared mem & open fabrics
+
+$(printf "$base")
+
+echo CHECK_DONE
+"""
+echo "$TASK"
+}
+
+
+
+
+
+
+
+echo "DYNAMIC PARAMETERS"
+echo ""
+echo "  src         $src"
+echo "  seed        $seed"
+echo "  pot         $pot"
+echo "  exe         $exe"
+echo "  types       $types"
+echo "  press       $press"
+echo "  optd        $optd"
+echo "  bonds       $min_bonds"
+echo "  safe_bonds  $bonds_scale"
+echo ""
+echo "  frame       $frame"
+echo "  group       $group"
+echo "  warp        $warp"
+echo ""
+echo "TASK"
+echo ""
+get_task $NCORE $sign| sed 's/^/  /'
+
+read -p "CHECK THE PARAMETERS: [y/n] " u_input
+
+if [[ "$u_input" == "y" ]]; then
+    echo ""
+elif [[ "$u_input" == "n" ]]; then
+    exit 0
+else
+    echo "Invalid input, [y/n] please."
+    exit 1
+fi
+
+
+
+
+
+
+mkdir -p $optd
+mkdir -p $optd/LIM
+cd $optd
+
+res_files=$(find "$src" -type f -name "*.res" -size +0c|shuf|head -n $frame)
+n_res=$(echo "$res_files" | wc -w)
+echo "Total res files: $n_res"
+echo ""
+
+echo "$res_files" | shuf | split -l $group - group_
+
+
+group_files=($(find . -name "group_*" | sort))
+n_groups=${#group_files[@]}
+
+full_warps=$(( n_groups / warp ))
+remain=$(( n_groups % warp ))
+
+
+for wi in $(seq 0 $((full_warps - 1))); do
+    NUS=$(find LIM -type f -name "*limit*" | wc -l)
+    echo "UNSAFE $NUS"
+    if [ $NUS -gt 100 ]; then
+        echo "STOP TOO MANY STRUCTURE EXCEEDING LIMIT"
+        exit 0
+    fi
+
+
+    acnn_limitjob "$JOB_NAME" $job_max
+
+    echo "TASK $wi"
+
+    base=""
+
+    for gi in $(seq 0 $((warp - 1))); do
+        gn=$(( wi * warp + gi ))
+        g=${group_files[$gn]}
+        echo "  $g"
+        base+="for fil in \$(cat $g); do f=\${fil##*/}; mkdir \${f%%.res}; cd \${f%%.res} \n"
+        #base+="    relax_lammps \"mpirun -np 1 lmp_mpi\" \$fil $pot \"$types\" $press & \n"
+        base+="    relax_lammps \"lmp_mpi\" \$fil $pot \"$types\" $press & \n"
+        base+="cd ..; done\n"
+    done
+
+    base+="wait \n"
+
+    for gi in $(seq 0 $((warp - 1))); do
+        gn=$(( wi * warp + gi ))
+        g=${group_files[$gn]}
+        base+="for fil in \$(cat $g); do f=\${fil##*/}; cd \${f%%.res} \n"
+        base+="    UNSAFE=\$(acnn_bsafe -b \"$min_bonds\" -x $bonds_scale | grep False |grep out | awk '{print \$1}'); if [ -n \"\$UNSAFE\" ]; then echo UNSAFE; rm \${f%%.res}-out.res; safe_traj -t \${f%%.res}.dump -b \"$min_bonds\" -x $bonds_scale | cabal poscar res > \${f%%.res}-limitbonds.res; cp \${f%%.res}-limitbonds.res ../LIM; fi; rm \${f%%.res}.dump & \n"
+        base+="cd ..; done\n"
+    done
+
+    base+="wait \n"
+
+    get_task $warp "sign" "$base" > task$wi.sh
+    chmod u+x task$wi.sh
+
+    safe_sbatch task$wi.sh
+done
+
+
+if (( remain > 0 )); then
+    NUS=$(find LIM -type f -name "*limit*" | wc -l)
+    echo "UNSAFE $NUS"
+    if [ $NUS -gt 100 ]; then
+        echo "STOP TOO MANY STRUCTURE EXCEEDING LIMIT"
+        exit 0
+    fi
+
+    acnn_limitjob "$JOB_NAME" $job_max
+
+    echo "TASK $((full_warps + 1))"
+    base=""
+    for gi in $(seq 0 $((remain - 1))); do
+        gn=$(( full_warps * warp + gi ))
+        g=${group_files[$gn]}
+        echo "  $g"
+        base+="for fil in \$(cat $g); do f=\${fil##*/}; mkdir \${f%%.res}; cd \${f%%.res} \n"
+        base+="    relax_lammps \"mpirun -np 1 lmp_mpi\" \$fil $pot \"$types\" $press & \n"
+        base+="cd ..; done\n"
+    done
+
+    base+="wait \n"
+
+    for gi in $(seq 0 $((remain - 1))); do
+        gn=$(( full_warps * warp + gi ))
+        g=${group_files[$gn]}
+        base+="for fil in \$(cat $g); do f=\${fil##*/}; cd \${f%%.res} \n"
+        base+="    UNSAFE=\$(acnn_bsafe -b \"$min_bonds\" -x $bonds_scale | grep False |grep out | awk '{print \$1}'); if [ -n \"\$UNSAFE\" ]; then echo UNSAFE; rm \${f%%.res}-out.res; safe_traj -t \${f%%.res}.dump -b \"$min_bonds\" -x $bonds_scale | cabal poscar res > \${f%%.res}-limitbonds.res; cp \${f%%.res}-limitbonds.res ../LIM; fi; rm \${f%%.res}.dump & \n"
+        base+="cd ..; done\n"
+    done
+
+    base+="wait \n"
+
+    get_task $remain "sign" "$base" > task$full_warps.sh
+    chmod u+x task$full_warps.sh
+
+    safe_sbatch task$full_warps.sh
+fi
+
+exit 0

@@ -1,0 +1,25 @@
+#!/bin/bash
+set -e
+
+if [ $# -eq 2 ];then
+    MODEL=$1
+    DT=$2
+else
+    echo "usage: emodel <MODEL PATH> <DT PATH>"
+fi
+
+
+
+sed "s|evalmodelpath *= *.*|evalmodelpath   =   $MODEL|" in.acnn > in.acnn.tmp
+sed -i "s|evaldatapath *= *.*|evaldatapath    =   $DT|" in.acnn.tmp
+
+
+BMODEL=$(basename $MODEL)
+BDT=$(basename $DT)
+
+EVAL_FILE="eval-$BMODEL-$BDT"
+acnn -eval in.acnn.tmp > $EVAL_FILE
+
+python $(which evalan.py) $EVAL_FILE | sort -gk 4
+
+rm in.acnn.tmp
