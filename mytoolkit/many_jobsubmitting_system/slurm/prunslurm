@@ -1,23 +1,22 @@
 #!/bin/bash
-  
-name=$1
 
-# 如果name是空的，获取当前绝对路径并赋值给name
-if [ -z "$name" ]; then # -z：检查字符串的长度是否为零。如果字符串的长度为零，则返回真 (true)>。
-    name=$(pwd)
-fi
+# Get the optional filter name; default to the current directory if none is given.
+name=${1:-$(pwd)}
 
-# 运行 squeue 一次并存储输出
-# squeue_output=$(squeue -h --format '%A    %t    %R    %M    %Z     %s' | grep mayuan)
+# Run squeue once and store the output.
+# This format uses a fixed width for each column, which is widely supported.
+# %12A: JobID, %12P: Partition, %5t: State, %25R: Name, %8M: Time, %Z: WorkDir
+squeue_output=$(squeue -u mayuan -h --format='%12A %12P %5t %25R %8M %Z')
 
-squeue_output=$(squeue -h --format '%A    %t    %R    %M    %Z' | grep mayuan)
+echo "======== RUNNING ========"
+# grep for the name to filter the list.
+echo "$squeue_output" | grep " R " | grep --color=never "$name"
 
-echo "running"
-echo "$squeue_output" | grep " R "  | grep "$name"
+echo
+echo "======== PENDING ========"
+echo "$squeue_output" | grep " PD " | grep --color=never "$name"
 
-echo "waiting"
-echo "$squeue_output" | grep " PD " | grep "$name"
-
-# 提交总任务数
-echo -n '提交总任务数: '
-echo "$squeue_output" | wc -l | grep "$name"
+echo
+# Fix the logic for counting total jobs: filter first, then count.
+total_count=$(echo "$squeue_output" | grep --color=never "$name" | wc -l)
+echo "Total jobs matching '$name': $total_count"

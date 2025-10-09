@@ -1,16 +1,19 @@
 #!/bin/bash
 
-# 运行 squeue 一次并存储输出
-# squeue_output=$(squeue -h --format '%A    %t    %R    %M    %Z     %s' | grep mayuan)
+# 运行 squeue -u mayuan 一次并存储输出
+# -u mayuan: 直接通过squeue筛选用户，比 | grep mayuan 更高效
+# --format: 使用固定宽度格式化字符，保证输出对齐
+# %12A: 任务ID, %12P: 队列名, %5t: 状态, %25R: 任务名, %8M: 已运行时间, %Z: 工作目录
+squeue_output=$(squeue -u mayuan -h --format='%12A %12P %5t %25R %8M %Z')
 
-squeue_output=$(squeue -h --format '%A    %t    %R    %M    %Z' | grep mayuan)
-
-echo "running"
+echo "======== RUNNING ========"
 echo "$squeue_output" | grep " R "
 
-echo "waiting"
+echo
+echo "======== PENDING ========"
 echo "$squeue_output" | grep " PD "
 
-# 提交总任务数
-echo -n '提交总任务数: '
-echo "$squeue_output" | wc -l
+echo
+# 统计总任务数
+total_count=$(echo "$squeue_output" | wc -l)
+echo "Total Submitted Jobs: $total_count"
