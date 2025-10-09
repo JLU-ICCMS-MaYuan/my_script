@@ -5,6 +5,8 @@
 #SBATCH --ntasks-per-node=56
 #SBATCH --cpus-per-task=1
 
+source /work/home/mayuan/bin/env_gcc.9.5.sh
+
 # --- 可配置参数 ---
 # 在这里设置您希望的最大并行任务数。
 MAX_PARALLEL_JOBS=40
