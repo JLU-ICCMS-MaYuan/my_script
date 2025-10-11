@@ -7,6 +7,7 @@ relax_script="RELAX/dyn_batch_relax_lmp"
 dft_incar="DFT/dyn_vasp_in"
 dft_sub="DFT/sub.sh"
 pot_sub="POT/sub.sh"
+auto_script="auto" # 新增 auto 脚本路径定义
 
 echo "--- 配置分析报告 ---"
 echo "当前目录: $(pwd)"
@@ -24,7 +25,7 @@ if [ -f "$relax_script" ]; then
         value_part=$(echo "$line" | cut -d'=' -f2-)
         # 修正：只清理 value_part, 而不是整个 line, 避免变量名重复
         cleaned_value=$(echo "$value_part" | sed 's/"//g')
-        printf "    - %-8s =%s\n" "$var_name" "$cleaned_value"
+        printf "    - %-8s = %s\n" "$var_name" "$cleaned_value"
     done
 
     echo ""
@@ -106,9 +107,35 @@ else
     echo "  POT 目录未找到。"
 fi
 
+# --- 4. 分析自动化流程 (auto) --- [新增功能]
+echo ""
+echo "----------------------------------------"
+echo "4. 自动化流程分析 (auto)"
+echo "----------------------------------------"
+if [ -f "$auto_script" ]; then
+    echo "  自动化脚本: $auto_script"
+    echo ""
+    
+    # 检查 RELAX 步骤是否使用 dyn_batch_relax_lmp
+    echo "  RELAX 步骤检查:"
+    # 使用 if/then 结构进行更可靠的检查
+    if grep "dyn_batch_relax_lmp" "$auto_script" ; then
+        echo "    - 状态: 确认使用 'dyn_batch_relax_lmp' 进行结构优化。"
+    else
+        echo "    - 状态: 未在 RELAX 步骤中找到 'dyn_batch_relax_lmp' 的明确调用。"
+    fi
+
+    # 检查其他主要执行步骤
+    echo ""
+    echo "  主要执行步骤:"
+    grep -E 'cd (DFT|XSF|PD|POT|RELAX)' "$auto_script" | sed 's/cd/    - 进入目录:/'
+
+else
+    echo "  自动化脚本 'auto' 未找到。"
+fi
+
+
 echo ""
 echo "----------------------------------------"
 echo "分析完成。"
 echo "----------------------------------------"
-
-
