@@ -7,7 +7,7 @@ relax_script="RELAX/dyn_batch_relax_lmp"
 dft_incar="DFT/dyn_vasp_in"
 dft_sub="DFT/sub.sh"
 pot_sub="POT/sub.sh"
-auto_script="auto" # 新增 auto 脚本路径定义
+auto_script="auto"
 
 echo "--- 配置分析报告 ---"
 echo "当前目录: $(pwd)"
@@ -23,20 +23,30 @@ if [ -f "$relax_script" ]; then
     grep -E '^(prj|types|press|frame|group|warp|job_max|JOB_NAME)=' "$relax_script" | while read -r line; do
         var_name=$(echo "$line" | cut -d'=' -f1)
         value_part=$(echo "$line" | cut -d'=' -f2-)
-        # 修正：只清理 value_part, 而不是整个 line, 避免变量名重复
         cleaned_value=$(echo "$value_part" | sed 's/"//g')
         printf "    - %-8s = %s\n" "$var_name" "$cleaned_value"
     done
 
     echo ""
     echo "  SLURM 配置 (来自 TASK 函数):"
-    # 修正：直接从文件中 grep, 不再使用复杂的 awk 匹配
     grep '#SBATCH' "$relax_script" | grep -E 'job-name|partition|time|exclude|ntasks-per-node' | sed 's/^/    - /'
 
     echo ""
     echo "  环境激活 (来自 TASK 函数):"
-    # 修正：直接从文件中 grep, 并排除顶部的 in.seed
     grep 'source ' "$relax_script" | grep -v 'in.seed' | sed 's/^/    - /'
+
+    # --- [新增功能] 平台兼容性检查 ---
+    echo ""
+    echo "  平台兼容性提示:"
+    # 检查是否包含特定于 Inspur 服务器的 LD_LIBRARY_PATH 设置
+    if grep -q 'export LD_LIBRARY_PATH=/work/home/mayuan/bin:$LD_LIBRARY_PATH' "$relax_script"; then
+        echo "    - Inspur 平台: 已找到推荐的 LD_LIBRARY_PATH 设置。"
+    else
+        echo "    - Inspur 平台: [注意] 如果在 Inspur 服务器上运行，建议在激活环境(source)附近添加以下行："
+        echo "                   export LD_LIBRARY_PATH=/work/home/mayuan/bin:\$LD_LIBRARY_PATH"
+    fi
+    # --- [新增功能结束] ---
+
 else
     echo "  文件未找到。"
 fi
@@ -107,7 +117,7 @@ else
     echo "  POT 目录未找到。"
 fi
 
-# --- 4. 分析自动化流程 (auto) --- [新增功能]
+# --- 4. 分析自动化流程 (auto) ---
 echo ""
 echo "----------------------------------------"
 echo "4. 自动化流程分析 (auto)"
@@ -118,8 +128,7 @@ if [ -f "$auto_script" ]; then
     
     # 检查 RELAX 步骤是否使用 dyn_batch_relax_lmp
     echo "  RELAX 步骤检查:"
-    # 使用 if/then 结构进行更可靠的检查
-    if grep "dyn_batch_relax_lmp" "$auto_script" ; then
+    if grep -q "cd RELAX" "$auto_script" && grep "dyn_batch_relax_lmp" "$auto_script" | grep -q "cd RELAX" -B 1; then
         echo "    - 状态: 确认使用 'dyn_batch_relax_lmp' 进行结构优化。"
     else
         echo "    - 状态: 未在 RELAX 步骤中找到 'dyn_batch_relax_lmp' 的明确调用。"
