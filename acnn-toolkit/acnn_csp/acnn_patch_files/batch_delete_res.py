@@ -114,10 +114,10 @@ def main():
 
     # 6. 执行删除操作
     print("\n" + "!"*20)
-    print(f"警告：将在 3 秒后使用 {args.cores} 个进程开始删除 {num_to_delete} 个文件...")
+    print(f"警告：将在 10 秒后使用 {args.cores} 个进程开始删除 {num_to_delete} 个文件...")
     print("按 Ctrl+C 可紧急中止操作。")
     print("!"*20)
-    time.sleep(3)
+    time.sleep(10)
 
     try:
         with Pool(processes=args.cores) as pool:
