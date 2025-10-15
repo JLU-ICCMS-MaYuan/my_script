@@ -34,42 +34,41 @@ EMPIRICAL_ATOMIC_VOLUMES = {
 }
 
 def setup_arg_parser():
-    """Sets up the argument parser for the script."""
+    """Sets up the argument parser for the script with short aliases."""
     parser = argparse.ArgumentParser(
         description="Generate CALYPSO input.dat files for a range of compositions.",
         formatter_class=argparse.RawTextHelpFormatter
     )
     # --- Core Arguments ---
     parser.add_argument(
-        '--elements', nargs='+', required=True, type=str,
-        help="List of element names.\nExample: --elements Si O"
+        '-e', '--elements', nargs='+', required=True, type=str,
+        help="List of element names.\nExample: -e Si O"
     )
     parser.add_argument(
-        '--radii', nargs='+', required=True, type=float,
-        help="List of covalent radii for each element (in Bohr).\nRequired for distance matrix.\nExample: --radii 1.11 0.60"
+        '-r', '--radii', nargs='+', required=True, type=float,
+        help="List of covalent radii for each element (in Bohr).\nRequired for distance matrix.\nExample: -r 1.11 0.60"
     )
     parser.add_argument(
-        '--composition', nargs='+', required=True, type=str,
-        help="Range of atoms for each element (e.g., '1-5', '3').\nExample: --composition 1-2 4"
+        '-c', '--composition', nargs='+', required=True, type=str,
+        help="Range of atoms for each element (e.g., '1-5', '3').\nExample: -c 1-2 4"
     )
     parser.add_argument(
-        '--popsize', required=True, type=int,
+        '-p', '--popsize', required=True, type=int,
         help="Population size for the CALYPSO run (e.g., 30)."
     )
     # --- Volume Calculation Method Arguments ---
     parser.add_argument(
-        '--method', type=str, choices=['radius', 'uspex'], default='radius',
+        '-m', '--method', type=str, choices=['radius', 'uspex'], default='radius',
         help="Method for volume calculation: 'radius' (default) or 'uspex'."
     )
     parser.add_argument(
-        '--pressure', type=float,
-        help="Target pressure in GPa (required for '--method uspex')."
+        '-P', '--pressure', type=float,
+        help="Target pressure in GPa (required for '--method uspex').\n(Note: Uppercase 'P' to avoid conflict)"
     )
     return parser
 
 def calculate_volume_radius(radii_bohr, composition):
     """Estimates the cell volume based on covalent radii (original method)."""
-    # NOTE: This uses the previously requested scaling factors.
     scaled_radii_angstrom = radii_bohr * 0.529177 * 0.7
     sphere_volumes = (4/3) * np.pi * np.power(scaled_radii_angstrom, 3)
     total_volume = np.sum(sphere_volumes * composition)
@@ -83,7 +82,7 @@ def calculate_volume_uspex(elements, composition, pressure_gpa):
             raise ValueError(f"Error: Empirical volume for element '{el}' is not in the database.")
         v0 += EMPIRICAL_ATOMIC_VOLUMES[el] * num
     
-    if pressure_gpa == 0:
+    if pressure_gpa is None or pressure_gpa == 0:
         return v0
     
     a = 0.08  # Empirical constant for pressure response
@@ -93,7 +92,6 @@ def calculate_volume_uspex(elements, composition, pressure_gpa):
 
 def calculate_distance_matrix(radii_bohr):
     """Calculates the NxN matrix of interatomic distances from radii."""
-    # NOTE: Using the previously requested scaling for distance.
     distance_matrix_angstrom = (radii_bohr[:, np.newaxis] + radii_bohr) * 0.529177 * 0.7
     return distance_matrix_angstrom
 
@@ -134,7 +132,7 @@ def generate_input_file(elements, radii, composition, popsize, num_elements, met
         f.write("SpeSpaceGroup = 8 230\n")
         f.write("Split = T\n")
         f.write("VSC = F\n")
-        f.write("MaxNumAtom = 65\n")
+        f.write("MaxNumAtom = 80\n")
         f.write("Command = sh submit.sh\n")
         f.write("MaxStep = 10\n")
 
@@ -145,11 +143,11 @@ def main():
 
     # --- Argument Validation ---
     if args.method == 'uspex' and args.pressure is None:
-        parser.error("--pressure is required when using --method uspex")
+        parser.error("--pressure (-P) is required when using --method uspex")
     
     num_elements = len(args.elements)
     if not (len(args.radii) == num_elements and len(args.composition) == num_elements):
-        print("Error: The number of --elements, --radii, and --composition arguments must be the same.")
+        print("Error: The number of arguments for --elements (-e), --radii (-r), and --composition (-c) must be the same.")
         sys.exit(1)
 
     # --- Parse Composition Ranges ---
@@ -171,10 +169,17 @@ def main():
     total_files = len(all_compositions)
     print(f"Found {total_files} composition(s). Generating files using '{args.method}' method...")
 
+    # *** NEW: Initialize a list to store all directory names ***
+    all_dir_names = []
+
     # --- Loop and Generate Files ---
     for i, comp in enumerate(all_compositions):
         current_composition = np.array(comp)
         dir_name = "".join([f"{el}{num}" for el, num in zip(args.elements, current_composition)])
+        
+        # *** NEW: Add the generated directory name to our list ***
+        all_dir_names.append(dir_name)
+
         print(f"[{i+1}/{total_files}] Generating input for {dir_name}...")
         generate_input_file(
             elements=args.elements,
@@ -185,10 +190,19 @@ def main():
             method=args.method,
             pressure=args.pressure
         )
+    
+    # *** NEW: Write all collected directory names to composition.dat ***
+    try:
+        output_filename = "composition.dat"
+        with open(output_filename, 'w') as f:
+            for name in all_dir_names:
+                f.write(f"./{name}\n")
+        print(f"\nSuccessfully created all {total_files} input files.")
+        print(f"All {len(all_dir_names)} directory paths have been written to '{output_filename}'.")
+    except IOError as e:
+        print(f"\nWarning: Could not write to file '{output_filename}': {e}")
+        print("Input files were still created successfully.")
 
-    print("\nSuccessfully created all input files.")
 
 if __name__ == "__main__":
     main()
-
-

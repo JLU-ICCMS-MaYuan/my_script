@@ -10,7 +10,7 @@ source /work/home/mayuan/bin/env_gcc.9.5.sh
 # --- 可配置参数 ---
 # 在这里设置您希望的最大并行任务数。
 MAX_PARALLEL_JOBS=40
-INPUT_FILE="unfinished.dat"
+INPUT_FILE="composition.dat"
 
 # --- 脚本主逻辑 ---
 

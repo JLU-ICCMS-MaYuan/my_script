@@ -12,7 +12,7 @@ scripts_names = [
     'elk-toolkit',
     'epw/epw-toolkit',
     'lammps-toolkit',
-    "acnn-toolkit/acnn_csp",
+    "acnn-toolkit/acnn_csp/acnn_patch_files",
 
     'mytoolkit/convexhull', 
     'mytoolkit/energy_curve_with_pressure', 
