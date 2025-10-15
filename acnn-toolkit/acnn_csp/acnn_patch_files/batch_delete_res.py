@@ -73,8 +73,7 @@ def main():
     args = parser.parse_args()
 
     # 2. 检查 Base 目录是否存在
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    target_dir = os.path.join(script_dir, DEFAULT_BASE_DIRECTORY)
+    target_dir = os.path.join(DEFAULT_BASE_DIRECTORY)
 
     if not os.path.isdir(target_dir):
         print(f"错误：在脚本所在位置未找到 '{DEFAULT_BASE_DIRECTORY}' 目录。")
