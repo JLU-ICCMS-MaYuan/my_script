@@ -16,7 +16,7 @@ count=0
 IT="$1"
 
 # 使用 find 命令来计数
-count=$(find . -maxdepth 3 -type f -wholename "./IT${IT}/AlBe*/*-out.res" | wc -l)
+count=$(find . -maxdepth 3 -type f -wholename "./IT${IT}/*/*-out.res" | wc -l)
 
 echo "Found $count directories starting with 'IT$IT'."
 
