@@ -16,6 +16,8 @@ def parse_arguments():
                         help="List of subdirectories or patterns for detailed selection")
     parser.add_argument('-od', '--preferred-order', nargs='+', type=str, default=None,
                         help='Custom element preferred_order for sorting, e.g., O C H for ordering oxygen first, followed by carbon and hydrogen')
+    parser.add_argument('-d', '--max-depth', type=int, default=0,
+                        help='Maximum directory depth to explore when input is a directory (0 means only the specified directory, 1 means include its direct subdirectories, and so on). Use a negative value to remove the limit.')
 
     return parser.parse_args()
 
@@ -66,7 +68,7 @@ def get_atom_info(atoms, prec, preferred_order=None):
     std_atoms = sort_by_custom_order(Atoms(cell=lattice, scaled_positions=scaled_positions, numbers=numbers), preferred_order=preferred_order)
     return pri_atoms, std_atoms, spacegroup
 
-def process_files(input_file_or_directory, detailed_conditions, prec=None, preferred_order=None):
+def process_files(input_file_or_directory, detailed_conditions, prec=None, preferred_order=None, max_depth=0):
 
     if os.path.isdir(input_file_or_directory):
 
@@ -79,7 +81,11 @@ def process_files(input_file_or_directory, detailed_conditions, prec=None, prefe
         # 如果是目录，遍历所有文件
 
         num = 1
-        for root, dirs, files_in_dir in os.walk(input_file_or_directory):
+        base_depth = os.path.abspath(input_file_or_directory).rstrip(os.sep).count(os.sep)
+        for root, dirs, files_in_dir in os.walk(input_file_or_directory, topdown=True):
+            current_depth = os.path.abspath(root).rstrip(os.sep).count(os.sep) - base_depth
+            if max_depth is not None and max_depth >= 0 and current_depth >= max_depth:
+                dirs[:] = []
             for filename in files_in_dir:
                 filepath = os.path.join(root, filename)
                 if all(pattern in filepath for pattern in detailed_conditions):
@@ -139,7 +145,7 @@ def main():
         print("{:<10} {:<3}   {:<15}   {:<15}   {:<15}   {:<15}   {:<15}".format("symbols", "Num", "1e-1", "1e-2", "1e-3", "1e-5", "1e-9"))
 
     try:
-        process_files(input_file_or_directory, detailed_conditions, prec, preferred_order)
+        process_files(input_file_or_directory, detailed_conditions, prec, preferred_order, args.max_depth)
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
 
