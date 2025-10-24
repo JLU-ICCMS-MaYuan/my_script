@@ -1,10 +1,13 @@
+import math
 import os
 import re
 import sys
 import shutil
 import logging
+from dataclasses import dataclass
 from pathlib import Path
 from collections import Counter
+from typing import Dict, Iterable, List, Tuple
 
 import numpy as np
 
@@ -16,6 +19,242 @@ from pymatgen.io.vasp import Poscar
 
 from qe.qebin import qe_pseudopotential_dir
 from qe.qe_check import qe_check
+
+PI = math.pi
+TPI = 2.0 * PI
+FPI = 4.0 * PI
+
+H_PLANCK_SI = 6.62607015e-34  # J s
+HARTREE_SI = 4.3597447222071e-18  # J
+RYDBERG_SI = HARTREE_SI / 2.0
+C_SI = 2.99792458e8  # m/s
+
+AU_SEC = H_PLANCK_SI / (TPI * HARTREE_SI)
+AU_PS = AU_SEC * 1.0e12
+AU_TERAHERTZ = AU_PS
+
+RY_TO_THZ = 1.0 / (AU_TERAHERTZ * FPI)
+RY_TO_CMM1 = 1.0e10 * RY_TO_THZ / C_SI
+
+FREQ_ZERO_THRESHOLD_RY = 1.0e-5
+
+
+@dataclass
+class GammaBlock:
+    broadening: float
+    gamma_by_q: List[List[float]]  # shape: (nq, nmodes)
+
+
+def read_gamma_lines(path: Path, nmodes: int) -> List[GammaBlock]:
+    blocks: List[GammaBlock] = []
+    current_gamma: List[List[float]] = []
+    current_broadening: float | None = None
+
+    with path.open() as fh:
+        for raw in fh:
+            line = raw.strip()
+            if not line:
+                continue
+            if line.startswith("Gamma lines"):
+                continue
+            if line.startswith("Broadening"):
+                if current_broadening is not None:
+                    blocks.append(
+                        GammaBlock(
+                            broadening=current_broadening,
+                            gamma_by_q=current_gamma,
+                        )
+                    )
+                    current_gamma = []
+                current_broadening = float(line.split()[1])
+                continue
+            if len(line.split()) == 1 and line.isdigit():
+                count = 0
+                values: List[float] = []
+                while count < nmodes:
+                    data_line = fh.readline()
+                    if not data_line:
+                        raise ValueError("Unexpected EOF while reading gamma data.")
+                    numbers = [float(x) for x in data_line.split()]
+                    values.extend(numbers)
+                    count += len(numbers)
+                if len(values) != nmodes:
+                    raise ValueError("Gamma data length mismatch.")
+                current_gamma.append(values)
+    if current_broadening is not None:
+        blocks.append(
+            GammaBlock(
+                broadening=current_broadening,
+                gamma_by_q=current_gamma,
+            )
+        )
+    if not blocks:
+        raise ValueError(f"No data parsed from {path}.")
+    return blocks
+
+
+def read_frequencies(path: Path) -> Tuple[List[Tuple[float, float, float]], List[List[float]]]:
+    q_points: List[Tuple[float, float, float]] = []
+    freq_by_q: List[List[float]] = []
+
+    with path.open() as fh:
+        header = fh.readline()
+        if not header or "&plot" not in header:
+            raise ValueError("Unexpected frequency file format.")
+        import re
+
+        match = re.search(r"nbnd\s*=\s*(\d+)", header)
+        if not match:
+            raise ValueError("Cannot determine nbnd from frequency header.")
+        nbnd = int(match.group(1))
+        lines = [line.strip() for line in fh if line.strip()]
+
+    idx = 0
+    while idx < len(lines):
+        q_tokens = [float(x) for x in lines[idx].split()]
+        if len(q_tokens) != 3:
+            raise ValueError("Malformed q-point entry in frequency file.")
+        q_points.append(tuple(q_tokens))
+        idx += 1
+        values: List[float] = []
+        while len(values) < nbnd and idx < len(lines):
+            values.extend(float(x) for x in lines[idx].split())
+            idx += 1
+        if len(values) < nbnd:
+            raise ValueError("Reached EOF before collecting all frequencies.")
+        freq_by_q.append(values[:nbnd])
+
+    if not freq_by_q:
+        raise ValueError(f"No frequency data parsed from {path}.")
+
+    return q_points, freq_by_q
+
+
+def read_broadening_dos(elph_dir: Path) -> Dict[float, float]:
+    mapping: Dict[float, float] = {}
+    for file in sorted(elph_dir.glob("a2Fmatdyn.*")):
+        with file.open() as fh:
+            line = fh.readline()
+            if not line:
+                continue
+            parts = [float(x) for x in line.split()]
+            if len(parts) < 3:
+                continue
+            deg, _, dos = parts[:3]
+            mapping[round(deg, 10)] = dos
+    if not mapping:
+        raise ValueError(f"No a2Fmatdyn.* files found in {elph_dir}.")
+    return mapping
+
+
+def compute_lambda(
+    gamma_blocks: Iterable[GammaBlock],
+    freq_cm: List[List[float]],
+    dos_by_broadening: Dict[float, float],
+) -> List[GammaBlock]:
+    freq_ry = [[abs(f) / RY_TO_CMM1 for f in row] for row in freq_cm]
+    nmodes = len(freq_ry[0])
+    lambda_blocks: List[GammaBlock] = []
+
+    for block in gamma_blocks:
+        key = round(block.broadening, 10)
+        if key not in dos_by_broadening:
+            raise ValueError(f"No DOS(Ef) found for broadening {block.broadening:g} Ry.")
+        dos = dos_by_broadening[key]
+        lambda_by_q: List[List[float]] = []
+
+        for q_index, gamma_thz_list in enumerate(block.gamma_by_q):
+            if len(gamma_thz_list) != nmodes:
+                raise ValueError("Gamma and frequency mode count mismatch.")
+            row: List[float] = []
+            for mode, gamma_thz in enumerate(gamma_thz_list):
+                gamma_ry = gamma_thz / RY_TO_THZ
+                omega_ry = freq_ry[q_index][mode]
+                if omega_ry <= FREQ_ZERO_THRESHOLD_RY:
+                    row.append(0.0)
+                else:
+                    row.append(gamma_ry / (math.pi * dos * omega_ry * omega_ry))
+            lambda_by_q.append(row)
+
+        lambda_blocks.append(
+            GammaBlock(
+                broadening=block.broadening,
+                gamma_by_q=lambda_by_q,
+            )
+        )
+    return lambda_blocks
+
+
+def write_lambda_file(blocks: Iterable[GammaBlock], output_path: Path) -> None:
+    with output_path.open("w") as fh:
+        fh.write("\n  Lambda lines for all modes [dimensionless]\n \n")
+        for block in blocks:
+            fh.write(f" Broadening   {block.broadening:0.4f}\n")
+            for idx, values in enumerate(block.gamma_by_q, start=1):
+                fh.write(f"{idx:8d}\n")
+                line_vals: List[str] = []
+                for val in values:
+                    line_vals.append(f"{val:10.6f}")
+                    if len(line_vals) == 9:
+                        fh.write(" " + " ".join(line_vals) + "\n")
+                        line_vals = []
+                if line_vals:
+                    fh.write(" " + " ".join(line_vals) + "\n")
+
+
+def generate_lambda_blocks(
+    base_dir: Path,
+    system_name: str,
+    elph_dir_path: Path | None = None,
+) -> Tuple[List[GammaBlock], int, int]:
+    base_dir = base_dir.resolve()
+    freq_path = base_dir.joinpath(f"{system_name}.freq")
+    gam_path = base_dir.joinpath("gam.lines")
+    if elph_dir_path is None:
+        candidates = [
+            base_dir.joinpath("elph_dir"),
+            base_dir.parent.joinpath("elph_dir"),
+        ]
+        elph_dir = next((cand for cand in candidates if cand.exists()), None)
+    else:
+        elph_dir = elph_dir_path
+
+    if not freq_path.exists():
+        raise FileNotFoundError(f"{freq_path} does not exist.")
+    if not gam_path.exists():
+        raise FileNotFoundError(f"{gam_path} does not exist.")
+    if elph_dir is None or not elph_dir.exists():
+        raise FileNotFoundError("Unable to locate elph_dir.")
+
+    q_points, freq_by_q = read_frequencies(freq_path)
+    nmodes = len(freq_by_q[0])
+    gamma_blocks = read_gamma_lines(gam_path, nmodes)
+    if any(len(block.gamma_by_q) != len(q_points) for block in gamma_blocks):
+        raise ValueError("Mismatch in number of q-points between files.")
+    dos_map = read_broadening_dos(elph_dir)
+    lambda_blocks = compute_lambda(gamma_blocks, freq_by_q, dos_map)
+    return lambda_blocks, len(q_points), nmodes
+
+
+def flatten_lambda_block(
+    blocks: Iterable[GammaBlock], gauss: float, q_number: int, freq_number: int
+) -> List[List[float]]:
+    block_map = {round(block.broadening, 10): block for block in blocks}
+    key = round(gauss, 10)
+    if key not in block_map:
+        raise ValueError(f"Broadening {gauss} not found in lambda data.")
+    block = block_map[key]
+    if len(block.gamma_by_q) != q_number:
+        raise ValueError("Lambda q-point count mismatch.")
+    result: List[List[float]] = []
+    for mode in range(freq_number):
+        for q_index in range(q_number):
+            row = block.gamma_by_q[q_index]
+            if len(row) != freq_number:
+                raise ValueError("Lambda mode count mismatch.")
+            result.append([row[mode]])
+        result.append([math.nan])
+    return result
 
 logger = logging.getLogger(__name__)
 

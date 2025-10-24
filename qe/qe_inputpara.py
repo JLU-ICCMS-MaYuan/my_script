@@ -10,7 +10,12 @@ from math import ceil
 import numpy as np
 import pandas as pd
 
-from qe.qe_base import qe_base
+from qe.qe_base import (
+    qe_base,
+    flatten_lambda_block,
+    generate_lambda_blocks,
+    write_lambda_file,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -768,15 +773,34 @@ class qephono_inputpara(qe_inputpara):
 
         return qpoints_freq_new, q_number, freq_number
 
-    def merge_qp_freq_width(self, qpoints_freqs, phononwidth):
+    def get_lambda_column(self, gauss: float, q_number: int, freq_number: int) -> np.ndarray:
+        lambda_blocks, lambda_q_number, lambda_freq_number = generate_lambda_blocks(
+            self.work_path,
+            self.system_name,
+        )
+        write_lambda_file(lambda_blocks, self.work_path.joinpath("lambda.lines"))
+        if lambda_q_number != q_number or lambda_freq_number != freq_number:
+            logger.error(
+                "Lambda data shape mismatch: (q_points=%s, modes=%s) vs expected (%s, %s)",
+                lambda_q_number,
+                lambda_freq_number,
+                q_number,
+                freq_number,
+            )
+            raise ValueError("Lambda data shape mismatch.")
+        lambda_column = flatten_lambda_block(lambda_blocks, gauss, q_number, freq_number)
+        return np.array(lambda_column)
+
+    def merge_qp_freq_width(self, qpoints_freqs, phononwidth, q_number, freq_number):
         """
-        合并q点位置，振动频率，声子线宽成一个3列n行的数组
+        合并q点位置、振动频率、声子线宽和λ值成一个4列n行的数组
         qpoints_freqs 是一个2列n行的数组
         phononwidth   是一个1列n行的数组
         """
-        qpoints_freqs_phonowidth = np.hstack((qpoints_freqs, phononwidth))
+        lambda_column = self.get_lambda_column(self.gauss, q_number, freq_number)
+        qpoints_freqs_phonowidth = np.hstack((qpoints_freqs, phononwidth, lambda_column))
         qp_freq_width = pd.DataFrame(qpoints_freqs_phonowidth)
-        qp_freq_width.columns = ["Q-Path", "Frequency(cm\+(-1))", "Widths"]
+        qp_freq_width.columns = ["Q-Path", "Frequency(cm\+(-1))", "Widths", "Lambda"]
         qp_freq_width.to_csv(
             self.work_path.joinpath("qp_freq_width.csv"),
             header=True,

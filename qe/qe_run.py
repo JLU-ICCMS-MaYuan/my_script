@@ -131,7 +131,7 @@ class qe_phono:
             gauss = self.phono_inputpara.gauss
             qpoints_freqs, q_number, freq_number = self.phono_inputpara.get_phono_freq()
             phononwidth = self.phono_inputpara.get_gam_lines(gauss, q_number, freq_number)
-            self.phono_inputpara.merge_qp_freq_width(qpoints_freqs, phononwidth)
+            self.phono_inputpara.merge_qp_freq_width(qpoints_freqs, phononwidth, q_number, freq_number)
             logger.info("You can use `qp_freq_width.csv` to plot phonon-band")
         elif self.phono_inputpara.mode == "phonobanddata":
             inputfilename = self.qe_writeinput.writeinput()
