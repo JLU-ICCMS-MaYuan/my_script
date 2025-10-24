@@ -458,6 +458,8 @@ class vaspbatch_base(vasp_base):
             self.input_file_name   = self.input_file_path.name.strip('.vasp')
         elif self.input_file_path.name.endswith('.cif'):
             self.input_file_name   = self.input_file_path.name.strip('.cif')
+        elif self.input_file_path.name.endswith('.res'):
+            self.input_file_name   = self.input_file_path.name.strip('.res')
         else:
             self.input_file_name   = self.input_file_path.name
 

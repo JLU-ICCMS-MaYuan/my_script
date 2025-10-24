@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
 从指定的 IT 目录的 cam 文件中提取结构，并复制对应的 .res 文件。
+支持按单元、二元、三元或四元结构进行筛选。
 """
 from __future__ import annotations
 
@@ -13,7 +14,7 @@ from pathlib import Path
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="提取 cam 指定行范围内的结构，可选只保留三元结构。"
+        description="提取 cam 指定行范围内的结构，可选按元素种类筛选。"
     )
     parser.add_argument(
         "it",
@@ -33,11 +34,30 @@ def parse_args() -> argparse.Namespace:
         required=True,
         help="结束行号（从 1 起算，包含该行）。",
     )
-    parser.add_argument(
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument(
+        "-s",
+        "--single-only",
+        action="store_true",
+        help="只保留单元（1 种元素）结构。",
+    )
+    group.add_argument(
+        "-b2",
+        "--binary-only",
+        action="store_true",
+        help="只保留二元（2 种元素）结构。",
+    )
+    group.add_argument(
         "-t",
         "--ternary-only",
         action="store_true",
-        help="只保留三元（含三个元素）结构。",
+        help="只保留三元（3 种元素）结构。",
+    )
+    group.add_argument(
+        "-q",
+        "--quaternary-only",
+        action="store_true",
+        help="只保留四元（4 种元素）结构。",
     )
     return parser.parse_args()
 
@@ -107,6 +127,21 @@ def main() -> int:
     missing = []
     written_lines = []
 
+    required_count = None
+    filter_label = ""
+    if args.single_only:
+        required_count = 1
+        filter_label = "单元"
+    elif args.binary_only:
+        required_count = 2
+        filter_label = "二元"
+    elif args.ternary_only:
+        required_count = 3
+        filter_label = "三元"
+    elif args.quaternary_only:
+        required_count = 4
+        filter_label = "四元"
+
     for idx, raw_line in enumerate(lines, start=1):
         if idx < args.begin or idx > args.end:
             continue
@@ -122,10 +157,10 @@ def main() -> int:
         struct_id = parts[0]
         composition = parts[8] if len(parts) > 8 else ""
 
-        if args.ternary_only:
+        if required_count is not None:
             if not composition:
                 continue
-            if count_unique_elements(composition) != 3:
+            if count_unique_elements(composition) != required_count:
                 continue
 
         res_path = it_dir / f"{struct_id}.res"
@@ -149,12 +184,12 @@ def main() -> int:
         for idx, name in missing:
             print(f"  行 {idx}: {name}", file=sys.stderr)
 
-    if args.ternary_only and not copied:
-        print("在指定范围内未找到符合三元条件的结构。", file=sys.stderr)
+    if required_count is not None and not copied:
+        print(f"在指定范围内未找到符合{filter_label}条件的结构。", file=sys.stderr)
+        return 1
 
-    return 0 if copied or not args.ternary_only else 1
+    return 0
 
 
 if __name__ == "__main__":
     sys.exit(main())
-
