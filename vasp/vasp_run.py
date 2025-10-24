@@ -366,7 +366,7 @@ class vaspbatch:
         _config = config(args).read_config()
         input_dir_path = Path(_config['input_file_path'])
         if input_dir_path.is_dir():
-            input_files_path  = [input_dir_path.joinpath(pathname) for pathname in os.listdir(input_dir_path) if input_dir_path.joinpath(pathname).suffix == ".cif" or input_dir_path.joinpath(pathname).suffix == ".vasp"]
+            input_files_path  = [input_dir_path.joinpath(pathname) for pathname in os.listdir(input_dir_path) if input_dir_path.joinpath(pathname).suffix == ".cif" or input_dir_path.joinpath(pathname).suffix == ".vasp" or input_dir_path.joinpath(pathname).suffix == ".res"]
             if not input_files_path:
                 logger.error(f"The program didn't get any structures from {input_dir_path}")
                 sys.exit(1)
