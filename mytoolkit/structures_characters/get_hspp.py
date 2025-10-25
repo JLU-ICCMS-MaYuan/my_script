@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-import sys
 import argparse
-
+import sys
 from itertools import chain
-from ase.io import read
-from ase import Atom
-import numpy as np
+from pathlib import Path
 
+import numpy as np
+from ase import Atom
+from ase.io import read
 
 
 def interpolate_points(start, end, num_points):
@@ -111,6 +111,76 @@ def get_hspp(ase_atom:Atom, get_hspp:bool=False):
     print(string_coord)
     return path_name_coords 
 
+
+def _read_matdyn_high_symmetry_path(matdyn_path: Path):
+    if not matdyn_path.exists():
+        raise FileNotFoundError(f"{matdyn_path} not found.")
+    with matdyn_path.open() as fh:
+        lines = fh.readlines()
+
+    slash_idx = None
+    for idx, line in enumerate(lines):
+        if "/" in line:
+            slash_idx = idx
+            break
+    if slash_idx is None:
+        raise ValueError("Cannot locate '/' line in matdyn.in.")
+
+    path_name_coords = []
+    for raw in lines[slash_idx + 1 :]:
+        if not raw.strip():
+            continue
+        segment = raw.split("!")[0]
+        tokens = segment.split()
+        if len(tokens) < 3:
+            continue
+        try:
+            coords = list(map(float, tokens[:3]))
+        except ValueError:
+            continue
+        name = raw.split("!")[-1].strip() if "!" in raw else ""
+        path_name_coords.append([name, coords])
+    if not path_name_coords:
+        raise ValueError("No high-symmetry points found in matdyn.in.")
+    for idx, entry in enumerate(path_name_coords):
+        if not entry[0]:
+            entry[0] = f"P{idx+1}"
+    return path_name_coords
+
+
+def _project_path(path_name_coords):
+    projected = [[path_name_coords[0][0] or "P1", 0.0]]
+    total = 0.0
+    for idx in range(1, len(path_name_coords)):
+        current_name = path_name_coords[idx][0] or f"P{idx+1}"
+        cur = np.array(path_name_coords[idx][1], dtype=float)
+        prev = np.array(path_name_coords[idx - 1][1], dtype=float)
+        dist = float(np.linalg.norm(cur - prev, ord=2))
+        total += dist
+        projected.append([current_name, total])
+    return projected
+
+
+def _format_distance(value: float) -> str:
+    text = f"{value:.6f}"
+    if "." in text:
+        text = text.rstrip("0").rstrip(".")
+    return text or "0"
+
+
+def print_projected_from_matdyn(matdyn_path: Path):
+    path_name_coords = _read_matdyn_high_symmetry_path(matdyn_path)
+    projected = _project_path(path_name_coords)
+    names_line = " ".join(item[0] for item in projected)
+    dist_line = " ".join(_format_distance(item[1]) for item in projected)
+    print(f"  {names_line}")
+    print(f"  {dist_line}")
+    output_file = Path("hspp_projected.txt")
+    with output_file.open("w") as fh:
+        fh.write(f"{names_line}\n")
+        fh.write(f"{dist_line}\n")
+    return path_name_coords
+
 def write4tdep_type(path_name_coords):
     front_path_name_coords = path_name_coords[:-1]
     behind_path_name_coords = path_name_coords[1:]
@@ -123,14 +193,31 @@ def write4tdep_type(path_name_coords):
             f.write('{:<10.8f} {:<10.8f} {:<10.8f}    {:<10.8f} {:<10.8f} {:<10.8f}    {:<5} {:<5}\n'.format(front[1][0], front[1][1], front[1][2], behind[1][0], behind[1][1], behind[1][2], front[0], behind[0]))
 
 
+def _load_path_from_structure(struct_file: str):
+    ase_atom = read(struct_file)
+    return get_hspp(ase_atom, get_hspp=True)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Process high symmetry paths.')
     parser.add_argument('-f', '--filename', help='Input filename for ASE atom')
     parser.add_argument('-n', '--num_points', type=int, default=0, help='Number of interpolation points between high symmetry points')
+    parser.add_argument('--matdyn', action='store_true', help='Read high-symmetry path from matdyn.in in current directory')
     
     args = parser.parse_args()
-    ase_atom = read(args.filename)
-    path_name_coords = get_hspp(ase_atom, get_hspp=True)
+
+    path_name_coords = None
+    if args.matdyn or not args.filename:
+        matdyn_path = Path.cwd().joinpath("matdyn.in")
+        try:
+            path_name_coords = print_projected_from_matdyn(matdyn_path)
+        except Exception as exc:
+            print(f"Failed to parse matdyn.in: {exc}")
+            if not args.filename:
+                sys.exit(1)
+    if path_name_coords is None:
+        ase_atom = read(args.filename)
+        path_name_coords = get_hspp(ase_atom, get_hspp=True)
 
     write4tdep_type(path_name_coords)
     if args.num_points > 0:

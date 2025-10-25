@@ -19,6 +19,12 @@ from qe.qe_base import (
 
 logger = logging.getLogger(__name__)
 
+def _format_projection_value(value: float) -> str:
+    text = f"{value:.6f}"
+    if "." in text:
+        text = text.rstrip("0").rstrip(".")
+    return text or "0"
+
 class qe_inputpara(qe_base):
 
     def __init__(
@@ -206,10 +212,84 @@ class qe_inputpara(qe_base):
         )
         return self
 
+    def _load_hspp_from_matdyn(self):
+        matdyn_path = self.work_path.joinpath("matdyn.in")
+        if not matdyn_path.exists():
+            return None
+        with matdyn_path.open('r') as f:
+            lines = f.readlines()
+            slash_line_number = None
+            for i, line in enumerate(lines, start=1):
+                if '/' in line:
+                    slash_line_number = i
+                    break
+            if slash_line_number is None:
+                logger.warning("There is non '/' in matdyn.in")
+                return None
+
+        path_name_coords = []
+        for raw in lines[slash_line_number+1:]:
+            if not raw.strip():
+                continue
+            segment = raw.split("!")[0]
+            coords_tokens = segment.split()
+            if len(coords_tokens) < 3:
+                continue
+            try:
+                coords = list(map(float, coords_tokens[:3]))
+            except ValueError:
+                continue
+            name = raw.split("!")[-1].strip() if "!" in raw else ""
+            path_name_coords.append([name, coords])
+
+        if not path_name_coords:
+            logger.warning("High-symmetry path is empty in matdyn.in")
+            return None
+
+        for idx, entry in enumerate(path_name_coords, start=1):
+            if not entry[0]:
+                entry[0] = f"P{idx}"
+
+        logger.debug("Print Fractional Coordinates of Reciprocal Lattice ! ")
+        for name, dirt in path_name_coords:
+            print("{:<10.6f} {:<10.6f} {:<10.6f} {:<4}".format(dirt[0], dirt[1], dirt[2], name))
+
+        logger.debug("The reciprocal lattice (without multiplating `unit_reciprocal_axis`)")
+        for vector in self.reciprocal_plattice:
+            print("{:<6.3f} {:<6.3f} {:<6.3f} ".format(vector[0], vector[1], vector[2]))
+
+        logger.info("Print projected high symmetry path")
+        logger.info("倒格子的单位是 2pi/alat")
+        projected_path_name_coords = [[path_name_coords[0][0], 0]]
+        total_dist = 0
+        for idx in range(1, len(path_name_coords)):
+            current_name = path_name_coords[idx][0]
+            current_coords = np.dot(path_name_coords[idx][1], self.reciprocal_plattice)
+            last_coords = np.dot(path_name_coords[idx-1][1], self.reciprocal_plattice)
+            dist = np.linalg.norm(current_coords-last_coords, 2)
+            total_dist += dist
+            projected_path_name_coords.append([current_name, total_dist])
+        string_names = ' '.join(coord[0] for coord in projected_path_name_coords)
+        string_coord = ' '.join(_format_projection_value(coord[1]) for coord in projected_path_name_coords)
+        padded_names = f"  {string_names}"
+        padded_coord = f"  {string_coord}"
+        logger.info(padded_names)
+        logger.info(padded_coord)
+        output_path = self.work_path.joinpath("hspp_projected.txt")
+        with output_path.open("w") as fh:
+            fh.write(string_names + "\n")
+            fh.write(string_coord + "\n")
+        logger.info("Projected high-symmetry path saved to %s", output_path)
+        return path_name_coords
+
     def get_hspp(self, autoselect=False):
         """
         This method is to get high symmetry paths and points
         """ 
+        matdyn_coords = self._load_hspp_from_matdyn()
+        if matdyn_coords:
+            return matdyn_coords
+
         lat     = self.ase_type.cell.get_bravais_lattice()
         pstring = lat.special_path
 
@@ -690,62 +770,14 @@ class qephono_inputpara(qe_inputpara):
         return phononwidth 
  
     def read_hspp_in_matdyn(self):
-
-        if not self.work_path.joinpath("matdyn.in").exists():
+        matdyn_path = self.work_path.joinpath("matdyn.in")
+        if not matdyn_path.exists():
             logger.warning(f"There is no matdyn.in in {self.work_path}")
             return None
-        
-        # 都当前目录下的matdyn.in
-        matdyn_in_file = self.work_path.joinpath("matdyn.in")
-        with open(matdyn_in_file, 'r') as f:
-            lines = f.readlines()
-            # 获取\所在的行号
-            for i, line in enumerate(lines, start=1):
-                if '/' in line:
-                    slash_line_number = i
-                    break
-            else:
-                logger.warning("There is non '/' in matdyn.in")
-                return None
-
-        # 获得高对称点路径
-        path_name_coords = []
-        for line in lines[slash_line_number+1:]:
-            coords = list(map(float, line.split()[0:3]))
-            name = line.split('!')[-1].strip('\n')
-            path_name_coords.append([name, coords])
-
-        # 获得倒格子
-        logger.debug("Print projected high symmetry path")
-        logger.debug("倒格子的单位是 2pi/alat")
-        logger.debug("The reciprocal lattice (without multiplating `unit_reciprocal_axis`)")
-        for vector in self.reciprocal_plattice:
-            print("{:<6.3f} {:<6.3f} {:<6.3f} ".format(vector[0], vector[1], vector[2]))
-        
-        # 处理高对称点路径
-        logger.debug("Print Fractional Coordinates of Reciprocal Lattice ! ")
-        for name, dirt in path_name_coords:
-            print("{:<10.6f} {:<10.6f} {:<10.6f} {:<4}".format(dirt[0], dirt[1], dirt[2], name))
-        
-        
-        logger.info("Print projected high symmetry path")
-        logger.info("倒格子的单位是 2pi/alat")
-        #projected_path_name_coords = [[path_name_coords[0][0], path_name_coords[0][1][0]]]
-        projected_path_name_coords = [[path_name_coords[0][0], 0]]
-        total_dist = 0
-        for idx in range(1, len(path_name_coords)):
-            current_name   = path_name_coords[idx][0]
-            # current_coords = np.dot(self.reciprocal_plattice, path_name_coords[idx][1])
-            # last_coords    = np.dot(self.reciprocal_plattice, path_name_coords[idx-1][1])
-            current_coords = np.dot(path_name_coords[idx][1],   self.reciprocal_plattice)
-            last_coords    = np.dot(path_name_coords[idx-1][1], self.reciprocal_plattice)
-            dist = np.linalg.norm(current_coords-last_coords, 2)
-            total_dist += dist
-            projected_path_name_coords.append([current_name, total_dist])
-        string_names = ' '.join(coord[0] for coord in projected_path_name_coords)
-        string_coord = ' '.join(str(np.round(coord[1], 6)) for coord in projected_path_name_coords)
-        logger.info(string_names)
-        logger.info(string_coord)
+        result = self._load_hspp_from_matdyn()
+        if result is None:
+            logger.warning("Failed to parse high-symmetry path from matdyn.in")
+        return result
 
     def get_phono_freq(self):
         """获得可以在origin中作图的数据"""
