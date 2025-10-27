@@ -223,8 +223,4 @@ if (( remain > 0 )); then
     safe_sbatch task$full_warps.sh
 fi
 
-echo "Deleting selected structures from RSS/Base ..."
-echo "$res_files" | xargs rm -f
-echo "Done. Removed $n_res structures from $src"
-
 exit 0

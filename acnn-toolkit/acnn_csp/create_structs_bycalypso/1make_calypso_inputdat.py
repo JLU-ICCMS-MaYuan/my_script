@@ -5,6 +5,8 @@ import os
 import sys
 import numpy as np
 import itertools
+import shlex
+from datetime import datetime
 
 # --- Data Section for USPEX-like method ---
 # This dictionary contains empirical atomic volumes at 0 GPa (in Angstrom^3/atom) for the first 86 elements.
@@ -136,6 +138,26 @@ def generate_input_file(elements, radii, composition, popsize, num_elements, met
         f.write("Command = sh submit.sh\n")
         f.write("MaxStep = 10\n")
 
+def write_parameter_log(args, filename="paras.dat"):
+    """Persist the latest CLI arguments for easier reruns."""
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    try:
+        need_separator = os.path.exists(filename) and os.path.getsize(filename) > 0
+        with open(filename, 'a') as f:
+            if need_separator:
+                f.write("\n")
+            quoted_args = " ".join(shlex.quote(arg) for arg in sys.argv)
+            f.write(f"[{timestamp}] Invocation: {quoted_args}\n")
+            for key, value in sorted(vars(args).items()):
+                if isinstance(value, (list, tuple)):
+                    value_str = " ".join(map(str, value))
+                else:
+                    value_str = str(value)
+                f.write(f"{key} = {value_str}\n")
+            f.write("----\n")
+    except OSError as e:
+        print(f"Warning: 无法写入参数记录文件 '{filename}': {e}")
+
 def main():
     """Main function to parse arguments and generate files."""
     parser = setup_arg_parser()
@@ -149,6 +171,8 @@ def main():
     if not (len(args.radii) == num_elements and len(args.composition) == num_elements):
         print("Error: The number of arguments for --elements (-e), --radii (-r), and --composition (-c) must be the same.")
         sys.exit(1)
+
+    write_parameter_log(args)
 
     # --- Parse Composition Ranges ---
     composition_ranges = []
