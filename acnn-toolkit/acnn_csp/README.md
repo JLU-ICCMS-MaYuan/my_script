@@ -159,7 +159,7 @@ CMake Error at CMakeLists.txt:44 (find_package):
 (除前五行需要修改，后面的全注释)，创建文件夹build，进入后cmake.只需要激活gcc9.2或gcc9.5即可，不需要激活intel
 ```shell
 cmake -B build
-cmake --build build --target acnn
+cmake --build build --target acnn -j
 ```
 
 
@@ -187,7 +187,7 @@ sh build_lammps_interface.sh build 8
 ```shell
 cd torchdemo/interface/bfgs
 cmake -B build
-cmake --build build --target acnn_relax
+cmake --build build --target acnn_relax -j
 ```
 
 ####  <span style="font-size: 25px; color: blue;"> 10. 范例：所有添加了PATH路径的代码
@@ -344,7 +344,34 @@ cabal poscar cell < POSCAR > BeH2-P-3m1_50GPa.res
 airss.pl -build -max 5000 -seed ScZrB (即SEED_NAME)
 ```
 
-(2) 提交结构预测到集群
+(2) 目前产生结构有两种方法
+
+1. 第一种方法airss定组分产生
+```shell
+# 第一步：估算每种元素的原子体积。在SEED目录中执行下面的命令，可以获得每个原子的体积。
+cat *.res | acnn_estvol 
+
+# 第二步：在RSS目录中创建AIRSS目录
+mkdir AIRSS
+
+# 第三步：将RSS目录中的dyn_gcs拷贝到AIRSS中，修改其中关于原子体积的部分：
+# Define atomic volumes
+declare -A atomic_volumes=(
+    ["H"]=2
+    ["Mg"]=11
+    ["Ce"]=15
+)
+
+# 第四步：产生组分文件，通过执行下面的命令。
+#   组分是去重的
+#   组分是可以指定倍数的
+#   每个组分产生100个结构
+python generate_formula_ratios.py Ce:1-2 Mg:1-2 H:1-30 -fu 1 -n 100
+
+# 第五步：执行dyn_gcs，生成结构
+./dyn_gcs composition.dat 64
+# 当然了你也可以循环执行，提交create_fix_composition.sh脚本即可。其逻辑是当所有组分产生好结构之后，就将其都移动到Base目录中。
+```
 
 ####  <span style="font-size: 25px; color: blue;"> 注意事项
 
@@ -485,3 +512,12 @@ RES=$(dedup -s ../../../PD/IT$IT -t 5 $CAU_FILE |grep out || true)
 ```shell
 emodel model-restart/model-100000 DT/ > ss 2>&1
 ```
+
+新版本的acnn用下面的命令检查
+```shell
+emodel model-restart/model-100000 DT/ > ss 2>&1
+```
+
+##### <span style="font-size: 20px; color: lightblue;"> 10. XSF中的ry可以调整受力筛选精度
+
+ry中的
