@@ -1,4 +1,3 @@
-(my_scripts) [mayuan@login01 AIRSS]$ cat create.sh 
 #!/bin/bash
 #SBATCH --job-name=caly_process_unfinished
 #SBATCH --partition=intel6430
