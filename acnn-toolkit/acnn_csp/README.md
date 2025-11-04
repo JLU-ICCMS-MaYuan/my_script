@@ -346,7 +346,7 @@ airss.pl -build -max 5000 -seed ScZrB (即SEED_NAME)
 
 (2) 目前产生结构有两种方法
 
-1. 第一种方法airss定组分产生
+1. 第一种方法airss定组分产生(<span style="font-size: 15px; color: RED;"> **特别注意，产生结构用到的dyn_gsc必须用acnn_deploy自动产生，不能从别的地方拷贝**)
 ```shell
 # 第一步：估算每种元素的原子体积。在SEED目录中执行下面的命令，可以获得每个原子的体积。
 cat *.res | acnn_estvol 
@@ -437,18 +437,27 @@ minimize            1.0e-8 1.0e-4 20000 20000
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ```
 
-##### <span style="font-size: 20px; color: lightblue;"> 4. 如何增加每代的结构数量，提升结构预测的效率？
+##### <span style="font-size: 20px; color: lightblue;"> 4. 如何提升结构预测的效率？
 
-首先，从第10代开始，增加`RELAX/dyn_batch_relax`中的`range="1 1000"`的结构数量。可以尝试从1000增加到10000或者20000.
-其次，从第10代开始，在增加结构数之后，修改`RELAX/ppr`的CAU_FILE和RES. 
+###### <span style="font-size: 18px; color: lightblue;"> 4.1 能量收敛到100meV/atom前帮助收敛的方法。
+
+从产生结构上来看，先产生500个结构, 检查DFT/SCF中每个结构的press是否为指定压强附近。如果偏离太多，说明初始体积不够合理。通过调整产生结构的体积来提高press的精度。
+
+###### <span style="font-size: 18px; color: lightblue;"> 4.2 在POT中用acnn_emodel检查当能量收敛到100meV/atom后，增加RELAX的结构的数量
+
+首先，能量收敛后，增加`RELAX/dyn_batch_relax`中的`range="1 1000"`的结构数量。可以尝试从1000增加到10000或者20000.
+其次，能量收敛后，在增加结构数之后，减小`RELAX/ppr`的CAU_FILE和RES. 保证每个配比只提取能量最低的。
 ```shell
 CAU_FILE=$(match_cau $(head -n 200 cac-log|awk '{print $9}'))
 RES=$(dedup -s ../../../PD/IT$IT -t 3 $CAU_FILE |grep out || true)
-```
-这两个变量代表的含义是：挑选出200个能量较低的组分保存至`CAU_FILE`，并且挑选每个组分的前三个能量更低结构保留下来保存到`RES`。
-可以在增加结构数之后增加200到500，同时减小RES中每个组分的结构数，保持效率不变。
 
-##### <span style="font-size: 20px; color: lightblue;"> 5. 关于RELAX中设置结构数的设置
+# 这两个变量代表的含义是：挑选出200个能量较低的组分保存至`CAU_FILE`，并且挑选每个组分的前三个能量更低结构保留下来保存到`RES`。
+# 可以在增加结构数之后增加200到500，同时减小RES中每个组分的结构数，保持效率不变。
+```
+
+##### <span style="font-size: 20px; color: lightblue;"> 5. RELAX中设置结构数的注意事项
+
+##### <span style="font-size: 18px; color: lightblue;"> 5.1 关于RELAX中设置结构数的设置
 
 ```shell
 frame="500" # 总结构数
@@ -464,12 +473,12 @@ job_max=4   # 最多同时提交多少个任务。
 frame/group = warp*job_max
 ```
 
-##### <span style="font-size: 20px; color: lightblue;"> 6. 关于各个提交任务的脚本的title的设置引发的错误。
+##### <span style="font-size: 18px; color: lightblue;"> 5.2  关于各个提交任务的脚本的title的设置引发的错误。
 acnn通过acnn_wait <任务名> 来控制一个模块任务的完成和下一个模块任务的进行，如果你在修改提交任务的脚本的时候，发现一个模块还没运行完毕，下一个模块已经开始运行了。那么这就说明你的`#SBATCH --job-name=TRAINAlBeH`设置的有问题（这里以slurm系统作为说明）。
 
 建议你在修改完之后，用grep好好检查一下。
 
-##### <span style="font-size: 20px; color: lightblue;"> 7. 关于RELAX目录中设置结构优化的types的参数设置问题
+##### <span style="font-size: 18px; color: lightblue;"> 5.3 关于RELAX目录中设置结构优化的types的参数设置问题
 
 dyn_batch_relax_bfgs中types="Al,Be"设置必须有逗号。
 ```shell
@@ -480,6 +489,14 @@ dyn_batch_relax_lmp中types="Al Be"不能有逗号。
 ```shell
 types="Al Be"
 ```
+##### <span style="font-size: 18px; color: lightblue;"> 5.4 RELAX的目录下的ppr会在RELAX/IT{x}/RES产生几个log文件，分别代表的含义是：
+
+1. `cam-log` 包含了所有结构的`convex hull信息`
+2. `cam1-log`  `cam2-log`  `cam3-log`代表`seed`中的`结构+单质结构`， `seed`中的`结构+二元结构`， `seed`中的`结构+三元结构`
+3. `cac-log`从cam-log中挑选出`convex hull`中能量低于2eV且结构数超过100个的结构
+4. `cas-log`从`RES`中统计优化成功的`总结构数`和`每个配比的结构数`
+5. `cau-log`统计了所有结构优化成功有多少个配比：对cas-log中的结构进行指纹去重
+
 
 ##### <span style="font-size: 20px; color: lightblue;"> 8. 关于PD目录某一代IT${IT}没有新一代结构信息
 
@@ -515,9 +532,13 @@ emodel model-restart/model-100000 DT/ > ss 2>&1
 
 新版本的acnn用下面的命令检查
 ```shell
-emodel model-restart/model-100000 DT/ > ss 2>&1
+acnn_emodel model-restart/model-100000 DT/ > ss 2>&1
 ```
 
 ##### <span style="font-size: 20px; color: lightblue;"> 10. XSF中的ry可以调整受力筛选精度
 
-ry中的
+XSF中ry中的`acnn_checkdt 50`设置了受力的误差阈值。代表挑选受力误差小于50eV/A的结构。
+
+##### <span style="font-size: 20px; color: lightblue;"> 11. DFT/batch_vasp中可以用acnn_limitjob来限制提交的DFT任务数
+acnn_limitjob FPCeBaH 50 可以用来限制提交的DFT任务数为50个
+
