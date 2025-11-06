@@ -3,7 +3,7 @@
 根据指定元素及其原子数范围生成配比，并化为最简形式。
 
 示例：
-    python generate_formula_ratios.py Ce:1-10 Mg:1-10 H:1-30 -fu 2
+    python generate_formula_ratios.py Ce:1-10 Mg:1-10 H:1-30 -fu 1 2 3 -f 1/6 1/8
 """
 
 from __future__ import annotations
@@ -20,7 +20,6 @@ DEFAULT_NUM_STRUCTURES = 1
 
 
 def parse_element_spec(spec: str) -> Tuple[str, range]:
-    """将形如 Ce:1-10 的参数解析为 (元素符号, range)。"""
     if ":" not in spec:
         raise ValueError(f"元素参数缺少冒号: '{spec}'")
     symbol, span = spec.split(":", 1)
@@ -46,35 +45,33 @@ def parse_element_spec(spec: str) -> Tuple[str, range]:
 
 
 def reduce_counts(counts: Sequence[int]) -> Tuple[int, ...]:
-    """将计数约化为最简整数比。"""
     divisor = reduce(gcd, counts)
     return tuple(count // divisor for count in counts)
 
 
 def format_composition(symbols: Sequence[str], counts: Sequence[int]) -> str:
-    """按元素顺序输出紧凑格式形如 Ce1Mg2H3 的字符串。"""
     return "".join(f"{symbol}{count}" for symbol, count in zip(symbols, counts))
 
 
 def generate_ratios(
     spec_map: Sequence[Tuple[str, range]],
-    fu: int,
+    fus: Sequence[int],
     deduplicate: bool = True,
 ) -> Iterable[Tuple[str, Tuple[int, ...]]]:
-    """生成(文本行, 约化后数量) 对，以便后续扩展。"""
+
     symbols = [symbol for symbol, _ in spec_map]
     ranges = [r for _, r in spec_map]
     seen = set()
 
     for counts in itertools.product(*ranges):
         reduced = reduce_counts(counts)
-        final_counts = tuple(count * fu for count in reduced)
-        if deduplicate:
-            key = final_counts
-            if key in seen:
-                continue
-            seen.add(key)
-        yield format_composition(symbols, final_counts), final_counts
+        for fu in fus:
+            final_counts = tuple(count * fu for count in reduced)
+            if deduplicate:
+                if final_counts in seen:
+                    continue
+                seen.add(final_counts)
+            yield format_composition(symbols, final_counts), final_counts
 
 
 def build_argument_parser() -> argparse.ArgumentParser:
@@ -89,9 +86,10 @@ def build_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "-fu",
         "--formula-unit",
+        nargs="+",
         type=int,
-        default=1,
-        help="分子式倍数，默认 1 表示最简配比",
+        default=[1],
+        help="分子式倍数，可写多个，如 -fu 1 2 3 表示生成1×,2×,3×分子式",
     )
     parser.add_argument(
         "-o",
@@ -111,6 +109,12 @@ def build_argument_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="保留重复配比（默认去重）",
     )
+    parser.add_argument(
+        "-f", "--mh-range",
+        nargs=2,
+        metavar=("LOW", "HIGH"),
+        help="筛选金属:氢比例范围，例如 -f 1/6 1/8 表示金属总数/氢总数在 [1/6, 1/8] 之间",
+    )
     return parser
 
 
@@ -118,8 +122,8 @@ def main(argv: Sequence[str]) -> int:
     parser = build_argument_parser()
     args = parser.parse_args(argv)
 
-    if args.formula_unit <= 0:
-        parser.error("公式倍数 (--formula-unit) 必须为正整数")
+    if any(fu <= 0 for fu in args.formula_unit):
+        parser.error("所有 -fu 参数必须为正整数")
 
     try:
         spec_map = [parse_element_spec(spec) for spec in args.element_specs]
@@ -129,16 +133,40 @@ def main(argv: Sequence[str]) -> int:
     if args.num_structures <= 0:
         parser.error("每个配比的结构数 (-n/--num-structures) 必须为正整数")
 
+    mh_low = mh_high = None
+    if args.mh_range:
+        def parse_ratio(s: str) -> float:
+            if "/" in s:
+                a, b = s.split("/", 1)
+                return float(a) / float(b)
+            return float(s)
+        try:
+            mh_low = parse_ratio(args.mh_range[0])
+            mh_high = parse_ratio(args.mh_range[1])
+        except Exception:
+            parser.error("比例范围参数 -f 必须是形如 1/6 或 0.2 的数字")
+
     lines: List[str] = []
     lines.append(
         f"# 元素范围: {' '.join(args.element_specs)}; fu={args.formula_unit}; 去重={'否' if args.allow_duplicates else '是'}; 每配比结构数={args.num_structures}"
     )
 
-    for line, _ in generate_ratios(
+    symbols_only = [symbol for symbol, _ in spec_map]
+
+    for line, final_counts in generate_ratios(
         spec_map,
         args.formula_unit,
         deduplicate=not args.allow_duplicates,
     ):
+        if mh_low is not None:
+            metal_count = sum(c for s, c in zip(symbols_only, final_counts) if s != "H")
+            hydrogen_count = sum(c for s, c in zip(symbols_only, final_counts) if s == "H")
+            if hydrogen_count == 0:
+                continue
+            ratio = metal_count / hydrogen_count
+            if not (mh_low <= ratio <= mh_high):
+                continue
+
         lines.append(f"{line} {args.num_structures}")
 
     with open(args.output, "w", encoding="utf-8") as handle:
@@ -146,7 +174,6 @@ def main(argv: Sequence[str]) -> int:
         handle.write("\n")
 
     print(f"# 已写入 {args.output}，共 {len(lines) - 1} 条配比。")
-
     return 0
 
 
