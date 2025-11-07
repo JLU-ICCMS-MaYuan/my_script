@@ -280,9 +280,6 @@ def evaluate_record(
             reasons.append(f"命中配比 {target}")
 
     should_move = bool(reasons)
-    if not should_move and not ratio_limits:
-        # 仅配比命中才算剔除
-        should_move = record.normalized_signature in composition_targets
 
     return should_move, reasons
 
