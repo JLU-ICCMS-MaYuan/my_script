@@ -823,14 +823,14 @@ class qe_writeinput:
             qe.write(" q_in_band_form=.true.,                           \n")                                 
             qe.write(" q_in_cryst_coord=.true.,                         \n")
             if self.qe_inputpara.EPC_flag == True: 
-                qe.write(" la2F = {},                                       \n".format(self.qe_inputpara.la2F))                 
-                qe.write(" el_ph_nsigma={},                                 \n".format(str(self.qe_inputpara.el_ph_nsigma)))
+                qe.write(" la2F = {},                                   \n".format(self.qe_inputpara.la2F))                 
+                qe.write(" el_ph_nsigma={},                             \n".format(str(self.qe_inputpara.el_ph_nsigma)))
             if self.qe_inputpara.SCTK_flag == True:
-                qe.write("  lshift_q = .true.                            \n") # 移动q网格以避免Γ点的奇点。SCTK软件要求用四面体方法计算声子，这个是必须加的。
-            qe.write("/                                                  \n")          
-            qe.write("{}                                                 \n".format(special_qpoints_number))            
+                qe.write("  lshift_q = .true.                           \n") # 移动q网格以避免Γ点的奇点。SCTK软件要求用四面体方法计算声子，这个是必须加的。
+            qe.write("/                                                 \n")          
+            qe.write("{}                                                \n".format(special_qpoints_number))            
             for name, coord in self.qe_inputpara.path_name_coords:
-                qe.write(" {:<15} {:<15} {:<15} {:<5}                   \n".format(str(coord[0]), str(coord[1]), str(coord[2]), str(inserted_qpoints_number)))
+                qe.write(" {:<15} {:<15} {:<15} {:<5} ! {:<5}           \n".format(str(coord[0]), str(coord[1]), str(coord[2]), str(inserted_qpoints_number), name))
         return inputfilename
 
     def write_phonobanddata_in(self, work_directory:Path):

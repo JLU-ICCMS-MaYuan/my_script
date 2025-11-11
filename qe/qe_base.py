@@ -205,33 +205,25 @@ def write_lambda_file(blocks: Iterable[GammaBlock], output_path: Path) -> None:
 def generate_lambda_blocks(
     base_dir: Path,
     system_name: str,
-    elph_dir_path: Path | None = None,
 ) -> Tuple[List[GammaBlock], int, int]:
     base_dir = base_dir.resolve()
     freq_path = base_dir.joinpath(f"{system_name}.freq")
+    elph_dir_path = base_dir.joinpath("elph_dir")
     gam_path = base_dir.joinpath("gam.lines")
-    if elph_dir_path is None:
-        candidates = [
-            base_dir.joinpath("elph_dir"),
-            base_dir.parent.joinpath("elph_dir"),
-        ]
-        elph_dir = next((cand for cand in candidates if cand.exists()), None)
-    else:
-        elph_dir = elph_dir_path
 
     if not freq_path.exists():
         raise FileNotFoundError(f"{freq_path} does not exist.")
     if not gam_path.exists():
         raise FileNotFoundError(f"{gam_path} does not exist.")
-    if elph_dir is None or not elph_dir.exists():
-        raise FileNotFoundError("Unable to locate elph_dir.")
+    if not elph_dir_path.exists():
+        raise FileNotFoundError(f"{elph_dir_path} does not exist.")
 
     q_points, freq_by_q = read_frequencies(freq_path)
     nmodes = len(freq_by_q[0])
     gamma_blocks = read_gamma_lines(gam_path, nmodes)
     if any(len(block.gamma_by_q) != len(q_points) for block in gamma_blocks):
         raise ValueError("Mismatch in number of q-points between files.")
-    dos_map = read_broadening_dos(elph_dir)
+    dos_map = read_broadening_dos(elph_dir_path)
     lambda_blocks = compute_lambda(gamma_blocks, freq_by_q, dos_map)
     return lambda_blocks, len(q_points), nmodes
 

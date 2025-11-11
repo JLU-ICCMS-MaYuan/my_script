@@ -147,9 +147,9 @@ def main(argv: Sequence[str]) -> int:
             parser.error("比例范围参数 -f 必须是形如 1/6 或 0.2 的数字")
 
     lines: List[str] = []
-    lines.append(
-        f"# 元素范围: {' '.join(args.element_specs)}; fu={args.formula_unit}; 去重={'否' if args.allow_duplicates else '是'}; 每配比结构数={args.num_structures}"
-    )
+    # lines.append(
+    #     f"# 元素范围: {' '.join(args.element_specs)}; fu={args.formula_unit}; 去重={'否' if args.allow_duplicates else '是'}; 每配比结构数={args.num_structures}"
+    # )
 
     symbols_only = [symbol for symbol, _ in spec_map]
 
