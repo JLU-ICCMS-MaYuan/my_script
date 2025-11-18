@@ -498,6 +498,23 @@ types="Al Be"
 5. `cau-log`统计了所有结构优化成功有多少个配比：对cas-log中的结构进行指纹去重
 
 
+##### <span style="font-size: 18px; color: lightblue;"> 5.5 RELAX/dyn_batch_relax_bfgs中关于bonds_scale的更新策略
+
+```shell
+if [ -d "$xsf" ];then
+    rt=$(echo "scale=2; $(find $xsf -name "*limit*xsf"|wc -l) / ($(find $xsf -name "*limit*"|wc -l) + 0.1)"|bc)
+    # 受力正常的结构 = $(find $xsf -name "*limit*xsf"|wc -l)
+    # 全部的结构 = $(find $xsf -name "*limit*"|wc -l)
+    if (( $(echo "$rt > 0.75" | bc -l) )); then # 正常的结构占比比较多，就收紧收缩。这样就可以过滤掉更多不合理的结构。
+        new_value=$(echo "scale=2;$bonds_scale * 0.95" | bc)
+    else # 如果正常的结构占比较少，就放宽条件，让更多的结构加入后续的弛豫中。
+        new_value=$(echo "scale=2;$bonds_scale * 1.05" | bc)
+    fi
+    sed -i "s/^bonds_scale=\"[0-9.]*\"/bonds_scale=\"$new_value\"/" ../in.seed
+fi
+```
+
+
 ##### <span style="font-size: 20px; color: lightblue;"> 8. 关于PD目录某一代IT${IT}没有新一代结构信息
 
 比如第四代`IT4/cam`里面找不到关于IT4_*开头的任何结构名以及它对应的res文件。

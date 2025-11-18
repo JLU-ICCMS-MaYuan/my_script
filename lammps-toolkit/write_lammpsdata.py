@@ -5,7 +5,7 @@ import argparse
 from ase.io import read
 from ase.io.lammpsdata import write_lammps_data
 
-parser = argparse.ArgumentParser(description='Generate supercells with optional diagonal or non-diagonal supercell matrices.')
+parser = argparse.ArgumentParser(description='create structure data file for LAMMPS from POSCAR/vasp or lammps trajectory file')
 # 输入文件
 parser.add_argument('-i', '--input', type=str, default='POSCAR',
                         help='Input structure file (default: POSCAR)')

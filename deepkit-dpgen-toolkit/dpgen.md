@@ -8,7 +8,7 @@ https://bohrium-doc.dp.tech/docs/software/CALYPSO/
 ```
 
 
-##  <span style="color:red">  0. 安装软件，准备目录以及相应的输入文件和训练集
+##  <span style="font-size: 30px; color:red">  0. 安装软件，准备目录以及相应的输入文件和训练集
 
 ###  <span style="color:yellow"> 0.1 安装deepmd-kit
 ```shell
