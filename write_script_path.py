@@ -8,7 +8,7 @@ scripts_names = [
     'calypso-toolkit', 
     'lobster-toolkit', 
 
-    'deepkit-dpgen-toolkit',
+    'deepkit-dpgen-toolkit/scripts',
     'elk-toolkit',
     'epw/epw-toolkit',
     'lammps-toolkit',
