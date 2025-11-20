@@ -1,0 +1,23 @@
+{
+  "_comment": "VASP计算通用配置文件示例",
+  "_description": "此文件提供默认参数，可被命令行参数覆盖",
+
+  "potcar_dir": "~/pot/vasp_pot/potpaw_PBE54",
+  "potcar_type": "PBE",
+
+  "kspacing": 0.3,
+  "encut": 500,
+
+  "job_system": "bash",
+  "max_workers": 4,
+  "parallel": false,
+
+  "include_elf": false,
+  "include_cohp": false,
+  "dos_type": "element",
+
+  "supercell": [2, 2, 2],
+  "method": "disp",
+
+  "log_level": "INFO"
+}

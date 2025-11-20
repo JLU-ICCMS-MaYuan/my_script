@@ -35,11 +35,22 @@ setup(
         "spglib==2.5.0",
         "phonopy==2.28.0",
     ],
-    scripts=[
-        'qe/qe_main.py',
-        'vasp/vasp_main.py',
-        'structuregenerator/generator_main.py',
-        'epw/epw_main.py',
-    ],
+    # 旧的scripts配置（这些文件不存在，已废弃）
+    # scripts=[
+    #     'qe/qe_main.py',
+    #     'vasp/vasp_main.py',
+    #     'structuregenerator/generator_main.py',
+    #     'epw/epw_main.py',
+    # ],
+
+    # 新的entry_points配置（推荐方式）
+    entry_points={
+        'console_scripts': [
+            'vasp=vasp.cli:main',
+            # qe和epw的CLI将在后续添加
+            # 'qe=qe.cli:main',
+            # 'epw=epw.cli:main',
+        ],
+    },
     python_requires='>=3.7',
 )
