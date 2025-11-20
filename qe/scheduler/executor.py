@@ -7,7 +7,7 @@
 创建时间：2025-11-19
 """
 
-from typing import List
+from typing import List, Optional, Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import logging
 
@@ -26,7 +26,7 @@ class MixedParallelExecutor:
     2. 步骤串行：每个结构的步骤按顺序执行
     """
 
-    def __init__(self, max_workers: int = 4):
+    def __init__(self, max_workers: int = 4, progress_callback: Optional[Callable] = None):
         """
         初始化执行器
 
@@ -34,8 +34,11 @@ class MixedParallelExecutor:
         ----------
         max_workers : int
             最大并行worker数量
+        progress_callback : Callable, optional
+            进度回调函数，参数为Task对象
         """
         self.max_workers = max_workers
+        self.progress_callback = progress_callback
 
     def execute(self, tasks: List[Task]):
         """
@@ -113,6 +116,10 @@ class MixedParallelExecutor:
         task.mark_running()
         logger.info(f"⟳ 执行任务: {task.task_id}")
 
+        # 通知进度监控
+        if self.progress_callback:
+            self.progress_callback(task)
+
         try:
             # TODO: 实际的任务执行逻辑
             # 这里需要调用相应的Workflow类
@@ -122,7 +129,16 @@ class MixedParallelExecutor:
             task.mark_success()
             logger.info(f"✓ 任务完成: {task.task_id}")
 
+            # 通知进度监控
+            if self.progress_callback:
+                self.progress_callback(task)
+
         except Exception as e:
             task.mark_failed(str(e))
             logger.error(f"✗ 任务失败: {task.task_id} - {e}")
+
+            # 通知进度监控
+            if self.progress_callback:
+                self.progress_callback(task)
+
             raise
