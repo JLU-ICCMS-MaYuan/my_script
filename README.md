@@ -5,11 +5,184 @@
 2. https://zhuanlan.zhihu.com/p/547184583 如何安装vasp
 
 # 介绍
-该软件是一个计算qe，vasp的小程序。也可以用来产生结构
+该软件是一个计算qe，vasp，epw的命令行工具。提供现代化的CLI接口，支持通过命令行参数或JSON配置文件执行计算任务。
 
 # 软件架构
-qe, vasp, structuregenerator是三个独立的项目，互相不耦合。可以独立开发，使用。
+qe, vasp, epw, structuregenerator是四个独立的模块，互相不耦合。可以独立开发、使用。
 
+# 新版CLI快速开始指南
+
+## CLI命令总览
+
+安装后，你可以直接在命令行使用以下命令：
+
+```bash
+vasp --help      # VASP计算命令行工具
+qe --help        # Quantum ESPRESSO计算命令行工具
+epw --help       # EPW电声耦合计算命令行工具
+```
+
+## VASP CLI使用示例
+
+### 结构优化
+```bash
+# 单个结构优化
+vasp relax -i POSCAR -w ./calc --kspacing 0.2 --encut 500
+
+# 批量结构优化（自动检测）
+vasp relax -i ./structures/ -w ./batch_calc --kspacing 0.2
+
+# 使用JSON配置文件
+vasp relax -i POSCAR -w ./calc --json config.json
+```
+
+### 电子性质全流程计算
+```bash
+# 完整流程：relax → scf → dos → band → elf → cohp → plotting
+vasp electronic -i POSCAR -w ./calc --kspacing 0.2 --include-elf --include-cohp
+```
+
+### 声子性质全流程计算
+```bash
+# 完整流程：relax → phonon → band → dos → plotting
+vasp phonon -i POSCAR -w ./calc --supercell 2 2 2 --method disp
+```
+
+## QE CLI使用示例
+
+### 结构优化
+```bash
+# 变胞优化
+qe relax -i input.cif -w ./calc --ecutwfc 80 --kpoints 16 16 16 --mode relax-vc
+
+# 使用JSON配置
+qe relax -i input.cif -w ./calc --json qe_config.json
+```
+
+### 声子计算
+```bash
+# 分割q点计算
+qe phonon -i relax.out -w ./calc --qpoints 4 4 4 --split
+
+# 计算电声耦合常数
+qe phonon -i relax.out -w ./calc --qpoints 4 4 4 --compute-lambda
+```
+
+### 超导性质计算
+```bash
+# McMillan-Allen-Dynes方法
+qe superconductivity -i relax.out -w ./calc --method McAD --mu-star 0.1
+
+# Eliashberg方程方法
+qe superconductivity -i relax.out -w ./calc --method eliashberg --mu-star 0.1
+```
+
+## EPW CLI使用示例
+
+```bash
+# EPW完整计算流程
+epw run -i relax.out -w ./calc --mode full --nkf 20 20 20 --nqf 20 20 20
+
+# 仅电声耦合计算
+epw run -i relax.out -w ./calc --mode elph --nkf 20 20 20
+
+# 使用JSON配置
+epw run -i relax.out -w ./calc --json epw_config.json
+```
+
+## JSON配置文件使用
+
+### 为什么使用JSON配置？
+
+JSON配置文件可以存储常用参数（如encut, kspacing, potcar_dir等），避免每次都在命令行输入重复的参数。
+
+### 配置优先级
+
+```
+命令行参数 > JSON配置 > 代码默认值
+```
+
+### VASP配置示例 (vasp_config.json)
+
+```json
+{
+  "potcar_dir": "~/pot/vasp_pot/potpaw_PBE54",
+  "potcar_type": "PBE",
+  "kspacing": 0.3,
+  "encut": 500,
+  "job_system": "bash",
+  "include_elf": false,
+  "include_cohp": false
+}
+```
+
+使用方式：
+```bash
+vasp electronic -i POSCAR -w ./calc --json vasp_config.json --kspacing 0.2
+# 这里kspacing会使用命令行的0.2，其他参数从JSON读取
+```
+
+### QE配置示例 (qe_config.json)
+
+```json
+{
+  "pp_dir": "~/pot/qe_pp",
+  "ecutwfc": 80,
+  "ecutrho": 640,
+  "kpoints": [16, 16, 16],
+  "qpoints": [4, 4, 4],
+  "mu_star": 0.1,
+  "job_system": "bash"
+}
+```
+
+### EPW配置示例 (epw_config.json)
+
+```json
+{
+  "pp_dir": "~/pot/qe_pp",
+  "mode": "full",
+  "nkf": [20, 20, 20],
+  "nqf": [20, 20, 20],
+  "job_system": "bash"
+}
+```
+
+配置文件示例位置：
+- `vasp/config_example.json`
+- `qe/config_example.json`
+- `epw/config_example.json`
+
+## 批量计算模式
+
+VASP CLI支持智能批量计算检测：
+
+```bash
+# 方法1：使用--batch标志
+vasp relax -i ./structures/ -w ./batch_calc --batch --kspacing 0.2
+
+# 方法2：自动检测（如果输入是目录且包含多个结构文件）
+vasp relax -i ./structures/ -w ./batch_calc --kspacing 0.2
+
+# 并行批量计算
+vasp electronic -i ./structures/ -w ./batch --parallel --max-workers 4
+```
+
+---
+
+## 关于旧版文档
+
+**本README后续章节保留了详细的技术文档**，包括：
+- QE、VASP、EPW的详细参数说明
+- 各种计算模式的技术细节
+- 常见错误分析和解决方案
+- 高级功能使用说明
+
+这些技术文档对理解底层计算原理和参数设置仍然非常有用，建议结合新CLI命令使用。
+
+旧代码已移至 `archive/` 目录，仅供参考，不再维护。
+
+---
 
 # 安装教程
 
