@@ -1,0 +1,14 @@
+{
+  "_comment": "EPW计算通用配置文件示例",
+  "_description": "此文件提供默认参数，可被命令行参数覆盖",
+
+  "pp_dir": "~/pot/qe_pp",
+
+  "mode": "full",
+
+  "nkf": [20, 20, 20],
+  "nqf": [20, 20, 20],
+
+  "job_system": "bash",
+  "log_level": "INFO"
+}

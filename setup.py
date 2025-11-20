@@ -47,9 +47,8 @@ setup(
     entry_points={
         'console_scripts': [
             'vasp=vasp.cli:main',
-            # qe和epw的CLI将在后续添加
-            # 'qe=qe.cli:main',
-            # 'epw=epw.cli:main',
+            'qe=qe.cli:main',
+            'epw=epw.cli:main',
         ],
     },
     python_requires='>=3.7',

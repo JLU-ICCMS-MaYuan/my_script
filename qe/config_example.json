@@ -1,0 +1,27 @@
+{
+  "_comment": "QE计算通用配置文件示例",
+  "_description": "此文件提供默认参数，可被命令行参数覆盖",
+
+  "pp_dir": "~/pot/qe_pp",
+
+  "ecutwfc": 80,
+  "ecutrho": 640,
+  "kpoints": [16, 16, 16],
+  "kpoints_dense": [32, 32, 32],
+
+  "press": 0.0,
+  "mode": "relax-vc",
+
+  "qpoints": [4, 4, 4],
+  "tr2_ph": 1e-14,
+
+  "conv_thr": 1e-9,
+  "mixing_beta": 0.7,
+
+  "mu_star": 0.1,
+  "top_freq": 80,
+  "degauss": 0.5,
+
+  "job_system": "bash",
+  "log_level": "INFO"
+}
