@@ -100,7 +100,7 @@ def main() -> int:
         print(str(exc), file=sys.stderr)
         return 1
 
-    base_dir = Path(__file__).resolve().parent
+    base_dir = Path().cwd()
     it_dir = base_dir / it_name
     if not it_dir.is_dir():
         print(f"未找到目录：{it_dir}", file=sys.stderr)
