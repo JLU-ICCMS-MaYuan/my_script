@@ -213,3 +213,70 @@ def validate_structure_file(structure_file: Path) -> bool:
     except Exception as e:
         logger.error(f"验证结构文件失败: {e}")
         return False
+
+
+def prepare_potcar(
+    poscar_file: Path,
+    potcar_dir: Path,
+    output_file: Path,
+    potcar_type: str = "PBE"
+) -> bool:
+    """
+    准备POTCAR文件
+
+    Parameters
+    ----------
+    poscar_file : Path
+        POSCAR文件路径
+    potcar_dir : Path
+        POTCAR库目录（包含各元素的POTCAR文件）
+    output_file : Path
+        输出的POTCAR文件路径
+    potcar_type : str
+        POTCAR类型：'PBE', 'LDA', 'PW91'等
+
+    Returns
+    -------
+    bool
+        成功返回True
+    """
+    try:
+        from pymatgen.io.vasp.inputs import Poscar, PotcarSingle
+
+        # 读取POSCAR获取元素列表
+        poscar = Poscar.from_file(str(poscar_file))
+        elements = [str(el) for el in poscar.structure.composition.elements]
+
+        logger.info(f"从POSCAR读取到元素: {elements}")
+
+        # 组合POTCAR
+        potcar_content = []
+
+        for element in elements:
+            # 构建POTCAR文件路径
+            potcar_path = potcar_dir / potcar_type / element / "POTCAR"
+
+            # 也尝试_sv等变体
+            if not potcar_path.exists():
+                potcar_path = potcar_dir / potcar_type / f"{element}_sv" / "POTCAR"
+
+            if not potcar_path.exists():
+                logger.error(f"未找到元素 {element} 的POTCAR: {potcar_path}")
+                return False
+
+            # 读取POTCAR内容
+            with open(potcar_path, 'r') as f:
+                potcar_content.append(f.read())
+
+            logger.info(f"添加元素 {element} 的POTCAR")
+
+        # 写入合并的POTCAR
+        with open(output_file, 'w') as f:
+            f.write(''.join(potcar_content))
+
+        logger.info(f"POTCAR已生成: {output_file}")
+        return True
+
+    except Exception as e:
+        logger.error(f"准备POTCAR失败: {e}", exc_info=True)
+        return False

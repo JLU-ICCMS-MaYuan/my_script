@@ -44,6 +44,8 @@ class ElectronicPropertiesPipeline(BasePipeline):
         include_cohp: bool = True,
         plot_dos_type: str = "element",
         queue_system: Optional[str] = None,
+        potcar_dir: Optional[Path] = None,
+        potcar_type: str = "PBE",
         **kwargs
     ):
         """
@@ -67,6 +69,10 @@ class ElectronicPropertiesPipeline(BasePipeline):
             DOS投影类型：'element', 'spd', 'element_spd'
         queue_system : str, optional
             队列系统：'slurm', 'pbs', 'bash'
+        potcar_dir : Path, optional
+            POTCAR库目录，如果不提供则需要手动准备POTCAR
+        potcar_type : str
+            POTCAR类型：'PBE', 'LDA', 'PW91'等
         """
         super().__init__(structure_file, work_dir, **kwargs)
 
@@ -76,6 +82,8 @@ class ElectronicPropertiesPipeline(BasePipeline):
         self.include_cohp = include_cohp
         self.plot_dos_type = plot_dos_type
         self.queue_system = queue_system or "bash"
+        self.potcar_dir = Path(potcar_dir) if potcar_dir else None
+        self.potcar_type = potcar_type
 
         # 子目录
         self.relax_dir = self.work_dir / "01_relax"
@@ -145,9 +153,19 @@ class ElectronicPropertiesPipeline(BasePipeline):
         # 创建KPOINTS
         self._write_kpoints(self.relax_dir / "KPOINTS", self.kspacing)
 
-        # 创建POTCAR（需要从用户提供的路径）
-        # 这里简化处理，假设用户已经准备好POTCAR
-        logger.info("请确保POTCAR文件已准备好")
+        # 准备POTCAR
+        if self.potcar_dir:
+            from vasp.pipelines.utils import prepare_potcar
+            if not prepare_potcar(
+                self.relax_dir / "POSCAR",
+                self.potcar_dir,
+                self.relax_dir / "POTCAR",
+                self.potcar_type
+            ):
+                logger.error("POTCAR准备失败")
+                return False
+        else:
+            logger.warning("未提供potcar_dir，请确保POTCAR文件已手动准备好")
 
         # 提交任务
         job_script = self._write_job_script(self.relax_dir, "relax")
@@ -187,6 +205,13 @@ class ElectronicPropertiesPipeline(BasePipeline):
         # 创建KPOINTS（更密）
         self._write_kpoints(self.scf_dir / "KPOINTS", self.kspacing)
 
+        # 复制POTCAR（从relax目录）
+        potcar_source = self.relax_dir / "POTCAR"
+        if potcar_source.exists():
+            shutil.copy(potcar_source, self.scf_dir / "POTCAR")
+        else:
+            logger.warning(f"未找到POTCAR文件: {potcar_source}")
+
         # 提交任务
         job_script = self._write_job_script(self.scf_dir, "scf")
         job_id = self._submit_job(self.scf_dir, job_script)
@@ -212,6 +237,7 @@ class ElectronicPropertiesPipeline(BasePipeline):
         # 复制文件
         shutil.copy(self.scf_dir / "POSCAR", self.dos_dir / "POSCAR")
         shutil.copy(self.scf_dir / "CHGCAR", self.dos_dir / "CHGCAR")
+        shutil.copy(self.scf_dir / "POTCAR", self.dos_dir / "POTCAR")
 
         # 创建INCAR（DOS）
         self._write_dos_incar(self.dos_dir / "INCAR")
@@ -239,6 +265,7 @@ class ElectronicPropertiesPipeline(BasePipeline):
         # 复制文件
         shutil.copy(self.scf_dir / "POSCAR", self.band_dir / "POSCAR")
         shutil.copy(self.scf_dir / "CHGCAR", self.band_dir / "CHGCAR")
+        shutil.copy(self.scf_dir / "POTCAR", self.band_dir / "POTCAR")
 
         # 创建INCAR（能带）
         self._write_band_incar(self.band_dir / "INCAR")
@@ -266,6 +293,7 @@ class ElectronicPropertiesPipeline(BasePipeline):
         # 复制文件
         shutil.copy(self.scf_dir / "POSCAR", self.elf_dir / "POSCAR")
         shutil.copy(self.scf_dir / "CHGCAR", self.elf_dir / "CHGCAR")
+        shutil.copy(self.scf_dir / "POTCAR", self.elf_dir / "POTCAR")
 
         # 创建INCAR（ELF）
         self._write_elf_incar(self.elf_dir / "INCAR")
@@ -292,6 +320,7 @@ class ElectronicPropertiesPipeline(BasePipeline):
 
         # 复制文件
         shutil.copy(self.scf_dir / "POSCAR", self.cohp_dir / "POSCAR")
+        shutil.copy(self.scf_dir / "POTCAR", self.cohp_dir / "POTCAR")
 
         # 创建INCAR（COHP）
         self._write_cohp_incar(self.cohp_dir / "INCAR")
@@ -473,7 +502,7 @@ class ElectronicPropertiesPipeline(BasePipeline):
         with open(script_file, 'w') as f:
             f.write("#!/bin/bash\n\n")
             f.write(f"cd {work_dir}\n")
-            f.write("mpirun -np 8 vasp_std > vasp.log\n")
+            f.write("mpirun -np 8 ~/soft/vasp.6.3.2/bin/vasp_std > vasp.log\n")
 
         script_file.chmod(0o755)
         return str(script_file)

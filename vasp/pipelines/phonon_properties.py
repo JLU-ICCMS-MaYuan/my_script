@@ -43,6 +43,8 @@ class PhononPropertiesPipeline(BasePipeline):
         kspacing: Optional[float] = 0.3,
         encut: Optional[float] = None,
         queue_system: Optional[str] = None,
+        potcar_dir: Optional[Path] = None,
+        potcar_type: str = "PBE",
         **kwargs
     ):
         """
@@ -66,6 +68,10 @@ class PhononPropertiesPipeline(BasePipeline):
             平面波截断能
         queue_system : str, optional
             队列系统
+        potcar_dir : Path, optional
+            POTCAR库目录，如果不提供则需要手动准备POTCAR
+        potcar_type : str
+            POTCAR类型：'PBE', 'LDA', 'PW91'等
         """
         super().__init__(structure_file, work_dir, **kwargs)
 
@@ -75,6 +81,8 @@ class PhononPropertiesPipeline(BasePipeline):
         self.kspacing = kspacing
         self.encut = encut
         self.queue_system = queue_system or "bash"
+        self.potcar_dir = Path(potcar_dir) if potcar_dir else None
+        self.potcar_type = potcar_type
 
         # 子目录
         self.relax_dir = self.work_dir / "01_relax"
@@ -129,6 +137,20 @@ class PhononPropertiesPipeline(BasePipeline):
 
         # 创建KPOINTS
         self._write_kpoints(self.relax_dir / "KPOINTS", self.kspacing)
+
+        # 准备POTCAR
+        if self.potcar_dir:
+            from vasp.pipelines.utils import prepare_potcar
+            if not prepare_potcar(
+                self.relax_dir / "POSCAR",
+                self.potcar_dir,
+                self.relax_dir / "POTCAR",
+                self.potcar_type
+            ):
+                logger.error("POTCAR准备失败")
+                return False
+        else:
+            logger.warning("未提供potcar_dir，请确保POTCAR文件已手动准备好")
 
         # 提交任务
         job_script = self._write_job_script(self.relax_dir, "relax")
@@ -219,6 +241,13 @@ class PhononPropertiesPipeline(BasePipeline):
 
                 # 创建KPOINTS
                 self._write_kpoints(disp_dir / "KPOINTS", self.kspacing)
+
+                # 复制POTCAR（从relax目录）
+                potcar_source = self.relax_dir / "POTCAR"
+                if potcar_source.exists():
+                    shutil.copy(potcar_source, disp_dir / "POTCAR")
+                else:
+                    logger.warning(f"未找到POTCAR文件: {potcar_source}")
 
                 # 提交任务
                 job_script = self._write_job_script(disp_dir, f"disp{disp_num}")
@@ -379,7 +408,7 @@ class PhononPropertiesPipeline(BasePipeline):
         with open(script_file, 'w') as f:
             f.write("#!/bin/bash\n\n")
             f.write(f"cd {work_dir}\n")
-            f.write("mpirun -np 8 vasp_std > vasp.log\n")
+            f.write("mpirun -np 8 ~/soft/vasp.6.3.2/bin/vasp_std > vasp.log\n")
 
         script_file.chmod(0o755)
         return str(script_file)
