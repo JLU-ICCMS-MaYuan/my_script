@@ -8,18 +8,37 @@
 /test
 /out
 /.idea
-/__pycache__
-/qe/__pycache__
-/vasp/__pycache__
+
+# Python缓存文件（全局规则）
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+*.pyo
+*.pyd
+*.so
+.Python
+
+# QE子目录的__pycache__
+/qe/__pycache__/
+/qe/core/__pycache__/
+/qe/eliashberg/__pycache__/
+
+# VASP子目录的__pycache__
+/vasp/__pycache__/
+/vasp/analysis/__pycache__/
+/vasp/pipelines/__pycache__/
 /vasp/vasptools/__pycache__/
-/epw/__pycache__
+
+# EPW子目录的__pycache__
+/epw/__pycache__/
 /epw/epw-tools/__pycache__/
 
-
-/structuregenerator/__pycache__
-/structuregenerator/psolib/__pycache__
-/structuregenerator/psolib/finger/__pycache__
-/structuregenerator/psolib/utils/__pycache__
+# StructureGenerator的__pycache__
+/structuregenerator/__pycache__/
+/structuregenerator/psolib/__pycache__/
+/structuregenerator/psolib/finger/__pycache__/
+/structuregenerator/psolib/utils/__pycache__/
 /structuregenerator/psolib/fortran_src/LegacyFingerPrint/F90wrap
 /structuregenerator/psolib/fortran_src/LegacyFingerPrint/LIB
 /structuregenerator/psolib/fortran_src/LegacyFingerPrint/OBJ
