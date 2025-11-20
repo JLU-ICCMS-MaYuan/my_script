@@ -7,4 +7,20 @@ VASP Analysis模块
 创建时间：2025-11-20
 """
 
-__all__ = []
+from vasp.analysis.plotters import (
+    plot_band_structure,
+    plot_dos,
+    plot_phonon_band,
+    plot_phonon_dos,
+    plot_elf,
+    plot_cohp,
+)
+
+__all__ = [
+    'plot_band_structure',
+    'plot_dos',
+    'plot_phonon_band',
+    'plot_phonon_dos',
+    'plot_elf',
+    'plot_cohp',
+]

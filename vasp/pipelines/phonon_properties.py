@@ -1,0 +1,395 @@
+"""
+VASP声子性质Pipeline
+
+完整流程：结构优化 → 声子谱计算 → 声子DOS → 绘图
+
+作者：Claude
+创建时间：2025-11-20
+"""
+
+import os
+import logging
+import shutil
+from pathlib import Path
+from typing import Optional, List
+
+from vasp.pipelines.base import BasePipeline
+from vasp.analysis import plotters
+
+logger = logging.getLogger(__name__)
+
+
+class PhononPropertiesPipeline(BasePipeline):
+    """
+    声子性质全流程Pipeline
+
+    执行步骤：
+    1. 结构优化（Relax）
+    2. 声子谱计算（使用位移法disp或DFPT法）
+    3. Phonopy后处理（声子能带）
+    4. Phonopy后处理（声子DOS）
+    5. 自动绘图
+
+    所有计算完全自动化
+    """
+
+    def __init__(
+        self,
+        structure_file: Path,
+        work_dir: Path,
+        supercell: List[int] = None,
+        method: str = "disp",
+        kdensity: Optional[float] = None,
+        kspacing: Optional[float] = 0.3,
+        encut: Optional[float] = None,
+        queue_system: Optional[str] = None,
+        **kwargs
+    ):
+        """
+        初始化声子性质Pipeline
+
+        Parameters
+        ----------
+        structure_file : Path
+            输入结构文件（POSCAR格式）
+        work_dir : Path
+            工作目录
+        supercell : List[int]
+            超胞大小，如[2, 2, 2]
+        method : str
+            声子计算方法：'disp'（位移法）或'dfpt'（密度泛函微扰理论）
+        kdensity : float, optional
+            K点密度（用于phonopy）
+        kspacing : float
+            K点间距
+        encut : float, optional
+            平面波截断能
+        queue_system : str, optional
+            队列系统
+        """
+        super().__init__(structure_file, work_dir, **kwargs)
+
+        self.supercell = supercell or [2, 2, 2]
+        self.method = method
+        self.kdensity = kdensity or 8000
+        self.kspacing = kspacing
+        self.encut = encut
+        self.queue_system = queue_system or "bash"
+
+        # 子目录
+        self.relax_dir = self.work_dir / "01_relax"
+        self.phonon_dir = self.work_dir / "02_phonon"
+        self.plots_dir = self.work_dir / "plots"
+
+    def get_steps(self) -> List[str]:
+        """返回所有步骤"""
+        return [
+            "relax",
+            "phonon_prepare",
+            "phonon_calculate",
+            "phonon_band",
+            "phonon_dos",
+            "plotting",
+        ]
+
+    def execute_step(self, step_name: str) -> bool:
+        """执行单个步骤"""
+        try:
+            if step_name == "relax":
+                return self._run_relax()
+            elif step_name == "phonon_prepare":
+                return self._prepare_phonon()
+            elif step_name == "phonon_calculate":
+                return self._run_phonon_calculate()
+            elif step_name == "phonon_band":
+                return self._run_phonon_band()
+            elif step_name == "phonon_dos":
+                return self._run_phonon_dos()
+            elif step_name == "plotting":
+                return self._run_plotting()
+            else:
+                logger.error(f"未知步骤: {step_name}")
+                return False
+
+        except Exception as e:
+            logger.error(f"步骤 '{step_name}' 执行异常: {e}", exc_info=True)
+            return False
+
+    def _run_relax(self) -> bool:
+        """Step 1: 结构优化"""
+        logger.info("执行结构优化...")
+
+        self.relax_dir.mkdir(parents=True, exist_ok=True)
+
+        # 复制POSCAR
+        shutil.copy(self.structure_file, self.relax_dir / "POSCAR")
+
+        # 创建INCAR
+        self._write_relax_incar(self.relax_dir / "INCAR")
+
+        # 创建KPOINTS
+        self._write_kpoints(self.relax_dir / "KPOINTS", self.kspacing)
+
+        # 提交任务
+        job_script = self._write_job_script(self.relax_dir, "relax")
+        job_id = self._submit_job(self.relax_dir, job_script)
+
+        # 等待完成
+        if not self._wait_for_job(job_id, self.relax_dir):
+            return False
+
+        # 检查收敛
+        if not self._check_convergence(self.relax_dir):
+            logger.error("结构优化未收敛")
+            return False
+
+        # 保存优化后的结构
+        contcar = self.relax_dir / "CONTCAR"
+        if contcar.exists():
+            poscar_relaxed = self.work_dir / "POSCAR_relaxed"
+            shutil.copy(contcar, poscar_relaxed)
+            self.steps_data['relaxed_structure'] = str(poscar_relaxed)
+
+        logger.info("结构优化完成")
+        return True
+
+    def _prepare_phonon(self) -> bool:
+        """Step 2: 准备声子计算"""
+        logger.info("准备声子计算...")
+
+        self.phonon_dir.mkdir(parents=True, exist_ok=True)
+
+        # 使用优化后的结构
+        relaxed_poscar = Path(self.steps_data.get('relaxed_structure', self.structure_file))
+
+        # 复制到phonon目录并命名为POSCAR-init
+        shutil.copy(relaxed_poscar, self.phonon_dir / "POSCAR-init")
+
+        if self.method == "disp":
+            # 使用phonopy生成位移超胞
+            os.chdir(self.phonon_dir)
+
+            supercell_str = f"{self.supercell[0]} {self.supercell[1]} {self.supercell[2]}"
+            cmd = f"phonopy --dim=\"{supercell_str}\" -d -c POSCAR-init"
+
+            logger.info(f"运行: {cmd}")
+            ret = os.system(cmd)
+
+            if ret != 0:
+                logger.error("Phonopy生成位移超胞失败")
+                return False
+
+            # 检查生成的POSCAR-XXX文件
+            poscar_files = list(self.phonon_dir.glob("POSCAR-[0-9]*"))
+            logger.info(f"生成了 {len(poscar_files)} 个位移超胞")
+
+            if len(poscar_files) == 0:
+                logger.error("未生成位移超胞")
+                return False
+
+            self.steps_data['n_displacements'] = len(poscar_files)
+
+        elif self.method == "dfpt":
+            # DFPT法只需要一个超胞
+            logger.info("使用DFPT方法，准备超胞...")
+            # TODO: 使用phonopy或手动生成超胞
+
+        logger.info("声子计算准备完成")
+        return True
+
+    def _run_phonon_calculate(self) -> bool:
+        """Step 3: 执行声子计算"""
+        logger.info("执行声子计算...")
+
+        if self.method == "disp":
+            # 位移法：需要计算所有disp-XXX
+            n_disp = self.steps_data.get('n_displacements', 0)
+
+            for i in range(1, n_disp + 1):
+                disp_num = str(i).zfill(3)
+                disp_dir = self.phonon_dir / f"disp-{disp_num}"
+                disp_dir.mkdir(exist_ok=True)
+
+                # 复制POSCAR-XXX
+                poscar_src = self.phonon_dir / f"POSCAR-{disp_num}"
+                shutil.copy(poscar_src, disp_dir / "POSCAR")
+
+                # 创建INCAR
+                self._write_phonon_incar(disp_dir / "INCAR")
+
+                # 创建KPOINTS
+                self._write_kpoints(disp_dir / "KPOINTS", self.kspacing)
+
+                # 提交任务
+                job_script = self._write_job_script(disp_dir, f"disp{disp_num}")
+                job_id = self._submit_job(disp_dir, job_script)
+
+                logger.info(f"已提交位移计算 {i}/{n_disp}: {disp_dir.name}")
+
+            # 等待所有任务完成
+            logger.info("等待所有位移计算完成...")
+            for i in range(1, n_disp + 1):
+                disp_num = str(i).zfill(3)
+                disp_dir = self.phonon_dir / f"disp-{disp_num}"
+
+                if not self._wait_for_job(f"disp{disp_num}", disp_dir):
+                    logger.error(f"位移计算失败: {disp_dir.name}")
+                    return False
+
+            logger.info("所有位移计算完成")
+
+        elif self.method == "dfpt":
+            # DFPT法
+            # TODO: 实现DFPT计算
+            logger.warning("DFPT方法尚未完全实现")
+
+        return True
+
+    def _run_phonon_band(self) -> bool:
+        """Step 4: 后处理声子能带"""
+        logger.info("后处理声子能带...")
+
+        os.chdir(self.phonon_dir)
+
+        if self.method == "disp":
+            # 收集力常数
+            n_disp = self.steps_data.get('n_displacements', 0)
+            disp_str = "{" + f"001..{str(n_disp).zfill(3)}" + "}"
+
+            cmd = f"phonopy -f disp-{disp_str}/vasprun.xml"
+            logger.info(f"运行: {cmd}")
+            os.system(cmd)
+
+            # 生成能带配置
+            self._write_phonon_band_conf(self.phonon_dir / "band.conf")
+
+            # 计算声子能带
+            cmd = "phonopy -p -s band.conf -c POSCAR-init"
+            logger.info(f"运行: {cmd}")
+            os.system(cmd)
+
+            # 生成数据文件
+            cmd = "phonopy-bandplot --gnuplot > band.dat"
+            os.system(cmd)
+
+        logger.info("声子能带后处理完成")
+        return True
+
+    def _run_phonon_dos(self) -> bool:
+        """Step 5: 后处理声子DOS"""
+        logger.info("后处理声子DOS...")
+
+        os.chdir(self.phonon_dir)
+
+        # 生成DOS配置
+        self._write_phonon_dos_conf(self.phonon_dir / "mesh.conf")
+
+        # 计算声子DOS
+        cmd = "phonopy -p -t mesh.conf -c POSCAR-init"
+        logger.info(f"运行: {cmd}")
+        os.system(cmd)
+
+        logger.info("声子DOS后处理完成")
+        return True
+
+    def _run_plotting(self) -> bool:
+        """Step 6: 自动绘图"""
+        logger.info("开始绘图...")
+
+        self.plots_dir.mkdir(parents=True, exist_ok=True)
+
+        try:
+            # 绘制声子能带
+            plotters.plot_phonon_band(
+                self.phonon_dir,
+                self.plots_dir / "phonon_band.png"
+            )
+
+            # 绘制声子DOS
+            plotters.plot_phonon_dos(
+                self.phonon_dir,
+                self.plots_dir / "phonon_dos.png"
+            )
+
+            logger.info(f"所有图表已保存到: {self.plots_dir}")
+            return True
+
+        except Exception as e:
+            logger.error(f"绘图失败: {e}", exc_info=True)
+            return False
+
+    def _write_relax_incar(self, incar_file: Path):
+        """写入结构优化INCAR"""
+        with open(incar_file, 'w') as f:
+            f.write("# Relaxation INCAR for Phonon\n")
+            f.write("SYSTEM = Structure Relaxation\n\n")
+            f.write("PREC = Accurate\n")
+            f.write("ENCUT = {}\n".format(self.encut if self.encut else 520))
+            f.write("EDIFF = 1E-8\n")  # 声子计算需要更高精度
+            f.write("ISMEAR = 0\n")
+            f.write("SIGMA = 0.01\n\n")
+            f.write("IBRION = 2\n")
+            f.write("NSW = 200\n")
+            f.write("ISIF = 3\n")
+            f.write("EDIFFG = -1E-5\n\n")  # 更严格的收敛标准
+            f.write("LWAVE = .FALSE.\n")
+            f.write("LCHARG = .FALSE.\n")
+
+    def _write_phonon_incar(self, incar_file: Path):
+        """写入声子计算INCAR"""
+        with open(incar_file, 'w') as f:
+            f.write("# Phonon INCAR (Displacement method)\n")
+            f.write("SYSTEM = Phonon Calculation\n\n")
+            f.write("PREC = Accurate\n")
+            f.write("ENCUT = {}\n".format(self.encut if self.encut else 520))
+            f.write("EDIFF = 1E-8\n")
+            f.write("ISMEAR = 0\n")
+            f.write("SIGMA = 0.01\n")
+            f.write("IBRION = -1\n")  # 单点能量计算
+            f.write("NSW = 0\n")
+            f.write("LWAVE = .FALSE.\n")
+            f.write("LCHARG = .FALSE.\n")
+
+    def _write_kpoints(self, kpoints_file: Path, kspacing: float):
+        """写入K点"""
+        with open(kpoints_file, 'w') as f:
+            f.write("Automatic mesh\n")
+            f.write("0\n")
+            f.write("Gamma\n")
+            f.write(f"{kspacing} {kspacing} {kspacing}\n")
+
+    def _write_phonon_band_conf(self, conf_file: Path):
+        """写入phonopy band.conf"""
+        with open(conf_file, 'w') as f:
+            f.write(f"DIM = {self.supercell[0]} {self.supercell[1]} {self.supercell[2]}\n")
+            f.write("BAND = AUTO\n")
+            f.write("BAND_POINTS = 101\n")
+
+    def _write_phonon_dos_conf(self, conf_file: Path):
+        """写入phonopy mesh.conf"""
+        with open(conf_file, 'w') as f:
+            f.write(f"DIM = {self.supercell[0]} {self.supercell[1]} {self.supercell[2]}\n")
+            f.write("MP = 20 20 20\n")
+            f.write("TPROP = T\n")
+
+    def _write_job_script(self, work_dir: Path, job_name: str) -> str:
+        """写入任务提交脚本"""
+        script_file = work_dir / f"run_{job_name}.sh"
+
+        with open(script_file, 'w') as f:
+            f.write("#!/bin/bash\n\n")
+            f.write(f"cd {work_dir}\n")
+            f.write("mpirun -np 8 vasp_std > vasp.log\n")
+
+        script_file.chmod(0o755)
+        return str(script_file)
+
+    def _submit_job(self, work_dir: Path, job_script: str) -> str:
+        """提交任务"""
+        import subprocess
+
+        if self.queue_system == "bash":
+            subprocess.Popen(["bash", job_script], cwd=work_dir)
+            return "bash_job"
+        else:
+            raise NotImplementedError(f"队列系统 {self.queue_system} 尚未实现")
