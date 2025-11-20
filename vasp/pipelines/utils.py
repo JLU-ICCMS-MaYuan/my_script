@@ -253,15 +253,27 @@ def prepare_potcar(
         potcar_content = []
 
         for element in elements:
-            # 构建POTCAR文件路径
-            potcar_path = potcar_dir / potcar_type / element / "POTCAR"
+            # 尝试多种POTCAR文件路径
+            # 1. 标准路径: potcar_dir/PBE/元素/POTCAR
+            # 2. 直接路径: potcar_dir/元素/POTCAR (如potpaw_PBE54/)
+            # 3. _sv变体
+            potcar_path = None
 
-            # 也尝试_sv等变体
-            if not potcar_path.exists():
-                potcar_path = potcar_dir / potcar_type / f"{element}_sv" / "POTCAR"
+            possible_paths = [
+                potcar_dir / potcar_type / element / "POTCAR",  # 标准: PBE/Li/POTCAR
+                potcar_dir / element / "POTCAR",  # 直接: Li/POTCAR
+                potcar_dir / potcar_type / f"{element}_sv" / "POTCAR",  # 标准_sv
+                potcar_dir / f"{element}_sv" / "POTCAR",  # 直接_sv
+                potcar_dir / f"{element}_pv" / "POTCAR",  # _pv变体
+            ]
 
-            if not potcar_path.exists():
-                logger.error(f"未找到元素 {element} 的POTCAR: {potcar_path}")
+            for path in possible_paths:
+                if path.exists():
+                    potcar_path = path
+                    break
+
+            if not potcar_path:
+                logger.error(f"未找到元素 {element} 的POTCAR，尝试了以下路径: {[str(p) for p in possible_paths]}")
                 return False
 
             # 读取POTCAR内容

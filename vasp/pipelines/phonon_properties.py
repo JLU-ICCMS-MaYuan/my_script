@@ -407,6 +407,8 @@ class PhononPropertiesPipeline(BasePipeline):
 
         with open(script_file, 'w') as f:
             f.write("#!/bin/bash\n\n")
+            f.write("# 激活Intel环境\n")
+            f.write("source ~/intel/oneapi/setvars.sh > /dev/null 2>&1\n\n")
             f.write(f"cd {work_dir}\n")
             f.write("mpirun -np 8 ~/soft/vasp.6.3.2/bin/vasp_std > vasp.log\n")
 
