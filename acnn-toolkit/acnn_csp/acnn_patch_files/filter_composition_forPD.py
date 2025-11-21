@@ -9,8 +9,9 @@
 
 使用示例：
     python filter_composition_for_PD.py IT0 --stats
-    python filter_composition_for_PD.py --ratio-limit Ce:Mg:5 --filter
-    python filter_composition_for_PD.py --ratio-limit Ce:Mg:5 -c Ce9Mg8H1 --move-invalid
+    python filter_composition_for_PD.py --ratio-limit Ce:Mg<1:5 --filter
+    python filter_composition_for_PD.py --ratio-limit Ce:Mg<1:5 --ratio-limit Ce:Mg>5:1 -c Ce9Mg8H1 --move-invalid
+    python filter_composition_for_PD.py --elements-num Ce>5 Mg>5 --move-invalid
     python filter_composition_for_PD.py --restore --yes
 """
 
@@ -25,6 +26,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Sequence, Tuple
+from fractions import Fraction
 import os
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
 
@@ -45,6 +47,14 @@ class StructureRecord:
     signature: str
     canonical_key: Tuple[Tuple[str, int], ...]
     unique_elements: int
+
+
+RatioLimit = Tuple[str, str, str, int, int]
+COMPARATORS = ("<=", ">=", "<", ">", "=")
+
+
+def _sorted_items(mapping: Dict[str, int]) -> List[Tuple[str, int]]:
+    return sorted(mapping.items(), key=lambda item: item[0])
 
 
 # -----------------------------------------------------------------------------
@@ -148,20 +158,64 @@ def _move_file_task(src: Path, dst: Path) -> Optional[str]:
         return str(exc)
 
 
-def parse_ratio_limit(token: str) -> Tuple[str, str, float]:
-    parts = token.split(":")
-    if len(parts) != 3:
-        raise ValueError(f"比例约束格式错误：{token}")
-    elem1, elem2, ratio = (p.strip() for p in parts)
-    if not elem1 or not elem2:
-        raise ValueError(f"元素名称不能为空：{token}")
+def _parse_ratio_value(text: str) -> Fraction:
+    ratio_tokens = [seg.strip() for seg in text.split(":") if seg.strip()]
+    if not ratio_tokens:
+        raise ValueError(f"比例值不能为空：{text}")
     try:
-        value = float(ratio)
+        if len(ratio_tokens) == 1:
+            ratio = Fraction(ratio_tokens[0])
+        elif len(ratio_tokens) == 2:
+            numerator = Fraction(ratio_tokens[0])
+            denominator = Fraction(ratio_tokens[1])
+            if denominator == 0:
+                raise ValueError
+            ratio = numerator / denominator
+        else:
+            raise ValueError
     except ValueError as exc:
-        raise ValueError(f"比例值必须为数字：{token}") from exc
-    if value <= 0:
-        raise ValueError(f"比例值必须大于 0：{token}")
-    return elem1, elem2, value
+        raise ValueError(f"比例值必须为数字：{text}") from exc
+    if ratio <= 0:
+        raise ValueError(f"比例值必须大于 0：{text}")
+    return ratio
+
+
+def _parse_element_pair(text: str) -> Tuple[str, str]:
+    tokens = [seg.strip() for seg in text.split(":") if seg.strip()]
+    if len(tokens) != 2:
+        raise ValueError(f"元素组合格式错误：{text}")
+    return tokens[0], tokens[1]
+
+
+def parse_ratio_limit(token: str) -> List[RatioLimit]:
+    if not token:
+        raise ValueError("比例约束不能为空")
+    limits: List[RatioLimit] = []
+    for part in (segment.strip() for segment in token.split(",")):
+        if not part:
+            continue
+        matched = False
+        for comparator in COMPARATORS:
+            if comparator in part:
+                left, right = part.split(comparator, 1)
+                elem1, elem2 = _parse_element_pair(left)
+                ratio = _parse_ratio_value(right)
+                limits.append((elem1, elem2, comparator, ratio.numerator, ratio.denominator))
+                matched = True
+                break
+        if matched:
+            continue
+        segments = part.split(":")
+        if len(segments) != 3:
+            raise ValueError(f"比例约束格式错误：{part}")
+        elem1, elem2, ratio_part = (s.strip() for s in segments)
+        if not elem1 or not elem2:
+            raise ValueError(f"元素名称不能为空：{part}")
+        ratio = _parse_ratio_value(ratio_part)
+        limits.append((elem1, elem2, "<=", ratio.numerator, ratio.denominator))
+    if not limits:
+        raise ValueError(f"比例约束格式错误：{token}")
+    return limits
 
 
 def format_ratio(counts: Counter[str], elem1: str, elem2: str) -> str:
@@ -171,6 +225,25 @@ def format_ratio(counts: Counter[str], elem1: str, elem2: str) -> str:
         return f"{elem1}:{elem2} = N/A"
     gcd_val = math.gcd(n1, n2)
     return f"{elem1}:{elem2} = {n1 // gcd_val}:{n2 // gcd_val}"
+
+
+def parse_element_threshold(token: str) -> Tuple[str, int]:
+    if ">" not in token:
+        raise ValueError(f"元素数量上限格式错误：{token}")
+    left, right = token.split(">", 1)
+    elem = left.strip()
+    value = right.strip()
+    if not elem:
+        raise ValueError(f"元素名称不能为空：{token}")
+    if not value:
+        raise ValueError(f"阈值不能为空：{token}")
+    try:
+        limit = int(value)
+    except ValueError as exc:
+        raise ValueError(f"阈值必须为整数：{token}") from exc
+    if limit < 0:
+        raise ValueError(f"阈值必须为非负整数：{token}")
+    return elem, limit
 
 
 # -----------------------------------------------------------------------------
@@ -240,30 +313,47 @@ def should_skip_by_element_count(record: StructureRecord, exclude_counts: Sequen
     return bool(exclude_counts) and record.unique_elements in exclude_counts
 
 
-def check_ratio_constraints(
+def _compare_ratio(n1: int, n2: int, comparator: str, target_num: int, target_den: int) -> bool:
+    left = n1 * target_den
+    right = n2 * target_num
+    if comparator == "<":
+        return left < right
+    if comparator == "<=":
+        return left <= right
+    if comparator == ">":
+        return left > right
+    if comparator == ">=":
+        return left >= right
+    return left == right
+
+
+def match_ratio_conditions(
     record: StructureRecord,
-    ratio_limits: Sequence[Tuple[str, str, float]],
+    ratio_limits: Sequence[RatioLimit],
 ) -> Tuple[bool, List[str]]:
     if not ratio_limits:
-        return True, []
-    violations: List[str] = []
-    for elem1, elem2, max_ratio in ratio_limits:
+        return False, []
+    messages: List[str] = []
+    for elem1, elem2, comparator, limit_num, limit_den in ratio_limits:
         n1 = record.composition.get(elem1, 0)
         n2 = record.composition.get(elem2, 0)
         if n1 == 0 or n2 == 0:
-            violations.append(f"{elem1} 或 {elem2} 缺失")
-            continue
-        ratio = max(n1, n2) / min(n1, n2)
-        if ratio > max_ratio:
-            violations.append(f"{format_ratio(record.composition, elem1, elem2)} > {max_ratio}:1")
-    return not violations, violations
+            return False, []
+        if _compare_ratio(n1, n2, comparator, limit_num, limit_den):
+            messages.append(
+                f"{format_ratio(record.composition, elem1, elem2)} 满足 {elem1}:{elem2} {comparator} {limit_num}:{limit_den}"
+            )
+        else:
+            return False, []
+    return True, messages
 
 
 def evaluate_record(
     record: StructureRecord,
-    ratio_limits: Sequence[Tuple[str, str, float]],
+    ratio_limits: Sequence[RatioLimit],
     exclude_counts: Sequence[int],
     composition_targets: Dict[Tuple[Tuple[str, int], ...], str],
+    element_thresholds: Dict[str, int],
 ) -> Tuple[bool, List[str]]:
     """
     返回 (should_move, reasons)
@@ -271,8 +361,20 @@ def evaluate_record(
     if should_skip_by_element_count(record, exclude_counts):
         return False, []
 
-    is_valid, violation_msgs = check_ratio_constraints(record, ratio_limits)
-    reasons: List[str] = violation_msgs.copy()
+    matched_ratio, ratio_msgs = match_ratio_conditions(record, ratio_limits)
+    reasons: List[str] = []
+    if matched_ratio:
+        reasons.append("比例命中：" + "; ".join(ratio_msgs))
+
+    if element_thresholds:
+        reduced = reduce_counts(record.composition)
+        hits: List[str] = []
+        for elem, limit in element_thresholds.items():
+            coeff = reduced.get(elem, 0)
+            if coeff > limit:
+                hits.append(f"{elem} 系数 {coeff} > {limit}")
+        if hits:
+            reasons.append(f"配比系数超限：{'; '.join(hits)}")
 
     if composition_targets:
         target = composition_targets.get(record.canonical_key)
@@ -291,9 +393,10 @@ def evaluate_record(
 
 def print_stats(
     records: Sequence[StructureRecord],
-    ratio_limits: Sequence[Tuple[str, str, float]],
+    ratio_limits: Sequence[RatioLimit],
     composition_targets: Dict[Tuple[Tuple[str, int], ...], str],
     exclude_counts: Sequence[int],
+    element_thresholds: Dict[str, int],
     output_path: Optional[Path],
 ) -> None:
     total = len(records)
@@ -304,9 +407,9 @@ def print_stats(
     print("=" * 70)
     print(f"结构总数：{total}")
     if ratio_limits:
-        print("比例约束：")
-        for elem1, elem2, max_ratio in ratio_limits:
-            print(f"  - {elem1}:{elem2} <= {max_ratio}:1")
+        print("比例触发条件（全部满足即剔除）：")
+        for elem1, elem2, comparator, num, den in ratio_limits:
+            print(f"  - {elem1}:{elem2} {comparator} {num}:{den}")
     if composition_targets:
         print("按配比剔除：")
         for display in composition_targets.values():
@@ -314,14 +417,24 @@ def print_stats(
     if exclude_counts:
         exclude_str = ", ".join(f"{n} 元化合物" for n in sorted(exclude_counts))
         print(f"排除元素数量：{exclude_str}")
+    if element_thresholds:
+        print("元素配比上限（任一满足即可剔除）：")
+        for elem, limit in _sorted_items(element_thresholds):
+            print(f"  - {elem} > {limit}")
     print()
 
-    if ratio_limits or composition_targets:
+    if ratio_limits or composition_targets or element_thresholds:
         exclude_counts = exclude_counts or []
         positives = 0
         negatives = 0
         for record in records:
-            should_move, _ = evaluate_record(record, ratio_limits, exclude_counts, composition_targets)
+            should_move, _ = evaluate_record(
+                record,
+                ratio_limits,
+                exclude_counts,
+                composition_targets,
+                element_thresholds,
+            )
             if should_move:
                 positives += 1
             else:
@@ -346,14 +459,19 @@ def print_stats(
             "",
         ]
         if ratio_limits:
-            lines.append("比例约束：")
-            for elem1, elem2, max_ratio in ratio_limits:
-                lines.append(f"  - {elem1}:{elem2} <= {max_ratio}:1")
+            lines.append("比例触发条件（全部满足即剔除）：")
+            for elem1, elem2, comparator, num, den in ratio_limits:
+                lines.append(f"  - {elem1}:{elem2} {comparator} {num}:{den}")
             lines.append("")
         if composition_targets:
             lines.append("按配比剔除：")
             for display in composition_targets.values():
                 lines.append(f"  - {display}")
+            lines.append("")
+        if element_thresholds:
+            lines.append("元素配比上限（任一满足即可剔除）：")
+            for elem, limit in _sorted_items(element_thresholds):
+                lines.append(f"  - {elem} > {limit}")
             lines.append("")
         lines.append("配比分布：")
         lines.append("-" * 70)
@@ -366,13 +484,20 @@ def print_stats(
 
 def filter_records(
     records: Sequence[StructureRecord],
-    ratio_limits: Sequence[Tuple[str, str, float]],
+    ratio_limits: Sequence[RatioLimit],
     exclude_counts: Sequence[int],
     composition_targets: Dict[Tuple[Tuple[str, int], ...], str],
+    element_thresholds: Dict[str, int],
 ) -> None:
     matched: List[StructureRecord] = []
     for record in records:
-        should_move, _ = evaluate_record(record, ratio_limits, exclude_counts, composition_targets)
+        should_move, _ = evaluate_record(
+            record,
+            ratio_limits,
+            exclude_counts,
+            composition_targets,
+            element_thresholds,
+        )
         if not should_move:
             matched.append(record)
 
@@ -535,8 +660,9 @@ def build_parser() -> argparse.ArgumentParser:
         epilog="""
 示例：
   python filter_composition_for_PD.py IT0 --stats
-  python filter_composition_for_PD.py --ratio-limit Ce:Mg:5 --filter
-  python filter_composition_for_PD.py --ratio-limit Ce:Mg:5 -c Ce9Mg8H1 --move-invalid
+  python filter_composition_for_PD.py --ratio-limit Ce:Mg<1:5 --filter
+  python filter_composition_for_PD.py --ratio-limit Ce:Mg<1:5 --ratio-limit Ce:Mg>5:1 -c Ce9Mg8H1 --move-invalid
+  python filter_composition_for_PD.py --elements-num Ce>5 Mg>5 --move-invalid
   python filter_composition_for_PD.py --move-invalid --dry-run
   python filter_composition_for_PD.py --restore --yes
 """,
@@ -550,8 +676,19 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--ratio-limit",
         action="append",
-        metavar="E1:E2:R",
-        help="元素比例约束，例如 Ce:Mg:5 表示两者比例不超过 5:1。",
+        nargs="+",
+        metavar="COND",
+        help=(
+            "元素比例约束，如 Ce:Mg<1:5、Ce:Mg>=2:1，亦兼容旧写法 Ce:Mg:5；"
+            "可多次提供或在一次参数中输入多个条件，使用逗号分隔也可。"
+        ),
+    )
+    parser.add_argument(
+        "--elements-num",
+        nargs="+",
+        action="extend",
+        metavar="E>N",
+        help="按约分后的配比系数限制元素数量，任一命中即剔除，如 --elements-num Ce>5 Mg>5。",
     )
     parser.add_argument(
         "-c",
@@ -602,10 +739,12 @@ def main() -> int:
     if not it_dirs:
         parser.error("未找到任何 IT* 目录")
 
-    ratio_limits: List[Tuple[str, str, float]] = []
+    ratio_limits: List[RatioLimit] = []
     if args.ratio_limit:
         try:
-            ratio_limits = [parse_ratio_limit(item) for item in args.ratio_limit]
+            for group in args.ratio_limit:
+                for item in group:
+                    ratio_limits.extend(parse_ratio_limit(item))
         except ValueError as exc:
             parser.error(str(exc))
 
@@ -617,6 +756,14 @@ def main() -> int:
                 composition_targets[key] = signature.strip()
 
     exclude_counts = args.exclude_elements or []
+    element_thresholds: Dict[str, int] = {}
+    if args.elements_num:
+        try:
+            for item in args.elements_num:
+                elem, limit = parse_element_threshold(item)
+                element_thresholds[elem] = limit
+        except ValueError as exc:
+            parser.error(str(exc))
     trash_dir = root / args.trash_dir
 
     if args.restore:
@@ -637,12 +784,25 @@ def main() -> int:
 
     if args.stats or (not args.filter and not args.move_invalid):
         output_path = Path(args.output) if args.output else None
-        print_stats(records, ratio_limits, composition_targets, exclude_counts, output_path)
+        print_stats(
+            records,
+            ratio_limits,
+            composition_targets,
+            exclude_counts,
+            element_thresholds,
+            output_path,
+        )
         if not (args.filter or args.move_invalid):
             return 0
 
     if args.filter:
-        filter_records(records, ratio_limits, exclude_counts, composition_targets)
+        filter_records(
+            records,
+            ratio_limits,
+            exclude_counts,
+            composition_targets,
+            element_thresholds,
+        )
         if not args.move_invalid:
             return 0
 
@@ -650,7 +810,11 @@ def main() -> int:
         targets: List[Tuple[StructureRecord, List[str]]] = []
         for record in records:
             should_move, reasons = evaluate_record(
-                record, ratio_limits, exclude_counts, composition_targets
+                record,
+                ratio_limits,
+                exclude_counts,
+                composition_targets,
+                element_thresholds,
             )
             if should_move:
                 targets.append((record, reasons))

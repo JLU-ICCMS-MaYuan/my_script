@@ -10,10 +10,17 @@
 /.idea
 /__pycache__
 /qe/__pycache__
+/qe/workflows/__pycache__/
 /vasp/__pycache__
+/vasp/workflows/__pycache__/
 /vasp/vasptools/__pycache__/
+/vasp/analysis/__pycache__/
+/vasp/config/__pycache__/
+/vasp/pipelines/__pycache__/
 /epw/__pycache__
 /epw/epw-tools/__pycache__/
+/epw/vasptools/__pycache__/
+
 
 
 /structuregenerator/__pycache__
