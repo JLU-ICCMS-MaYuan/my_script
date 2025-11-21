@@ -8,7 +8,6 @@
 /test
 /out
 /.idea
-<<<<<<< HEAD
 
 # Python缓存文件（全局规则）
 __pycache__/
@@ -32,10 +31,7 @@ __pycache__/
 /vasp/vasptools/__pycache__/
 /vasp/workflows/__pycache__/
 /vasp/config/__pycache__/
-=======
 
-
->>>>>>> master
 
 # EPW子目录的__pycache__
 /epw/__pycache__/
