@@ -8,6 +8,7 @@
 /test
 /out
 /.idea
+<<<<<<< HEAD
 
 # Python缓存文件（全局规则）
 __pycache__/
@@ -23,16 +24,23 @@ __pycache__/
 /qe/__pycache__/
 /qe/core/__pycache__/
 /qe/eliashberg/__pycache__/
-
+/qe/workflows/__pycache__/
 # VASP子目录的__pycache__
 /vasp/__pycache__/
 /vasp/analysis/__pycache__/
 /vasp/pipelines/__pycache__/
 /vasp/vasptools/__pycache__/
+/vasp/workflows/__pycache__/
+/vasp/config/__pycache__/
+=======
+
+
+>>>>>>> master
 
 # EPW子目录的__pycache__
 /epw/__pycache__/
 /epw/epw-tools/__pycache__/
+/epw/vasptools/__pycache__/
 
 # StructureGenerator的__pycache__
 /structuregenerator/__pycache__/
