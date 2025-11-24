@@ -25,7 +25,7 @@ import plotly.graph_objects as go
 @dataclass
 class StructureInfo:
     name: str
-    ratio: Tuple[int, int, int]
+    counts: Tuple[int, int, int]
 
 
 @dataclass
@@ -61,6 +61,10 @@ def parse_args() -> argparse.Namespace:
         help="超 RMSE 图 HTML 文件名（默认 beyond_rmse.html）",
     )
     return parser.parse_args()
+
+
+def log_step(message: str) -> None:
+    print(f"[进度] {message}")
 
 
 # ---------------------------------------------------------------------------
@@ -119,7 +123,7 @@ def load_structures(dt_dir: Path) -> Tuple[Dict[str, StructureInfo], List[str]]:
     structures: Dict[str, StructureInfo] = {}
     for name, comp in compositions.items():
         counts = tuple(comp.get(elem, 0) for elem in elements)
-        structures[name] = StructureInfo(name=name, ratio=reduce_tuple(counts))
+        structures[name] = StructureInfo(name=name, counts=counts)
 
     return structures, elements
 
@@ -168,12 +172,18 @@ def parse_ss_file(path: Path) -> Tuple[List[ErrorRecord], Dict[str, float]]:
 # ---------------------------------------------------------------------------
 
 
-def write_sorted_errors(records: List[ErrorRecord], attr: str, path: Path) -> None:
+def write_sorted_errors(
+    records: List[ErrorRecord],
+    attr: str,
+    path: Path,
+) -> None:
     sorted_records = sorted(records, key=lambda item: getattr(item, attr), reverse=True)
     with path.open("w", encoding="utf-8") as handle:
-        handle.write("结构\t误差\n")
+        handle.write("结构\t配比\t误差\n")
         for record in sorted_records:
-            handle.write(f"{record.name}\t{getattr(record, attr):.6e}\n")
+            handle.write(
+                f"{record.name}\t{record.composition}\t{getattr(record, attr):.6e}\n"
+            )
 
 
 def compute_rmse(values: Iterable[float]) -> float:
@@ -189,7 +199,7 @@ def summarize_errors(
     elements: Sequence[str],
     thresholds: Dict[str, float],
 ):
-    ratio_map = {info.name: info.ratio for info in structures.values()}
+    ratio_map = {info.name: info.counts for info in structures.values()}
     composition_counter: Dict[Tuple[int, ...], int] = defaultdict(int)
     ratio_errors: Dict[Tuple[int, ...], Dict[str, List[float]]] = defaultdict(lambda: defaultdict(list))
     high_ratio_counts: Dict[Tuple[int, ...], int] = defaultdict(int)
@@ -201,29 +211,29 @@ def summarize_errors(
     high_structures: List[ErrorRecord] = []
 
     for info in structures.values():
-        composition_counter[info.ratio] += 1
+        composition_counter[info.counts] += 1
 
     for entry in entries:
-        ratio = ratio_map.get(entry.name)
-        if ratio is None:
+        counts = ratio_map.get(entry.name)
+        if counts is None:
             continue
-        entry.composition = tuple_to_formula(elements, ratio)
-        ratio_errors[ratio]["energy"].append(entry.energy)
-        ratio_errors[ratio]["force"].append(entry.force)
-        ratio_errors[ratio]["virial"].append(entry.virial)
+        entry.composition = tuple_to_formula(elements, counts)
+        ratio_errors[counts]["energy"].append(entry.energy)
+        ratio_errors[counts]["force"].append(entry.force)
+        ratio_errors[counts]["virial"].append(entry.virial)
 
         if thresholds.get("energy") and entry.energy > thresholds["energy"]:
             entry.over_energy = True
-            metric_counts["energy"][ratio] += 1
+            metric_counts["energy"][counts] += 1
         if thresholds.get("force") and entry.force > thresholds["force"]:
             entry.over_force = True
-            metric_counts["force"][ratio] += 1
+            metric_counts["force"][counts] += 1
         if thresholds.get("virial") and entry.virial > thresholds["virial"]:
             entry.over_virial = True
-            metric_counts["virial"][ratio] += 1
+            metric_counts["virial"][counts] += 1
 
         if entry.over_energy or entry.over_force or entry.over_virial:
-            high_ratio_counts[ratio] += 1
+            high_ratio_counts[counts] += 1
             high_structures.append(entry)
 
     return composition_counter, ratio_errors, high_ratio_counts, metric_counts, high_structures
@@ -390,32 +400,27 @@ def build_metric_figures(
     structures: Dict[str, StructureInfo],
     high_structures: List[ErrorRecord],
     flag_attr: str,
-    error_attr: str,
 ) -> List[go.Figure]:
     figures: List[go.Figure] = []
-    dataset = build_dataset(count_map, elements)
-    fig_ratio = build_ternary_figure(dataset, elements, f"{metric_name} - 配比")
-    if fig_ratio:
-        figures.append(fig_ratio)
-
     struct_dataset = []
     for record in high_structures:
         if not getattr(record, flag_attr):
             continue
-        ratio = structures.get(record.name)
-        if ratio is None:
+        info = structures.get(record.name)
+        if info is None:
             continue
-        total = sum(ratio.ratio)
+        total = sum(info.counts)
         if not total:
             continue
+        ratio = info.counts
         struct_dataset.append(
             {
-                "a": ratio.ratio[0] / total,
-                "b": ratio.ratio[1] / total,
-                "c": ratio.ratio[2] / total,
+                "a": info.counts[0] / total,
+                "b": info.counts[1] / total,
+                "c": info.counts[2] / total,
                 "composition": record.composition,
                 "structure": record.name,
-                "error": getattr(record, error_attr),
+                "count": count_map.get(ratio, 0),
             }
         )
 
@@ -424,12 +429,66 @@ def build_metric_figures(
             struct_dataset,
             elements,
             f"{metric_name} - 结构",
-            color_key="error",
-            color_title="误差",
+            color_key="count",
+            color_title="结构数",
         )
         if fig_struct:
             figures.append(fig_struct)
     return figures
+
+
+def parse_iteration_index(label: str) -> int:
+    match = re.match(r"(?i)IT(\d+)", label)
+    if not match:
+        raise ValueError(f"无法解析迭代编号：{label}")
+    return int(match.group(1))
+
+
+def collect_previous_ratios(
+    root: Path,
+    elements: Sequence[str],
+    target_label: str,
+) -> set[Tuple[int, ...]]:
+    target_idx = parse_iteration_index(target_label)
+    ratios: set[Tuple[int, ...]] = set()
+    for dir_path in sorted(root.glob("IT*")):
+        try:
+            idx = parse_iteration_index(dir_path.name)
+        except ValueError:
+            continue
+        if idx >= target_idx:
+            continue
+        dt_dir = dir_path / "DT"
+        if not dt_dir.is_dir():
+            continue
+        for xsf in dt_dir.glob("*.xsf"):
+            try:
+                comp = read_xsf_composition(xsf)
+            except Exception:
+                continue
+            counts = tuple(comp.get(elem, 0) for elem in elements)
+            ratios.add(counts)
+    return ratios
+
+
+def write_new_compositions(
+    path: Path,
+    new_infos: List[StructureInfo],
+    elements: Sequence[str],
+    error_map: Dict[str, ErrorRecord],
+) -> None:
+    formatter = lambda info: tuple_to_formula(elements, info.counts)
+    new_infos = sorted(new_infos, key=lambda info: (formatter(info), info.name))
+    with path.open("w", encoding="utf-8") as handle:
+        handle.write("结构\t配比\tenergy\tforce\tvirial\n")
+        for info in new_infos:
+            record = error_map.get(info.name)
+            energy = record.energy if record else float("nan")
+            force = record.force if record else float("nan")
+            virial = record.virial if record else float("nan")
+            handle.write(
+                f"{info.name}\t{formatter(info)}\t{energy:.6e}\t{force:.6e}\t{virial:.6e}\n"
+            )
 
 
 # ---------------------------------------------------------------------------
@@ -448,21 +507,20 @@ def main() -> int:
         raise RuntimeError(f"未找到迭代目录：{iteration_dir}")
 
     dt_dir = iteration_dir / "DT"
+    log_step("解析 DT 目录结构...")
     structures, elements = load_structures(dt_dir)
 
     ss_path = Path(args.ss_path) if args.ss_path else iteration_dir / "ss"
     if not ss_path.is_file():
         raise RuntimeError(f"未找到 ss 文件：{ss_path}")
 
+    log_step("解析 ss 文件...")
     ss_records, thresholds = parse_ss_file(ss_path)
 
     output_dir = Path(args.output_dir) if args.output_dir else iteration_dir
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    write_sorted_errors(ss_records, "energy", output_dir / "ss_energy.txt")
-    write_sorted_errors(ss_records, "force", output_dir / "ss_force.txt")
-    write_sorted_errors(ss_records, "virial", output_dir / "ss_virial.txt")
-
+    log_step("聚合误差统计...")
     comp_counter, ratio_errors, high_ratio_counts, metric_counts, high_structures = summarize_errors(
         structures,
         ss_records,
@@ -470,9 +528,14 @@ def main() -> int:
         thresholds,
     )
 
+    log_step("写出文本报告...")
     write_composition_stats(output_dir / "composition_stats.txt", elements, comp_counter, ratio_errors)
     write_high_error_structures(high_structures, output_dir / "high_error_structures.txt")
+    write_sorted_errors(ss_records, "energy", output_dir / "ss_energy.txt")
+    write_sorted_errors(ss_records, "force", output_dir / "ss_force.txt")
+    write_sorted_errors(ss_records, "virial", output_dir / "ss_virial.txt")
 
+    log_step("生成三角图...")
     figures = []
     fig_all = build_ternary_figure(build_dataset(comp_counter, elements), elements, "全部结构配比分布")
     if fig_all:
@@ -487,7 +550,6 @@ def main() -> int:
         structures,
         high_structures,
         "over_energy",
-        "energy",
     )
     beyond_figs += build_metric_figures(
         elements,
@@ -496,7 +558,6 @@ def main() -> int:
         structures,
         high_structures,
         "over_force",
-        "force",
     )
     beyond_figs += build_metric_figures(
         elements,
@@ -505,9 +566,20 @@ def main() -> int:
         structures,
         high_structures,
         "over_virial",
-        "virial",
     )
     export_html(beyond_figs, output_dir / args.high_html)
+
+    log_step("检测新增配比...")
+    previous_ratios = collect_previous_ratios(root, elements, args.iteration)
+    error_map = {record.name: record for record in ss_records}
+    new_infos = [info for info in structures.values() if info.counts not in previous_ratios]
+    new_file = output_dir / "new_composition.txt"
+    if new_infos:
+        write_new_compositions(new_file, new_infos, elements, error_map)
+        print(f"新增配比 {len(new_infos)} 条，详情见 {new_file}")
+    else:
+        new_file.write_text("无新增配比\n", encoding="utf-8")
+        print("未发现新增配比。")
 
     print(f"已生成交互式 HTML：{output_dir / args.html}")
     print(f"高误差配比/结构图：{output_dir / args.high_html}")
