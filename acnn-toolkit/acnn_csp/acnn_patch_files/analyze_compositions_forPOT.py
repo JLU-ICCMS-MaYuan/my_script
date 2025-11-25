@@ -182,7 +182,7 @@ def write_sorted_errors(
         handle.write("结构\t配比\t误差\n")
         for record in sorted_records:
             handle.write(
-                f"{record.name}\t{record.composition}\t{getattr(record, attr):.6e}\n"
+                f"{record.name:<66}\t{record.composition}\t{getattr(record, attr):.6e}\n"
             )
 
 
@@ -267,7 +267,7 @@ def write_high_error_structures(records: List[ErrorRecord], path: Path) -> None:
         handle.write("结构\t配比\tenergy\tforce\tvirial\n")
         for record in records:
             handle.write(
-                f"{record.name}\t{record.composition}\t{record.energy:.6e}\t{record.force:.6e}\t{record.virial:.6e}\n"
+                f"{record.name:<66}\t{record.composition}\t{record.energy:.6e}\t{record.force:.6e}\t{record.virial:.6e}\n"
             )
 
 
