@@ -95,7 +95,10 @@ def plot_pressure_distribution(
         "median": np.median(total_pressures),
         "std": np.std(total_pressures),
         "var": np.var(total_pressures),
+        "total": len(total_pressures),
+        "acceptable": sum(threshold_lower <= p <= threshold_upper for p in total_pressures),
     }
+    stats["out_range"] = stats["total"] - stats["acceptable"]
 
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 10))
 
@@ -123,6 +126,9 @@ def plot_pressure_distribution(
             f"median: {stats['median']:.2f} GPa",
             f"std: {stats['std']:.2f} GPa",
             f"var: {stats['var']:.2f} (GPa^2)",
+            f"total: {stats['total']}",
+            f"acceptable: {stats['acceptable']}",
+            f"out of range: {stats['out_range']}",
         ]
     )
     ax1.text(
