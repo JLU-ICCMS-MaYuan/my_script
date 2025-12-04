@@ -82,6 +82,8 @@ def plot_pressure_distribution(
     target_pressure_gpa: float,
     threshold_percent: float,
     output_file: Path,
+    plot_min: Optional[float],
+    plot_max: Optional[float],
 ) -> None:
     """绘制主压强分布图并保存。"""
 
@@ -118,6 +120,10 @@ def plot_pressure_distribution(
     ax1.set_title("Pressure Distribution (Histogram)")
     ax1.legend(fontsize=10)
     ax1.grid(True, alpha=0.3)
+    xmin = stats["min"] if plot_min is None else plot_min
+    xmax = stats["max"] if plot_max is None else plot_max
+    if xmin < xmax:
+        ax1.set_xlim(xmin, xmax)
     stats_text = "\n".join(
         [
             f"min: {stats['min']:.2f} GPa",
@@ -155,6 +161,8 @@ def plot_pressure_distribution(
     ax2.set_title("Pressure Distribution (Scatter Plot)")
     ax2.legend(fontsize=10)
     ax2.grid(True, alpha=0.3)
+    if xmin < xmax:
+        ax2.set_ylim(xmin, xmax)
 
     plt.tight_layout()
     output_file.parent.mkdir(parents=True, exist_ok=True)
@@ -422,6 +430,8 @@ def analyze_iteration(
     threshold_percent: float,
     extreme_error_percent: Optional[float],
     move_extreme_count: Optional[int],
+    plot_min: Optional[float],
+    plot_max: Optional[float],
 ) -> None:
     """针对单个迭代进行压强分析，输出到对应 IT 目录。"""
 
@@ -497,7 +507,14 @@ def analyze_iteration(
     if pressure_data:
         total_pressures = [d["total_pressure_gpa"] for d in pressure_data]
         print(f"统计: min={min(total_pressures):.2f}, max={max(total_pressures):.2f}, mean={np.mean(total_pressures):.2f}, median={np.median(total_pressures):.2f}, std={np.std(total_pressures):.2f}")
-        plot_pressure_distribution(pressure_data, target_pressure_gpa, threshold_percent, output_dir / "pressure_distribution.png")
+        plot_pressure_distribution(
+            pressure_data,
+            target_pressure_gpa,
+            threshold_percent,
+            output_dir / "pressure_distribution.png",
+            plot_min,
+            plot_max,
+        )
     else:
         print(f"[WARNING] {it_name} 未获取到可用于主图的数据")
 
@@ -532,6 +549,8 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     parser.add_argument("iterations", nargs="*", help="要分析的 IT 目录，如 IT0 IT1")
     parser.add_argument("-p", "--pressure", type=float, default=None, help="目标压强 (GPa) [分析模式必需]")
     parser.add_argument("-t", "--threshold", type=float, default=20.0, help="合理阈值百分比，默认 ±20%%")
+    parser.add_argument("--plot-min", type=float, default=None, help="绘图压强下限(GPa)，未给则用数据最小值")
+    parser.add_argument("--plot-max", type=float, default=None, help="绘图压强上限(GPa)，未给则用数据最大值")
     parser.add_argument("-e", "--extreme-error", type=float, default=None, help="极端不合理阈值百分比，超出则单独处理")
     parser.add_argument("-m", "--move-xsf", type=int, default=None, metavar="N", help="移动偏差最大的前 N 个极端不合理结构到 XSF/trash_bin")
     parser.add_argument("-r", "--read-extreme-error-txt", type=str, default=None, metavar="FILE", help="直接读取已有的 extreme_error_structures.txt 并执行移动")
@@ -558,7 +577,6 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         move_extreme_errors_to_trash(extreme_errors[: args.move_xsf], args.move_xsf, len(extreme_errors), xsf_root)
         print("操作完成！")
         return 0
-
     if not args.iterations:
         print("[ERROR] 分析模式下需要指定至少一个 IT 目录，例如 IT0 IT1")
         return 1
@@ -577,6 +595,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             threshold_percent=args.threshold,
             extreme_error_percent=args.extreme_error,
             move_extreme_count=args.move_xsf,
+            plot_min=args.plot_min,
+            plot_max=args.plot_max,
         )
 
     print("全部处理完成！")
