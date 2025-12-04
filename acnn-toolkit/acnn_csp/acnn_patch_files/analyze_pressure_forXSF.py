@@ -71,9 +71,9 @@ def extract_pressure_from_xsf(xsf_path: Path) -> Optional[float]:
     if volume == 0:
         return None
 
-    # virial 单位 eV，压力 = -trace(virial)/(3*V)，再乘以换算 1 eV/Å^3 = 160.21766208 GPa
+    # virial 单位 eV，压力 = trace(virial)/(3*V)，1 eV/Å^3 = 160.21766208 GPa
     trace_virial = virial_values[0] + virial_values[4] + virial_values[8]
-    pressure_gpa = -(trace_virial / (3 * volume)) * 160.21766208
+    pressure_gpa = (trace_virial / (3 * volume)) * 160.21766208
     return pressure_gpa
 
 
