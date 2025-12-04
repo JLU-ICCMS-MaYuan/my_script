@@ -88,6 +88,14 @@ def plot_pressure_distribution(
     total_pressures = [d["total_pressure_gpa"] for d in pressure_data]
     threshold_lower = target_pressure_gpa * (1 - threshold_percent / 100.0)
     threshold_upper = target_pressure_gpa * (1 + threshold_percent / 100.0)
+    stats = {
+        "min": np.min(total_pressures),
+        "max": np.max(total_pressures),
+        "mean": np.mean(total_pressures),
+        "median": np.median(total_pressures),
+        "std": np.std(total_pressures),
+        "var": np.var(total_pressures),
+    }
 
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 10))
 
@@ -107,6 +115,26 @@ def plot_pressure_distribution(
     ax1.set_title("Pressure Distribution (Histogram)")
     ax1.legend(fontsize=10)
     ax1.grid(True, alpha=0.3)
+    stats_text = "\n".join(
+        [
+            f"min: {stats['min']:.2f} GPa",
+            f"max: {stats['max']:.2f} GPa",
+            f"mean: {stats['mean']:.2f} GPa",
+            f"median: {stats['median']:.2f} GPa",
+            f"std: {stats['std']:.2f} GPa",
+            f"var: {stats['var']:.2f} (GPa^2)",
+        ]
+    )
+    ax1.text(
+        0.02,
+        0.98,
+        stats_text,
+        ha="left",
+        va="top",
+        transform=ax1.transAxes,
+        fontsize=9,
+        bbox=dict(boxstyle="round,pad=0.4", facecolor="white", edgecolor="gray", alpha=0.8),
+    )
 
     indices = list(range(1, len(total_pressures) + 1))
     colors = ["green" if threshold_lower <= p <= threshold_upper else "red" for p in total_pressures]
