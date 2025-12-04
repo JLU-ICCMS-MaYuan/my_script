@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""在 XSF 目录下分析指定迭代的 DFT 压强结果并输出图表与列表。
+"""在 XSF 目录下分析指定迭代的压强结果并输出图表与列表。
 
 示例（在 XSF 目录执行）：
     python analyze_pressure.py IT0 IT1 -p 100 -t 20 --extreme-error 100 --move-xsf 5
-    python analyze_pressure.py IT3 -p 80 -f 1/5 1/4  # 仅设置合理阈值
+    python analyze_pressure.py IT3 -p 80 -t 30  # 仅设置合理阈值
     python analyze_pressure.py -r IT2/extreme_error_structures.txt -m 3  # 直接按文件删除
 
 输出位置：每个迭代的 PNG 与 TXT 文件写入对应的 `IT*` 目录；
@@ -26,34 +26,55 @@ import numpy as np
 from tqdm import tqdm
 
 
-def extract_pressure_from_outcar(outcar_path: Path) -> Tuple[Optional[float], Optional[float]]:
-    """从 OUTCAR 中读取 external pressure 与 Pullay stress（单位 kB）。"""
+def extract_pressure_from_xsf(xsf_path: Path) -> Optional[float]:
+    """从 XSF 文件中解析 VIRIAL 与晶格体积，计算压强 (GPa)。"""
 
-    external_pressure = None
-    pullay_stress = None
-
+    virial_values: List[float] = []
+    lattice: List[List[float]] = []
     try:
-        with outcar_path.open("r", encoding="utf-8", errors="ignore") as handle:
-            for line in handle:
-                match = re.search(
-                    r"external pressure\s*=\s*([-\d.]+)\s*kB\s+Pullay stress\s*=\s*([-\d.]+)\s*kB",
-                    line,
-                )
-                if match:
-                    external_pressure = float(match.group(1))
-                    pullay_stress = float(match.group(2))
+        with xsf_path.open("r", encoding="utf-8", errors="ignore") as handle:
+            lines = handle.readlines()
     except Exception as exc:  # pragma: no cover - 仅记录异常
-        tqdm.write(f"[WARNING] 无法读取 {outcar_path}: {exc}")
+        tqdm.write(f"[WARNING] 无法读取 {xsf_path}: {exc}")
+        return None
 
-    return external_pressure, pullay_stress
+    # 提取 VIRIAL（9 个数字）
+    for idx, line in enumerate(lines):
+        if line.strip().upper() == "VIRIAL":
+            collected: List[float] = []
+            j = idx + 1
+            while j < len(lines) and len(collected) < 9:
+                collected.extend([float(x) for x in lines[j].split()])
+                j += 1
+            if len(collected) >= 9:
+                virial_values = collected[:9]
+            break
 
+    # 提取 PRIMVEC（3 行晶格向量）
+    for idx, line in enumerate(lines):
+        if line.strip().upper() == "PRIMVEC":
+            try:
+                lattice = [
+                    [float(x) for x in lines[idx + 1].split()],
+                    [float(x) for x in lines[idx + 2].split()],
+                    [float(x) for x in lines[idx + 3].split()],
+                ]
+            except Exception:  # pragma: no cover - 保守跳过
+                lattice = []
+            break
 
-def find_corresponding_xsf_path(outcar_path: Path, xsf_root: Path, it_name: str) -> Path:
-    """通过 OUTCAR 路径推断对应的 XSF 文件路径。"""
+    if len(virial_values) < 9 or len(lattice) != 3:
+        return None
 
-    structure_name = outcar_path.parent.name
-    xsf_filename = f"{it_name}_SCF_{structure_name}.xsf"
-    return xsf_root / it_name / xsf_filename
+    a, b, c = (np.array(vec) for vec in lattice)
+    volume = abs(np.dot(a, np.cross(b, c)))  # Å^3
+    if volume == 0:
+        return None
+
+    # virial 单位 eV，压力 = -trace(virial)/(3*V)，再乘以换算 1 eV/Å^3 = 160.21766208 GPa
+    trace_virial = virial_values[0] + virial_values[4] + virial_values[8]
+    pressure_gpa = -(trace_virial / (3 * volume)) * 160.21766208
+    return pressure_gpa
 
 
 def plot_pressure_distribution(
@@ -71,10 +92,10 @@ def plot_pressure_distribution(
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 10))
 
     n, _, _ = ax1.hist(total_pressures, bins=50, alpha=0.7, color="steelblue", edgecolor="black")
-    ax1.axvspan(threshold_lower, threshold_upper, alpha=0.15, color="green", label=f"合理范围(±{threshold_percent}%)", zorder=1)
-    ax1.axvline(target_pressure_gpa, color="#E74C3C", linestyle="-", linewidth=3, label=f"目标: {target_pressure_gpa} GPa", zorder=3)
-    ax1.axvline(threshold_upper, color="#E67E22", linestyle="--", linewidth=2.5, label=f"上限: {threshold_upper:.2f} GPa", zorder=2)
-    ax1.axvline(threshold_lower, color="#E67E22", linestyle="--", linewidth=2.5, label=f"下限: {threshold_lower:.2f} GPa", zorder=2)
+    ax1.axvspan(threshold_lower, threshold_upper, alpha=0.15, color="green", label=f"Acceptable (±{threshold_percent}%)", zorder=1)
+    ax1.axvline(target_pressure_gpa, color="#E74C3C", linestyle="-", linewidth=3, label=f"Target: {target_pressure_gpa} GPa", zorder=3)
+    ax1.axvline(threshold_upper, color="#E67E22", linestyle="--", linewidth=2.5, label=f"Upper: {threshold_upper:.2f} GPa", zorder=2)
+    ax1.axvline(threshold_lower, color="#E67E22", linestyle="--", linewidth=2.5, label=f"Lower: {threshold_lower:.2f} GPa", zorder=2)
 
     y_max = n.max() * 0.95 if len(n) else 1
     ax1.text(target_pressure_gpa, y_max, f"{target_pressure_gpa} GPa", ha="center", va="top", fontsize=11, fontweight="bold", color="#E74C3C")
@@ -89,11 +110,11 @@ def plot_pressure_distribution(
 
     indices = list(range(1, len(total_pressures) + 1))
     colors = ["green" if threshold_lower <= p <= threshold_upper else "red" for p in total_pressures]
-    ax2.axhspan(threshold_lower, threshold_upper, alpha=0.15, color="green", label=f"合理范围(±{threshold_percent}%)", zorder=1)
+    ax2.axhspan(threshold_lower, threshold_upper, alpha=0.15, color="green", label=f"Acceptable (±{threshold_percent}%)", zorder=1)
     ax2.scatter(indices, total_pressures, c=colors, alpha=0.6, s=20, zorder=3)
-    ax2.axhline(target_pressure_gpa, color="#E74C3C", linestyle="-", linewidth=3, label=f"目标: {target_pressure_gpa} GPa", zorder=2)
-    ax2.axhline(threshold_upper, color="#E67E22", linestyle="--", linewidth=2.5, label=f"上限: {threshold_upper:.2f} GPa", zorder=2)
-    ax2.axhline(threshold_lower, color="#E67E22", linestyle="--", linewidth=2.5, label=f"下限: {threshold_lower:.2f} GPa", zorder=2)
+    ax2.axhline(target_pressure_gpa, color="#E74C3C", linestyle="-", linewidth=3, label=f"Target: {target_pressure_gpa} GPa", zorder=2)
+    ax2.axhline(threshold_upper, color="#E67E22", linestyle="--", linewidth=2.5, label=f"Upper: {threshold_upper:.2f} GPa", zorder=2)
+    ax2.axhline(threshold_lower, color="#E67E22", linestyle="--", linewidth=2.5, label=f"Lower: {threshold_lower:.2f} GPa", zorder=2)
 
     ax2.set_xlabel("Structure Index")
     ax2.set_ylabel("Total Pressure (GPa)")
@@ -119,12 +140,13 @@ def plot_extreme_error_distribution(
     if not extreme_pressures:
         return
 
-    def extract_it_number(outcar_path: str) -> int:
-        match = re.search(r"IT(\d+)", outcar_path)
+    def extract_it_number(path_text: str) -> int:
+        match = re.search(r"IT(\d+)", path_text)
         return int(match.group(1)) if match else -1
 
     for error in extreme_errors:
-        error["it_number"] = extract_it_number(error.get("outcar_path", ""))
+        it_token_source = str(error.get("outcar_path") or error.get("xsf_path") or "")
+        error["it_number"] = extract_it_number(it_token_source)
 
     extreme_errors_sorted = sorted(extreme_errors, key=lambda x: x["it_number"])
     it_boundaries = []
@@ -139,9 +161,9 @@ def plot_extreme_error_distribution(
     extreme_upper = target_pressure_gpa * (1 + extreme_error_percent / 100.0)
 
     n, _, _ = ax1.hist(extreme_pressures, bins=30, alpha=0.7, color="crimson", edgecolor="black")
-    ax1.axvline(target_pressure_gpa, color="#E74C3C", linestyle="-", linewidth=3, label=f"目标: {target_pressure_gpa} GPa", zorder=3)
-    ax1.axvline(extreme_upper, color="#E67E22", linestyle="--", linewidth=2.5, label=f"上限: {extreme_upper:.2f} GPa", zorder=2)
-    ax1.axvline(extreme_lower, color="#E67E22", linestyle="--", linewidth=2.5, label=f"下限: {extreme_lower:.2f} GPa", zorder=2)
+    ax1.axvline(target_pressure_gpa, color="#E74C3C", linestyle="-", linewidth=3, label=f"Target: {target_pressure_gpa} GPa", zorder=3)
+    ax1.axvline(extreme_upper, color="#E67E22", linestyle="--", linewidth=2.5, label=f"Upper: {extreme_upper:.2f} GPa", zorder=2)
+    ax1.axvline(extreme_lower, color="#E67E22", linestyle="--", linewidth=2.5, label=f"Lower: {extreme_lower:.2f} GPa", zorder=2)
     ax1.axvspan(ax1.get_xlim()[0], extreme_lower, alpha=0.15, color="red", zorder=1)
     ax1.axvspan(extreme_upper, ax1.get_xlim()[1], alpha=0.15, color="red", zorder=1)
     y_max = n.max() * 0.95 if len(n) else 1
@@ -171,9 +193,9 @@ def plot_extreme_error_distribution(
         center = (start + end) / 2 + 1
         ax2.text(center, ax2.get_ylim()[1], f"IT{it_num}", ha="center", va="bottom", fontsize=9, color="#3498DB")
 
-    ax2.axhline(target_pressure_gpa, color="#E74C3C", linestyle="-", linewidth=3, label=f"目标: {target_pressure_gpa} GPa", zorder=2)
-    ax2.axhline(extreme_upper, color="#E67E22", linestyle="--", linewidth=2.5, label=f"上限: {extreme_upper:.2f} GPa", zorder=2)
-    ax2.axhline(extreme_lower, color="#E67E22", linestyle="--", linewidth=2.5, label=f"下限: {extreme_lower:.2f} GPa", zorder=2)
+    ax2.axhline(target_pressure_gpa, color="#E74C3C", linestyle="-", linewidth=3, label=f"Target: {target_pressure_gpa} GPa", zorder=2)
+    ax2.axhline(extreme_upper, color="#E67E22", linestyle="--", linewidth=2.5, label=f"Upper: {extreme_upper:.2f} GPa", zorder=2)
+    ax2.axhline(extreme_lower, color="#E67E22", linestyle="--", linewidth=2.5, label=f"Lower: {extreme_lower:.2f} GPa", zorder=2)
     ax2.set_xlabel("Structure Index")
     ax2.set_ylabel("Total Pressure (GPa)")
     ax2.set_title(f"Extreme Error Structures (>{extreme_error_percent}% deviation) - Scatter Plot")
@@ -369,10 +391,11 @@ def analyze_iteration(
 ) -> None:
     """针对单个迭代进行压强分析，输出到对应 IT 目录。"""
 
-    dft_outcar_pattern = xsf_root.parent / "DFT" / it_name / "SCF" / "*/OUTCAR"
-    outcar_files = [Path(p) for p in glob.glob(str(dft_outcar_pattern))]
-    if not outcar_files:
-        print(f"[ERROR] 未找到 OUTCAR 文件: {dft_outcar_pattern}")
+    it_dir = xsf_root / it_name
+    xsf_pattern = it_dir / f"{it_name}_SCF_*"
+    xsf_files = [Path(p) for p in glob.glob(str(xsf_pattern)) if Path(p).is_file()]
+    if not xsf_files:
+        print(f"[ERROR] 未找到 XSF 文件: {xsf_pattern}")
         return
 
     threshold_lower = target_pressure_gpa * (1 - threshold_percent / 100.0)
@@ -384,52 +407,55 @@ def analyze_iteration(
         extreme_lower = target_pressure_gpa * (1 - extreme_error_percent / 100.0)
         extreme_upper = target_pressure_gpa * (1 + extreme_error_percent / 100.0)
         print(f"极端不合理范围: < {extreme_lower:.2f} GPa 或 > {extreme_upper:.2f} GPa")
-    print(f"共 {len(outcar_files)} 个 OUTCAR，开始提取...")
+    print(f"共 {len(xsf_files)} 个 XSF，开始提取...")
 
     pressure_data: List[Dict[str, float]] = []
     outliers: List[Dict[str, float]] = []
     extreme_errors: List[Dict[str, float]] = []
 
+    def handle_pressure(xsf_path: Path, pressure: Optional[float]) -> None:
+        if pressure is None:
+            return
+        entry = {
+            "xsf_path": xsf_path,
+            "outcar_path": None,
+            "total_pressure_gpa": pressure,
+            "deviation_gpa": abs(pressure - target_pressure_gpa),
+        }
+
+        is_extreme = False
+        if extreme_error_percent is not None:
+            extreme_lower = target_pressure_gpa * (1 - extreme_error_percent / 100.0)
+            extreme_upper = target_pressure_gpa * (1 + extreme_error_percent / 100.0)
+            if pressure < extreme_lower or pressure > extreme_upper:
+                is_extreme = True
+                extreme_errors.append(entry)
+
+        if not is_extreme:
+            pressure_data.append(entry)
+            if pressure < threshold_lower or pressure > threshold_upper:
+                outliers.append(entry)
+
     num_workers = max(1, multiprocessing.cpu_count() - 1)
-    with ProcessPoolExecutor(max_workers=num_workers) as executor:
-        future_to_path = {executor.submit(extract_pressure_from_outcar, path): path for path in outcar_files}
-        for future in tqdm(as_completed(future_to_path), total=len(outcar_files), desc=f"处理 {it_name}", unit="文件"):
-            outcar_path = future_to_path[future]
-            try:
-                ext_press, pullay = future.result()
-            except Exception as exc:
-                tqdm.write(f"[WARNING] 处理 {outcar_path} 时出错: {exc}")
-                continue
-
-            if ext_press is None or pullay is None:
-                continue
-
-            total_pressure_kb = ext_press + pullay
-            total_pressure_gpa = total_pressure_kb / 10.0
-            xsf_path = find_corresponding_xsf_path(outcar_path, xsf_root, it_name)
-
-            entry = {
-                "outcar_path": outcar_path,
-                "xsf_path": xsf_path,
-                "external_pressure": ext_press,
-                "pullay_stress": pullay,
-                "total_pressure_kb": total_pressure_kb,
-                "total_pressure_gpa": total_pressure_gpa,
-                "deviation_gpa": abs(total_pressure_gpa - target_pressure_gpa),
-            }
-
-            is_extreme = False
-            if extreme_error_percent is not None:
-                extreme_lower = target_pressure_gpa * (1 - extreme_error_percent / 100.0)
-                extreme_upper = target_pressure_gpa * (1 + extreme_error_percent / 100.0)
-                if total_pressure_gpa < extreme_lower or total_pressure_gpa > extreme_upper:
-                    is_extreme = True
-                    extreme_errors.append(entry)
-
-            if not is_extreme:
-                pressure_data.append(entry)
-                if total_pressure_gpa < threshold_lower or total_pressure_gpa > threshold_upper:
-                    outliers.append(entry)
+    try:
+        if num_workers > 1:
+            with ProcessPoolExecutor(max_workers=num_workers) as executor:
+                future_to_path = {executor.submit(extract_pressure_from_xsf, path): path for path in xsf_files}
+                for future in tqdm(as_completed(future_to_path), total=len(xsf_files), desc=f"处理 {it_name}", unit="文件"):
+                    xsf_path = future_to_path[future]
+                    try:
+                        pressure = future.result()
+                    except Exception as exc:
+                        tqdm.write(f"[WARNING] 处理 {xsf_path} 时出错: {exc}")
+                        continue
+                    handle_pressure(xsf_path, pressure)
+        else:
+            for xsf_path in tqdm(xsf_files, desc=f"处理 {it_name}", unit="文件"):
+                handle_pressure(xsf_path, extract_pressure_from_xsf(xsf_path))
+    except PermissionError:
+        tqdm.write("[WARNING] 进程池不可用，改为单进程处理")
+        for xsf_path in tqdm(xsf_files, desc=f"处理 {it_name}", unit="文件"):
+            handle_pressure(xsf_path, extract_pressure_from_xsf(xsf_path))
 
     output_dir = xsf_root / it_name
     output_dir.mkdir(parents=True, exist_ok=True)
