@@ -1,9 +1,10 @@
 # VASP 计算工具 - 使用与开发指引
 
 ## 配置来源
-- 默认读取 `~/.my_scriptrc.py` 中的 `vaspstd_path/vaspgam_path/potcar_dir` 以及 `bashtitle/slurmtitle/pbstitle/lsftitle` 作为作业脚本头；缺失时回退到 `vasp/utils/job.py` 内置路径（同样基于 rc 提供的示例）。
-- 队列系统通过 `-j/--job-system` 选择 `bash/slurm/pbs/lsf`；MPI 进程数可用 `--mpi-procs` 指定（默认 8 或 rc 中的设置）。
-- POTCAR 默认读取 rc 的 `potcar_dir`，也可用 `--potcar-dir` 覆盖；`--potcar-type` 选择 PBE/LDA/PW91。
+- 程序路径与赝势：优先读取环境变量 `VASP_STD`、`VASP_GAM`、`POTCAR_DIR`、`VASP_MPI_PROCS`；其次读取 `vasp/config/job_templates.toml` 的 defaults；最后回退到内置默认（兼容旧 `.my_scriptrc.py`）。
+- 队列脚本头：`vasp/config/job_templates.toml` 中按 bash/slurm/pbs/lsf 提供模板，可用环境变量 `JOB_HEADER_BASH/SLURM/PBS/LSF` 覆盖。
+- 队列选择：`-j/--job-system` 取 `bash/slurm/pbs/lsf`；MPI 进程数可用 `--mpi-procs` 指定（默认 8 或配置值）。
+- POTCAR：默认使用 `POTCAR_DIR` 或模板 defaults，可被 `--potcar-dir` 覆盖；`--potcar-type` 选择 PBE/LDA/PW91。
 
 ## 功能与流程
 - `relax`：仅结构优化（步骤目录 `01_relax`）。可批量、并行。

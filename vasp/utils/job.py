@@ -1,10 +1,16 @@
 import importlib.util
 import logging
+import os
 import shlex
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
+
+try:  # Python 3.11+
+    import tomllib  # type: ignore
+except ModuleNotFoundError:  # pragma: no cover - 兼容旧版
+    tomllib = None
 
 logger = logging.getLogger(__name__)
 
@@ -34,37 +40,94 @@ _DEFAULTS = {
     "default_mpi_procs": 8,
 }
 
+_TOML_PATH = Path(__file__).resolve().parent.parent / "config" / "job_templates.toml"
 
-def load_job_config(rc_path: Path = Path.home() / ".my_scriptrc.py") -> JobConfig:
+
+def _load_templates_from_toml(toml_path: Path) -> tuple[dict, dict]:
+    """从 TOML 配置读取 defaults 与 queue header 模板。"""
+    if not tomllib or not toml_path.exists():
+        return {}, {}
+
+    try:
+        with toml_path.open("rb") as f:
+            data = tomllib.load(f)
+        defaults = data.get("defaults", {}) or {}
+        templates_raw = data.get("templates", {}) or {}
+        templates = {k.lower(): (v.get("header") or "").strip() for k, v in templates_raw.items()}
+        return defaults, templates
+    except Exception as exc:  # pragma: no cover
+        logger.warning("读取 job_templates.toml 失败，使用默认模板", exc_info=exc)
+        return {}, {}
+
+
+def load_job_config(
+    toml_path: Path = _TOML_PATH,
+    rc_path: Path = Path.home() / ".my_scriptrc.py",
+) -> JobConfig:
     """
-    加载 ~/.my_scriptrc.py 中的 VASP 配置；缺失时使用默认值。
+    读取 VASP 运行配置，优先级：环境变量 > TOML 模板 > ~/.my_scriptrc.py（兼容）> 内置默认。
 
-    用户可在 rc 中提供：
-    - vaspstd_path, vaspgam_path, potcar_dir
-    - bashtitle, slurmtitle, pbstitle, lsftitle
+    环境变量：
+    - VASP_STD / VASP_GAM / POTCAR_DIR / VASP_MPI_PROCS
+    - JOB_HEADER_BASH / JOB_HEADER_SLURM / JOB_HEADER_PBS / JOB_HEADER_LSF
     """
     cfg = _DEFAULTS.copy()
-    rc_file = Path(rc_path)
 
+    # 兼容旧 rc（低优先级）
+    rc_file = Path(rc_path)
     if rc_file.exists():
         try:
             spec = importlib.util.spec_from_file_location("_user_rc", rc_file)
             module = importlib.util.module_from_spec(spec)
             assert spec and spec.loader
             spec.loader.exec_module(module)  # type: ignore[attr-defined]
+            rc_values = {
+                "vasp_std": getattr(module, "vaspstd_path", None),
+                "vasp_gam": getattr(module, "vaspgam_path", None),
+                "potcar_dir": getattr(module, "potcar_dir", None),
+                "bashtitle": getattr(module, "bashtitle", None),
+                "slurmtitle": getattr(module, "slurmtitle", None),
+                "pbstitle": getattr(module, "pbstitle", None),
+                "lsftitle": getattr(module, "lsftitle", None),
+                "default_mpi_procs": getattr(module, "default_mpi_procs", None),
+            }
+            for k, v in rc_values.items():
+                if v:
+                    cfg[k] = v
+        except Exception as exc:  # pragma: no cover
+            logger.warning("加载 ~/.my_scriptrc.py 失败，跳过 rc", exc_info=exc)
 
-            cfg["vasp_std"] = getattr(module, "vaspstd_path", cfg["vasp_std"])
-            cfg["vasp_gam"] = getattr(module, "vaspgam_path", cfg["vasp_gam"])
-            cfg["potcar_dir"] = getattr(module, "potcar_dir", cfg["potcar_dir"])
-            cfg["bashtitle"] = getattr(module, "bashtitle", cfg["bashtitle"])
-            cfg["slurmtitle"] = getattr(module, "slurmtitle", cfg["slurmtitle"])
-            cfg["pbstitle"] = getattr(module, "pbstitle", cfg["pbstitle"])
-            cfg["lsftitle"] = getattr(module, "lsftitle", cfg["lsftitle"])
-            cfg["default_mpi_procs"] = getattr(module, "default_mpi_procs", cfg["default_mpi_procs"])
-        except Exception as exc:  # pragma: no cover - 容错为主
-            logger.warning("加载 ~/.my_scriptrc.py 失败，使用默认配置", exc_info=exc)
-    else:
-        logger.info("未找到 ~/.my_scriptrc.py，使用默认 VASP 配置")
+    # TOML 模板（中优先级）
+    defaults, templates = _load_templates_from_toml(toml_path)
+    if defaults.get("potcar_dir"):
+        cfg["potcar_dir"] = defaults["potcar_dir"]
+    if defaults.get("mpi_procs"):
+        cfg["default_mpi_procs"] = defaults["mpi_procs"]
+
+    for queue, header in templates.items():
+        if queue == "bash":
+            cfg["bashtitle"] = header or cfg["bashtitle"]
+        if queue == "slurm":
+            cfg["slurmtitle"] = header or cfg["slurmtitle"]
+        if queue == "pbs":
+            cfg["pbstitle"] = header or cfg["pbstitle"]
+        if queue == "lsf":
+            cfg["lsftitle"] = header or cfg["lsftitle"]
+
+    # 环境变量（最高优先级）
+    env_overrides = {
+        "vasp_std": os.environ.get("VASP_STD"),
+        "vasp_gam": os.environ.get("VASP_GAM"),
+        "potcar_dir": os.environ.get("POTCAR_DIR"),
+        "default_mpi_procs": os.environ.get("VASP_MPI_PROCS"),
+        "bashtitle": os.environ.get("JOB_HEADER_BASH"),
+        "slurmtitle": os.environ.get("JOB_HEADER_SLURM"),
+        "pbstitle": os.environ.get("JOB_HEADER_PBS"),
+        "lsftitle": os.environ.get("JOB_HEADER_LSF"),
+    }
+    for k, v in env_overrides.items():
+        if v:
+            cfg[k] = v
 
     potcar_dir = Path(cfg["potcar_dir"]) if cfg.get("potcar_dir") else None
 
@@ -76,7 +139,7 @@ def load_job_config(rc_path: Path = Path.home() / ".my_scriptrc.py") -> JobConfi
         slurmtitle=str(cfg["slurmtitle"]).strip() if cfg.get("slurmtitle") else None,
         pbstitle=str(cfg["pbstitle"]).strip() if cfg.get("pbstitle") else None,
         lsftitle=str(cfg["lsftitle"]).strip() if cfg.get("lsftitle") else None,
-        default_mpi_procs=int(cfg.get("default_mpi_procs", 8)),
+        default_mpi_procs=int(cfg.get("default_mpi_procs") or 8),
     )
 
 
