@@ -15,6 +15,7 @@ from typing import Optional, List
 
 from vasp.pipelines.base import BasePipeline
 from vasp.analysis import plotters
+from vasp.utils.job import load_job_config, write_job_script, submit_job
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +44,7 @@ class PhononPropertiesPipeline(BasePipeline):
         kspacing: Optional[float] = 0.3,
         encut: Optional[float] = None,
         queue_system: Optional[str] = None,
+        mpi_procs: Optional[int] = None,
         potcar_dir: Optional[Path] = None,
         potcar_type: str = "PBE",
         **kwargs
@@ -68,6 +70,8 @@ class PhononPropertiesPipeline(BasePipeline):
             平面波截断能
         queue_system : str, optional
             队列系统
+        mpi_procs : int, optional
+            mpirun -np 参数，默认取 rc 中设置或8
         potcar_dir : Path, optional
             POTCAR库目录，如果不提供则需要手动准备POTCAR
         potcar_type : str
@@ -75,13 +79,16 @@ class PhononPropertiesPipeline(BasePipeline):
         """
         super().__init__(structure_file, work_dir, **kwargs)
 
+        self.job_cfg = load_job_config()
         self.supercell = supercell or [2, 2, 2]
         self.method = method
         self.kdensity = kdensity or 8000
         self.kspacing = kspacing
         self.encut = encut
         self.queue_system = queue_system or "bash"
-        self.potcar_dir = Path(potcar_dir) if potcar_dir else None
+        self.mpi_procs = mpi_procs
+        default_potcar = self.job_cfg.potcar_dir if self.job_cfg else None
+        self.potcar_dir = Path(potcar_dir) if potcar_dir else default_potcar
         self.potcar_type = potcar_type
 
         # 子目录
@@ -402,25 +409,17 @@ class PhononPropertiesPipeline(BasePipeline):
             f.write("TPROP = T\n")
 
     def _write_job_script(self, work_dir: Path, job_name: str) -> str:
-        """写入任务提交脚本"""
-        script_file = work_dir / f"run_{job_name}.sh"
-
-        with open(script_file, 'w') as f:
-            f.write("#!/bin/bash\n\n")
-            f.write("# 激活Intel环境\n")
-            f.write("source ~/intel/oneapi/setvars.sh > /dev/null 2>&1\n\n")
-            f.write(f"cd {work_dir}\n")
-            f.write("mpirun -np 8 ~/soft/vasp.6.3.2/bin/vasp_std > vasp.log\n")
-
-        script_file.chmod(0o755)
-        return str(script_file)
+        """写入任务提交脚本（支持 bash/slurm/pbs/lsf）"""
+        script_path = write_job_script(
+            work_dir=work_dir,
+            job_name=job_name,
+            queue_system=self.queue_system,
+            cfg=self.job_cfg,
+            use_gamma=False,
+            mpi_procs=self.mpi_procs,
+        )
+        return str(script_path)
 
     def _submit_job(self, work_dir: Path, job_script: str) -> str:
         """提交任务"""
-        import subprocess
-
-        if self.queue_system == "bash":
-            subprocess.Popen(["bash", job_script], cwd=work_dir)
-            return "bash_job"
-        else:
-            raise NotImplementedError(f"队列系统 {self.queue_system} 尚未实现")
+        return submit_job(Path(job_script), self.queue_system)

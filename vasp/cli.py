@@ -30,7 +30,8 @@ from typing import Dict, Any, Optional
 
 # 导入Pipeline和Workflow类
 from vasp.pipelines import ElectronicPropertiesPipeline, PhononPropertiesPipeline, BatchPipeline
-# from vasp.workflows import RelaxWorkflow, MDWorkflow  # TODO: 等workflows修复后再启用
+from vasp.pipelines.relax import RelaxPipeline
+from vasp.pipelines.md import MdPipeline
 
 # 配置日志
 logging.basicConfig(
@@ -139,26 +140,56 @@ def command_relax(args):
     logger.info("VASP 结构优化")
     logger.info("=" * 80)
 
-    # 加载JSON配置（如果有）
     config = {}
     if args.json:
         config = load_json_config(Path(args.json))
 
-    # 合并配置
     final_config = merge_configs(config, args)
 
-    input_path = Path(final_config['input'])
-    work_dir = Path(final_config['work_dir'])
+    input_path = Path(final_config["input"])
+    work_dir = Path(final_config["work_dir"])
+    is_batch = detect_batch_mode(input_path, final_config.get("batch", False))
 
-    # 检测批量模式
-    is_batch = detect_batch_mode(input_path, final_config.get('batch', False))
+    pipeline_kwargs = {
+        "kspacing": final_config.get("kspacing", 0.2),
+        "encut": final_config.get("encut"),
+        "potcar_dir": Path(final_config["potcar_dir"]) if final_config.get("potcar_dir") else None,
+        "potcar_type": final_config.get("potcar_type", "PBE"),
+        "queue_system": final_config.get("job_system", "bash"),
+        "mpi_procs": final_config.get("mpi_procs"),
+    }
 
-    # TODO: 实现RelaxWorkflow调用
-    logger.info("结构优化功能开发中...")
-    logger.info(f"输入: {input_path}")
-    logger.info(f"工作目录: {work_dir}")
-    logger.info(f"批量模式: {is_batch}")
-    logger.info(f"配置: {final_config}")
+    try:
+        if is_batch:
+            logger.info(f"批量模式: 处理目录 {input_path}")
+
+            batch = BatchPipeline(
+                pipeline_class=RelaxPipeline,
+                structures_dir=input_path,
+                work_root=work_dir,
+                pipeline_kwargs=pipeline_kwargs,
+                parallel=final_config.get("parallel", False),
+                max_workers=final_config.get("max_workers", 4),
+            )
+            results = batch.run()
+            success_count = sum(1 for r in results if r.get("success"))
+            logger.info(f"\n批量计算完成: {success_count}/{len(results)} 成功")
+        else:
+            logger.info(f"单文件模式: {input_path}")
+            pipeline = RelaxPipeline(
+                structure_file=input_path,
+                work_dir=work_dir,
+                **pipeline_kwargs,
+            )
+            success = pipeline.run()
+            if success:
+                logger.info("\n✓ 结构优化完成")
+            else:
+                logger.error("\n✗ 结构优化失败")
+                sys.exit(1)
+    except Exception as exc:
+        logger.error(f"\n计算异常: {exc}", exc_info=True)
+        sys.exit(1)
 
 
 def command_electronic(args):
@@ -189,6 +220,7 @@ def command_electronic(args):
         'include_cohp': final_config.get('include_cohp', False),
         'plot_dos_type': final_config.get('dos_type', 'element'),
         'queue_system': final_config.get('job_system', 'bash'),
+        'mpi_procs': final_config.get('mpi_procs'),
         'potcar_dir': Path(final_config['potcar_dir']) if final_config.get('potcar_dir') else None,
         'potcar_type': final_config.get('potcar_type', 'PBE'),
     }
@@ -264,6 +296,7 @@ def command_phonon(args):
         'kspacing': final_config.get('kspacing', 0.3),
         'encut': final_config.get('encut'),
         'queue_system': final_config.get('job_system', 'bash'),
+        'mpi_procs': final_config.get('mpi_procs'),
         'potcar_dir': Path(final_config['potcar_dir']) if final_config.get('potcar_dir') else None,
         'potcar_type': final_config.get('potcar_type', 'PBE'),
     }
@@ -317,8 +350,44 @@ def command_md(args):
     logger.info("VASP 分子动力学")
     logger.info("=" * 80)
 
-    # TODO: 实现MDWorkflow调用
-    logger.info("分子动力学功能开发中...")
+    config = {}
+    if args.json:
+        config = load_json_config(Path(args.json))
+
+    final_config = merge_configs(config, args)
+
+    input_path = Path(final_config["input"])
+    work_dir = Path(final_config["work_dir"])
+
+    pipeline_kwargs = {
+        "potim": final_config.get("potim", 1.0),
+        "tebeg": final_config.get("tebeg", 300.0),
+        "teend": final_config.get("teend", 300.0),
+        "nsw": final_config.get("nsw", 200),
+        "kspacing": final_config.get("kspacing", 0.2),
+        "encut": final_config.get("encut"),
+        "potcar_dir": Path(final_config["potcar_dir"]) if final_config.get("potcar_dir") else None,
+        "potcar_type": final_config.get("potcar_type", "PBE"),
+        "queue_system": final_config.get("job_system", "bash"),
+        "mpi_procs": final_config.get("mpi_procs"),
+    }
+
+    try:
+        pipeline = MdPipeline(
+            structure_file=input_path,
+            work_dir=work_dir,
+            **pipeline_kwargs,
+        )
+        success = pipeline.run()
+
+        if success:
+            logger.info("\n✓ 分子动力学计算完成")
+        else:
+            logger.error("\n✗ 分子动力学计算失败")
+            sys.exit(1)
+    except Exception as exc:
+        logger.error(f"\n计算异常: {exc}", exc_info=True)
+        sys.exit(1)
 
 
 def create_parser():
@@ -357,7 +426,8 @@ def create_parser():
     relax_parser.add_argument('--encut', type=float, help='截断能(eV)')
     relax_parser.add_argument('--potcar-dir', help='POTCAR库目录')
     relax_parser.add_argument('--potcar-type', choices=['PBE', 'LDA', 'PW91'], help='POTCAR类型')
-    relax_parser.add_argument('-j', '--job-system', choices=['bash', 'slurm', 'pbs'], help='队列系统')
+    relax_parser.add_argument('-j', '--job-system', choices=['bash', 'slurm', 'pbs', 'lsf'], help='队列系统')
+    relax_parser.add_argument('--mpi-procs', type=int, help='MPI进程数（默认取配置或8）')
     relax_parser.add_argument('--log-level', choices=['DEBUG', 'INFO', 'WARNING'], help='日志级别')
     relax_parser.set_defaults(func=command_relax)
 
@@ -376,7 +446,8 @@ def create_parser():
     electronic_parser.add_argument('--dos-type', choices=['element', 'spd', 'element_spd'], help='DOS投影类型')
     electronic_parser.add_argument('--potcar-dir', help='POTCAR库目录')
     electronic_parser.add_argument('--potcar-type', choices=['PBE', 'LDA', 'PW91'], help='POTCAR类型')
-    electronic_parser.add_argument('-j', '--job-system', choices=['bash', 'slurm', 'pbs'], help='队列系统')
+    electronic_parser.add_argument('-j', '--job-system', choices=['bash', 'slurm', 'pbs', 'lsf'], help='队列系统')
+    electronic_parser.add_argument('--mpi-procs', type=int, help='MPI进程数（默认取配置或8）')
     electronic_parser.add_argument('--log-level', choices=['DEBUG', 'INFO', 'WARNING'], help='日志级别')
     electronic_parser.set_defaults(func=command_electronic)
 
@@ -394,7 +465,8 @@ def create_parser():
     phonon_parser.add_argument('--encut', type=float, help='截断能(eV)')
     phonon_parser.add_argument('--potcar-dir', help='POTCAR库目录')
     phonon_parser.add_argument('--potcar-type', choices=['PBE', 'LDA', 'PW91'], help='POTCAR类型')
-    phonon_parser.add_argument('-j', '--job-system', choices=['bash', 'slurm', 'pbs'], help='队列系统')
+    phonon_parser.add_argument('-j', '--job-system', choices=['bash', 'slurm', 'pbs', 'lsf'], help='队列系统')
+    phonon_parser.add_argument('--mpi-procs', type=int, help='MPI进程数（默认取配置或8）')
     phonon_parser.add_argument('--log-level', choices=['DEBUG', 'INFO', 'WARNING'], help='日志级别')
     phonon_parser.set_defaults(func=command_phonon)
 
@@ -407,9 +479,12 @@ def create_parser():
     md_parser.add_argument('--tebeg', type=float, help='起始温度(K)')
     md_parser.add_argument('--teend', type=float, help='结束温度(K)')
     md_parser.add_argument('--nsw', type=int, help='MD步数')
+    md_parser.add_argument('--kspacing', type=float, help='K点间距')
+    md_parser.add_argument('--encut', type=float, help='截断能(eV)')
     md_parser.add_argument('--potcar-dir', help='POTCAR库目录')
     md_parser.add_argument('--potcar-type', choices=['PBE', 'LDA', 'PW91'], help='POTCAR类型')
-    md_parser.add_argument('-j', '--job-system', choices=['bash', 'slurm', 'pbs'], help='队列系统')
+    md_parser.add_argument('-j', '--job-system', choices=['bash', 'slurm', 'pbs', 'lsf'], help='队列系统')
+    md_parser.add_argument('--mpi-procs', type=int, help='MPI进程数（默认取配置或8）')
     md_parser.set_defaults(func=command_md)
 
     return parser
