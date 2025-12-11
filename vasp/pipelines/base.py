@@ -49,6 +49,7 @@ class BasePipeline(ABC):
         checkpoint_file: Optional[Path] = None,
         max_retries: int = 3,
         retry_delay: int = 60,
+        submit_only: bool = False,
     ):
         """
         初始化Pipeline
@@ -73,6 +74,7 @@ class BasePipeline(ABC):
         self.checkpoint_file = checkpoint_file or self.work_dir / "pipeline_checkpoint.json"
         self.max_retries = max_retries
         self.retry_delay = retry_delay
+        self.submit_only = submit_only
 
         # 步骤状态字典
         self.steps_status: Dict[str, StepStatus] = {}
@@ -144,6 +146,11 @@ class BasePipeline(ABC):
             # 标记完成并保存断点
             self.steps_status[step_name] = StepStatus.COMPLETED
             self._save_checkpoint()
+
+            # 仅提交模式：提交后立即退出，不等待后续步骤
+            if self.submit_only:
+                logger.info("submit_only=True，本次仅提交任务，不等待完成或后续步骤。")
+                break
 
         logger.info(f"\n{'='*60}")
         logger.info("Pipeline执行完成！")

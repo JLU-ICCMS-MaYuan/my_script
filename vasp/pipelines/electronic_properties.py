@@ -178,6 +178,10 @@ class ElectronicPropertiesPipeline(BasePipeline):
         job_script = self._write_job_script(self.relax_dir, "relax")
         job_id = self._submit_job(self.relax_dir, job_script)
 
+        if self.submit_only:
+            logger.info("submit_only=True，已提交 relax 作业，退出等待。")
+            return True
+
         # 等待完成
         if not self._wait_for_job(job_id, self.relax_dir, self.queue_system):
             return False
@@ -223,6 +227,10 @@ class ElectronicPropertiesPipeline(BasePipeline):
         job_script = self._write_job_script(self.scf_dir, "scf")
         job_id = self._submit_job(self.scf_dir, job_script)
 
+        if self.submit_only:
+            logger.info("submit_only=True，已提交 scf 作业，退出等待。")
+            return True
+
         # 等待完成
         if not self._wait_for_job(job_id, self.scf_dir, self.queue_system):
             return False
@@ -256,6 +264,10 @@ class ElectronicPropertiesPipeline(BasePipeline):
         job_script = self._write_job_script(self.dos_dir, "dos")
         job_id = self._submit_job(self.dos_dir, job_script)
 
+        if self.submit_only:
+            logger.info("submit_only=True，已提交 dos 作业，退出等待。")
+            return True
+
         # 等待完成
         if not self._wait_for_job(job_id, self.dos_dir, self.queue_system):
             return False
@@ -283,6 +295,10 @@ class ElectronicPropertiesPipeline(BasePipeline):
         # 提交任务
         job_script = self._write_job_script(self.band_dir, "band")
         job_id = self._submit_job(self.band_dir, job_script)
+
+        if self.submit_only:
+            logger.info("submit_only=True，已提交 band 作业，退出等待。")
+            return True
 
         # 等待完成
         if not self._wait_for_job(job_id, self.band_dir, self.queue_system):
@@ -312,6 +328,10 @@ class ElectronicPropertiesPipeline(BasePipeline):
         job_script = self._write_job_script(self.elf_dir, "elf")
         job_id = self._submit_job(self.elf_dir, job_script)
 
+        if self.submit_only:
+            logger.info("submit_only=True，已提交 elf 作业，退出等待。")
+            return True
+
         # 等待完成
         if not self._wait_for_job(job_id, self.elf_dir, self.queue_system):
             return False
@@ -338,6 +358,10 @@ class ElectronicPropertiesPipeline(BasePipeline):
         # 提交任务
         job_script = self._write_job_script(self.cohp_dir, "cohp")
         job_id = self._submit_job(self.cohp_dir, job_script)
+
+        if self.submit_only:
+            logger.info("submit_only=True，已提交 cohp 作业，退出等待。")
+            return True
 
         # 等待完成
         if not self._wait_for_job(job_id, self.cohp_dir, self.queue_system):

@@ -79,6 +79,10 @@ class MdPipeline(BasePipeline):
         job_script = self._write_job_script(self.md_dir, "md")
         job_id = self._submit_job(self.md_dir, job_script)
 
+        if self.submit_only:
+            logger.info("submit_only=True，已提交 md 作业，退出等待。")
+            return True
+
         if not self._wait_for_job(job_id, self.md_dir, self.queue_system):
             return False
 

@@ -71,6 +71,10 @@ class RelaxPipeline(BasePipeline):
         job_script = self._write_job_script(self.relax_dir, "relax")
         job_id = self._submit_job(self.relax_dir, job_script)
 
+        if self.submit_only:
+            logger.info("submit_only=True，已提交 relax 作业，退出等待。")
+            return True
+
         if not self._wait_for_job(job_id, self.relax_dir, self.queue_system):
             return False
 
