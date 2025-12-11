@@ -1,8 +1,9 @@
 from setuptools import setup, find_packages
 
+# 使用 pyproject.toml 作为主配置，setup.py 仅保留兼容入口，避免与 PEP 621 配置重复。
 setup(
     name="my_script",
-    version="2.0",
+    version="2.0.0",
     author="madegan",
     author_email="myth620137018@163.com",
     description="一个计算qe vasp epw 和产生结构的小软件",
@@ -13,7 +14,7 @@ setup(
         "Documentation": "https://your-docs-url",
         "Source": "https://gitee.com/mayuan_JLUPHY/my_script"
     },
-    packages=find_packages(include=['qe', 'vasp', 'structuregenerator']),
+    packages=find_packages(include=['qe', 'vasp', 'epw', 'structuregenerator']),
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Science/Research',
@@ -24,32 +25,5 @@ setup(
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
     ],
-    install_requires=[
-        "pymatgen==2022.9.21",
-        "ase==3.25.0", # 我之前安装了3.24.1的ase的版本，无法读取relax.out文件，所以这里我强制要求安装3.22.1的版本
-        "matplotlib",
-        "f90wrap",
-        "Cython",
-        "scikit-learn",
-        "pyfiglet==1.0.2",
-        "spglib==2.5.0",
-        "phonopy==2.28.0",
-    ],
-    # 旧的scripts配置（这些文件不存在，已废弃）
-    # scripts=[
-    #     'qe/qe_main.py',
-    #     'vasp/vasp_main.py',
-    #     'structuregenerator/generator_main.py',
-    #     'epw/epw_main.py',
-    # ],
-
-    # 新的entry_points配置（推荐方式）
-    entry_points={
-        'console_scripts': [
-            'vasp=vasp.cli:main',
-            'qe=qe.cli:main',
-            'epw=epw.cli:main',
-        ],
-    },
     python_requires='>=3.7',
 )
