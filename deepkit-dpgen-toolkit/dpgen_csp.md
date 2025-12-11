@@ -675,30 +675,3 @@ Please check error messages above and in remote_root. The submission information
 For furthur actions, run the following command with proper flags: dpdisp submission 9e16ce64ccdfa65bee93be36838740e338edd476
 
 ```
-
-# dpgen+lammps分子动力学
-
-##  <span style="color:red"> 1. deepgen+lammps 的使用注意事项
-
-### <span style="color:yellow"> 有时候需要用lammps跑一些特殊的功能，比如蒙卡交换金属原子位置模拟高熵合金的无序性。
-
-这个教程教会我们如何使用model_devi_jobs的template函数提供lammps的模板：https://bohrium-doc.dp.tech/docs/software/DP-GEN_lmp_template/
-
-### <span style="color:yellow"> dpgen通过metadynamics增强采样
-
-1. https://bohrium.dp.tech/notebook/ce0e23b7a5714043824b6e192964b0a5
-2. https://zhuanlan.zhihu.com/p/350009924
-3. https://bohrium-doc.dp.tech/docs/software/DP-GEN_lmp_template/
-
-需要在param.json中添加开关：
-```json
-{
-"model_devi_plumed": true,
-"model_devi_jobs": [
-  {"sys_idx":[0], "trj_freq": 10, "_idx": "00",
-    "rev_mat":  {"lmp": { "V_NSTEPS": [20000], "V_TEMP": [300], "V_PRES": [700] }, "plm": { "V_TEMP": [300], "V_STRIDE": [10] } },
-    "template": {"lmp": "lmp/input.lammps",  "plm": "lmp/input.plumed"}
-  }]
-}
-
-```

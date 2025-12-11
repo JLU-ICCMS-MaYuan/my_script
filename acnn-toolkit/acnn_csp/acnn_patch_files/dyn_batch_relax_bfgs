@@ -1,21 +1,18 @@
 #!/bin/bash
 set -e
+export OMP_NUM_THREADS=1
 
-# 获取脚本所在的绝对路径，避免相对路径导致的目录混乱
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$SCRIPT_DIR"
-echo "[INFO] Script directory: $SCRIPT_DIR"
-echo "[INFO] Working from: $(pwd)"
+
 
 source ../in.seed
 
-prj="/data/home/mayuan/work/45.Ce-Mg-H/1.CSP/100GPa/acnn"
-src="$prj/RSS/Base"
+prj="/data/home/mayuan/work/45.Ce-Mg-H/1.CSP/100GPa/acnn_new"
+src="$prj/RSS/AIRSS"
 pot_dir="$prj/POT/IT$IT"
 pot=$(ls "$pot_dir"/model*/model-*|sort -V|tail -n 1)
 
-exe="lmp_mpi"
-types="Ce Mg H"
+exe="acnn_relax"
+types="Ce,Mg,H"
 
 press=100
 
@@ -30,25 +27,24 @@ if [ -d "$xsf" ];then
     else
         new_value=$(echo "scale=2;$bonds_scale * 1.05" | bc)
     fi
+
     sed -i "s/^bonds_scale=\"[0-9.]*\"/bonds_scale=\"$new_value\"/" ../in.seed
 fi
 
 optd="IT$IT"
 
 # parallel hierarchy
-frame="50000" # 总结构数
-group="100" # 每个group文件里面有多少个结构
-# 因此有group_aa, group_ab, group_ac, group_ad, group_ae五个group
+frame="500"
+group="50"
+warp="10"
+job_max=10
 
-warp="1"   # 多少个group写在一个task*.sh文件里面
-# 5/2=2……1，因此有3个task0.sh, task1.sh, task2.sh
-
-job_max=3   # 最多同时提交多少个任务。
 
 JOB_NAME="RELAXCeMgH"
 NCORE="[DECISION]"
 sign="[DECISION]"
 base="[DECISION]"
+
 
 function get_task(){
 local NCORE="$1"
@@ -58,15 +54,22 @@ local base="$3"
 TASK="""\
 #!/bin/bash
 #SBATCH --job-name="$JOB_NAME"
-#SBATCH --partition=amd9654
-#SBATCH --time=08:00:00
+#SBATCH --partition=amd7513
+##SBATCH --exclude=node02,node21,node07,node12
+
+##SBATCH --time=00:30:00
 #SBATCH --nodes=1
-###SBATCH --ntasks-per-node="$NCORE"
-#SBATCH --ntasks-per-node=64
+#SBATCH --ntasks-per-node="$NCORE"
 #SBATCH --cpus-per-task=1
-##SBATCH --exclude=node21
+#SBATCH --exclusive
 
 source /data/home/mayuan/intel-2024/oneapi/intel2024_setvars.sh --force  > /dev/null
+source /data/home/mayuan/bin/env_gcc-9.2.0 
+
+export LD_LIBRARY_PATH=/data/home/mayuan/soft/libtorch/lib:\$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=/data/home/mayuan/soft/OpenBLAS-0.3.28/anzhuang/lib:\$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=/data/home/mayuan/soft/OpenBLAS-0.3.28-intel/anzhuang/lib:\$LD_LIBRARY_PATH
+
 
 export MKL_NUM_THREADS=1
 export OMP_NUM_THREADS=1
@@ -75,7 +78,37 @@ export KMP_AFFINITY=granularity=fine,compact,1,0    # Thread affinity
 export I_MPI_PIN_DOMAIN=auto        # process binding
 export I_MPI_FABRICS=shm:ofi        # shared mem & open fabrics
 
+#relax_lammps \"mpirun -np $NCORE "$exe"\" "$src"/"$sign".res "$pot" \""$types"\" "$press"
+
 $(printf "$base")
+
+#process_directory() {
+#    local d=\$1
+#    cd \$d || exit
+#    echo \"check \$d\"
+#    cabal poscar res < relax.vasp > \$d-out.res
+#    H=\$(grep '!' relax.conv | tail -n 1 | awk -F'[ =]+' '{print \$3}')
+#    rres "\$d-out.res" -s "\$d-out" -e "\$H" -p "$press"
+#
+#    UNSAFE=\$(acnn_bsafe -b \""$min_bonds"\" -x $bonds_scale | grep False |grep out | awk '{print \$1}')
+#    if [ -n \"\$UNSAFE\" ]; then
+#        echo UNSAFE
+#
+#        rm "\$d"-out.res
+#
+#        safe_traj -t relax.conv -b \"$min_bonds\" -x $bonds_scale | cabal poscar res > "\$d"-limitbonds.res
+#
+#        cp "\$d"-limitbonds.res ../LIM
+#    fi
+#    cd ..
+#}
+#
+#export -f process_directory
+#
+#echo \"\${opt_dir[@]}\" | xargs -n 1 -P $NCORE bash -c 'timeout 30 bash -c \"process_directory \\\"\$@\\\"\" _' _
+
+export opt_dir
+acnn_ckrelax -b \"$min_bonds\" -x $bonds_scale -p "$press" -c $NCORE
 
 echo CHECK_DONE
 """
@@ -106,7 +139,7 @@ echo "  warp        $warp"
 echo ""
 echo "TASK"
 echo ""
-get_task $NCORE $sign| sed 's/^/  /'
+get_task $NCORE $sign $base| sed 's/^/  /'
 
 read -p "CHECK THE PARAMETERS: [y/n] " u_input
 
@@ -124,13 +157,11 @@ fi
 
 
 
-# 使用绝对路径创建工作目录，避免目录层级混乱
-WORK_DIR="$SCRIPT_DIR/$optd"
-echo "[INFO] Creating work directory: $WORK_DIR"
-mkdir -p "$WORK_DIR"
-mkdir -p "$WORK_DIR/LIM"
-cd "$WORK_DIR"
-echo "[INFO] Changed to work directory: $(pwd)"
+
+
+mkdir -p $optd
+mkdir -p $optd/LIM
+cd $optd
 
 res_files=$(SRC_DIR="$src" FRAME_COUNT="$frame" python3 <<'PY'
 import os
@@ -194,6 +225,8 @@ echo ""
 echo "$res_files" | shuf | split -l $group - group_
 
 
+
+
 group_files=($(find . -name "group_*" | sort))
 n_groups=${#group_files[@]}
 
@@ -201,8 +234,10 @@ full_warps=$(( n_groups / warp ))
 remain=$(( n_groups % warp ))
 
 
+
+
+
 for wi in $(seq 0 $((full_warps - 1))); do
-    echo "[DEBUG] Loop iteration $wi, current dir: $(pwd)" | tee -a debug.log
     NUS=$(find LIM -type f -name "*limit*" | wc -l)
     echo "UNSAFE $NUS"
     if [ $NUS -gt 100 ]; then
@@ -216,29 +251,22 @@ for wi in $(seq 0 $((full_warps - 1))); do
     echo "TASK $wi"
 
     base=""
+    back="opt_dir=\$(cat "
 
     for gi in $(seq 0 $((warp - 1))); do
         gn=$(( wi * warp + gi ))
         g=${group_files[$gn]}
         echo "  $g"
-        base+="for fil in \$(cat $g); do f=\${fil##*/}; mkdir \${f%%.res}; cd \${f%%.res} \n"
-        #base+="    relax_lammps \"mpirun -np 1 lmp_mpi\" \$fil $pot \"$types\" $press & \n"
-        base+="    relax_lammps \"lmp_mpi\" \$fil $pot \"$types\" $press & \n"
-        base+="cd ..; done\n"
+
+        base+="xargs -a $g cat |$exe -p $press -m $pot -t $types > relax_$(basename $g) 2>&1 & \n"
+        back+="$g "
     done
 
     base+="wait \n"
-
-    for gi in $(seq 0 $((warp - 1))); do
-        gn=$(( wi * warp + gi ))
-        g=${group_files[$gn]}
-        base+="for fil in \$(cat $g); do f=\${fil##*/}; cd \${f%%.res} \n"
-        base+="    UNSAFE=\$(acnn_bsafe -b \"$min_bonds\" -x $bonds_scale | grep False |grep out | awk '{print \$1}'); if [ -n \"\$UNSAFE\" ]; then echo UNSAFE; rm \${f%%.res}-out.res; safe_traj -t \${f%%.res}.dump -b \"$min_bonds\" -x $bonds_scale | cabal poscar res > \${f%%.res}-limitbonds.res; cp \${f%%.res}-limitbonds.res ../LIM; fi; rm \${f%%.res}.dump & \n"
-        base+="cd ..; done\n"
-    done
-
-    base+="wait \n"
-
+    base+="$back"
+    base+="| while read -r line; do basename "\$line" .res; done)\n\n"
+    #base+="for d in \${opt_dir[@]};do\n"
+    #printf "$base"
     get_task $warp "sign" "$base" > task$wi.sh
     chmod u+x task$wi.sh
 
@@ -247,7 +275,6 @@ done
 
 
 if (( remain > 0 )); then
-    echo "[DEBUG] Processing remaining groups, current dir: $(pwd)" | tee -a debug.log
     NUS=$(find LIM -type f -name "*limit*" | wc -l)
     echo "UNSAFE $NUS"
     if [ $NUS -gt 100 ]; then
@@ -259,32 +286,24 @@ if (( remain > 0 )); then
 
     echo "TASK $((full_warps + 1))"
     base=""
+    back="opt_dir=\$(cat "
     for gi in $(seq 0 $((remain - 1))); do
         gn=$(( full_warps * warp + gi ))
         g=${group_files[$gn]}
         echo "  $g"
-        base+="for fil in \$(cat $g); do f=\${fil##*/}; mkdir \${f%%.res}; cd \${f%%.res} \n"
-        base+="    relax_lammps \"lmp_mpi\" \$fil $pot \"$types\" $press & \n"
-        base+="cd ..; done\n"
+
+        base+="xargs -a $g cat |$exe -p $press -m $pot -t $types > relax_$(basename $g) 2>&1 & \n"
+        back+="$g "
     done
-
     base+="wait \n"
-
-    for gi in $(seq 0 $((remain - 1))); do
-        gn=$(( full_warps * warp + gi ))
-        g=${group_files[$gn]}
-        base+="for fil in \$(cat $g); do f=\${fil##*/}; cd \${f%%.res} \n"
-        base+="    UNSAFE=\$(acnn_bsafe -b \"$min_bonds\" -x $bonds_scale | grep False |grep out | awk '{print \$1}'); if [ -n \"\$UNSAFE\" ]; then echo UNSAFE; rm \${f%%.res}-out.res; safe_traj -t \${f%%.res}.dump -b \"$min_bonds\" -x $bonds_scale | cabal poscar res > \${f%%.res}-limitbonds.res; cp \${f%%.res}-limitbonds.res ../LIM; fi; rm \${f%%.res}.dump & \n"
-        base+="cd ..; done\n"
-    done
-
-    base+="wait \n"
-
+    base+="$back"
+    base+="| while read -r line; do basename "\$line" .res; done)\n\n"
+    #base+="for d in \${opt_dir[@]};do\n"
+    #printf "$base"
     get_task $remain "sign" "$base" > task$full_warps.sh
     chmod u+x task$full_warps.sh
 
     safe_sbatch task$full_warps.sh
 fi
-
 
 exit 0
