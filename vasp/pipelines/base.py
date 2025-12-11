@@ -20,6 +20,8 @@ from pathlib import Path
 from typing import Dict, List, Optional, Any
 from enum import Enum
 
+from vasp.utils.job import is_job_active
+
 logger = logging.getLogger(__name__)
 
 
@@ -193,6 +195,7 @@ class BasePipeline(ABC):
         self,
         job_id: str,
         work_path: Path,
+        queue_system: Optional[str] = None,
         check_interval: int = 30,
         timeout: int = 86400
     ) -> bool:
@@ -205,6 +208,8 @@ class BasePipeline(ABC):
             任务ID
         work_path : Path
             任务工作目录
+        queue_system : str
+            队列系统，便于查询作业状态
         check_interval : int
             检查间隔（秒）
         timeout : int
@@ -231,6 +236,12 @@ class BasePipeline(ABC):
             if self._check_job_completed(work_path):
                 logger.info(f"任务完成！耗时: {elapsed:.0f}秒")
                 return True
+
+            # 队列状态检查（非bash）
+            active = is_job_active(job_id, queue_system)
+            if active is False:
+                logger.error(f"队列中未找到任务 {job_id}，可能失败或被取消")
+                return False
 
             # 等待
             time.sleep(check_interval)

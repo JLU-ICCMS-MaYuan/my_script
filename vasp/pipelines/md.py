@@ -79,7 +79,7 @@ class MdPipeline(BasePipeline):
         job_script = self._write_job_script(self.md_dir, "md")
         job_id = self._submit_job(self.md_dir, job_script)
 
-        if not self._wait_for_job(job_id, self.md_dir):
+        if not self._wait_for_job(job_id, self.md_dir, self.queue_system):
             return False
 
         if not self._check_job_completed(self.md_dir):

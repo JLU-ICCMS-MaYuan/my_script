@@ -179,7 +179,7 @@ class ElectronicPropertiesPipeline(BasePipeline):
         job_id = self._submit_job(self.relax_dir, job_script)
 
         # 等待完成
-        if not self._wait_for_job(job_id, self.relax_dir):
+        if not self._wait_for_job(job_id, self.relax_dir, self.queue_system):
             return False
 
         # 检查收敛
@@ -224,7 +224,7 @@ class ElectronicPropertiesPipeline(BasePipeline):
         job_id = self._submit_job(self.scf_dir, job_script)
 
         # 等待完成
-        if not self._wait_for_job(job_id, self.scf_dir):
+        if not self._wait_for_job(job_id, self.scf_dir, self.queue_system):
             return False
 
         # 保存CHGCAR供后续使用
@@ -257,7 +257,7 @@ class ElectronicPropertiesPipeline(BasePipeline):
         job_id = self._submit_job(self.dos_dir, job_script)
 
         # 等待完成
-        if not self._wait_for_job(job_id, self.dos_dir):
+        if not self._wait_for_job(job_id, self.dos_dir, self.queue_system):
             return False
 
         logger.info("DOS计算完成")
@@ -285,7 +285,7 @@ class ElectronicPropertiesPipeline(BasePipeline):
         job_id = self._submit_job(self.band_dir, job_script)
 
         # 等待完成
-        if not self._wait_for_job(job_id, self.band_dir):
+        if not self._wait_for_job(job_id, self.band_dir, self.queue_system):
             return False
 
         logger.info("能带计算完成")
@@ -313,7 +313,7 @@ class ElectronicPropertiesPipeline(BasePipeline):
         job_id = self._submit_job(self.elf_dir, job_script)
 
         # 等待完成
-        if not self._wait_for_job(job_id, self.elf_dir):
+        if not self._wait_for_job(job_id, self.elf_dir, self.queue_system):
             return False
 
         logger.info("ELF计算完成")
@@ -340,7 +340,7 @@ class ElectronicPropertiesPipeline(BasePipeline):
         job_id = self._submit_job(self.cohp_dir, job_script)
 
         # 等待完成
-        if not self._wait_for_job(job_id, self.cohp_dir):
+        if not self._wait_for_job(job_id, self.cohp_dir, self.queue_system):
             return False
 
         logger.info("COHP计算完成")

@@ -71,7 +71,7 @@ class RelaxPipeline(BasePipeline):
         job_script = self._write_job_script(self.relax_dir, "relax")
         job_id = self._submit_job(self.relax_dir, job_script)
 
-        if not self._wait_for_job(job_id, self.relax_dir):
+        if not self._wait_for_job(job_id, self.relax_dir, self.queue_system):
             return False
 
         if not self._check_convergence(self.relax_dir):

@@ -43,6 +43,6 @@ vasp electronic -i ./structures -w ./batch_elec --parallel --max-workers 4
 - 断点文件 `pipeline_checkpoint.json` 支持续跑，报告 `pipeline_report.txt` 便于回溯。
 
 ## 注意事项
-- 队列提交通过 rc/默认脚本头生成并调用 `mpirun`；若提交命令不可用会回退本地 bash 执行。
-- `_wait_for_job` 以 OUTCAR 关键字判断完成/收敛，必要时可根据集群行为调整时间或判据。
+- 队列提交通过 rc/默认脚本头生成并调用 `mpirun`；命令缺失时回退本地 bash 执行，bash 环境即可直接跑。
+- `_wait_for_job` 同时检查队列状态（slurm/pbs/lsf）与 OUTCAR 关键字，若队列中不存在该任务会提前报错；可根据集群行为调整判据或超时。
 - 仓库不内置 VASP 可执行文件/赝势，请确保路径、权限与 MPI 环境正确。

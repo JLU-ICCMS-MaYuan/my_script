@@ -147,3 +147,39 @@ def submit_job(script_path: Path, queue_system: str) -> str:
     logger.warning("未知队列系统 %s，回退到 bash", queue_system)
     subprocess.Popen(["bash", str(script_path)], cwd=script_path.parent)
     return "bash_unknown"
+
+
+def is_job_active(job_id: str, queue_system: Optional[str]) -> Optional[bool]:
+    """
+    查询作业是否仍在队列中。
+
+    返回值：True=仍在运行/排队，False=不在队列，None=无法判断或使用bash。
+    """
+    queue = (queue_system or "bash").lower()
+
+    if queue == "bash":
+        return None
+
+    try:
+        if queue == "slurm":
+            output = subprocess.check_output(["squeue", "-j", str(job_id)], text=True)
+            # squeue 输出含表头 + 任务行
+            return len(output.strip().splitlines()) > 1
+
+        if queue == "pbs":
+            output = subprocess.check_output(["qstat", str(job_id)], text=True)
+            return job_id in output
+
+        if queue == "lsf":
+            output = subprocess.check_output(["bjobs", str(job_id)], text=True)
+            return job_id in output
+    except subprocess.CalledProcessError:
+        return False
+    except FileNotFoundError:
+        logger.warning("未找到队列命令，跳过队列状态检查")
+        return None
+    except Exception as exc:  # pragma: no cover
+        logger.warning("队列状态检查异常，跳过", exc_info=exc)
+        return None
+
+    return None

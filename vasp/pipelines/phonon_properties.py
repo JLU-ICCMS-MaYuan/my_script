@@ -164,7 +164,7 @@ class PhononPropertiesPipeline(BasePipeline):
         job_id = self._submit_job(self.relax_dir, job_script)
 
         # 等待完成
-        if not self._wait_for_job(job_id, self.relax_dir):
+        if not self._wait_for_job(job_id, self.relax_dir, self.queue_system):
             return False
 
         # 检查收敛
@@ -268,7 +268,7 @@ class PhononPropertiesPipeline(BasePipeline):
                 disp_num = str(i).zfill(3)
                 disp_dir = self.phonon_dir / f"disp-{disp_num}"
 
-                if not self._wait_for_job(f"disp{disp_num}", disp_dir):
+                if not self._wait_for_job(f"disp{disp_num}", disp_dir, self.queue_system):
                     logger.error(f"位移计算失败: {disp_dir.name}")
                     return False
 
