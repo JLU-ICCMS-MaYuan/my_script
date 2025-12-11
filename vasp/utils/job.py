@@ -184,11 +184,11 @@ def write_job_script(
 def submit_job(script_path: Path, queue_system: str) -> str:
     """提交作业，不同队列系统自动选择命令；失败时回落到本地 bash 执行。"""
     queue = (queue_system or "bash").lower()
-    script_path = Path(script_path)
+    script_path = Path(script_path).resolve()
 
     try:
         if queue == "bash":
-            subprocess.Popen(["bash", str(script_path)], cwd=script_path.parent)
+            subprocess.Popen(["bash", script_path.name], cwd=script_path.parent)
             return "bash"
         if queue == "slurm":
             output = subprocess.check_output(["sbatch", str(script_path)], text=True)
