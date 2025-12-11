@@ -173,7 +173,6 @@ def write_job_script(
 
     lines = [
         header,
-        f"cd {work_dir}",
         f"mpirun -np {mpi} {binary} > vasp.log",
     ]
 
