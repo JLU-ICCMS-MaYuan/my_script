@@ -5,7 +5,7 @@ import shlex
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
 
 try:  # Python 3.11+
     import tomllib  # type: ignore
@@ -143,15 +143,42 @@ def load_job_config(
     )
 
 
-def _select_header(queue_system: str, cfg: JobConfig) -> str:
+def select_job_header(queue_system: str, cfg: JobConfig) -> str:
+    """脚本头选择器，所有模块共用，按队列类型选择 header。"""
     header_map = {
         "bash": cfg.bashtitle,
         "slurm": cfg.slurmtitle or cfg.bashtitle,
         "pbs": cfg.pbstitle or cfg.bashtitle,
         "lsf": cfg.lsftitle or cfg.bashtitle,
     }
-    header = header_map.get(queue_system, cfg.bashtitle) or cfg.bashtitle
+    header = header_map.get((queue_system or "bash"), cfg.bashtitle) or cfg.bashtitle
     return header.strip()
+
+
+def write_master_script(header: str, commands: List[str], script_path: Path) -> Path:
+    """
+    写入总控脚本：脚本头 + set -euo pipefail + 命令序列。
+
+    Parameters
+    ----------
+    header : str
+        队列脚本头（含 shebang / 模块加载等）
+    commands : List[str]
+        需要顺序执行的 shell 命令列表
+    script_path : Path
+        输出脚本路径
+    """
+    script_path = Path(script_path)
+    content_lines = [
+        header.strip(),
+        "set -euo pipefail",
+        "",
+        *commands,
+        "",
+    ]
+    script_path.write_text("\n".join(content_lines))
+    script_path.chmod(0o755)
+    return script_path
 
 
 def write_job_script(
@@ -167,7 +194,7 @@ def write_job_script(
     queue = (queue_system or "bash").lower()
     script_file = work_dir / f"run_{job_name}.sh"
 
-    header = _select_header(queue, cfg)
+    header = select_job_header(queue, cfg)
     binary = cfg.vasp_gam if use_gamma else cfg.vasp_std
     mpi = mpi_procs or cfg.default_mpi_procs or 8
 

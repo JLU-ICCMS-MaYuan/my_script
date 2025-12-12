@@ -47,6 +47,8 @@ class PhononPropertiesPipeline(BasePipeline):
         mpi_procs: Optional[int] = None,
         potcar_dir: Optional[Path] = None,
         potcar_type: str = "PBE",
+        include_relax: bool = False,
+        custom_steps: Optional[List[str]] = None,
         **kwargs
     ):
         """
@@ -76,6 +78,10 @@ class PhononPropertiesPipeline(BasePipeline):
             POTCAR库目录，如果不提供则需要手动准备POTCAR
         potcar_type : str
             POTCAR类型：'PBE', 'LDA', 'PW91'等
+        include_relax : bool
+            是否在声子前自动进行结构优化
+        custom_steps : List[str], optional
+            自定义步骤序列，如 ["phonon_prepare", "phonon_calculate"]
         """
         super().__init__(structure_file, work_dir, **kwargs)
 
@@ -87,6 +93,8 @@ class PhononPropertiesPipeline(BasePipeline):
         self.encut = encut
         self.queue_system = queue_system or "bash"
         self.mpi_procs = mpi_procs
+        self.include_relax = include_relax
+        self.custom_steps = self._normalize_steps(custom_steps)
         default_potcar = self.job_cfg.potcar_dir if self.job_cfg else None
         self.potcar_dir = Path(potcar_dir) if potcar_dir else default_potcar
         self.potcar_type = potcar_type
@@ -96,9 +104,10 @@ class PhononPropertiesPipeline(BasePipeline):
         self.phonon_dir = self.work_dir / "02_phonon"
         self.plots_dir = self.work_dir / "plots"
 
-    def get_steps(self) -> List[str]:
-        """返回所有步骤"""
-        return [
+    def _normalize_steps(self, custom_steps: Optional[List[str]]) -> Optional[List[str]]:
+        if not custom_steps:
+            return None
+        allowed = [
             "relax",
             "phonon_prepare",
             "phonon_calculate",
@@ -106,6 +115,30 @@ class PhononPropertiesPipeline(BasePipeline):
             "phonon_dos",
             "plotting",
         ]
+        normalized: List[str] = []
+        for step in custom_steps:
+            name = step.strip().lower()
+            if name in allowed:
+                normalized.append(name)
+            else:
+                logger.warning(f"忽略未支持的步骤: {name}")
+        return normalized or None
+
+    def get_steps(self) -> List[str]:
+        """返回所有步骤"""
+        if self.custom_steps:
+            return self.custom_steps
+
+        steps = [
+            "phonon_prepare",
+            "phonon_calculate",
+            "phonon_band",
+            "phonon_dos",
+            "plotting",
+        ]
+        if self.include_relax:
+            steps.insert(0, "relax")
+        return steps
 
     def execute_step(self, step_name: str) -> bool:
         """执行单个步骤"""
@@ -261,6 +294,11 @@ class PhononPropertiesPipeline(BasePipeline):
                 potcar_source = self.relax_dir / "POTCAR"
                 if potcar_source.exists():
                     shutil.copy(potcar_source, disp_dir / "POTCAR")
+                elif self.potcar_dir:
+                    from vasp.pipelines.utils import prepare_potcar
+                    if not prepare_potcar(disp_dir / "POSCAR", self.potcar_dir, disp_dir / "POTCAR", self.potcar_type):
+                        logger.error("POTCAR准备失败")
+                        return False
                 else:
                     logger.warning(f"未找到POTCAR文件: {potcar_source}")
 

@@ -51,6 +51,8 @@ class BasePipeline(ABC):
         retry_delay: int = 60,
         submit_only: bool = False,
         prepare_only: bool = False,
+        master_mode: bool = False,
+        master_script_name: str = "run_pipeline.sh",
     ):
         """
         初始化Pipeline
@@ -77,6 +79,8 @@ class BasePipeline(ABC):
         self.retry_delay = retry_delay
         self.submit_only = submit_only
         self.prepare_only = prepare_only
+        self.master_mode = master_mode
+        self.master_script_name = master_script_name
 
         # 步骤状态字典
         self.steps_status: Dict[str, StepStatus] = {}
@@ -150,7 +154,7 @@ class BasePipeline(ABC):
             self._save_checkpoint()
 
             # 仅准备或仅提交：执行/提交首步骤后退出
-            if self.prepare_only or self.submit_only:
+            if (self.prepare_only or self.submit_only) and not self.master_mode:
                 if self.prepare_only:
                     logger.info("prepare_only=True，本次仅生成输入和脚本，不提交。")
                 if self.submit_only:
@@ -163,6 +167,10 @@ class BasePipeline(ABC):
 
         # 生成最终报告
         self._generate_report()
+
+        # master模式：生成总控脚本
+        if self.master_mode:
+            self._write_master_script()
 
         return True
 
@@ -380,3 +388,7 @@ class BasePipeline(ABC):
             f.write("\n" + "="*60 + "\n")
 
         logger.info(f"报告已生成: {report_file}")
+
+    def _write_master_script(self):
+        """子类覆盖以生成总控脚本。"""
+        return None
