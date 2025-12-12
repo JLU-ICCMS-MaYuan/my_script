@@ -157,7 +157,8 @@ def command_relax(args):
         "potcar_type": final_config.get("potcar_type", "PBE"),
         "queue_system": final_config.get("job_system", "bash"),
         "mpi_procs": final_config.get("mpi_procs"),
-        "submit_only": final_config.get("submit_only", False),
+        "submit_only": final_config.get("submit", False),
+        "prepare_only": not final_config.get("submit", False),
     }
 
     try:
@@ -224,7 +225,8 @@ def command_electronic(args):
         'mpi_procs': final_config.get('mpi_procs'),
         'potcar_dir': Path(final_config['potcar_dir']) if final_config.get('potcar_dir') else None,
         'potcar_type': final_config.get('potcar_type', 'PBE'),
-        'submit_only': final_config.get('submit_only', False),
+        'submit_only': final_config.get('submit', False),
+        'prepare_only': not final_config.get('submit', False),
     }
 
     try:
@@ -301,7 +303,8 @@ def command_phonon(args):
         'mpi_procs': final_config.get('mpi_procs'),
         'potcar_dir': Path(final_config['potcar_dir']) if final_config.get('potcar_dir') else None,
         'potcar_type': final_config.get('potcar_type', 'PBE'),
-        'submit_only': final_config.get('submit_only', False),
+        'submit_only': final_config.get('submit', False),
+        'prepare_only': not final_config.get('submit', False),
     }
 
     try:
@@ -373,7 +376,8 @@ def command_md(args):
         "potcar_type": final_config.get("potcar_type", "PBE"),
         "queue_system": final_config.get("job_system", "bash"),
         "mpi_procs": final_config.get("mpi_procs"),
-        "submit_only": final_config.get("submit_only", False),
+        "submit_only": final_config.get("submit", False),
+        "prepare_only": not final_config.get("submit", False),
     }
 
     try:
@@ -432,7 +436,7 @@ def create_parser():
     relax_parser.add_argument('--potcar-type', choices=['PBE', 'LDA', 'PW91'], help='POTCAR类型')
     relax_parser.add_argument('-j', '--job-system', choices=['bash', 'slurm', 'pbs', 'lsf'], help='队列系统')
     relax_parser.add_argument('--mpi-procs', type=int, help='MPI进程数（默认取配置或8）')
-    relax_parser.add_argument('--submit-only', action='store_true', help='仅提交作业，不等待计算完成')
+    relax_parser.add_argument('--submit', action='store_true', help='提交作业（默认仅生成输入和脚本）')
     relax_parser.add_argument('--log-level', choices=['DEBUG', 'INFO', 'WARNING'], help='日志级别')
     relax_parser.set_defaults(func=command_relax)
 
@@ -453,7 +457,7 @@ def create_parser():
     electronic_parser.add_argument('--potcar-type', choices=['PBE', 'LDA', 'PW91'], help='POTCAR类型')
     electronic_parser.add_argument('-j', '--job-system', choices=['bash', 'slurm', 'pbs', 'lsf'], help='队列系统')
     electronic_parser.add_argument('--mpi-procs', type=int, help='MPI进程数（默认取配置或8）')
-    electronic_parser.add_argument('--submit-only', action='store_true', help='仅提交作业，不等待计算完成')
+    electronic_parser.add_argument('--submit', action='store_true', help='提交作业（默认仅生成输入和脚本）')
     electronic_parser.add_argument('--log-level', choices=['DEBUG', 'INFO', 'WARNING'], help='日志级别')
     electronic_parser.set_defaults(func=command_electronic)
 
@@ -473,7 +477,7 @@ def create_parser():
     phonon_parser.add_argument('--potcar-type', choices=['PBE', 'LDA', 'PW91'], help='POTCAR类型')
     phonon_parser.add_argument('-j', '--job-system', choices=['bash', 'slurm', 'pbs', 'lsf'], help='队列系统')
     phonon_parser.add_argument('--mpi-procs', type=int, help='MPI进程数（默认取配置或8）')
-    phonon_parser.add_argument('--submit-only', action='store_true', help='仅提交作业，不等待计算完成')
+    phonon_parser.add_argument('--submit', action='store_true', help='提交作业（默认仅生成输入和脚本）')
     phonon_parser.add_argument('--log-level', choices=['DEBUG', 'INFO', 'WARNING'], help='日志级别')
     phonon_parser.set_defaults(func=command_phonon)
 
@@ -492,7 +496,7 @@ def create_parser():
     md_parser.add_argument('--potcar-type', choices=['PBE', 'LDA', 'PW91'], help='POTCAR类型')
     md_parser.add_argument('-j', '--job-system', choices=['bash', 'slurm', 'pbs', 'lsf'], help='队列系统')
     md_parser.add_argument('--mpi-procs', type=int, help='MPI进程数（默认取配置或8）')
-    md_parser.add_argument('--submit-only', action='store_true', help='仅提交作业，不等待计算完成')
+    md_parser.add_argument('--submit', action='store_true', help='提交作业（默认仅生成输入和脚本）')
     md_parser.set_defaults(func=command_md)
 
     return parser
