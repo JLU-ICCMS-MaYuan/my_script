@@ -161,6 +161,10 @@ class PhononPropertiesPipeline(BasePipeline):
 
         # 提交任务
         job_script = self._write_job_script(self.relax_dir, "relax")
+        if self.prepare_only:
+            logger.info("prepare_only=True，仅生成输入和脚本，不提交。")
+            return True
+
         job_id = self._submit_job(self.relax_dir, job_script)
 
         if self.submit_only:
@@ -262,6 +266,10 @@ class PhononPropertiesPipeline(BasePipeline):
 
                 # 提交任务
                 job_script = self._write_job_script(disp_dir, f"disp{disp_num}")
+                if self.prepare_only:
+                    logger.info("prepare_only=True，仅生成输入和脚本，不提交。")
+                    return True
+
                 job_id = self._submit_job(disp_dir, job_script)
 
                 logger.info(f"已提交位移计算 {i}/{n_disp}: {disp_dir.name}")

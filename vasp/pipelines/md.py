@@ -77,6 +77,11 @@ class MdPipeline(BasePipeline):
             logger.warning("未提供 potcar_dir，请确保已手动准备 POTCAR")
 
         job_script = self._write_job_script(self.md_dir, "md")
+
+        if self.prepare_only:
+            logger.info("prepare_only=True，仅生成输入和脚本，不提交。")
+            return True
+
         job_id = self._submit_job(self.md_dir, job_script)
 
         if self.submit_only:

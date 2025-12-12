@@ -50,6 +50,7 @@ class BasePipeline(ABC):
         max_retries: int = 3,
         retry_delay: int = 60,
         submit_only: bool = False,
+        prepare_only: bool = False,
     ):
         """
         初始化Pipeline
@@ -75,6 +76,7 @@ class BasePipeline(ABC):
         self.max_retries = max_retries
         self.retry_delay = retry_delay
         self.submit_only = submit_only
+        self.prepare_only = prepare_only
 
         # 步骤状态字典
         self.steps_status: Dict[str, StepStatus] = {}
@@ -147,9 +149,12 @@ class BasePipeline(ABC):
             self.steps_status[step_name] = StepStatus.COMPLETED
             self._save_checkpoint()
 
-            # 仅提交模式：提交后立即退出，不等待后续步骤
-            if self.submit_only:
-                logger.info("submit_only=True，本次仅提交任务，不等待完成或后续步骤。")
+            # 仅准备或仅提交：执行/提交首步骤后退出
+            if self.prepare_only or self.submit_only:
+                if self.prepare_only:
+                    logger.info("prepare_only=True，本次仅生成输入和脚本，不提交。")
+                if self.submit_only:
+                    logger.info("submit_only=True，本次提交作业后不等待完成。")
                 break
 
         logger.info(f"\n{'='*60}")

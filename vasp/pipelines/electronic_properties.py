@@ -176,6 +176,10 @@ class ElectronicPropertiesPipeline(BasePipeline):
 
         # 提交任务
         job_script = self._write_job_script(self.relax_dir, "relax")
+        if self.prepare_only:
+            logger.info("prepare_only=True，仅生成输入和脚本，不提交。")
+            return True
+
         job_id = self._submit_job(self.relax_dir, job_script)
 
         if self.submit_only:
@@ -225,6 +229,10 @@ class ElectronicPropertiesPipeline(BasePipeline):
 
         # 提交任务
         job_script = self._write_job_script(self.scf_dir, "scf")
+        if self.prepare_only:
+            logger.info("prepare_only=True，仅生成输入和脚本，不提交。")
+            return True
+
         job_id = self._submit_job(self.scf_dir, job_script)
 
         if self.submit_only:
@@ -262,6 +270,10 @@ class ElectronicPropertiesPipeline(BasePipeline):
 
         # 提交任务
         job_script = self._write_job_script(self.dos_dir, "dos")
+        if self.prepare_only:
+            logger.info("prepare_only=True，仅生成输入和脚本，不提交。")
+            return True
+
         job_id = self._submit_job(self.dos_dir, job_script)
 
         if self.submit_only:
@@ -294,6 +306,10 @@ class ElectronicPropertiesPipeline(BasePipeline):
 
         # 提交任务
         job_script = self._write_job_script(self.band_dir, "band")
+        if self.prepare_only:
+            logger.info("prepare_only=True，仅生成输入和脚本，不提交。")
+            return True
+
         job_id = self._submit_job(self.band_dir, job_script)
 
         if self.submit_only:
@@ -326,6 +342,10 @@ class ElectronicPropertiesPipeline(BasePipeline):
 
         # 提交任务
         job_script = self._write_job_script(self.elf_dir, "elf")
+        if self.prepare_only:
+            logger.info("prepare_only=True，仅生成输入和脚本，不提交。")
+            return True
+
         job_id = self._submit_job(self.elf_dir, job_script)
 
         if self.submit_only:
@@ -357,6 +377,10 @@ class ElectronicPropertiesPipeline(BasePipeline):
 
         # 提交任务
         job_script = self._write_job_script(self.cohp_dir, "cohp")
+        if self.prepare_only:
+            logger.info("prepare_only=True，仅生成输入和脚本，不提交。")
+            return True
+
         job_id = self._submit_job(self.cohp_dir, job_script)
 
         if self.submit_only:
