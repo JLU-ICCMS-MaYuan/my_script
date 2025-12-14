@@ -169,8 +169,8 @@ def run_properties_command(args, title: str, base_steps: list[str]):
 
     try:
         for p in pressures:
-            pressure_dir = base_root / format_pressure_dir(p)
-            pressure_dir.mkdir(parents=True, exist_ok=True)
+            pressure_label = format_pressure_dir(p)
+            pressure_dir = base_root / pressure_label
 
             pipeline_kwargs = {
                 "kspacing": final_config.get("kspacing", 0.2),
@@ -199,13 +199,14 @@ def run_properties_command(args, title: str, base_steps: list[str]):
                     parallel=parallel_flag,
                     max_workers=max_workers,
                     structure_exts=structure_exts,
-                    pressure_label=format_pressure_dir(p),
+                    pressure_label=pressure_label,
                 )
                 results = batch.run()
                 success_count = sum(1 for r in results if r.get("success"))
                 logger.info(f"\n批量计算完成(压强 {p} GPa): {success_count}/{len(results)} 成功")
             else:
                 logger.info(f"单文件模式: {input_path}, 压强 {p} GPa")
+                pressure_dir.mkdir(parents=True, exist_ok=True)
                 pipeline = PropertiesPipeline(
                     structure_file=input_path,
                     work_dir=pressure_dir,
@@ -476,8 +477,8 @@ def command_phonon(args):
 
     try:
         for p in pressures:
-            pressure_dir = base_root / format_pressure_dir(p)
-            pressure_dir.mkdir(parents=True, exist_ok=True)
+            pressure_label = format_pressure_dir(p)
+            pressure_dir = base_root / pressure_label
 
             pipeline_kwargs = {
                 'supercell': final_config.get('supercell', [2, 2, 2]),
@@ -495,7 +496,6 @@ def command_phonon(args):
             }
 
             if is_batch:
-                # 批量计算模式
                 logger.info(f"批量模式: 压强 {p} GPa, 处理目录 {input_path}")
 
                 batch = BatchPipeline(
@@ -506,7 +506,7 @@ def command_phonon(args):
                     parallel=parallel_flag,
                     max_workers=max_workers,
                     structure_exts=structure_exts,
-                    pressure_label=pressure_dir.name,
+                    pressure_label=pressure_label,
                 )
 
                 results = batch.run()
@@ -515,8 +515,8 @@ def command_phonon(args):
                 logger.info(f"\n批量计算完成: {success_count}/{len(results)} 成功 (压强 {p} GPa)")
 
             else:
-                # 单个文件模式
                 logger.info(f"单文件模式: {input_path}, 压强 {p} GPa")
+                pressure_dir.mkdir(parents=True, exist_ok=True)
 
                 pipeline = PhononPropertiesPipeline(
                     structure_file=input_path,
@@ -566,8 +566,8 @@ def command_md(args):
 
     try:
         for p in pressures:
-            pressure_dir = base_root / format_pressure_dir(p)
-            pressure_dir.mkdir(parents=True, exist_ok=True)
+            pressure_label = format_pressure_dir(p)
+            pressure_dir = base_root / pressure_label
 
             pipeline_kwargs = {
                 "potim": final_config.get("potim", 1.0),
@@ -596,12 +596,13 @@ def command_md(args):
                     parallel=parallel_flag,
                     max_workers=max_workers,
                     structure_exts=structure_exts,
-                    pressure_label=pressure_dir.name,
+                    pressure_label=pressure_label,
                 )
                 results = batch.run()
                 success_count = sum(1 for r in results if r.get('success'))
                 logger.info(f"\n批量计算完成: {success_count}/{len(results)} 成功 (压强 {p} GPa)")
             else:
+                pressure_dir.mkdir(parents=True, exist_ok=True)
                 pipeline = MdPipeline(
                     structure_file=input_path,
                     work_dir=pressure_dir,
