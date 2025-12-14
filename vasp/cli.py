@@ -59,6 +59,36 @@ def _rewrite_relax_combo(argv: list[str]) -> list[str]:
 sys.argv = _rewrite_relax_combo(sys.argv)
 
 
+def parse_structure_exts(ext_str: Optional[str]) -> list[str]:
+    if not ext_str:
+        return ["vasp"]
+    parts = [p.strip().lower() for p in re.split(r"[ ,]+", ext_str) if p.strip()]
+    return parts or ["vasp"]
+
+
+def parse_pressures(values) -> list[float]:
+    if values is None:
+        return [0.0]
+    if isinstance(values, (int, float)):
+        return [float(values)]
+    return [float(v) for v in values]
+
+
+def format_pressure_dir(pressure: float) -> str:
+    return f"{pressure:g}_GPa"
+
+
+def derive_work_root(input_path: Path) -> Path:
+    """
+    根据输入路径自动推导工作根目录：
+    - 文件：使用文件所在目录下的 stem 作为工作根（去掉后缀）
+    - 目录：使用目录本身作为工作根
+    """
+    if input_path.is_dir():
+        return Path.cwd()
+    return Path.cwd() / input_path.stem
+
+
 def load_json_config(json_file: Path) -> Dict[str, Any]:
     """
     从JSON文件加载配置
@@ -117,7 +147,7 @@ def merge_configs(json_config: Dict[str, Any], cli_args: argparse.Namespace) -> 
     return merged
 
 
-def detect_batch_mode(input_path: Path, batch_flag: bool) -> bool:
+def detect_batch_mode(input_path: Path, batch_flag: bool, structure_exts: Optional[list[str]] = None) -> bool:
     """
     智能检测是否为批量模式
 
@@ -127,22 +157,30 @@ def detect_batch_mode(input_path: Path, batch_flag: bool) -> bool:
         输入路径
     batch_flag : bool
         用户是否明确指定--batch
+    structure_exts : list[str], optional
+         结构文件后缀筛选
 
     Returns
     -------
     bool
         True表示批量模式
     """
-    # 用户明确指定
-    if batch_flag:
-        return True
-
     # 输入不是目录
     if not input_path.is_dir():
         return False
 
-    # 检测目录中是否有多个结构文件
-    patterns = ['*.vasp', '*.POSCAR', 'POSCAR*']
+    # 检测目录中是否有结构文件
+    patterns = []
+    for ext in structure_exts or ["vasp"]:
+        e = ext.lower()
+        if e == "vasp":
+            patterns.extend(['*.vasp', '*.POSCAR', 'POSCAR*'])
+        elif e == "cif":
+            patterns.append("*.cif")
+        elif e == "res":
+            patterns.append("*.res")
+        else:
+            patterns.append(f"*.{e}")
     for pattern in patterns:
         files = list(input_path.glob(pattern))
         if len(files) >= 1:  # 只要有结构文件就认为是批量
@@ -165,48 +203,56 @@ def command_relax(args):
     final_config = merge_configs(config, args)
 
     input_path = Path(final_config["input"])
-    work_dir = Path(final_config["work_dir"])
-    is_batch = detect_batch_mode(input_path, final_config.get("batch", False))
-
-    pipeline_kwargs = {
-        "kspacing": final_config.get("kspacing", 0.2),
-        "encut": final_config.get("encut"),
-        "potcar_dir": Path(final_config["potcar_dir"]) if final_config.get("potcar_dir") else None,
-        "potcar_type": final_config.get("potcar_type", "PBE"),
-        "queue_system": final_config.get("job_system", "bash"),
-        "mpi_procs": final_config.get("mpi_procs"),
-        "submit_only": final_config.get("submit", False),
-        "prepare_only": not final_config.get("submit", False),
-    }
+    structure_exts = parse_structure_exts(final_config.get("structure_ext"))
+    pressures = parse_pressures(final_config.get("pressure"))
+    base_root = derive_work_root(input_path)
+    is_batch = detect_batch_mode(input_path, final_config.get("batch", False), structure_exts)
 
     try:
-        if is_batch:
-            logger.info(f"批量模式: 处理目录 {input_path}")
+        for p in pressures:
+            pressure_dirname = format_pressure_dir(p)
+            pipeline_kwargs = {
+                "kspacing": final_config.get("kspacing", 0.2),
+                "encut": final_config.get("encut"),
+                "potcar_dir": Path(final_config["potcar_dir"]) if final_config.get("potcar_dir") else None,
+                "potcar_type": final_config.get("potcar_type", "PBE"),
+                "queue_system": final_config.get("job_system", "bash"),
+                "mpi_procs": final_config.get("mpi_procs"),
+                "prepare_only": not final_config.get("submit", False),
+                "pressure": p,
+            }
 
-            batch = BatchPipeline(
-                pipeline_class=RelaxPipeline,
-                structures_dir=input_path,
-                work_root=work_dir,
-                pipeline_kwargs=pipeline_kwargs,
-                parallel=final_config.get("parallel", False),
-                max_workers=final_config.get("max_workers", 4),
-            )
-            results = batch.run()
-            success_count = sum(1 for r in results if r.get("success"))
-            logger.info(f"\n批量计算完成: {success_count}/{len(results)} 成功")
-        else:
-            logger.info(f"单文件模式: {input_path}")
-            pipeline = RelaxPipeline(
-                structure_file=input_path,
-                work_dir=work_dir,
-                **pipeline_kwargs,
-            )
-            success = pipeline.run()
-            if success:
-                logger.info("\n✓ 结构优化完成")
+            if is_batch:
+                logger.info(f"批量模式: 压强 {p} GPa, 处理目录 {input_path}")
+
+                batch = BatchPipeline(
+                    pipeline_class=RelaxPipeline,
+                    structures_dir=input_path,
+                    work_root=base_root,
+                    pipeline_kwargs=pipeline_kwargs,
+                    parallel=bool(final_config.get("tasks")),
+                    max_workers=final_config.get("tasks", 4),
+                    structure_exts=structure_exts,
+                    pressure_label=pressure_dirname,
+                )
+                results = batch.run()
+                success_count = sum(1 for r in results if r.get("success"))
+                logger.info(f"\n批量计算完成(压强 {p} GPa): {success_count}/{len(results)} 成功")
             else:
-                logger.error("\n✗ 结构优化失败")
-                sys.exit(1)
+                logger.info(f"单文件模式: {input_path}, 压强 {p} GPa")
+                pressure_dir = base_root / pressure_dirname
+                pressure_dir.mkdir(parents=True, exist_ok=True)
+                pipeline = RelaxPipeline(
+                    structure_file=input_path,
+                    work_dir=pressure_dir,
+                    **pipeline_kwargs,
+                )
+                success = pipeline.run()
+                if success:
+                    logger.info("\n✓ 结构优化完成")
+                else:
+                    logger.error("\n✗ 结构优化失败")
+                    sys.exit(1)
     except Exception as exc:
         logger.error(f"\n计算异常: {exc}", exc_info=True)
         sys.exit(1)
@@ -227,12 +273,13 @@ def command_electronic(args):
     final_config = merge_configs(config, args)
 
     input_path = Path(final_config['input'])
-    work_dir = Path(final_config['work_dir'])
+    structure_exts = parse_structure_exts(final_config.get('structure_ext'))
+    pressures = parse_pressures(final_config.get('pressure'))
+    base_root = derive_work_root(input_path)
 
     # 检测批量模式
-    is_batch = detect_batch_mode(input_path, final_config.get('batch', False))
+    is_batch = detect_batch_mode(input_path, final_config.get('batch', False), structure_exts)
 
-    master_script = final_config.get('master_script', False)
     submit_flag = final_config.get('submit', False)
     steps_raw = final_config.get('steps')
     custom_steps = None
@@ -240,74 +287,65 @@ def command_electronic(args):
         parts = re.split(r'[ ,]+', steps_raw)
         custom_steps = [p for p in parts if p]
 
-    # 准备Pipeline参数
-    pipeline_kwargs = {
-        'kspacing': final_config.get('kspacing', 0.2),
-        'encut': final_config.get('encut'),
-        'include_elf': final_config.get('include_elf', False),
-        'include_cohp': final_config.get('include_cohp', False),
-        'plot_dos_type': final_config.get('dos_type', 'element'),
-        'queue_system': final_config.get('job_system', 'bash'),
-        'mpi_procs': final_config.get('mpi_procs'),
-        'potcar_dir': Path(final_config['potcar_dir']) if final_config.get('potcar_dir') else None,
-        'potcar_type': final_config.get('potcar_type', 'PBE'),
-        'submit_only': submit_flag if not master_script else False,
-        'prepare_only': (not submit_flag) or master_script,
-        'custom_steps': custom_steps,
-        'master_script': master_script,
-        'master_script_name': final_config.get('master_script_name', 'run_master.sh'),
-    }
-
     try:
-        if is_batch:
-            # 批量计算模式
-            logger.info(f"批量模式: 处理目录 {input_path}")
+        for p in pressures:
+            pressure_dir = base_root / format_pressure_dir(p)
+            pressure_dir.mkdir(parents=True, exist_ok=True)
 
-            batch = BatchPipeline(
-                pipeline_class=ElectronicPropertiesPipeline,
-                structures_dir=input_path,
-                work_root=work_dir,
-                pipeline_kwargs=pipeline_kwargs,
-                parallel=final_config.get('parallel', False),
-                max_workers=final_config.get('max_workers', 4),
-            )
+            pipeline_kwargs = {
+                'kspacing': final_config.get('kspacing', 0.2),
+                'encut': final_config.get('encut'),
+                'include_elf': final_config.get('include_elf', False),
+                'include_cohp': final_config.get('include_cohp', False),
+                'plot_dos_type': final_config.get('dos_type', 'element'),
+                'queue_system': final_config.get('job_system', 'bash'),
+                'mpi_procs': final_config.get('mpi_procs'),
+                'potcar_dir': Path(final_config['potcar_dir']) if final_config.get('potcar_dir') else None,
+                'potcar_type': final_config.get('potcar_type', 'PBE'),
+                'prepare_only': (not submit_flag),
+                'custom_steps': custom_steps,
+                'pressure': p,
+            }
 
-            results = batch.run()
+            if is_batch:
+                # 批量计算模式
+                logger.info(f"批量模式: 压强 {p} GPa, 处理目录 {input_path}")
 
-            # 打印结果摘要
-            success_count = sum(1 for r in results if r.get('success'))
-            logger.info(f"\n批量计算完成: {success_count}/{len(results)} 成功")
-            if master_script and submit_flag:
-                logger.info("批量 + --master-script 当前仅生成各目录的 run_master.sh，不会自动提交，请按需手动提交。")
+                batch = BatchPipeline(
+                    pipeline_class=ElectronicPropertiesPipeline,
+                    structures_dir=input_path,
+                    work_root=pressure_dir,
+                    pipeline_kwargs=pipeline_kwargs,
+                    parallel=bool(final_config.get('tasks')),
+                    max_workers=final_config.get('tasks', 4),
+                    structure_exts=structure_exts,
+                    pressure_label=pressure_dirname,
+                )
 
-        else:
-            # 单个文件模式
-            logger.info(f"单文件模式: {input_path}")
+                results = batch.run()
 
-            pipeline = ElectronicPropertiesPipeline(
-                structure_file=input_path,
-                work_dir=work_dir,
-                **pipeline_kwargs
-            )
+                # 打印结果摘要
+                success_count = sum(1 for r in results if r.get('success'))
+                logger.info(f"\n批量计算完成: {success_count}/{len(results)} 成功 (压强 {p} GPa)")
 
-            success = pipeline.run()
-
-            if success:
-                if master_script:
-                    script_path = pipeline.master_script_path or (work_dir / final_config.get('master_script_name', 'run_master.sh'))
-                    if submit_flag:
-                        if not script_path.exists():
-                            logger.error(f"未找到总控脚本: {script_path}")
-                            sys.exit(1)
-                        job_id = submit_job(script_path, final_config.get('job_system', 'bash'))
-                        logger.info(f"已提交总控脚本: {job_id}")
-                    else:
-                        logger.info(f"已生成总控脚本（未提交）: {script_path}")
-                logger.info("\n✓ 计算成功完成！")
-                logger.info(f"结果保存在: {work_dir}")
             else:
-                logger.error("\n✗ 计算失败")
-                sys.exit(1)
+                # 单个文件模式
+                logger.info(f"单文件模式: {input_path}, 压强 {p} GPa")
+
+                pipeline = ElectronicPropertiesPipeline(
+                    structure_file=input_path,
+                    work_dir=pressure_dir,
+                    **pipeline_kwargs
+                )
+
+                success = pipeline.run()
+
+                if success:
+                    logger.info("\n✓ 计算成功完成！")
+                    logger.info(f"结果保存在: {pressure_dir}")
+                else:
+                    logger.error("\n✗ 计算失败")
+                    sys.exit(1)
 
     except Exception as e:
         logger.error(f"\n计算异常: {e}", exc_info=True)
@@ -329,69 +367,75 @@ def command_phonon(args):
     final_config = merge_configs(config, args)
 
     input_path = Path(final_config['input'])
-    work_dir = Path(final_config['work_dir'])
-
+    structure_exts = parse_structure_exts(final_config.get('structure_ext'))
+    pressures = parse_pressures(final_config.get('pressure'))
+    base_root = derive_work_root(input_path)
     # 检测批量模式
-    is_batch = detect_batch_mode(input_path, final_config.get('batch', False))
+    is_batch = detect_batch_mode(input_path, final_config.get('batch', False), structure_exts)
 
     steps_raw = final_config.get('steps')
     custom_steps = None
     if steps_raw:
         custom_steps = [p for p in re.split(r'[ ,]+', steps_raw) if p]
 
-    # 准备Pipeline参数
-    pipeline_kwargs = {
-        'supercell': final_config.get('supercell', [2, 2, 2]),
-        'method': final_config.get('method', 'disp'),
-        'kspacing': final_config.get('kspacing', 0.3),
-        'encut': final_config.get('encut'),
-        'queue_system': final_config.get('job_system', 'bash'),
-        'mpi_procs': final_config.get('mpi_procs'),
-        'potcar_dir': Path(final_config['potcar_dir']) if final_config.get('potcar_dir') else None,
-        'potcar_type': final_config.get('potcar_type', 'PBE'),
-        'submit_only': final_config.get('submit', False),
-        'prepare_only': not final_config.get('submit', False),
-        'include_relax': final_config.get('with_relax', False),
-        'custom_steps': custom_steps,
-    }
-
     try:
-        if is_batch:
-            # 批量计算模式
-            logger.info(f"批量模式: 处理目录 {input_path}")
+        for p in pressures:
+            pressure_dir = base_root / format_pressure_dir(p)
+            pressure_dir.mkdir(parents=True, exist_ok=True)
 
-            batch = BatchPipeline(
-                pipeline_class=PhononPropertiesPipeline,
-                structures_dir=input_path,
-                work_root=work_dir,
-                pipeline_kwargs=pipeline_kwargs,
-                parallel=final_config.get('parallel', False),
-                max_workers=final_config.get('max_workers', 4),
-            )
+            pipeline_kwargs = {
+                'supercell': final_config.get('supercell', [2, 2, 2]),
+                'method': final_config.get('method', 'disp'),
+                'kspacing': final_config.get('kspacing', 0.3),
+                'encut': final_config.get('encut'),
+                'queue_system': final_config.get('job_system', 'bash'),
+                'mpi_procs': final_config.get('mpi_procs'),
+                'potcar_dir': Path(final_config['potcar_dir']) if final_config.get('potcar_dir') else None,
+                'potcar_type': final_config.get('potcar_type', 'PBE'),
+                'prepare_only': not final_config.get('submit', False),
+                'include_relax': final_config.get('with_relax', False),
+                'custom_steps': custom_steps,
+                'pressure': p,
+            }
 
-            results = batch.run()
+            if is_batch:
+                # 批量计算模式
+                logger.info(f"批量模式: 压强 {p} GPa, 处理目录 {input_path}")
 
-            success_count = sum(1 for r in results if r.get('success'))
-            logger.info(f"\n批量计算完成: {success_count}/{len(results)} 成功")
+                batch = BatchPipeline(
+                    pipeline_class=PhononPropertiesPipeline,
+                    structures_dir=input_path,
+                    work_root=base_root,
+                    pipeline_kwargs=pipeline_kwargs,
+                    parallel=bool(final_config.get('tasks')),
+                    max_workers=final_config.get('tasks', 4),
+                    structure_exts=structure_exts,
+                    pressure_label=pressure_dir.name,
+                )
 
-        else:
-            # 单个文件模式
-            logger.info(f"单文件模式: {input_path}")
+                results = batch.run()
 
-            pipeline = PhononPropertiesPipeline(
-                structure_file=input_path,
-                work_dir=work_dir,
-                **pipeline_kwargs
-            )
+                success_count = sum(1 for r in results if r.get('success'))
+                logger.info(f"\n批量计算完成: {success_count}/{len(results)} 成功 (压强 {p} GPa)")
 
-            success = pipeline.run()
-
-            if success:
-                logger.info("\n✓ 计算成功完成！")
-                logger.info(f"结果保存在: {work_dir}")
             else:
-                logger.error("\n✗ 计算失败")
-                sys.exit(1)
+                # 单个文件模式
+                logger.info(f"单文件模式: {input_path}, 压强 {p} GPa")
+
+                pipeline = PhononPropertiesPipeline(
+                    structure_file=input_path,
+                    work_dir=pressure_dir,
+                    **pipeline_kwargs
+                )
+
+                success = pipeline.run()
+
+                if success:
+                    logger.info("\n✓ 计算成功完成！")
+                    logger.info(f"结果保存在: {pressure_dir}")
+                else:
+                    logger.error("\n✗ 计算失败")
+                    sys.exit(1)
 
     except Exception as e:
         logger.error(f"\n计算异常: {e}", exc_info=True)
@@ -411,41 +455,65 @@ def command_md(args):
     final_config = merge_configs(config, args)
 
     input_path = Path(final_config["input"])
-    work_dir = Path(final_config["work_dir"])
+    structure_exts = parse_structure_exts(final_config.get("structure_ext"))
+    pressures = parse_pressures(final_config.get("pressure"))
+    base_root = derive_work_root(input_path)
+    is_batch = detect_batch_mode(input_path, final_config.get("batch", False), structure_exts)
 
     steps_raw = final_config.get("steps")
     custom_steps = [p for p in re.split(r"[ ,]+", steps_raw) if p] if steps_raw else None
 
-    pipeline_kwargs = {
-        "potim": final_config.get("potim", 1.0),
-        "tebeg": final_config.get("tebeg", 300.0),
-        "teend": final_config.get("teend", 300.0),
-        "nsw": final_config.get("nsw", 200),
-        "kspacing": final_config.get("kspacing", 0.2),
-        "encut": final_config.get("encut"),
-        "potcar_dir": Path(final_config["potcar_dir"]) if final_config.get("potcar_dir") else None,
-        "potcar_type": final_config.get("potcar_type", "PBE"),
-        "queue_system": final_config.get("job_system", "bash"),
-        "mpi_procs": final_config.get("mpi_procs"),
-        "submit_only": final_config.get("submit", False),
-        "prepare_only": not final_config.get("submit", False),
-        "include_relax": final_config.get("with_relax", False),
-        "custom_steps": custom_steps,
-    }
-
     try:
-        pipeline = MdPipeline(
-            structure_file=input_path,
-            work_dir=work_dir,
-            **pipeline_kwargs,
-        )
-        success = pipeline.run()
+        for p in pressures:
+            pressure_dir = base_root / format_pressure_dir(p)
+            pressure_dir.mkdir(parents=True, exist_ok=True)
 
-        if success:
-            logger.info("\n✓ 分子动力学计算完成")
-        else:
-            logger.error("\n✗ 分子动力学计算失败")
-            sys.exit(1)
+            pipeline_kwargs = {
+                "potim": final_config.get("potim", 1.0),
+                "tebeg": final_config.get("tebeg", 300.0),
+                "teend": final_config.get("teend", 300.0),
+                "nsw": final_config.get("nsw", 200),
+                "kspacing": final_config.get("kspacing", 0.2),
+                "encut": final_config.get("encut"),
+                "potcar_dir": Path(final_config["potcar_dir"]) if final_config.get("potcar_dir") else None,
+                "potcar_type": final_config.get("potcar_type", "PBE"),
+                "queue_system": final_config.get("job_system", "bash"),
+                "mpi_procs": final_config.get("mpi_procs"),
+                "prepare_only": not final_config.get("submit", False),
+                "include_relax": final_config.get("with_relax", False),
+                "custom_steps": custom_steps,
+                "pressure": p,
+            }
+
+            if is_batch:
+                logger.info(f"批量模式: 压强 {p} GPa, 处理目录 {input_path}")
+                batch = BatchPipeline(
+                    pipeline_class=MdPipeline,
+                    structures_dir=input_path,
+                    work_root=base_root,
+                    pipeline_kwargs=pipeline_kwargs,
+                    parallel=bool(final_config.get("tasks")),
+                    max_workers=final_config.get("tasks", 4),
+                    structure_exts=structure_exts,
+                    pressure_label=pressure_dir.name,
+                )
+                results = batch.run()
+                success_count = sum(1 for r in results if r.get('success'))
+                logger.info(f"\n批量计算完成: {success_count}/{len(results)} 成功 (压强 {p} GPa)")
+            else:
+                pipeline = MdPipeline(
+                    structure_file=input_path,
+                    work_dir=pressure_dir,
+                    **pipeline_kwargs,
+                )
+                success = pipeline.run()
+
+                if success:
+                    logger.info("\n✓ 分子动力学计算完成")
+                    logger.info(f"结果保存在: {pressure_dir}")
+                else:
+                    logger.error("\n✗ 分子动力学计算失败")
+                    sys.exit(1)
     except Exception as exc:
         logger.error(f"\n计算异常: {exc}", exc_info=True)
         sys.exit(1)
@@ -457,19 +525,19 @@ def create_parser():
         prog='vasp',
         description='VASP计算命令行工具',
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
+epilog="""
 示例:
   # 电子性质计算
-  vasp electronic -i POSCAR -w ./calc --kspacing 0.2 --include-elf
+  vasp electronic -i POSCAR --kspacing 0.2 --include-elf
 
   # 批量计算
-  vasp electronic -i ./structures/ -w ./batch_calc --batch --parallel
+  vasp electronic -i ./structures/ --batch --parallel
 
   # 使用JSON配置
-  vasp electronic -i POSCAR -w ./calc --json config.json
+  vasp electronic -i POSCAR --json config.json
 
   # 声子计算
-  vasp phonon -i POSCAR -w ./calc --supercell 2 2 2
+  vasp phonon -i POSCAR --supercell 2 2 2
         """
     )
 
@@ -478,15 +546,14 @@ def create_parser():
     # ========== relax 子命令 ==========
     relax_parser = subparsers.add_parser('relax', help='结构优化')
     relax_parser.add_argument('-i', '--input', required=True, help='输入文件或目录')
-    relax_parser.add_argument('-w', '--work-dir', required=True, help='工作目录')
     relax_parser.add_argument('--json', help='JSON配置文件路径')
-    relax_parser.add_argument('--batch', action='store_true', help='批量模式')
-    relax_parser.add_argument('--parallel', action='store_true', help='并行执行批量任务')
-    relax_parser.add_argument('--max-workers', type=int, help='最大并行数（默认4）')
+    relax_parser.add_argument('--tasks', type=int, help='同时运行的最大结构数（并行度，默认串行）')
     relax_parser.add_argument('--kspacing', type=float, help='K点间距')
     relax_parser.add_argument('--encut', type=float, help='截断能(eV)')
     relax_parser.add_argument('--potcar-dir', help='POTCAR库目录')
     relax_parser.add_argument('--potcar-type', choices=['PBE', 'LDA', 'PW91'], help='POTCAR类型')
+    relax_parser.add_argument('-p', '--pressure', type=float, nargs='+', help='外压(GPa)，可多值')
+    relax_parser.add_argument('--structure-ext', type=str, help='目录输入时的结构后缀过滤，逗号分隔，默认vasp')
     relax_parser.add_argument('-j', '--job-system', choices=['bash', 'slurm', 'pbs', 'lsf'], help='队列系统')
     relax_parser.add_argument('--mpi-procs', type=int, help='MPI进程数（默认取配置或8）')
     relax_parser.add_argument('--submit', action='store_true', help='提交作业（默认仅生成输入和脚本）')
@@ -496,11 +563,8 @@ def create_parser():
     # ========== electronic 子命令 ==========
     electronic_parser = subparsers.add_parser('electronic', help='电子性质全流程计算')
     electronic_parser.add_argument('-i', '--input', required=True, help='输入文件或目录')
-    electronic_parser.add_argument('-w', '--work-dir', required=True, help='工作目录')
     electronic_parser.add_argument('--json', help='JSON配置文件路径')
-    electronic_parser.add_argument('--batch', action='store_true', help='批量模式')
-    electronic_parser.add_argument('--parallel', action='store_true', help='并行执行批量任务')
-    electronic_parser.add_argument('--max-workers', type=int, help='最大并行数')
+    electronic_parser.add_argument('--tasks', type=int, help='同时运行的最大结构数（并行度，默认串行）')
     electronic_parser.add_argument('--kspacing', type=float, help='K点间距')
     electronic_parser.add_argument('--encut', type=float, help='截断能(eV)')
     electronic_parser.add_argument('--include-elf', action='store_true', help='包含ELF计算')
@@ -508,11 +572,11 @@ def create_parser():
     electronic_parser.add_argument('--dos-type', choices=['element', 'spd', 'element_spd'], help='DOS投影类型')
     electronic_parser.add_argument('--potcar-dir', help='POTCAR库目录')
     electronic_parser.add_argument('--potcar-type', choices=['PBE', 'LDA', 'PW91'], help='POTCAR类型')
+    electronic_parser.add_argument('-p', '--pressure', type=float, nargs='+', help='外压(GPa)，可多值')
+    electronic_parser.add_argument('--structure-ext', type=str, help='目录输入时的结构后缀过滤，逗号分隔，默认vasp')
     electronic_parser.add_argument('-j', '--job-system', choices=['bash', 'slurm', 'pbs', 'lsf'], help='队列系统')
     electronic_parser.add_argument('--mpi-procs', type=int, help='MPI进程数（默认取配置或8）')
     electronic_parser.add_argument('--steps', type=str, help='自定义步骤序列，逗号分隔: relax,scf,dos,band,elf,cohp,plotting')
-    electronic_parser.add_argument('--master-script', action='store_true', help='生成总控脚本，一次提交串行跑完所选步骤')
-    electronic_parser.add_argument('--master-script-name', type=str, default='run_master.sh', help='总控脚本文件名')
     electronic_parser.add_argument('--submit', action='store_true', help='提交作业（默认仅生成输入和脚本）')
     electronic_parser.add_argument('--log-level', choices=['DEBUG', 'INFO', 'WARNING'], help='日志级别')
     electronic_parser.set_defaults(func=command_electronic)
@@ -520,17 +584,16 @@ def create_parser():
     # ========== phonon 子命令 ==========
     phonon_parser = subparsers.add_parser('phonon', help='声子性质全流程计算')
     phonon_parser.add_argument('-i', '--input', required=True, help='输入文件或目录')
-    phonon_parser.add_argument('-w', '--work-dir', required=True, help='工作目录')
     phonon_parser.add_argument('--json', help='JSON配置文件路径')
-    phonon_parser.add_argument('--batch', action='store_true', help='批量模式')
-    phonon_parser.add_argument('--parallel', action='store_true', help='并行执行批量任务')
-    phonon_parser.add_argument('--max-workers', type=int, help='最大并行数')
+    phonon_parser.add_argument('--tasks', type=int, help='同时运行的最大结构数（并行度，默认串行）')
     phonon_parser.add_argument('--supercell', nargs=3, type=int, metavar=('X', 'Y', 'Z'), help='超胞大小，如: --supercell 2 2 2')
     phonon_parser.add_argument('--method', choices=['disp', 'dfpt'], help='声子计算方法')
     phonon_parser.add_argument('--kspacing', type=float, help='K点间距')
     phonon_parser.add_argument('--encut', type=float, help='截断能(eV)')
     phonon_parser.add_argument('--potcar-dir', help='POTCAR库目录')
     phonon_parser.add_argument('--potcar-type', choices=['PBE', 'LDA', 'PW91'], help='POTCAR类型')
+    phonon_parser.add_argument('-p', '--pressure', type=float, nargs='+', help='外压(GPa)，可多值')
+    phonon_parser.add_argument('--structure-ext', type=str, help='目录输入时的结构后缀过滤，逗号分隔，默认vasp')
     phonon_parser.add_argument('-j', '--job-system', choices=['bash', 'slurm', 'pbs', 'lsf'], help='队列系统')
     phonon_parser.add_argument('--mpi-procs', type=int, help='MPI进程数（默认取配置或8）')
     phonon_parser.add_argument('--with-relax', action='store_true', help='先做结构优化再做声子')
@@ -542,7 +605,6 @@ def create_parser():
     # ========== md 子命令 ==========
     md_parser = subparsers.add_parser('md', help='分子动力学')
     md_parser.add_argument('-i', '--input', required=True, help='输入文件')
-    md_parser.add_argument('-w', '--work-dir', required=True, help='工作目录')
     md_parser.add_argument('--json', help='JSON配置文件路径')
     md_parser.add_argument('--potim', type=float, help='时间步长(fs)')
     md_parser.add_argument('--tebeg', type=float, help='起始温度(K)')
@@ -552,10 +614,13 @@ def create_parser():
     md_parser.add_argument('--encut', type=float, help='截断能(eV)')
     md_parser.add_argument('--potcar-dir', help='POTCAR库目录')
     md_parser.add_argument('--potcar-type', choices=['PBE', 'LDA', 'PW91'], help='POTCAR类型')
+    md_parser.add_argument('-p', '--pressure', type=float, nargs='+', help='外压(GPa)，可多值')
+    md_parser.add_argument('--structure-ext', type=str, help='目录输入时的结构后缀过滤，逗号分隔，默认vasp')
     md_parser.add_argument('-j', '--job-system', choices=['bash', 'slurm', 'pbs', 'lsf'], help='队列系统')
     md_parser.add_argument('--mpi-procs', type=int, help='MPI进程数（默认取配置或8）')
     md_parser.add_argument('--with-relax', action='store_true', help='先做结构优化再进行MD')
     md_parser.add_argument('--steps', type=str, help='自定义步骤序列，逗号分隔: relax,md')
+    md_parser.add_argument('--tasks', type=int, help='同时运行的最大结构数（并行度，默认串行）')
     md_parser.add_argument('--submit', action='store_true', help='提交作业（默认仅生成输入和脚本）')
     md_parser.set_defaults(func=command_md)
 

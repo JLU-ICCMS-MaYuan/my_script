@@ -23,9 +23,10 @@ class RelaxPipeline(BasePipeline):
         mpi_procs: Optional[int] = None,
         potcar_dir: Optional[Path] = None,
         potcar_type: str = "PBE",
+        pressure: float = 0.0,
         **kwargs,
     ):
-        super().__init__(structure_file, work_dir, **kwargs)
+        super().__init__(structure_file, work_dir, pressure=pressure, **kwargs)
 
         self.job_cfg = load_job_config()
         self.kspacing = kspacing
@@ -35,6 +36,7 @@ class RelaxPipeline(BasePipeline):
         default_potcar = self.job_cfg.potcar_dir if self.job_cfg else None
         self.potcar_dir = Path(potcar_dir) if potcar_dir else default_potcar
         self.potcar_type = potcar_type
+        self.pressure = pressure
 
         self.relax_dir = self.work_dir / "01_relax"
 
@@ -75,10 +77,6 @@ class RelaxPipeline(BasePipeline):
 
         job_id = self._submit_job(self.relax_dir, job_script)
 
-        if self.submit_only:
-            logger.info("submit_only=True，已提交 relax 作业，退出等待。")
-            return True
-
         if not self._wait_for_job(job_id, self.relax_dir, self.queue_system):
             return False
 
@@ -103,6 +101,7 @@ class RelaxPipeline(BasePipeline):
             f.write("EDIFF = 1E-6\n")
             f.write("ISMEAR = 0\n")
             f.write("SIGMA = 0.05\n\n")
+            f.write(f"PSTRESS = {self.pressure_kbar}\n\n")
             f.write("IBRION = 2\n")
             f.write("NSW = 200\n")
             f.write("ISIF = 3\n")

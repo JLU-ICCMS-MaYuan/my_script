@@ -34,6 +34,8 @@ class BatchPipeline:
         pipeline_kwargs: Optional[Dict[str, Any]] = None,
         parallel: bool = False,
         max_workers: int = 4,
+        structure_exts: Optional[List[str]] = None,
+        pressure_label: Optional[str] = None,
     ):
         """
         初始化批量Pipeline
@@ -59,6 +61,8 @@ class BatchPipeline:
         self.pipeline_kwargs = pipeline_kwargs or {}
         self.parallel = parallel
         self.max_workers = max_workers
+        self.structure_exts = structure_exts or ["vasp"]
+        self.pressure_label = pressure_label
 
         # 创建工作根目录
         self.work_root.mkdir(parents=True, exist_ok=True)
@@ -69,14 +73,27 @@ class BatchPipeline:
         logger.info(f"找到 {len(self.structure_files)} 个结构文件")
 
     def _scan_structure_files(self) -> List[Path]:
-        """扫描目录中的所有.vasp文件"""
+        """扫描目录中的结构文件"""
         if not self.structures_dir.exists():
             raise FileNotFoundError(f"结构目录不存在: {self.structures_dir}")
 
         structure_files = []
 
-        # 查找所有.vasp文件
-        for pattern in ['*.vasp', '*.POSCAR', 'POSCAR*']:
+        patterns = []
+        for ext in self.structure_exts:
+            e = ext.lower()
+            if e == "vasp":
+                patterns.extend(['*.vasp', '*.POSCAR', 'POSCAR*'])
+            elif e == "cif":
+                patterns.append("*.cif")
+            elif e == "res":
+                patterns.append("*.res")
+            elif e == "xsf":
+                patterns.append("*.xsf")
+            else:
+                patterns.append(f"*.{e}")
+
+        for pattern in patterns:
             structure_files.extend(self.structures_dir.glob(pattern))
 
         # 去重并验证
@@ -205,6 +222,8 @@ class BatchPipeline:
         try:
             # 创建工作目录
             work_dir = self.work_root / structure_file.stem
+            if self.pressure_label:
+                work_dir = work_dir / self.pressure_label
             work_dir.mkdir(parents=True, exist_ok=True)
 
             result['work_dir'] = str(work_dir)

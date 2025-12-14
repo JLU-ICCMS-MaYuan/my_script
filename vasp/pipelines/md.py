@@ -29,9 +29,10 @@ class MdPipeline(BasePipeline):
         potcar_type: str = "PBE",
         include_relax: bool = False,
         custom_steps: Optional[List[str]] = None,
+        pressure: float = 0.0,
         **kwargs,
     ):
-        super().__init__(structure_file, work_dir, **kwargs)
+        super().__init__(structure_file, work_dir, pressure=pressure, **kwargs)
 
         self.job_cfg = load_job_config()
         self.potim = potim
@@ -47,6 +48,7 @@ class MdPipeline(BasePipeline):
         self.potcar_type = potcar_type
         self.include_relax = include_relax
         self.custom_steps = self._normalize_steps(custom_steps)
+        self.pressure = pressure
 
         self.relax_dir = self.work_dir / "01_relax" if self.include_relax else None
         self.md_dir = self.work_dir / ("02_md" if self.include_relax else "01_md")
@@ -112,10 +114,6 @@ class MdPipeline(BasePipeline):
 
         job_id = self._submit_job(self.relax_dir, job_script)
 
-        if self.submit_only:
-            logger.info("submit_only=True，已提交 relax 作业，退出等待。")
-            return True
-
         if not self._wait_for_job(job_id, self.relax_dir, self.queue_system):
             return False
 
@@ -167,10 +165,6 @@ class MdPipeline(BasePipeline):
 
         job_id = self._submit_job(self.md_dir, job_script)
 
-        if self.submit_only:
-            logger.info("submit_only=True，已提交 md 作业，退出等待。")
-            return True
-
         if not self._wait_for_job(job_id, self.md_dir, self.queue_system):
             return False
 
@@ -198,6 +192,7 @@ class MdPipeline(BasePipeline):
             f.write(f"TEBEG = {self.tebeg}\n")
             f.write(f"TEEND = {self.teend}\n")
             f.write("SMASS = 0\n")
+            f.write(f"PSTRESS = {self.pressure_kbar}\n")
             f.write("LWAVE = .FALSE.\n")
             f.write("LCHARG = .FALSE.\n")
 
@@ -215,6 +210,7 @@ class MdPipeline(BasePipeline):
             f.write("NSW = 120\n")
             f.write("ISIF = 3\n")
             f.write("EDIFFG = -0.02\n")
+            f.write(f"PSTRESS = {self.pressure_kbar}\n")
             f.write("LWAVE = .FALSE.\n")
             f.write("LCHARG = .FALSE.\n")
 

@@ -5,7 +5,7 @@ import shlex
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional, List
+from typing import Optional
 
 try:  # Python 3.11+
     import tomllib  # type: ignore
@@ -153,32 +153,6 @@ def select_job_header(queue_system: str, cfg: JobConfig) -> str:
     }
     header = header_map.get((queue_system or "bash"), cfg.bashtitle) or cfg.bashtitle
     return header.strip()
-
-
-def write_master_script(header: str, commands: List[str], script_path: Path) -> Path:
-    """
-    写入总控脚本：脚本头 + set -euo pipefail + 命令序列。
-
-    Parameters
-    ----------
-    header : str
-        队列脚本头（含 shebang / 模块加载等）
-    commands : List[str]
-        需要顺序执行的 shell 命令列表
-    script_path : Path
-        输出脚本路径
-    """
-    script_path = Path(script_path)
-    content_lines = [
-        header.strip(),
-        "set -euo pipefail",
-        "",
-        *commands,
-        "",
-    ]
-    script_path.write_text("\n".join(content_lines))
-    script_path.chmod(0o755)
-    return script_path
 
 
 def write_job_script(

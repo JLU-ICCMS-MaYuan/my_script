@@ -49,6 +49,7 @@ class PhononPropertiesPipeline(BasePipeline):
         potcar_type: str = "PBE",
         include_relax: bool = False,
         custom_steps: Optional[List[str]] = None,
+        pressure: float = 0.0,
         **kwargs
     ):
         """
@@ -82,8 +83,10 @@ class PhononPropertiesPipeline(BasePipeline):
             是否在声子前自动进行结构优化
         custom_steps : List[str], optional
             自定义步骤序列，如 ["phonon_prepare", "phonon_calculate"]
+        pressure : float
+            施加的外压（GPa），写入 PSTRESS（kBar）
         """
-        super().__init__(structure_file, work_dir, **kwargs)
+        super().__init__(structure_file, work_dir, pressure=pressure, **kwargs)
 
         self.job_cfg = load_job_config()
         self.supercell = supercell or [2, 2, 2]
@@ -95,6 +98,7 @@ class PhononPropertiesPipeline(BasePipeline):
         self.mpi_procs = mpi_procs
         self.include_relax = include_relax
         self.custom_steps = self._normalize_steps(custom_steps)
+        self.pressure = pressure
         default_potcar = self.job_cfg.potcar_dir if self.job_cfg else None
         self.potcar_dir = Path(potcar_dir) if potcar_dir else default_potcar
         self.potcar_type = potcar_type
@@ -199,10 +203,6 @@ class PhononPropertiesPipeline(BasePipeline):
             return True
 
         job_id = self._submit_job(self.relax_dir, job_script)
-
-        if self.submit_only:
-            logger.info("submit_only=True，已提交 relax 作业，退出等待。")
-            return True
 
         # 等待完成
         if not self._wait_for_job(job_id, self.relax_dir, self.queue_system):
@@ -312,10 +312,6 @@ class PhononPropertiesPipeline(BasePipeline):
 
                 logger.info(f"已提交位移计算 {i}/{n_disp}: {disp_dir.name}")
 
-            if self.submit_only:
-                logger.info("submit_only=True，已提交全部位移作业，退出等待。")
-                return True
-
             # 等待所有任务完成
             logger.info("等待所有位移计算完成...")
             for i in range(1, n_disp + 1):
@@ -418,6 +414,7 @@ class PhononPropertiesPipeline(BasePipeline):
             f.write("EDIFF = 1E-8\n")  # 声子计算需要更高精度
             f.write("ISMEAR = 0\n")
             f.write("SIGMA = 0.01\n\n")
+            f.write(f"PSTRESS = {self.pressure_kbar}\n\n")
             f.write("IBRION = 2\n")
             f.write("NSW = 200\n")
             f.write("ISIF = 3\n")
@@ -437,6 +434,7 @@ class PhononPropertiesPipeline(BasePipeline):
             f.write("SIGMA = 0.01\n")
             f.write("IBRION = -1\n")  # 单点能量计算
             f.write("NSW = 0\n")
+            f.write(f"PSTRESS = {self.pressure_kbar}\n")
             f.write("LWAVE = .FALSE.\n")
             f.write("LCHARG = .FALSE.\n")
 

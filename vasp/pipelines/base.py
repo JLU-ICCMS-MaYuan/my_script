@@ -49,10 +49,8 @@ class BasePipeline(ABC):
         checkpoint_file: Optional[Path] = None,
         max_retries: int = 3,
         retry_delay: int = 60,
-        submit_only: bool = False,
         prepare_only: bool = False,
-        master_mode: bool = False,
-        master_script_name: str = "run_pipeline.sh",
+        pressure: float = 0.0,
     ):
         """
         初始化Pipeline
@@ -77,10 +75,9 @@ class BasePipeline(ABC):
         self.checkpoint_file = checkpoint_file or self.work_dir / "pipeline_checkpoint.json"
         self.max_retries = max_retries
         self.retry_delay = retry_delay
-        self.submit_only = submit_only
         self.prepare_only = prepare_only
-        self.master_mode = master_mode
-        self.master_script_name = master_script_name
+        self.pressure_gpa = pressure
+        self.pressure_kbar = pressure * 10  # PSTRESS 单位 kBar
 
         # 步骤状态字典
         self.steps_status: Dict[str, StepStatus] = {}
@@ -153,12 +150,9 @@ class BasePipeline(ABC):
             self.steps_status[step_name] = StepStatus.COMPLETED
             self._save_checkpoint()
 
-            # 仅准备或仅提交：执行/提交首步骤后退出
-            if (self.prepare_only or self.submit_only) and not self.master_mode:
-                if self.prepare_only:
-                    logger.info("prepare_only=True，本次仅生成输入和脚本，不提交。")
-                if self.submit_only:
-                    logger.info("submit_only=True，本次提交作业后不等待完成。")
+            # 仅准备模式：生成输入后退出
+            if self.prepare_only:
+                logger.info("prepare_only=True，本次仅生成输入和脚本，不提交。")
                 break
 
         logger.info(f"\n{'='*60}")
@@ -168,9 +162,8 @@ class BasePipeline(ABC):
         # 生成最终报告
         self._generate_report()
 
-        # master模式：生成总控脚本
-        if self.master_mode:
-            self._write_master_script()
+        # 生成完成标记
+        self._mark_finished()
 
         return True
 
@@ -260,7 +253,11 @@ class BasePipeline(ABC):
             # 队列状态检查（非bash）
             active = is_job_active(job_id, queue_system)
             if active is False:
-                logger.error(f"队列中未找到任务 {job_id}，可能失败或被取消")
+                # 任务号消失，检查结果文件是否完成
+                if self._check_job_completed(work_path):
+                    logger.info(f"任务已结束且检测到完成标志，耗时: {elapsed:.0f}秒")
+                    return True
+                logger.error(f"队列中未找到任务 {job_id}，且未检测到完成标志，可能失败或被取消")
                 return False
 
             # 等待
@@ -389,6 +386,10 @@ class BasePipeline(ABC):
 
         logger.info(f"报告已生成: {report_file}")
 
-    def _write_master_script(self):
-        """子类覆盖以生成总控脚本。"""
-        return None
+    def _mark_finished(self):
+        """在工作目录写入完成标记文件。"""
+        try:
+            marker = self.work_dir / "finished"
+            marker.write_text("finished\n")
+        except Exception as exc:  # pragma: no cover
+            logger.warning(f"写入完成标记失败: {exc}")

@@ -19,7 +19,6 @@ from vasp.utils.job import (
     write_job_script,
     submit_job,
     select_job_header,
-    write_master_script,
 )
 
 logger = logging.getLogger(__name__)
@@ -49,14 +48,15 @@ class ElectronicPropertiesPipeline(BasePipeline):
         encut: Optional[float] = None,
         include_elf: bool = True,
         include_cohp: bool = True,
+        include_bader: bool = False,
+        include_fermi: bool = False,
         plot_dos_type: str = "element",
         queue_system: Optional[str] = None,
         mpi_procs: Optional[int] = None,
         potcar_dir: Optional[Path] = None,
         potcar_type: str = "PBE",
         custom_steps: Optional[List[str]] = None,
-        master_script: bool = False,
-        master_script_name: str = "run_master.sh",
+        pressure: float = 0.0,
         **kwargs
     ):
         """
@@ -76,6 +76,10 @@ class ElectronicPropertiesPipeline(BasePipeline):
             是否包含ELF计算
         include_cohp : bool
             是否包含COHP计算
+        include_bader : bool
+            是否进行 Bader 电荷分析
+        include_fermi : bool
+            是否进行费米面计算
         plot_dos_type : str
             DOS投影类型：'element', 'spd', 'element_spd'
         queue_system : str, optional
@@ -88,16 +92,13 @@ class ElectronicPropertiesPipeline(BasePipeline):
             POTCAR类型：'PBE', 'LDA', 'PW91'等
         custom_steps : List[str], optional
             自定义步骤顺序/子集，如 ["relax", "scf", "elf"]
-        master_script : bool
-            是否启用总控脚本模式（生成 run_*.sh + 总控脚本，单次提交完成串行计算）
-        master_script_name : str
-            总控脚本文件名
+        pressure : float
+            施加的外压（GPa），写入 PSTRESS（kBar）
         """
         super().__init__(
             structure_file,
             work_dir,
-            master_mode=master_script,
-            master_script_name=master_script_name,
+            pressure=pressure,
             **kwargs,
         )
 
@@ -106,13 +107,13 @@ class ElectronicPropertiesPipeline(BasePipeline):
         self.encut = encut
         self.include_elf = include_elf
         self.include_cohp = include_cohp
+        self.include_bader = include_bader
+        self.include_fermi = include_fermi
         self.plot_dos_type = plot_dos_type
         self.queue_system = queue_system or "bash"
         self.mpi_procs = mpi_procs
         self.custom_steps = self._normalize_steps(custom_steps)
-        self.master_script = master_script
-        self.master_script_name = master_script_name
-        self.master_script_path: Optional[Path] = None
+        self.pressure = pressure
         default_potcar = self.job_cfg.potcar_dir if self.job_cfg else None
         self.potcar_dir = Path(potcar_dir) if potcar_dir else default_potcar
         self.potcar_type = potcar_type
@@ -124,6 +125,8 @@ class ElectronicPropertiesPipeline(BasePipeline):
         self.band_dir = self.work_dir / "04_band"
         self.elf_dir = self.work_dir / "05_elf"
         self.cohp_dir = self.work_dir / "06_cohp"
+        self.bader_dir = self.work_dir / "07_bader"
+        self.fermi_dir = self.work_dir / "08_fermi"
         self.plots_dir = self.work_dir / "plots"
 
     def _normalize_steps(self, custom_steps: Optional[List[str]]) -> Optional[List[str]]:
@@ -131,7 +134,7 @@ class ElectronicPropertiesPipeline(BasePipeline):
         if not custom_steps:
             return None
 
-        allowed = ["relax", "scf", "dos", "band", "elf", "cohp", "plotting"]
+        allowed = ["relax", "scf", "dos", "band", "elf", "cohp", "bader", "fermisurface", "plotting"]
         normalized: List[str] = []
         for step in custom_steps:
             name = step.strip().lower()
@@ -156,6 +159,10 @@ class ElectronicPropertiesPipeline(BasePipeline):
 
         if self.include_cohp:
             steps.append("cohp")
+        if self.include_bader:
+            steps.append("bader")
+        if self.include_fermi:
+            steps.append("fermisurface")
         steps.append("plotting")
 
         return steps
@@ -175,6 +182,10 @@ class ElectronicPropertiesPipeline(BasePipeline):
                 return self._run_elf()
             elif step_name == "cohp":
                 return self._run_cohp()
+            elif step_name == "bader":
+                return self._run_bader()
+            elif step_name == "fermisurface":
+                return self._run_fermi()
             elif step_name == "plotting":
                 return self._run_plotting()
             else:
@@ -216,18 +227,11 @@ class ElectronicPropertiesPipeline(BasePipeline):
 
         # 提交任务
         job_script = self._write_job_script(self.relax_dir, "relax")
-        if self.master_mode:
-            logger.info("master_mode=True：已生成 relax 输入与脚本，总控脚本将串行执行。")
-            return True
         if self.prepare_only:
             logger.info("prepare_only=True，仅生成输入和脚本，不提交。")
             return True
 
         job_id = self._submit_job(self.relax_dir, job_script)
-
-        if self.submit_only:
-            logger.info("submit_only=True，已提交 relax 作业，退出等待。")
-            return True
 
         # 等待完成
         if not self._wait_for_job(job_id, self.relax_dir, self.queue_system):
@@ -272,18 +276,11 @@ class ElectronicPropertiesPipeline(BasePipeline):
 
         # 提交任务
         job_script = self._write_job_script(self.scf_dir, "scf")
-        if self.master_mode:
-            logger.info("master_mode=True：已生成 scf 输入与脚本，总控脚本将串行执行。")
-            return True
         if self.prepare_only:
             logger.info("prepare_only=True，仅生成输入和脚本，不提交。")
             return True
 
         job_id = self._submit_job(self.scf_dir, job_script)
-
-        if self.submit_only:
-            logger.info("submit_only=True，已提交 scf 作业，退出等待。")
-            return True
 
         # 等待完成
         if not self._wait_for_job(job_id, self.scf_dir, self.queue_system):
@@ -303,25 +300,10 @@ class ElectronicPropertiesPipeline(BasePipeline):
 
         self.dos_dir.mkdir(parents=True, exist_ok=True)
 
-        # 复制文件（master模式不强依赖前一步的输出）
-        if self.master_mode:
-            poscar_source = self.scf_dir / "POSCAR"
-            if poscar_source.exists():
-                shutil.copy(poscar_source, self.dos_dir / "POSCAR")
-            elif (self.relax_dir / "POSCAR").exists():
-                shutil.copy(self.relax_dir / "POSCAR", self.dos_dir / "POSCAR")
-
-            potcar_source = self.scf_dir / "POTCAR"
-            if potcar_source.exists():
-                shutil.copy(potcar_source, self.dos_dir / "POTCAR")
-            elif (self.relax_dir / "POTCAR").exists():
-                shutil.copy(self.relax_dir / "POTCAR", self.dos_dir / "POTCAR")
-            else:
-                logger.warning("master_mode: 未找到POTCAR，请在执行前确认。")
-        else:
-            shutil.copy(self.scf_dir / "POSCAR", self.dos_dir / "POSCAR")
-            shutil.copy(self.scf_dir / "CHGCAR", self.dos_dir / "CHGCAR")
-            shutil.copy(self.scf_dir / "POTCAR", self.dos_dir / "POTCAR")
+        # 复制文件
+        shutil.copy(self.scf_dir / "POSCAR", self.dos_dir / "POSCAR")
+        shutil.copy(self.scf_dir / "CHGCAR", self.dos_dir / "CHGCAR")
+        shutil.copy(self.scf_dir / "POTCAR", self.dos_dir / "POTCAR")
 
         # 创建INCAR（DOS）
         self._write_dos_incar(self.dos_dir / "INCAR")
@@ -331,18 +313,11 @@ class ElectronicPropertiesPipeline(BasePipeline):
 
         # 提交任务
         job_script = self._write_job_script(self.dos_dir, "dos")
-        if self.master_mode:
-            logger.info("master_mode=True：已生成 dos 输入与脚本，总控脚本将串行执行。")
-            return True
         if self.prepare_only:
             logger.info("prepare_only=True，仅生成输入和脚本，不提交。")
             return True
 
         job_id = self._submit_job(self.dos_dir, job_script)
-
-        if self.submit_only:
-            logger.info("submit_only=True，已提交 dos 作业，退出等待。")
-            return True
 
         # 等待完成
         if not self._wait_for_job(job_id, self.dos_dir, self.queue_system):
@@ -358,24 +333,9 @@ class ElectronicPropertiesPipeline(BasePipeline):
         self.band_dir.mkdir(parents=True, exist_ok=True)
 
         # 复制文件
-        if self.master_mode:
-            poscar_source = self.scf_dir / "POSCAR"
-            if poscar_source.exists():
-                shutil.copy(poscar_source, self.band_dir / "POSCAR")
-            elif (self.relax_dir / "POSCAR").exists():
-                shutil.copy(self.relax_dir / "POSCAR", self.band_dir / "POSCAR")
-
-            potcar_source = self.scf_dir / "POTCAR"
-            if potcar_source.exists():
-                shutil.copy(potcar_source, self.band_dir / "POTCAR")
-            elif (self.relax_dir / "POTCAR").exists():
-                shutil.copy(self.relax_dir / "POTCAR", self.band_dir / "POTCAR")
-            else:
-                logger.warning("master_mode: 未找到POTCAR，请在执行前确认。")
-        else:
-            shutil.copy(self.scf_dir / "POSCAR", self.band_dir / "POSCAR")
-            shutil.copy(self.scf_dir / "CHGCAR", self.band_dir / "CHGCAR")
-            shutil.copy(self.scf_dir / "POTCAR", self.band_dir / "POTCAR")
+        shutil.copy(self.scf_dir / "POSCAR", self.band_dir / "POSCAR")
+        shutil.copy(self.scf_dir / "CHGCAR", self.band_dir / "CHGCAR")
+        shutil.copy(self.scf_dir / "POTCAR", self.band_dir / "POTCAR")
 
         # 创建INCAR（能带）
         self._write_band_incar(self.band_dir / "INCAR")
@@ -385,18 +345,11 @@ class ElectronicPropertiesPipeline(BasePipeline):
 
         # 提交任务
         job_script = self._write_job_script(self.band_dir, "band")
-        if self.master_mode:
-            logger.info("master_mode=True：已生成 band 输入与脚本，总控脚本将串行执行。")
-            return True
         if self.prepare_only:
             logger.info("prepare_only=True，仅生成输入和脚本，不提交。")
             return True
 
         job_id = self._submit_job(self.band_dir, job_script)
-
-        if self.submit_only:
-            logger.info("submit_only=True，已提交 band 作业，退出等待。")
-            return True
 
         # 等待完成
         if not self._wait_for_job(job_id, self.band_dir, self.queue_system):
@@ -412,24 +365,9 @@ class ElectronicPropertiesPipeline(BasePipeline):
         self.elf_dir.mkdir(parents=True, exist_ok=True)
 
         # 复制文件
-        if self.master_mode:
-            poscar_source = self.scf_dir / "POSCAR"
-            if poscar_source.exists():
-                shutil.copy(poscar_source, self.elf_dir / "POSCAR")
-            elif (self.relax_dir / "POSCAR").exists():
-                shutil.copy(self.relax_dir / "POSCAR", self.elf_dir / "POSCAR")
-
-            potcar_source = self.scf_dir / "POTCAR"
-            if potcar_source.exists():
-                shutil.copy(potcar_source, self.elf_dir / "POTCAR")
-            elif (self.relax_dir / "POTCAR").exists():
-                shutil.copy(self.relax_dir / "POTCAR", self.elf_dir / "POTCAR")
-            else:
-                logger.warning("master_mode: 未找到POTCAR，请在执行前确认。")
-        else:
-            shutil.copy(self.scf_dir / "POSCAR", self.elf_dir / "POSCAR")
-            shutil.copy(self.scf_dir / "CHGCAR", self.elf_dir / "CHGCAR")
-            shutil.copy(self.scf_dir / "POTCAR", self.elf_dir / "POTCAR")
+        shutil.copy(self.scf_dir / "POSCAR", self.elf_dir / "POSCAR")
+        shutil.copy(self.scf_dir / "CHGCAR", self.elf_dir / "CHGCAR")
+        shutil.copy(self.scf_dir / "POTCAR", self.elf_dir / "POTCAR")
 
         # 创建INCAR（ELF）
         self._write_elf_incar(self.elf_dir / "INCAR")
@@ -439,18 +377,11 @@ class ElectronicPropertiesPipeline(BasePipeline):
 
         # 提交任务
         job_script = self._write_job_script(self.elf_dir, "elf")
-        if self.master_mode:
-            logger.info("master_mode=True：已生成 elf 输入与脚本，总控脚本将串行执行。")
-            return True
         if self.prepare_only:
             logger.info("prepare_only=True，仅生成输入和脚本，不提交。")
             return True
 
         job_id = self._submit_job(self.elf_dir, job_script)
-
-        if self.submit_only:
-            logger.info("submit_only=True，已提交 elf 作业，退出等待。")
-            return True
 
         # 等待完成
         if not self._wait_for_job(job_id, self.elf_dir, self.queue_system):
@@ -466,23 +397,8 @@ class ElectronicPropertiesPipeline(BasePipeline):
         self.cohp_dir.mkdir(parents=True, exist_ok=True)
 
         # 复制文件
-        if self.master_mode:
-            poscar_source = self.scf_dir / "POSCAR"
-            if poscar_source.exists():
-                shutil.copy(poscar_source, self.cohp_dir / "POSCAR")
-            elif (self.relax_dir / "POSCAR").exists():
-                shutil.copy(self.relax_dir / "POSCAR", self.cohp_dir / "POSCAR")
-
-            potcar_source = self.scf_dir / "POTCAR"
-            if potcar_source.exists():
-                shutil.copy(potcar_source, self.cohp_dir / "POTCAR")
-            elif (self.relax_dir / "POTCAR").exists():
-                shutil.copy(self.relax_dir / "POTCAR", self.cohp_dir / "POTCAR")
-            else:
-                logger.warning("master_mode: 未找到POTCAR，请在执行前确认。")
-        else:
-            shutil.copy(self.scf_dir / "POSCAR", self.cohp_dir / "POSCAR")
-            shutil.copy(self.scf_dir / "POTCAR", self.cohp_dir / "POTCAR")
+        shutil.copy(self.scf_dir / "POSCAR", self.cohp_dir / "POSCAR")
+        shutil.copy(self.scf_dir / "POTCAR", self.cohp_dir / "POTCAR")
 
         # 创建INCAR（COHP）
         self._write_cohp_incar(self.cohp_dir / "INCAR")
@@ -492,18 +408,11 @@ class ElectronicPropertiesPipeline(BasePipeline):
 
         # 提交任务
         job_script = self._write_job_script(self.cohp_dir, "cohp")
-        if self.master_mode:
-            logger.info("master_mode=True：已生成 cohp 输入与脚本，总控脚本将串行执行。")
-            return True
         if self.prepare_only:
             logger.info("prepare_only=True，仅生成输入和脚本，不提交。")
             return True
 
         job_id = self._submit_job(self.cohp_dir, job_script)
-
-        if self.submit_only:
-            logger.info("submit_only=True，已提交 cohp 作业，退出等待。")
-            return True
 
         # 等待完成
         if not self._wait_for_job(job_id, self.cohp_dir, self.queue_system):
@@ -512,15 +421,65 @@ class ElectronicPropertiesPipeline(BasePipeline):
         logger.info("COHP计算完成")
         return True
 
+    def _run_bader(self) -> bool:
+        """Step 7: Bader电荷分析"""
+        logger.info("执行Bader分析...")
+        self.bader_dir.mkdir(parents=True, exist_ok=True)
+
+        chgcar = self.scf_dir / "CHGCAR"
+        if not chgcar.exists():
+            logger.error("缺少 CHGCAR，无法进行 Bader 分析")
+            return False
+
+        shutil.copy(self.scf_dir / "CHGCAR", self.bader_dir / "CHGCAR")
+        shutil.copy(self.scf_dir / "AECCAR0", self.bader_dir / "AECCAR0") if (self.scf_dir / "AECCAR0").exists() else None
+        shutil.copy(self.scf_dir / "AECCAR2", self.bader_dir / "AECCAR2") if (self.scf_dir / "AECCAR2").exists() else None
+
+        # 写入脚本：调用 bader
+        script_path = self._write_bader_script(self.bader_dir)
+        if self.prepare_only:
+            logger.info("prepare_only=True，仅生成输入和脚本，不提交。")
+            return True
+
+        job_id = self._submit_job(self.bader_dir, script_path)
+
+        if not self._wait_for_job(job_id, self.bader_dir, self.queue_system):
+            return False
+
+        logger.info("Bader 分析完成")
+        return True
+
+    def _run_fermi(self) -> bool:
+        """Step 8: 费米面计算"""
+        logger.info("执行费米面计算...")
+
+        self.fermi_dir.mkdir(parents=True, exist_ok=True)
+
+        shutil.copy(self.scf_dir / "POSCAR", self.fermi_dir / "POSCAR")
+        shutil.copy(self.scf_dir / "CHGCAR", self.fermi_dir / "CHGCAR") if (self.scf_dir / "CHGCAR").exists() else None
+        shutil.copy(self.scf_dir / "POTCAR", self.fermi_dir / "POTCAR")
+
+        self._write_fermi_incar(self.fermi_dir / "INCAR")
+        self._write_band_kpoints(self.fermi_dir / "KPOINTS")
+
+        job_script = self._write_job_script(self.fermi_dir, "fermi")
+        if self.prepare_only:
+            logger.info("prepare_only=True，仅生成输入和脚本，不提交。")
+            return True
+
+        job_id = self._submit_job(self.fermi_dir, job_script)
+
+        if not self._wait_for_job(job_id, self.fermi_dir, self.queue_system):
+            return False
+
+        logger.info("费米面计算完成")
+        return True
+
     def _run_plotting(self) -> bool:
         """Step 7: 自动绘图"""
         logger.info("开始绘图...")
 
         self.plots_dir.mkdir(parents=True, exist_ok=True)
-
-        if self.master_mode:
-            logger.info("master_mode=True：跳过即时绘图，总控脚本尾部将调用绘图。")
-            return True
 
         try:
             # 绘制能带
@@ -563,126 +522,6 @@ class ElectronicPropertiesPipeline(BasePipeline):
             logger.error(f"绘图失败: {e}", exc_info=True)
             return False
 
-    def _write_master_script(self):
-        """生成总控脚本，串行执行所选步骤。"""
-        if not self.master_mode:
-            return None
-
-        cfg = self.job_cfg or load_job_config()
-        if not cfg:
-            logger.warning("master_mode: 未找到作业配置，无法生成总控脚本。")
-            return None
-
-        header = select_job_header(self.queue_system, cfg)
-        base = self.work_dir.resolve()
-        steps = self.get_steps()
-        cmds: List[str] = [
-            f'BASE_DIR="{base}"',
-            "",
-        ]
-
-        def _append_copy(src: Path, dst: Path):
-            cmds.append(f'if [ -f "{src}" ]; then cp "{src}" "{dst}"; fi')
-
-        for step in steps:
-            if step == "relax":
-                cmds.extend([
-                    'echo "[STEP] relax"',
-                    f'cd "{base / "01_relax"}"',
-                    "bash run_relax.sh",
-                    "",
-                ])
-            elif step == "scf":
-                cmds.append('echo "[STEP] scf"')
-                _append_copy(base / "01_relax" / "CONTCAR", base / "02_scf" / "POSCAR")
-                _append_copy(base / "01_relax" / "POTCAR", base / "02_scf" / "POTCAR")
-                cmds.extend([
-                    f'cd "{base / "02_scf"}"',
-                    "bash run_scf.sh",
-                    "",
-                ])
-            elif step == "dos":
-                cmds.extend([
-                    'echo "[STEP] dos"',
-                    f'if [ ! -f "{base / "02_scf" / "CHGCAR"}" ]; then echo "[ERROR] 缺少 02_scf/CHGCAR" >&2; exit 1; fi',
-                    f'cp "{base / "02_scf" / "CHGCAR"}" "{base / "03_dos" / "CHGCAR"}"',
-                ])
-                _append_copy(base / "02_scf" / "POTCAR", base / "03_dos" / "POTCAR")
-                _append_copy(base / "02_scf" / "POSCAR", base / "03_dos" / "POSCAR")
-                cmds.extend([
-                    f'cd "{base / "03_dos"}"',
-                    "bash run_dos.sh",
-                    "",
-                ])
-            elif step == "band":
-                cmds.extend([
-                    'echo "[STEP] band"',
-                    f'if [ ! -f "{base / "02_scf" / "CHGCAR"}" ]; then echo "[ERROR] 缺少 02_scf/CHGCAR" >&2; exit 1; fi',
-                    f'cp "{base / "02_scf" / "CHGCAR"}" "{base / "04_band" / "CHGCAR"}"',
-                ])
-                _append_copy(base / "02_scf" / "POTCAR", base / "04_band" / "POTCAR")
-                _append_copy(base / "02_scf" / "POSCAR", base / "04_band" / "POSCAR")
-                cmds.extend([
-                    f'cd "{base / "04_band"}"',
-                    "bash run_band.sh",
-                    "",
-                ])
-            elif step == "elf":
-                cmds.extend([
-                    'echo "[STEP] elf"',
-                    f'if [ ! -f "{base / "02_scf" / "CHGCAR"}" ]; then echo "[ERROR] 缺少 02_scf/CHGCAR" >&2; exit 1; fi',
-                    f'cp "{base / "02_scf" / "CHGCAR"}" "{base / "05_elf" / "CHGCAR"}"',
-                ])
-                _append_copy(base / "02_scf" / "POTCAR", base / "05_elf" / "POTCAR")
-                _append_copy(base / "02_scf" / "POSCAR", base / "05_elf" / "POSCAR")
-                cmds.extend([
-                    f'cd "{base / "05_elf"}"',
-                    "bash run_elf.sh",
-                    "",
-                ])
-            elif step == "cohp":
-                cmds.extend([
-                    'echo "[STEP] cohp"',
-                ])
-                _append_copy(base / "02_scf" / "POTCAR", base / "06_cohp" / "POTCAR")
-                _append_copy(base / "02_scf" / "POSCAR", base / "06_cohp" / "POSCAR")
-                cmds.extend([
-                    f'cd "{base / "06_cohp"}"',
-                    "bash run_cohp.sh",
-                    "",
-                ])
-            elif step == "plotting":
-                cmds.extend([
-                    'echo "[STEP] plotting"',
-                    'python - <<\'PY\'',
-                    'from pathlib import Path',
-                    'from vasp.analysis import plotters',
-                    f'base = Path(r"{base}")',
-                    'plots = base / "plots"',
-                    'plots.mkdir(parents=True, exist_ok=True)',
-                    'try:',
-                    '    plotters.plot_band_structure(base / "04_band", plots / "band.png")',
-                    '    plotters.plot_dos(base / "03_dos", plots / "dos.png")',
-                    '    elf_dir = base / "05_elf"',
-                    '    if elf_dir.exists():',
-                    '        try:',
-                    '            plotters.plot_elf(elf_dir, plots / "elf.png")',
-                    '        except Exception as exc:  # pragma: no cover',
-                    '            print(f"[WARN] ELF 绘图失败: {exc}")',
-                    '    cohp_dir = base / "06_cohp"',
-                    '    if cohp_dir.exists():',
-                    '        plotters.plot_cohp(cohp_dir, plots / "cohp.png")',
-                    'except Exception as exc:  # pragma: no cover',
-                    '    print(f"[WARN] 绘图失败: {exc}")',
-                    'PY',
-                    "",
-                ])
-
-        script_path = self.work_dir / self.master_script_name
-        write_master_script(header, cmds, script_path)
-        self.master_script_path = script_path
-        logger.info(f"总控脚本已生成: {script_path}")
-        return script_path
 
     def _write_relax_incar(self, incar_file: Path):
         """写入结构优化INCAR"""
@@ -695,6 +534,7 @@ class ElectronicPropertiesPipeline(BasePipeline):
             f.write("EDIFF = 1E-6\n")
             f.write("ISMEAR = 0\n")
             f.write("SIGMA = 0.05\n\n")
+            f.write(f"PSTRESS = {self.pressure_kbar}\n\n")
             f.write("# Ionic\n")
             f.write("IBRION = 2\n")
             f.write("NSW = 200\n")
@@ -714,6 +554,7 @@ class ElectronicPropertiesPipeline(BasePipeline):
             f.write("EDIFF = 1E-6\n")
             f.write("ISMEAR = 0\n")
             f.write("SIGMA = 0.05\n")
+            f.write(f"PSTRESS = {self.pressure_kbar}\n")
             f.write("LWAVE = .FALSE.\n")
             f.write("LCHARG = .TRUE.\n")
 
@@ -728,6 +569,7 @@ class ElectronicPropertiesPipeline(BasePipeline):
             f.write("ISMEAR = -5\n")
             f.write("LORBIT = 11\n")
             f.write("NEDOS = 2000\n")
+            f.write(f"PSTRESS = {self.pressure_kbar}\n")
             f.write("LWAVE = .FALSE.\n")
             f.write("LCHARG = .FALSE.\n")
 
@@ -742,6 +584,7 @@ class ElectronicPropertiesPipeline(BasePipeline):
             f.write("ISMEAR = 0\n")
             f.write("SIGMA = 0.05\n")
             f.write("LORBIT = 11\n")
+            f.write(f"PSTRESS = {self.pressure_kbar}\n")
             f.write("LWAVE = .FALSE.\n")
             f.write("LCHARG = .FALSE.\n")
 
@@ -754,6 +597,7 @@ class ElectronicPropertiesPipeline(BasePipeline):
             f.write("ENCUT = {}\n".format(self.encut if self.encut else 520))
             f.write("ICHARG = 11\n")
             f.write("LELF = .TRUE.\n")
+            f.write(f"PSTRESS = {self.pressure_kbar}\n")
             f.write("LWAVE = .FALSE.\n")
             f.write("LCHARG = .FALSE.\n")
 
@@ -766,6 +610,7 @@ class ElectronicPropertiesPipeline(BasePipeline):
             f.write("ENCUT = {}\n".format(self.encut if self.encut else 520))
             f.write("ISMEAR = -5\n")
             f.write("LORBIT = 11\n")
+            f.write(f"PSTRESS = {self.pressure_kbar}\n")
             f.write("LWAVE = .FALSE.\n")
             f.write("LCHARG = .FALSE.\n")
 
@@ -793,6 +638,21 @@ class ElectronicPropertiesPipeline(BasePipeline):
             f.write("0.5 0.5 0.0   ! M\n")
             f.write("0.0 0.0 0.0   ! Gamma\n")
 
+    def _write_fermi_incar(self, incar_file: Path):
+        """写入费米面计算 INCAR（基于能带计算设置）。"""
+        with open(incar_file, 'w') as f:
+            f.write("# Fermi Surface INCAR\n")
+            f.write("SYSTEM = Fermi Surface\n\n")
+            f.write("PREC = Accurate\n")
+            f.write("ENCUT = {}\n".format(self.encut if self.encut else 520))
+            f.write("ICHARG = 11\n")
+            f.write("ISMEAR = 0\n")
+            f.write("SIGMA = 0.05\n")
+            f.write("LORBIT = 11\n")
+            f.write(f"PSTRESS = {self.pressure_kbar}\n")
+            f.write("LWAVE = .FALSE.\n")
+            f.write("LCHARG = .FALSE.\n")
+
     def _write_job_script(self, work_dir: Path, job_name: str) -> str:
         """写入任务提交脚本（支持 bash/slurm/pbs/lsf）"""
         script_path = write_job_script(
@@ -804,6 +664,19 @@ class ElectronicPropertiesPipeline(BasePipeline):
             mpi_procs=self.mpi_procs,
         )
         return str(script_path)
+
+    def _write_bader_script(self, work_dir: Path) -> Path:
+        """写入 Bader 分析脚本（不使用 mpirun）。"""
+        header = select_job_header(self.queue_system, self.job_cfg)
+        lines = [
+            header,
+            "set -e",
+            "bader CHGCAR > bader.log",
+        ]
+        script_path = Path(work_dir) / "run_bader.sh"
+        script_path.write_text("\n".join(lines) + "\n")
+        script_path.chmod(0o755)
+        return script_path
 
     def _submit_job(self, work_dir: Path, job_script: str) -> str:
         """提交任务"""
