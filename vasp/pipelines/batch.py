@@ -43,7 +43,7 @@ class BatchPipeline:
         Parameters
         ----------
         pipeline_class : Type[BasePipeline]
-            要执行的Pipeline类（如ElectronicPropertiesPipeline）
+            要执行的Pipeline类（如PropertiesPipeline）
         structures_dir : Path
             包含结构文件的目录
         work_root : Path

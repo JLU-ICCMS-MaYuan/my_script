@@ -47,7 +47,7 @@ class PhononPropertiesPipeline(BasePipeline):
         mpi_procs: Optional[int] = None,
         potcar_dir: Optional[Path] = None,
         potcar_type: str = "PBE",
-        include_relax: bool = False,
+        include_relax: bool = True,
         custom_steps: Optional[List[str]] = None,
         pressure: float = 0.0,
         **kwargs
@@ -96,7 +96,8 @@ class PhononPropertiesPipeline(BasePipeline):
         self.encut = encut
         self.queue_system = queue_system or "bash"
         self.mpi_procs = mpi_procs
-        self.include_relax = include_relax
+        # 声子必须基于结构优化
+        self.include_relax = True
         self.custom_steps = self._normalize_steps(custom_steps)
         self.pressure = pressure
         default_potcar = self.job_cfg.potcar_dir if self.job_cfg else None
@@ -122,11 +123,16 @@ class PhononPropertiesPipeline(BasePipeline):
         normalized: List[str] = []
         for step in custom_steps:
             name = step.strip().lower()
-            if name in allowed:
+            if name in allowed and name not in normalized:
                 normalized.append(name)
             else:
-                logger.warning(f"忽略未支持的步骤: {name}")
-        return normalized or None
+                if name not in allowed:
+                    logger.warning(f"忽略未支持的步骤: {name}")
+        if normalized:
+            if "relax" not in normalized:
+                normalized.insert(0, "relax")
+            return normalized
+        return None
 
     def get_steps(self) -> List[str]:
         """返回所有步骤"""

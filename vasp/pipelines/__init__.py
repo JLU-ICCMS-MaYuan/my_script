@@ -8,7 +8,7 @@ VASP Pipelines模块
 """
 
 from vasp.pipelines.base import BasePipeline, StepStatus
-from vasp.pipelines.electronic_properties import ElectronicPropertiesPipeline
+from vasp.pipelines.electronic_properties import PropertiesPipeline
 from vasp.pipelines.phonon_properties import PhononPropertiesPipeline
 from vasp.pipelines.relax import RelaxPipeline
 from vasp.pipelines.md import MdPipeline
@@ -18,7 +18,7 @@ from vasp.pipelines import utils
 __all__ = [
     'BasePipeline',
     'StepStatus',
-    'ElectronicPropertiesPipeline',
+    'PropertiesPipeline',
     'PhononPropertiesPipeline',
     'RelaxPipeline',
     'MdPipeline',

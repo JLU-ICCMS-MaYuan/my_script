@@ -24,9 +24,9 @@ from vasp.utils.job import (
 logger = logging.getLogger(__name__)
 
 
-class ElectronicPropertiesPipeline(BasePipeline):
+class PropertiesPipeline(BasePipeline):
     """
-    电子性质全流程Pipeline
+    电子性质全流程Pipeline（可按步骤拆分）
 
     执行步骤：
     1. 结构优化（Relax）
@@ -135,15 +135,33 @@ class ElectronicPropertiesPipeline(BasePipeline):
             return None
 
         allowed = ["relax", "scf", "dos", "band", "elf", "cohp", "bader", "fermisurface", "plotting"]
+        deps = {
+            "scf": ["relax"],
+            "dos": ["relax", "scf"],
+            "band": ["relax", "scf"],
+            "elf": ["relax", "scf"],
+            "cohp": ["relax", "scf"],
+            "bader": ["relax", "scf"],
+            "fermisurface": ["relax", "scf"],
+        }
+
         normalized: List[str] = []
+
+        def add_step(name: str):
+            if name not in allowed:
+                logger.warning(f"忽略未支持的步骤: {name}")
+                return
+            for dep in deps.get(name, []):
+                if dep not in normalized:
+                    add_step(dep)
+            if name not in normalized:
+                normalized.append(name)
+
         for step in custom_steps:
             name = step.strip().lower()
             if not name:
                 continue
-            if name not in allowed:
-                logger.warning(f"忽略未支持的步骤: {name}")
-                continue
-            normalized.append(name)
+            add_step(name)
 
         return normalized or None
 
@@ -681,3 +699,7 @@ class ElectronicPropertiesPipeline(BasePipeline):
     def _submit_job(self, work_dir: Path, job_script: str) -> str:
         """提交任务"""
         return submit_job(Path(job_script), self.queue_system)
+
+
+# 兼容旧名称
+ElectronicPropertiesPipeline = PropertiesPipeline

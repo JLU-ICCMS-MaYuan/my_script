@@ -27,7 +27,7 @@ class MdPipeline(BasePipeline):
         mpi_procs: Optional[int] = None,
         potcar_dir: Optional[Path] = None,
         potcar_type: str = "PBE",
-        include_relax: bool = False,
+        include_relax: bool = True,
         custom_steps: Optional[List[str]] = None,
         pressure: float = 0.0,
         **kwargs,
@@ -46,7 +46,8 @@ class MdPipeline(BasePipeline):
         default_potcar = self.job_cfg.potcar_dir if self.job_cfg else None
         self.potcar_dir = Path(potcar_dir) if potcar_dir else default_potcar
         self.potcar_type = potcar_type
-        self.include_relax = include_relax
+        # MD 必须基于结构优化结果
+        self.include_relax = True
         self.custom_steps = self._normalize_steps(custom_steps)
         self.pressure = pressure
 
@@ -56,9 +57,7 @@ class MdPipeline(BasePipeline):
     def get_steps(self):
         if self.custom_steps:
             return self.custom_steps
-        if self.include_relax:
-            return ["relax", "md"]
-        return ["md"]
+        return ["relax", "md"]
 
     def execute_step(self, step_name: str) -> bool:
         if step_name == "relax":
@@ -76,9 +75,12 @@ class MdPipeline(BasePipeline):
         for step in custom_steps:
             name = step.strip().lower()
             if name in allowed:
-                normalized.append(name)
+                if name not in normalized:
+                    normalized.append(name)
             else:
                 logger.warning(f"忽略未支持的步骤: {name}")
+        if "md" in normalized and "relax" not in normalized:
+            normalized.insert(0, "relax")
         return normalized or None
 
     def _run_relax(self) -> bool:
