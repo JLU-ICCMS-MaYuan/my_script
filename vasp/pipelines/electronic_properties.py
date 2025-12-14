@@ -52,7 +52,7 @@ class PropertiesPipeline(BasePipeline):
         include_fermi: bool = False,
         plot_dos_type: str = "element",
         queue_system: Optional[str] = None,
-        mpi_procs: Optional[int] = None,
+        mpi_procs: Optional[str] = None,
         potcar_dir: Optional[Path] = None,
         potcar_type: str = "PBE",
         custom_steps: Optional[List[str]] = None,

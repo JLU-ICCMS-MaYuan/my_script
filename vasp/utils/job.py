@@ -5,7 +5,7 @@ import shlex
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 try:  # Python 3.11+
     import tomllib  # type: ignore
@@ -161,7 +161,7 @@ def write_job_script(
     queue_system: str,
     cfg: JobConfig,
     use_gamma: bool = False,
-    mpi_procs: Optional[int] = None,
+    mpi_procs: Optional[Union[int, str]] = None,
 ) -> Path:
     """根据 queue_system 生成作业脚本。"""
     work_dir = Path(work_dir)
@@ -170,12 +170,21 @@ def write_job_script(
 
     header = select_job_header(queue, cfg)
     binary = cfg.vasp_gam if use_gamma else cfg.vasp_std
-    mpi = mpi_procs or cfg.default_mpi_procs or 8
+    # 支持字符串或数字：字符串直接作为启动命令前缀，数字走 mpirun -np
+    run_line: str
+    if mpi_procs is None:
+        mpi = cfg.default_mpi_procs or 8
+        run_line = f"mpirun -np {mpi} {binary} > vasp.log"
+    elif isinstance(mpi_procs, str):
+        mpi_str = mpi_procs.strip()
+        if mpi_str.isdigit():
+            run_line = f"mpirun -np {mpi_str} {binary} > vasp.log"
+        else:
+            run_line = f"{mpi_str} {binary} > vasp.log"
+    else:
+        run_line = f"mpirun -np {mpi_procs} {binary} > vasp.log"
 
-    lines = [
-        header,
-        f"mpirun -np {mpi} {binary} > vasp.log",
-    ]
+    lines = [header, run_line]
 
     script_file.write_text("\n".join(lines) + "\n")
     script_file.chmod(0o755)

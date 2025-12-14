@@ -44,7 +44,7 @@ class PhononPropertiesPipeline(BasePipeline):
         kspacing: Optional[float] = 0.3,
         encut: Optional[float] = None,
         queue_system: Optional[str] = None,
-        mpi_procs: Optional[int] = None,
+        mpi_procs: Optional[str] = None,
         potcar_dir: Optional[Path] = None,
         potcar_type: str = "PBE",
         include_relax: bool = True,

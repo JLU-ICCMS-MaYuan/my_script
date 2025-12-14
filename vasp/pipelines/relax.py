@@ -20,7 +20,7 @@ class RelaxPipeline(BasePipeline):
         kspacing: float = 0.2,
         encut: Optional[float] = None,
         queue_system: Optional[str] = None,
-        mpi_procs: Optional[int] = None,
+        mpi_procs: Optional[str] = None,
         potcar_dir: Optional[Path] = None,
         potcar_type: str = "PBE",
         pressure: float = 0.0,
