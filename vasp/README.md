@@ -14,7 +14,7 @@
 ## 子命令与步骤依赖
 - `vasp relax`：`01_relax`，生成 POSCAR/INCAR/KPOINTS/POTCAR 与 `run_relax.sh`。
 - `vasp scf`：`01_relax → 02_scf`，生成 CHGCAR。
-- `vasp dos|band|elf|cohp|bader|fermisurface`：默认 `01_relax → 02_scf → <目标步骤>`（Bader/费米面目录分别为 `07_bader`、`08_fermi`）。`--steps` 可自定义序列，程序自动补齐依赖（确保 relax、scf 在前）。
+- `vasp dos|band|elf|cohp|bader|fermisurface`：默认 `01_relax → 02_scf → <目标步骤>`（Bader/费米面目录分别为 `07_bader`、`08_fermi`）。
 - `vasp phonon`：固定包含结构优化，流程 `01_relax → 02_phonon (disp/dfpt) → phonon_band → phonon_dos → plots`。
 - `vasp md`：固定 `01_relax → 02_md`，自动继承 CONTCAR/POTCAR。
 - 所有命令在 `bash` 下直接 `mpirun -np <N> vasp_std`；在队列模式下 `sbatch/qsub/bsub run_*.sh`，任务号消失后再检查 OUTCAR 判定完成。
@@ -23,7 +23,7 @@
 - 单结构：
   ```bash
   vasp relax -i POSCAR -p 0 5 -j slurm --mpi-procs 48 --submit
-  vasp dos -i POSCAR --steps relax,scf,dos,band,elf,cohp,bader,fermisurface --submit
+  vasp dos -i POSCAR --submit
   vasp phonon -i POSCAR --supercell 2 2 2 --method disp --submit
   vasp md -i POSCAR --potim 1.0 --tebeg 300 --teend 300 --nsw 200 --submit
   ```
@@ -31,6 +31,11 @@
   ```bash
   vasp relax -i ./structures --structure-ext vasp,cif --pressure 0 10 --tasks 4 -j slurm
   vasp band  -i ./structures --tasks 3 --submit
+  ```
+- 多模块组合（自动补齐依赖，relax 完成后并行调度 phonon 与电子流程）：
+  ```bash
+  vasp combo relax phonon dos -i ./stdlibs/ -p 0 5 -j slurm --encut 600 --kspacing 0.18 --mpi-procs "srun -n 32" --submit
+  vasp combo relax md -i POSCAR --potim 1.0 --nsw 200 --submit
   ```
 
 ## 输出与断点

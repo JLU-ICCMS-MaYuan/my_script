@@ -97,7 +97,7 @@ class PhononPropertiesPipeline(BasePipeline):
         self.queue_system = queue_system or "bash"
         self.mpi_procs = mpi_procs
         # 声子必须基于结构优化
-        self.include_relax = True
+        self.include_relax = include_relax
         self.custom_steps = self._normalize_steps(custom_steps)
         self.pressure = pressure
         default_potcar = self.job_cfg.potcar_dir if self.job_cfg else None
@@ -129,7 +129,7 @@ class PhononPropertiesPipeline(BasePipeline):
                 if name not in allowed:
                     logger.warning(f"忽略未支持的步骤: {name}")
         if normalized:
-            if "relax" not in normalized:
+            if self.include_relax and "relax" not in normalized:
                 normalized.insert(0, "relax")
             return normalized
         return None

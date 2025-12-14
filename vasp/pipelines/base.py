@@ -47,6 +47,7 @@ class BasePipeline(ABC):
         structure_file: Path,
         work_dir: Path,
         checkpoint_file: Optional[Path] = None,
+        report_file: Optional[Path] = None,
         max_retries: int = 3,
         retry_delay: int = 60,
         prepare_only: bool = False,
@@ -73,6 +74,7 @@ class BasePipeline(ABC):
         self.work_dir.mkdir(parents=True, exist_ok=True)
 
         self.checkpoint_file = checkpoint_file or self.work_dir / "pipeline_checkpoint.json"
+        self.report_file = report_file or self.work_dir / "pipeline_report.txt"
         self.max_retries = max_retries
         self.retry_delay = retry_delay
         self.prepare_only = prepare_only
@@ -367,9 +369,7 @@ class BasePipeline(ABC):
 
     def _generate_report(self):
         """生成Pipeline执行报告"""
-        report_file = self.work_dir / "pipeline_report.txt"
-
-        with open(report_file, 'w') as f:
+        with open(self.report_file, 'w') as f:
             f.write("="*60 + "\n")
             f.write(f"Pipeline执行报告: {self.__class__.__name__}\n")
             f.write("="*60 + "\n\n")
@@ -384,7 +384,7 @@ class BasePipeline(ABC):
 
             f.write("\n" + "="*60 + "\n")
 
-        logger.info(f"报告已生成: {report_file}")
+        logger.info(f"报告已生成: {self.report_file}")
 
     def _mark_finished(self):
         """在工作目录写入完成标记文件。"""

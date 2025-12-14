@@ -55,7 +55,8 @@ class PropertiesPipeline(BasePipeline):
         mpi_procs: Optional[str] = None,
         potcar_dir: Optional[Path] = None,
         potcar_type: str = "PBE",
-        custom_steps: Optional[List[str]] = None,
+        requested_steps: Optional[List[str]] = None,
+        run_relax: bool = True,
         pressure: float = 0.0,
         **kwargs
     ):
@@ -90,8 +91,10 @@ class PropertiesPipeline(BasePipeline):
             POTCAR库目录，如果不提供则需要手动准备POTCAR
         potcar_type : str
             POTCAR类型：'PBE', 'LDA', 'PW91'等
-        custom_steps : List[str], optional
-            自定义步骤顺序/子集，如 ["relax", "scf", "elf"]
+        requested_steps : List[str], optional
+            目标步骤列表，如 ["dos","band"]，会自动补齐依赖
+        run_relax : bool
+            是否执行 relax 步骤（已完成可置 False）
         pressure : float
             施加的外压（GPa），写入 PSTRESS（kBar）
         """
@@ -112,7 +115,8 @@ class PropertiesPipeline(BasePipeline):
         self.plot_dos_type = plot_dos_type
         self.queue_system = queue_system or "bash"
         self.mpi_procs = mpi_procs
-        self.custom_steps = self._normalize_steps(custom_steps)
+        self.requested_steps = self._normalize_steps(requested_steps)
+        self.run_relax = run_relax
         self.pressure = pressure
         default_potcar = self.job_cfg.potcar_dir if self.job_cfg else None
         self.potcar_dir = Path(potcar_dir) if potcar_dir else default_potcar
@@ -129,9 +133,9 @@ class PropertiesPipeline(BasePipeline):
         self.fermi_dir = self.work_dir / "08_fermi"
         self.plots_dir = self.work_dir / "plots"
 
-    def _normalize_steps(self, custom_steps: Optional[List[str]]) -> Optional[List[str]]:
-        """规范化并校验自定义步骤列表。"""
-        if not custom_steps:
+    def _normalize_steps(self, steps: Optional[List[str]]) -> Optional[List[str]]:
+        """规范化并补齐依赖。"""
+        if not steps:
             return None
 
         allowed = ["relax", "scf", "dos", "band", "elf", "cohp", "bader", "fermisurface", "plotting"]
@@ -152,12 +156,13 @@ class PropertiesPipeline(BasePipeline):
                 logger.warning(f"忽略未支持的步骤: {name}")
                 return
             for dep in deps.get(name, []):
-                if dep not in normalized:
-                    add_step(dep)
+                if dep == "relax" and not self.run_relax:
+                    continue
+                add_step(dep)
             if name not in normalized:
                 normalized.append(name)
 
-        for step in custom_steps:
+        for step in steps:
             name = step.strip().lower()
             if not name:
                 continue
@@ -167,10 +172,13 @@ class PropertiesPipeline(BasePipeline):
 
     def get_steps(self) -> List[str]:
         """返回所有步骤"""
-        if self.custom_steps:
-            return self.custom_steps
+        if self.requested_steps:
+            return self.requested_steps
 
-        steps = ["relax", "scf", "dos", "band"]
+        steps: List[str] = []
+        if self.run_relax:
+            steps.append("relax")
+        steps.append("scf")
 
         if self.include_elf:
             steps.append("elf")
@@ -181,7 +189,6 @@ class PropertiesPipeline(BasePipeline):
             steps.append("bader")
         if self.include_fermi:
             steps.append("fermisurface")
-        steps.append("plotting")
 
         return steps
 

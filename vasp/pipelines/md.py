@@ -46,8 +46,7 @@ class MdPipeline(BasePipeline):
         default_potcar = self.job_cfg.potcar_dir if self.job_cfg else None
         self.potcar_dir = Path(potcar_dir) if potcar_dir else default_potcar
         self.potcar_type = potcar_type
-        # MD 必须基于结构优化结果
-        self.include_relax = True
+        self.include_relax = include_relax
         self.custom_steps = self._normalize_steps(custom_steps)
         self.pressure = pressure
 
@@ -79,7 +78,7 @@ class MdPipeline(BasePipeline):
                     normalized.append(name)
             else:
                 logger.warning(f"忽略未支持的步骤: {name}")
-        if "md" in normalized and "relax" not in normalized:
+        if self.include_relax and "md" in normalized and "relax" not in normalized:
             normalized.insert(0, "relax")
         return normalized or None
 
