@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Optional, List
 
 from vasp.pipelines.base import BasePipeline
-from vasp.pipelines.utils import ensure_poscar, prepare_potcar
+from vasp.pipelines.utils import ensure_poscar, prepare_potcar, check_vasp_completion
 from vasp.analysis import plotters
 from vasp.utils.job import load_job_config, write_job_script, submit_job
 
@@ -280,56 +280,62 @@ class PhononPropertiesPipeline(BasePipeline):
 
         if self.method == "disp":
             # 位移法：需要计算所有disp-XXX
-            n_disp = self.steps_data.get('n_displacements', 0)
+            n_disp = self.steps_data.get('n_displacements') or len(list(self.phonon_dir.glob("POSCAR-*")))
+            if n_disp == 0:
+                logger.error("未找到位移超胞，无法执行声子计算")
+                return False
 
+            # 1) 先准备所有位移输入（不提交）
             for i in range(1, n_disp + 1):
                 disp_num = str(i).zfill(3)
                 disp_dir = self.phonon_dir / f"disp-{disp_num}"
                 disp_dir.mkdir(exist_ok=True)
 
-                # 复制POSCAR-XXX
                 poscar_src = self.phonon_dir / f"POSCAR-{disp_num}"
                 shutil.copy(poscar_src, disp_dir / "POSCAR")
 
-                # 创建INCAR
                 self._write_phonon_incar(disp_dir / "INCAR")
-
-                # 创建KPOINTS
                 self._write_kpoints(disp_dir / "KPOINTS", disp_dir / "POSCAR", self.kspacing)
 
-                # 复制POTCAR（从relax目录）
                 potcar_source = self.relax_dir / "POTCAR"
                 if potcar_source.exists():
                     shutil.copy(potcar_source, disp_dir / "POTCAR")
                 elif self.potcar_dir:
-                    from vasp.pipelines.utils import prepare_potcar
                     if not prepare_potcar(disp_dir / "POSCAR", self.potcar_dir, disp_dir / "POTCAR", self.potcar_type):
                         logger.error("POTCAR准备失败")
                         return False
                 else:
                     logger.warning(f"未找到POTCAR文件: {potcar_source}")
 
-                # 提交任务
-                job_script = self._write_job_script(disp_dir, f"disp{disp_num}")
-                if self.prepare_only:
-                    logger.info("prepare_only=True，仅生成输入和脚本，不提交。")
-                    return True
+                self._write_job_script(disp_dir, f"disp{disp_num}")
 
-                job_id = self._submit_job(disp_dir, job_script)
+            if self.prepare_only:
+                logger.info("prepare_only=True，已生成所有位移输入和脚本，不提交。")
+                return True
 
-                logger.info(f"已提交位移计算 {i}/{n_disp}: {disp_dir.name}")
-
-            # 等待所有任务完成
-            logger.info("等待所有位移计算完成...")
+            # 2) 提交未完成的位移，已完成的跳过
+            pending_jobs: List[tuple[str, Path]] = []
             for i in range(1, n_disp + 1):
                 disp_num = str(i).zfill(3)
                 disp_dir = self.phonon_dir / f"disp-{disp_num}"
 
-                if not self._wait_for_job(f"disp{disp_num}", disp_dir, self.queue_system):
+                if check_vasp_completion(disp_dir):
+                    logger.info(f"{disp_dir.name} 已完成，跳过提交")
+                    continue
+
+                job_script = disp_dir / f"run_disp{disp_num}.sh"
+                job_id = self._submit_job(disp_dir, str(job_script))
+                pending_jobs.append((job_id, disp_dir))
+                logger.info(f"已提交位移计算 {i}/{n_disp}: {disp_dir.name}")
+
+            # 3) 等待未完成的位移作业
+            logger.info("等待所有未完成的位移计算完成...")
+            for job_id, disp_dir in pending_jobs:
+                if not self._wait_for_job(job_id, disp_dir, self.queue_system):
                     logger.error(f"位移计算失败: {disp_dir.name}")
                     return False
 
-            logger.info("所有位移计算完成")
+            logger.info("所有位移计算完成或已完成")
 
         elif self.method == "dfpt":
             # DFPT法
