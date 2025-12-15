@@ -3,6 +3,7 @@ import logging
 import os
 import shlex
 import subprocess
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, Union
@@ -161,30 +162,46 @@ def submit_job(script_path: Path, queue_system: str) -> str:
     script_path = Path(script_path).resolve()
     workdir = script_path.parent
 
-    try:
-        if queue == "bash":
-            subprocess.Popen(["bash", script_path.name], cwd=workdir)
-            return "bash"
-        if queue == "slurm":
-            output = subprocess.check_output(["sbatch", script_path.name], cwd=workdir, text=True).strip()
-            # 典型输出: "Submitted batch job 123456"
-            parts = output.split()
-            return parts[-1] if parts else output
-        if queue == "pbs":
-            output = subprocess.check_output(["qsub", script_path.name], cwd=workdir, text=True).strip()
-            return output
-        if queue == "lsf":
-            cmd = f"bsub < {shlex.quote(str(script_path))}"
-            output = subprocess.check_output(["bash", "-lc", cmd], cwd=workdir, text=True).strip()
-            # 典型输出: "Job <123456> is submitted ..."
-            import re
-            m = re.search(r"<(\d+)>", output)
-            return m.group(1) if m else output
-    except Exception as exc:  # pragma: no cover - 运行时容错
-        logger.error("队列提交失败，请检查集群环境或脚本", exc_info=exc)
-        raise
+    attempts = 0
+    while True:
+        attempts += 1
+        try:
+            if queue == "bash":
+                subprocess.Popen(["bash", script_path.name], cwd=workdir)
+                return "bash"
+            if queue == "slurm":
+                output = subprocess.check_output(
+                    ["sbatch", script_path.name],
+                    cwd=workdir,
+                    text=True,
+                    stderr=subprocess.STDOUT,
+                ).strip()
+                # 典型输出: "Submitted batch job 123456"
+                parts = output.split()
+                return parts[-1] if parts else output
+            if queue == "pbs":
+                output = subprocess.check_output(["qsub", script_path.name], cwd=workdir, text=True).strip()
+                return output
+            if queue == "lsf":
+                cmd = f"bsub < {shlex.quote(str(script_path))}"
+                output = subprocess.check_output(["bash", "-lc", cmd], cwd=workdir, text=True).strip()
+                # 典型输出: "Job <123456> is submitted ..."
+                import re
+                m = re.search(r"<(\d+)>", output)
+                return m.group(1) if m else output
+        except subprocess.CalledProcessError as exc:
+            msg = exc.output if hasattr(exc, "output") else str(exc)
+            if queue == "slurm" and "AssocMaxSubmitJobLimit" in msg and attempts < 10:
+                logger.warning("提交超出作业数限制，等待20秒后重试（第 %d 次）...", attempts)
+                time.sleep(20)
+                continue
+            logger.error("队列提交失败，请检查集群环境或脚本", exc_info=exc)
+            raise
+        except Exception as exc:  # pragma: no cover - 运行时容错
+            logger.error("队列提交失败，请检查集群环境或脚本", exc_info=exc)
+            raise
 
-    # 未知队列，回退
+    # 未知队列，回退（理论不会到这里）
     logger.warning("未知队列系统 %s，回退到 bash", queue_system)
     subprocess.Popen(["bash", str(script_path)], cwd=script_path.parent)
     return "bash_unknown"
