@@ -217,9 +217,8 @@ def submit_job(script_path: Path, queue_system: str) -> str:
             m = re.search(r"<(\d+)>", output)
             return m.group(1) if m else output
     except Exception as exc:  # pragma: no cover - 运行时容错
-        logger.warning("队列提交失败，改为本地 bash 运行", exc_info=exc)
-        subprocess.Popen(["bash", str(script_path)], cwd=script_path.parent)
-        return "bash_fallback"
+        logger.error("队列提交失败，请检查集群环境或脚本", exc_info=exc)
+        raise
 
     # 未知队列，回退
     logger.warning("未知队列系统 %s，回退到 bash", queue_system)
