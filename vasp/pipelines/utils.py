@@ -193,31 +193,8 @@ def validate_structure_file(structure_file: Path) -> bool:
     if not structure_file.exists():
         logger.error(f"结构文件不存在: {structure_file}")
         return False
-
-    if structure_file.suffix not in ['.vasp', '.POSCAR', '']:
-        logger.warning(f"文件后缀不是.vasp或POSCAR: {structure_file}")
-
-    # 简单检查文件内容
-    try:
-        with open(structure_file, 'r') as f:
-            lines = f.readlines()
-
-        if len(lines) < 8:
-            logger.error(f"POSCAR文件行数不足: {structure_file}")
-            return False
-
-        # 检查scaling factor（第二行应该是数字）
-        try:
-            float(lines[1].strip())
-        except:
-            logger.error(f"POSCAR格式错误（第二行不是数字）: {structure_file}")
-            return False
-
-        return True
-
-    except Exception as e:
-        logger.error(f"验证结构文件失败: {e}")
-        return False
+    # 仅检查存在，其余解析交给 ensure_poscar/ASE 处理
+    return True
 
 
 def ensure_poscar(src: Path, dest: Path) -> Path:
