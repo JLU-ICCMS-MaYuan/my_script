@@ -28,18 +28,6 @@ class JobConfig:
     lsftitle: Optional[str]
     default_mpi_procs: int = 8
 
-
-_DEFAULTS = {
-    "vasp_std": "/home/mayuan/soft/vasp.6.3.2/bin/vasp_std",
-    "vasp_gam": "/home/mayuan/soft/vasp.6.3.2/bin/vasp_gam",
-    "potcar_dir": "/home/mayuan/pot/vasp_pot/potpaw_PBE54",
-    "bashtitle": "#!/bin/sh\nsource /home/mayuan/intel/oneapi/setvars.sh\nulimit -s unlimited\n",
-    "slurmtitle": "#!/bin/sh\n#SBATCH  --job-name=vasp\n#SBATCH  --output=log.out\n#SBATCH  --error=log.err\n##SBATCH  --partition=intel6240r_384\n#SBATCH  --partition=intel6240r_192\n#SBATCH  --nodes=1\n#SBATCH  --ntasks=48\n#SBATCH  --ntasks-per-node=48\n#SBATCH  --cpus-per-task=1\n\nsource /home/mayuan/intel/oneapi/setvars.sh\nulimit -s unlimited\nexport I_MPI_ADJUST_REDUCE=3\nexport MPIR_CVAR_COLL_ALIAS_CHECK=0\n",
-    "pbstitle": "#!/bin/sh\n#PBS -N    mayqe\n#PBS -q    liuhy\n#PBS -l    nodes=1:ppn=28\n#PBS -j    oe\n#PBS -V\n\nsource /home/mayuan/intel/oneapi/setvars.sh\nulimit -s unlimited\ncd $PBS_O_WORKDIR\n",
-    "lsftitle": "#!/bin/bash\n#BSUB -n 56\n#BSUB -q normal\n#BSUB -J myjob\n#BSUB -R 'span[ptile=56]'\n#BSUB -o operation.log\n\nsource /data/env/inteloneapi2021\nulimit -s unlimited\n",
-    "default_mpi_procs": 8,
-}
-
 _TOML_PATH = Path(__file__).resolve().parent.parent / "config" / "job_templates.toml"
 _USER_TOML = Path.home() / ".config" / "vasp" / "job_templates.toml"
 _LOCAL_TOML = Path.cwd() / "job_templates.local.toml"
@@ -66,13 +54,10 @@ def load_job_config(
     toml_path: Path = _TOML_PATH,
 ) -> JobConfig:
     """
-    读取 VASP 运行配置，优先级：工作目录 job_templates.local.toml > 用户级 ~/.config/vasp/job_templates.toml > 内置默认。
+    读取 VASP 运行配置，优先级：工作目录 job_templates.local.toml > 用户级 ~/.config/vasp/job_templates.toml > 仓库默认 job_templates.toml。
     不再读取环境变量覆盖或 ~/.my_scriptrc.py 兼容。
     """
-    cfg = _DEFAULTS.copy()
-
-    # 内置默认
-    defaults, templates = {}, {}
+    cfg = {}
 
     # 1) 工作目录本地覆盖
     if _LOCAL_TOML.exists():
@@ -84,6 +69,10 @@ def load_job_config(
     else:
         defaults, templates = _load_templates_from_toml(toml_path)
 
+    if defaults.get("vasp_std"):
+        cfg["vasp_std"] = defaults["vasp_std"]
+    if defaults.get("vasp_gam"):
+        cfg["vasp_gam"] = defaults["vasp_gam"]
     if defaults.get("potcar_dir"):
         cfg["potcar_dir"] = defaults["potcar_dir"]
     if defaults.get("mpi_procs"):
@@ -98,6 +87,11 @@ def load_job_config(
             cfg["pbstitle"] = header or cfg["pbstitle"]
         if queue == "lsf":
             cfg["lsftitle"] = header or cfg["lsftitle"]
+
+    required = ["vasp_std", "vasp_gam"]
+    missing = [k for k in required if not cfg.get(k)]
+    if missing:
+        raise ValueError(f"job_templates 配置缺少必需字段: {missing}，请在 job_templates.local.toml 或 ~/.config/vasp/job_templates.toml 中补充")
 
     potcar_dir = Path(cfg["potcar_dir"]) if cfg.get("potcar_dir") else None
 

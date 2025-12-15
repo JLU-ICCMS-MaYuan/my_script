@@ -1,6 +1,8 @@
 [defaults]
 mpi_procs = 8
 potcar_dir = "/home/mayuan/pot/vasp_pot/potpaw_PBE54"
+vasp_std = "/home/mayuan/soft/vasp.6.3.2/bin/vasp_std"
+vasp_gam = "/home/mayuan/soft/vasp.6.3.2/bin/vasp_gam"
 
 [templates.bash]
 header = """
