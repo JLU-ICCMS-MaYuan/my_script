@@ -93,7 +93,7 @@ class MdPipeline(BasePipeline):
         shutil.copy(self.structure_file, self.relax_dir / "POSCAR")
 
         self._write_relax_incar(self.relax_dir / "INCAR")
-        self._write_kpoints(self.relax_dir / "KPOINTS", self.kspacing)
+        self._write_kpoints(self.relax_dir / "KPOINTS", self.relax_dir / "POSCAR", self.kspacing)
 
         if self.potcar_dir:
             if not prepare_potcar(
@@ -142,7 +142,7 @@ class MdPipeline(BasePipeline):
         shutil.copy(source_poscar, self.md_dir / "POSCAR")
 
         self._write_md_incar(self.md_dir / "INCAR")
-        self._write_kpoints(self.md_dir / "KPOINTS", self.kspacing)
+        self._write_kpoints(self.md_dir / "KPOINTS", self.md_dir / "POSCAR", self.kspacing)
 
         if self.include_relax and self.relax_dir and (self.relax_dir / "POTCAR").exists():
             shutil.copy(self.relax_dir / "POTCAR", self.md_dir / "POTCAR")
@@ -215,12 +215,15 @@ class MdPipeline(BasePipeline):
             f.write("LWAVE = .FALSE.\n")
             f.write("LCHARG = .FALSE.\n")
 
-    def _write_kpoints(self, kpoints_file: Path, kspacing: float):
+    def _write_kpoints(self, kpoints_file: Path, poscar_file: Path, kspacing: float):
+        from vasp.pipelines.utils import kspacing_to_mesh
+        n1, n2, n3 = kspacing_to_mesh(poscar_file, kspacing)
         with open(kpoints_file, "w") as f:
             f.write("Automatic mesh\n")
             f.write("0\n")
             f.write("Gamma\n")
-            f.write(f"{kspacing} {kspacing} {kspacing}\n")
+            f.write(f"{n1} {n2} {n3}\n")
+            f.write("0 0 0\n")
 
     def _write_job_script(self, work_dir: Path, job_name: str) -> str:
         script_path = write_job_script(

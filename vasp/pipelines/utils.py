@@ -10,8 +10,9 @@ VASP Pipeline工具函数
 import logging
 import os
 import shutil
+import math
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -351,3 +352,52 @@ def _search_potcar_candidates(potcar_dir: Path, element: str, potcar_type: str) 
                 if pot_path.exists():
                     candidates.append(pot_path)
     return candidates
+
+
+def kspacing_to_mesh(poscar_file: Path, kspacing: float) -> Tuple[int, int, int]:
+    """
+    将 KSPACING 转换为 Monkhorst-Pack 网格：N_i = max(1, ceil(|b_i| / kspacing))
+    其中 b_i 为 2π 倒格矢长度。
+    """
+    try:
+        lines = poscar_file.read_text().splitlines()
+        if len(lines) < 5:
+            raise ValueError("POSCAR 行数不足")
+        scale = float(lines[1].split()[0])
+        a1 = [float(x) for x in lines[2].split()[:3]]
+        a2 = [float(x) for x in lines[3].split()[:3]]
+        a3 = [float(x) for x in lines[4].split()[:3]]
+        a1 = [v * scale for v in a1]
+        a2 = [v * scale for v in a2]
+        a3 = [v * scale for v in a3]
+
+        def cross(u, v):
+            return [
+                u[1] * v[2] - u[2] * v[1],
+                u[2] * v[0] - u[0] * v[2],
+                u[0] * v[1] - u[1] * v[0],
+            ]
+
+        def dot(u, v):
+            return u[0] * v[0] + u[1] * v[1] + u[2] * v[2]
+
+        vol = dot(a1, cross(a2, a3))
+        if abs(vol) < 1e-8:
+            raise ValueError("晶胞体积异常")
+
+        factor = 2 * math.pi / vol
+        b1 = [x * factor for x in cross(a2, a3)]
+        b2 = [x * factor for x in cross(a3, a1)]
+        b3 = [x * factor for x in cross(a1, a2)]
+
+        def norm(u):
+            return math.sqrt(dot(u, u))
+
+        n1 = max(1, math.ceil(norm(b1) / kspacing))
+        n2 = max(1, math.ceil(norm(b2) / kspacing))
+        n3 = max(1, math.ceil(norm(b3) / kspacing))
+        return int(n1), int(n2), int(n3)
+    except Exception as exc:
+        logger.error(f"KSPACING 转换 KPOINTS 失败: {exc}")
+        # 回退默认 1x1x1，避免写入错误浮点
+        return 1, 1, 1

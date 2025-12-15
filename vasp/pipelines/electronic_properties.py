@@ -234,7 +234,7 @@ class PropertiesPipeline(BasePipeline):
         self._write_relax_incar(self.relax_dir / "INCAR")
 
         # 创建KPOINTS
-        self._write_kpoints(self.relax_dir / "KPOINTS", self.kspacing)
+        self._write_kpoints(self.relax_dir / "KPOINTS", self.relax_dir / "POSCAR", self.kspacing)
 
         # 准备POTCAR
         if self.potcar_dir:
@@ -290,7 +290,7 @@ class PropertiesPipeline(BasePipeline):
         self._write_scf_incar(self.scf_dir / "INCAR")
 
         # 创建KPOINTS（更密）
-        self._write_kpoints(self.scf_dir / "KPOINTS", self.kspacing)
+        self._write_kpoints(self.scf_dir / "KPOINTS", self.scf_dir / "POSCAR", self.kspacing)
 
         # 复制POTCAR（从relax目录）
         potcar_source = self.relax_dir / "POTCAR"
@@ -337,7 +337,7 @@ class PropertiesPipeline(BasePipeline):
         self._write_dos_incar(self.dos_dir / "INCAR")
 
         # 创建KPOINTS（DOS需要更密的网格）
-        self._write_kpoints(self.dos_dir / "KPOINTS", self.kspacing / 2)
+        self._write_kpoints(self.dos_dir / "KPOINTS", self.dos_dir / "POSCAR", self.kspacing / 2)
 
         # 提交任务
         job_script = self._write_job_script(self.dos_dir, "dos")
@@ -645,13 +645,16 @@ class PropertiesPipeline(BasePipeline):
             f.write("LWAVE = .FALSE.\n")
             f.write("LCHARG = .FALSE.\n")
 
-    def _write_kpoints(self, kpoints_file: Path, kspacing: float):
-        """写入自动K点"""
+    def _write_kpoints(self, kpoints_file: Path, poscar_file: Path, kspacing: float):
+        """写入自动K点（由KSPACING计算网格数）。"""
+        from vasp.pipelines.utils import kspacing_to_mesh
+        n1, n2, n3 = kspacing_to_mesh(poscar_file, kspacing)
         with open(kpoints_file, 'w') as f:
             f.write("Automatic mesh\n")
             f.write("0\n")
             f.write("Gamma\n")
-            f.write(f"{kspacing} {kspacing} {kspacing}\n")
+            f.write(f"{n1} {n2} {n3}\n")
+            f.write("0 0 0\n")
 
     def _write_band_kpoints(self, kpoints_file: Path):
         """写入能带K点（高对称路径）"""
