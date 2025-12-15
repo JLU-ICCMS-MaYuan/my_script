@@ -90,8 +90,8 @@ class RelaxPipeline(BasePipeline):
             shutil.copy(contcar, relaxed)
             self.steps_data["relaxed_structure"] = str(relaxed)
 
-            # 对称性分析，生成原胞/标准晶胞
-            prim, std, sg = find_symmetry(relaxed, self.relax_dir, symprec=1e-3)
+            # 对称性分析，生成原胞/标准晶胞（放在压强目录）
+            prim, std, sg = find_symmetry(relaxed, self.work_dir, symprec=1e-3)
             if prim:
                 self.steps_data["primitive_structure"] = str(prim)
             if std:
