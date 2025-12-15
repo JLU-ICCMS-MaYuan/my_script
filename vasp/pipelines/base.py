@@ -343,7 +343,6 @@ class BasePipeline(ABC):
             "steps_status": {k: v.value if isinstance(v, StepStatus) else v
                            for k, v in self.steps_status.items()},
             "steps_data": self.steps_data,
-            "timestamp": time.time(),
         }
 
         with open(self.checkpoint_file, 'w') as f:
