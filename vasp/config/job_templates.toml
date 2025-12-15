@@ -1,8 +1,13 @@
 [defaults]
-mpi_procs = 8
-potcar_dir = "/home/mayuan/pot/vasp_pot/potpaw_PBE54"
+# VASP 可执行文件路径（必填）
 vasp_std = "/home/mayuan/soft/vasp.6.3.2/bin/vasp_std"
 vasp_gam = "/home/mayuan/soft/vasp.6.3.2/bin/vasp_gam"
+
+# POTCAR 根目录（必填）
+potcar_dir = "/home/mayuan/pot/vasp_pot/potpaw_PBE54"
+
+# 默认 MPI 进程数（未指定 --mpi-procs 时使用）
+mpi_procs = 8
 
 [templates.bash]
 header = """
