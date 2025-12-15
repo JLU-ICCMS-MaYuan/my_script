@@ -95,6 +95,9 @@ class BasePipeline(ABC):
         self.steps_data: Dict[str, Any] = {}
 
         # 加载断点（如果存在）
+        self.log_file = self.work_dir / "pipeline.log"
+        self._file_handler = None
+
         self._load_checkpoint()
 
     @abstractmethod
@@ -132,6 +135,17 @@ class BasePipeline(ABC):
         bool
             所有步骤成功返回True，任意步骤失败返回False
         """
+        # 每个任务单独日志文件
+        root_logger = logging.getLogger()
+        try:
+            self._file_handler = logging.FileHandler(self.log_file, encoding="utf-8")
+            self._file_handler.setLevel(logging.DEBUG)
+            fmt = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+            self._file_handler.setFormatter(fmt)
+            root_logger.addHandler(self._file_handler)
+        except Exception as e:  # pragma: no cover - 日志文件创建失败时仍继续
+            logger.warning(f"创建日志文件失败: {e}")
+
         logger.info(f"开始执行Pipeline: {self.__class__.__name__}")
         logger.info(f"工作目录: {self.work_dir}")
 
@@ -179,6 +193,12 @@ class BasePipeline(ABC):
         self._mark_finished()
 
         return True
+    def __del__(self):
+        # 清理文件日志句柄，避免重复记录
+        if getattr(self, "_file_handler", None):
+            root_logger = logging.getLogger()
+            root_logger.removeHandler(self._file_handler)
+            self._file_handler.close()
 
     def _execute_step_with_retry(self, step_name: str) -> bool:
         """
