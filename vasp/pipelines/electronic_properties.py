@@ -115,8 +115,8 @@ class PropertiesPipeline(BasePipeline):
         self.plot_dos_type = plot_dos_type
         self.queue_system = queue_system or "bash"
         self.mpi_procs = mpi_procs
-        self.requested_steps = self._normalize_steps(requested_steps)
         self.run_relax = run_relax
+        self.requested_steps = self._normalize_steps(requested_steps)
         self.pressure = pressure
         default_potcar = self.job_cfg.potcar_dir if self.job_cfg else None
         self.potcar_dir = Path(potcar_dir) if potcar_dir else default_potcar
