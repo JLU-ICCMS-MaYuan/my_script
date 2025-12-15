@@ -287,14 +287,12 @@ def prepare_potcar(
             if len(candidates) == 0:
                 logger.error(f"未找到元素 {element} 的POTCAR，请在 {potcar_lib} 手动放置或检查 potcar_dir")
                 return False
-            if len(candidates) > 1:
-                logger.error(
-                    f"找到多个 {element} 候选：{[str(c) for c in candidates]}，"
-                    f"请手动选择一个复制到 {potcar_lib}（命名为 {element} 或 {element}/POTCAR）后重试"
-                )
+
+            chosen = _prompt_choose_potcar(element, candidates)
+            if not chosen:
+                logger.error(f"未为元素 {element} 选择赝势，已中止")
                 return False
 
-            chosen = candidates[0]
             dest = potcar_lib / element
             dest.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy(chosen, dest)
@@ -361,6 +359,29 @@ def _search_potcar_candidates(potcar_dir: Path, element: str, potcar_type: str) 
                 if pot_path.exists():
                     candidates.append(pot_path)
     return candidates
+
+
+def _prompt_choose_potcar(element: str, candidates: List[Path]) -> Optional[Path]:
+    """
+    交互式选择赝势候选。
+    """
+    if len(candidates) == 1:
+        return candidates[0]
+
+    print(f"\n为元素 {element} 选择赝势（按序号输入，回车默认1）：")
+    for idx, c in enumerate(candidates, 1):
+        print(f"  {idx}. {c}")
+    choice = input("请输入编号：").strip()
+    if choice == "":
+        return candidates[0]
+    try:
+        num = int(choice)
+        if 1 <= num <= len(candidates):
+            return candidates[num - 1]
+    except Exception:
+        pass
+    logger.error("输入无效，未选择赝势")
+    return None
 
 
 def kspacing_to_mesh(poscar_file: Path, kspacing: float) -> Tuple[int, int, int]:
