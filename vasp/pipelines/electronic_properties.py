@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Optional, List
 
 from vasp.pipelines.base import BasePipeline
+from vasp.pipelines.utils import ensure_poscar
 from vasp.analysis import plotters
 from vasp.utils.job import (
     load_job_config,
@@ -228,7 +229,7 @@ class PropertiesPipeline(BasePipeline):
         self.relax_dir.mkdir(parents=True, exist_ok=True)
 
         # 复制POSCAR
-        shutil.copy(self.structure_file, self.relax_dir / "POSCAR")
+        ensure_poscar(self.structure_file, self.relax_dir / "POSCAR")
 
         # 创建INCAR（结构优化）
         self._write_relax_incar(self.relax_dir / "INCAR")
@@ -284,7 +285,7 @@ class PropertiesPipeline(BasePipeline):
 
         # 使用优化后的结构
         relaxed_poscar = Path(self.steps_data.get('relaxed_structure', self.structure_file))
-        shutil.copy(relaxed_poscar, self.scf_dir / "POSCAR")
+        ensure_poscar(relaxed_poscar, self.scf_dir / "POSCAR")
 
         # 创建INCAR（高精度SCF）
         self._write_scf_incar(self.scf_dir / "INCAR")

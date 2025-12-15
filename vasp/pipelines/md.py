@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Optional, List
 
 from vasp.pipelines.base import BasePipeline
-from vasp.pipelines.utils import prepare_potcar
+from vasp.pipelines.utils import prepare_potcar, ensure_poscar
 from vasp.utils.job import load_job_config, write_job_script, submit_job
 
 logger = logging.getLogger(__name__)
@@ -136,10 +136,10 @@ class MdPipeline(BasePipeline):
 
         self.md_dir.mkdir(parents=True, exist_ok=True)
         # 使用relax结果优先
-        source_poscar = self.structure_file
+        source_poscar = Path(self.structure_file)
         if self.include_relax and self.steps_data.get("relaxed_structure"):
             source_poscar = Path(self.steps_data["relaxed_structure"])
-        shutil.copy(source_poscar, self.md_dir / "POSCAR")
+        ensure_poscar(source_poscar, self.md_dir / "POSCAR")
 
         self._write_md_incar(self.md_dir / "INCAR")
         self._write_kpoints(self.md_dir / "KPOINTS", self.md_dir / "POSCAR", self.kspacing)

@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Optional
 
 from vasp.pipelines.base import BasePipeline
-from vasp.pipelines.utils import prepare_potcar
+from vasp.pipelines.utils import prepare_potcar, ensure_poscar
 from vasp.utils.job import load_job_config, write_job_script, submit_job
 
 logger = logging.getLogger(__name__)
@@ -53,7 +53,7 @@ class RelaxPipeline(BasePipeline):
         logger.info("执行结构优化...")
 
         self.relax_dir.mkdir(parents=True, exist_ok=True)
-        shutil.copy(self.structure_file, self.relax_dir / "POSCAR")
+        ensure_poscar(self.structure_file, self.relax_dir / "POSCAR")
 
         self._write_relax_incar(self.relax_dir / "INCAR")
         self._write_kpoints(self.relax_dir / "KPOINTS", self.relax_dir / "POSCAR", self.kspacing)

@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Optional, List
 
 from vasp.pipelines.base import BasePipeline
+from vasp.pipelines.utils import ensure_poscar, prepare_potcar
 from vasp.analysis import plotters
 from vasp.utils.job import load_job_config, write_job_script, submit_job
 
@@ -180,7 +181,7 @@ class PhononPropertiesPipeline(BasePipeline):
         self.relax_dir.mkdir(parents=True, exist_ok=True)
 
         # 复制POSCAR
-        shutil.copy(self.structure_file, self.relax_dir / "POSCAR")
+        ensure_poscar(self.structure_file, self.relax_dir / "POSCAR")
 
         # 创建INCAR
         self._write_relax_incar(self.relax_dir / "INCAR")

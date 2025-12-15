@@ -74,6 +74,14 @@ class BasePipeline(ABC):
         self.work_dir = Path(work_dir)
         self.work_dir.mkdir(parents=True, exist_ok=True)
 
+        if self.structure_file.is_dir():
+            raise ValueError(
+                f"structure_file 必须是文件，当前是目录: {self.structure_file}。"
+                " 可能是批量模式未正确识别，请检查输入目录下的结构后缀，或显式指定 --structure-ext。"
+            )
+        if not self.structure_file.exists():
+            raise FileNotFoundError(f"结构文件不存在: {self.structure_file}")
+
         self.checkpoint_file = checkpoint_file or self.work_dir / "pipeline_checkpoint.json"
         self.report_file = report_file or self.work_dir / "pipeline_report.txt"
         self.max_retries = max_retries

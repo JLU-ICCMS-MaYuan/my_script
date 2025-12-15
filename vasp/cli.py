@@ -30,12 +30,15 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# 默认支持的结构后缀
+SUPPORTED_STRUCTURE_EXTS = ["vasp", "poscar", "cif", "res", "xsf"]
+
 
 def parse_structure_exts(ext_str: Optional[str]) -> list[str]:
     if not ext_str:
-        return ["vasp"]
+        return SUPPORTED_STRUCTURE_EXTS
     parts = [p.strip().lower() for p in re.split(r"[ ,]+", ext_str) if p.strip()]
-    return parts or ["vasp"]
+    return parts or SUPPORTED_STRUCTURE_EXTS
 
 
 def parse_pressures(values) -> list[float]:
@@ -261,9 +264,9 @@ def detect_batch_mode(input_path: Path, structure_exts: Optional[list[str]] = No
 
     # 检测目录中是否有结构文件
     patterns = []
-    for ext in structure_exts or ["vasp"]:
+    for ext in structure_exts or SUPPORTED_STRUCTURE_EXTS:
         e = ext.lower()
-        if e == "vasp":
+        if e in ("vasp", "poscar"):
             patterns.extend(['*.vasp', '*.POSCAR', 'POSCAR*'])
         elif e == "cif":
             patterns.append("*.cif")
@@ -285,9 +288,9 @@ def detect_batch_mode(input_path: Path, structure_exts: Optional[list[str]] = No
 def scan_structure_files(structures_dir: Path, structure_exts: Optional[list[str]] = None) -> list[Path]:
     """扫描目录中的结构文件。"""
     patterns = []
-    for ext in structure_exts or ["vasp"]:
+    for ext in structure_exts or SUPPORTED_STRUCTURE_EXTS:
         e = ext.lower()
-        if e == "vasp":
+        if e in ("vasp", "poscar"):
             patterns.extend(['*.vasp', '*.POSCAR', 'POSCAR*'])
         elif e == "cif":
             patterns.append("*.cif")

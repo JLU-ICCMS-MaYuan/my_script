@@ -14,6 +14,8 @@ import math
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Tuple
 
+from ase.io import read as ase_read, write as ase_write
+
 logger = logging.getLogger(__name__)
 
 
@@ -216,6 +218,36 @@ def validate_structure_file(structure_file: Path) -> bool:
     except Exception as e:
         logger.error(f"验证结构文件失败: {e}")
         return False
+
+
+def ensure_poscar(src: Path, dest: Path) -> Path:
+    """
+    将任意受支持的结构文件转换/复制为 POSCAR。
+
+    Parameters
+    ----------
+    src : Path
+        原始结构文件路径
+    dest : Path
+        目标 POSCAR 路径
+
+    Returns
+    -------
+    Path
+        生成的 POSCAR 路径
+    """
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        # POSCAR/vasp 直接复制
+        if src.suffix.lower() in [".vasp", ".poscar"] or src.name.upper().startswith("POSCAR"):
+            shutil.copy(src, dest)
+        else:
+            atoms = ase_read(src)
+            ase_write(dest, atoms, format="vasp")
+    except Exception as exc:
+        logger.error(f"转换结构为 POSCAR 失败: {src} -> {dest}，错误: {exc}")
+        raise
+    return dest
 
 
 def prepare_potcar(
