@@ -79,3 +79,14 @@ structuregenerator/psolib/fortran_src/LegacyFingerPrint/src.macosx-10.9-x86_64-3
 
 
 
+vasp/io/__pycache__/__init__.cpython-312.pyc
+vasp/io/readers/__pycache__/__init__.cpython-312.pyc
+vasp/io/readers/vasptools/__pycache__/__init__.cpython-312.pyc
+vasp/io/readers/vasptools/__pycache__/parser_vasp.cpython-312.pyc
+vasp/utils/__pycache__/job.cpython-312.pyc
+vasp/utils/__pycache__/__init__.cpython-312.pyc
+vasp/scheduler/__pycache__/__init__.cpython-312.pyc
+vasp/io/writers/__pycache__/__init__.cpython-312.pyc
+vasp/io/readers/vasptools/__pycache__/poscar.cpython-312.pyc
+vasp/io/readers/vasptools/__pycache__/vasprunxml.cpython-312.pyc
+vasp/io/readers/vasptools/__pycache__/outcar.cpython-312.pyc
