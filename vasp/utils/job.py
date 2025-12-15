@@ -41,6 +41,8 @@ _DEFAULTS = {
 }
 
 _TOML_PATH = Path(__file__).resolve().parent.parent / "config" / "job_templates.toml"
+_USER_TOML = Path.home() / ".config" / "vasp" / "job_templates.toml"
+_LOCAL_TOML = Path.cwd() / "job_templates.local.toml"
 
 
 def _load_templates_from_toml(toml_path: Path) -> tuple[dict, dict]:
@@ -62,43 +64,26 @@ def _load_templates_from_toml(toml_path: Path) -> tuple[dict, dict]:
 
 def load_job_config(
     toml_path: Path = _TOML_PATH,
-    rc_path: Path = Path.home() / ".my_scriptrc.py",
 ) -> JobConfig:
     """
-    读取 VASP 运行配置，优先级：环境变量 > TOML 模板 > ~/.my_scriptrc.py（兼容）> 内置默认。
-
-    环境变量：
-    - VASP_STD / VASP_GAM / POTCAR_DIR / VASP_MPI_PROCS
-    - JOB_HEADER_BASH / JOB_HEADER_SLURM / JOB_HEADER_PBS / JOB_HEADER_LSF
+    读取 VASP 运行配置，优先级：工作目录 job_templates.local.toml > 用户级 ~/.config/vasp/job_templates.toml > 内置默认。
+    不再读取环境变量覆盖或 ~/.my_scriptrc.py 兼容。
     """
     cfg = _DEFAULTS.copy()
 
-    # 兼容旧 rc（低优先级）
-    rc_file = Path(rc_path)
-    if rc_file.exists():
-        try:
-            spec = importlib.util.spec_from_file_location("_user_rc", rc_file)
-            module = importlib.util.module_from_spec(spec)
-            assert spec and spec.loader
-            spec.loader.exec_module(module)  # type: ignore[attr-defined]
-            rc_values = {
-                "vasp_std": getattr(module, "vaspstd_path", None),
-                "vasp_gam": getattr(module, "vaspgam_path", None),
-                "potcar_dir": getattr(module, "potcar_dir", None),
-                "bashtitle": getattr(module, "bashtitle", None),
-                "slurmtitle": getattr(module, "slurmtitle", None),
-                "pbstitle": getattr(module, "pbstitle", None),
-                "lsftitle": getattr(module, "lsftitle", None),
-                "default_mpi_procs": getattr(module, "default_mpi_procs", None),
-            }
-            for k, v in rc_values.items():
-                if v:
-                    cfg[k] = v
-        except Exception as exc:  # pragma: no cover
-            logger.warning("加载 ~/.my_scriptrc.py 失败，跳过 rc", exc_info=exc)
+    # 内置默认
+    defaults, templates = {}, {}
 
-    # TOML 模板（中优先级）
-    defaults, templates = _load_templates_from_toml(toml_path)
+    # 1) 工作目录本地覆盖
+    if _LOCAL_TOML.exists():
+        defaults, templates = _load_templates_from_toml(_LOCAL_TOML)
+    # 2) 用户级全局
+    elif _USER_TOML.exists():
+        defaults, templates = _load_templates_from_toml(_USER_TOML)
+    # 3) 仓库内默认
+    else:
+        defaults, templates = _load_templates_from_toml(toml_path)
+
     if defaults.get("potcar_dir"):
         cfg["potcar_dir"] = defaults["potcar_dir"]
     if defaults.get("mpi_procs"):
@@ -113,21 +98,6 @@ def load_job_config(
             cfg["pbstitle"] = header or cfg["pbstitle"]
         if queue == "lsf":
             cfg["lsftitle"] = header or cfg["lsftitle"]
-
-    # 环境变量（最高优先级）
-    env_overrides = {
-        "vasp_std": os.environ.get("VASP_STD"),
-        "vasp_gam": os.environ.get("VASP_GAM"),
-        "potcar_dir": os.environ.get("POTCAR_DIR"),
-        "default_mpi_procs": os.environ.get("VASP_MPI_PROCS"),
-        "bashtitle": os.environ.get("JOB_HEADER_BASH"),
-        "slurmtitle": os.environ.get("JOB_HEADER_SLURM"),
-        "pbstitle": os.environ.get("JOB_HEADER_PBS"),
-        "lsftitle": os.environ.get("JOB_HEADER_LSF"),
-    }
-    for k, v in env_overrides.items():
-        if v:
-            cfg[k] = v
 
     potcar_dir = Path(cfg["potcar_dir"]) if cfg.get("potcar_dir") else None
 
