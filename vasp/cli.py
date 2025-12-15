@@ -603,7 +603,8 @@ def _run_relax_pipeline(structure_file: Path, work_dir: Path, cfg: Dict[str, Any
         prepare_only=cfg.get("prepare_only", True),
         pressure=pressure,
     )
-    return pipeline.run()
+    ok = pipeline.run()
+    return ok
 
 
 def _run_phonon_pipeline(structure_file: Path, work_dir: Path, cfg: Dict[str, Any], pressure: float):
@@ -740,7 +741,13 @@ def command_combo(args):
                 # relax
                 ok = _run_relax_pipeline(structure_file, work_root, cfg_common, p) if need_relax else True
                 if not ok:
+                    logger.error("relax 未完成或报错，已停止后续步骤")
                     return False
+
+                # 仅准备模式：生成 relax 输入后即退出，不再准备下游
+                if cfg_common.get("prepare_only", True):
+                    logger.info("prepare_only=True，仅生成 relax 输入，未准备后续 scf/phonon/md。")
+                    return True
 
                 relaxed_poscar = work_root / "POSCAR_relaxed"
                 source_structure = relaxed_poscar if relaxed_poscar.exists() else structure_file
@@ -756,6 +763,7 @@ def command_combo(args):
 
                     for f in as_completed(futures):
                         if not f.result():
+                            logger.error("子流程执行失败，已停止")
                             return False
 
                 return True
