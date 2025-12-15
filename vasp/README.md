@@ -4,6 +4,7 @@
 - 程序与赝势来源（高→低）：① 环境变量 `VASP_STD`/`VASP_GAM`、`POTCAR_DIR`、`VASP_MPI_PROCS`，脚本头可用 `JOB_HEADER_BASH/SLURM/PBS/LSF` 覆盖；② `vasp/config/job_templates.toml` 的 `defaults` 与 `templates`（按 bash/slurm/pbs/lsf 定义头）；③ 兼容旧 `~/.my_scriptrc.py` (`vaspstd_path/vaspgam_path/potcar_dir/*title/default_mpi_procs`)；④ 内置默认。
 - 命令行优先：`--potcar-dir/--potcar-type`、`-j/--job-system`、`--mpi-procs`、`--encut`、`--kspacing` 等最高优先级。`vasp/config_example.json` 仅示例，不会自动读取，只有传 `--json config_example.json` 才会加载。
 - 提交方式：`-j/--job-system` 选 `bash/slurm/pbs/lsf`；`--mpi-procs` 可为数字或完整前缀（如 `mpirun -np 16`、`srun -n 16`），未指定取配置或默认 8。
+- 赝势管理：优先使用当前工作目录下的 `potcar_lib`（支持 `potcar_lib/元素` 或 `potcar_lib/元素/POTCAR`），若缺元素且提供 `potcar_dir` 则仅在 `potcar_dir`（含 `potcar_type` 子目录）中寻找唯一候选并复制到 `potcar_lib`。若找不到或候选不唯一会报错，请手动将所需 POTCAR 放入 `potcar_lib` 后重试。
 
 ## 目录规则与执行模式
 - 结构输入：`-i` 接受单文件或目录，自动判定批量；`--structure-ext` 过滤扩展名（如 `vasp,cif,res,xsf`，默认 vasp）。
@@ -39,6 +40,7 @@
   vasp combo relax phonon dos -i ./stdlibs/ -p 0 5 -j slurm --encut 600 --kspacing 0.18 --mpi-procs "srun -n 32" --submit
   vasp combo relax md -i POSCAR --potim 1.0 --nsw 200 --submit
   ```
+- 运行前准备赝势：在当前工作目录创建 `potcar_lib`，放入选定赝势（如 `potcar_lib/Si/POTCAR`）；缺失元素时若提供 `potcar_dir` 会复制唯一匹配项到 `potcar_lib`，否则报错提示手动补齐。
 - 全功能回归示例（覆盖全部子命令与参数形态）：
   - 基础优化：`vasp relax -i POSCAR -p 0 5 -j slurm --mpi-procs "mpirun -np 32" --submit`
   - 自洽：`vasp scf -i POSCAR --kspacing 0.2 --encut 520 -j bash --mpi-procs 16 --submit`
