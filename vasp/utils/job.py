@@ -195,22 +195,23 @@ def submit_job(script_path: Path, queue_system: str) -> str:
     """提交作业，不同队列系统自动选择命令；失败时回落到本地 bash 执行。"""
     queue = (queue_system or "bash").lower()
     script_path = Path(script_path).resolve()
+    workdir = script_path.parent
 
     try:
         if queue == "bash":
-            subprocess.Popen(["bash", script_path.name], cwd=script_path.parent)
+            subprocess.Popen(["bash", script_path.name], cwd=workdir)
             return "bash"
         if queue == "slurm":
-            output = subprocess.check_output(["sbatch", str(script_path)], text=True).strip()
+            output = subprocess.check_output(["sbatch", script_path.name], cwd=workdir, text=True).strip()
             # 典型输出: "Submitted batch job 123456"
             parts = output.split()
             return parts[-1] if parts else output
         if queue == "pbs":
-            output = subprocess.check_output(["qsub", str(script_path)], text=True).strip()
+            output = subprocess.check_output(["qsub", script_path.name], cwd=workdir, text=True).strip()
             return output
         if queue == "lsf":
             cmd = f"bsub < {shlex.quote(str(script_path))}"
-            output = subprocess.check_output(["bash", "-lc", cmd], text=True).strip()
+            output = subprocess.check_output(["bash", "-lc", cmd], cwd=workdir, text=True).strip()
             # 典型输出: "Job <123456> is submitted ..."
             import re
             m = re.search(r"<(\d+)>", output)
