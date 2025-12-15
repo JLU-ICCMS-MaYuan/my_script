@@ -201,15 +201,20 @@ def submit_job(script_path: Path, queue_system: str) -> str:
             subprocess.Popen(["bash", script_path.name], cwd=script_path.parent)
             return "bash"
         if queue == "slurm":
-            output = subprocess.check_output(["sbatch", str(script_path)], text=True)
-            return output.strip()
+            output = subprocess.check_output(["sbatch", str(script_path)], text=True).strip()
+            # 典型输出: "Submitted batch job 123456"
+            parts = output.split()
+            return parts[-1] if parts else output
         if queue == "pbs":
-            output = subprocess.check_output(["qsub", str(script_path)], text=True)
-            return output.strip()
+            output = subprocess.check_output(["qsub", str(script_path)], text=True).strip()
+            return output
         if queue == "lsf":
             cmd = f"bsub < {shlex.quote(str(script_path))}"
-            output = subprocess.check_output(["bash", "-lc", cmd], text=True)
-            return output.strip()
+            output = subprocess.check_output(["bash", "-lc", cmd], text=True).strip()
+            # 典型输出: "Job <123456> is submitted ..."
+            import re
+            m = re.search(r"<(\d+)>", output)
+            return m.group(1) if m else output
     except Exception as exc:  # pragma: no cover - 运行时容错
         logger.warning("队列提交失败，改为本地 bash 运行", exc_info=exc)
         subprocess.Popen(["bash", str(script_path)], cwd=script_path.parent)
