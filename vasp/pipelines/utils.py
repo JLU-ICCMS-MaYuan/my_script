@@ -8,8 +8,10 @@ VASP Pipeline工具函数
 """
 
 import logging
+import os
+import shutil
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -217,23 +219,28 @@ def validate_structure_file(structure_file: Path) -> bool:
 
 def prepare_potcar(
     poscar_file: Path,
-    potcar_dir: Path,
+    potcar_dir: Optional[Path],
     output_file: Path,
-    potcar_type: str = "PBE"
+    potcar_type: str = "PBE",
+    potcar_lib_root: Optional[Path] = None,
 ) -> bool:
     """
-    准备POTCAR文件
+    准备POTCAR文件（用户优先选择）。
+    优先使用当前工作目录下的 potcar_lib 中已选赝势；若缺失则从 potcar_dir 搜索唯一匹配的元素目录复制到 potcar_lib。
+    若找到多个候选或找不到候选，提示用户手动放置到 potcar_lib 后重试。
 
     Parameters
     ----------
     poscar_file : Path
         POSCAR文件路径
     potcar_dir : Path
-        POTCAR库目录（包含各元素的POTCAR文件）
+        POTCAR源库目录（包含各元素的POTCAR文件），可为 None（仅使用现有 potcar_lib）
     output_file : Path
         输出的POTCAR文件路径
     potcar_type : str
         POTCAR类型：'PBE', 'LDA', 'PW91'等
+    potcar_lib_root : Path, optional
+        赝势缓存目录，默认使用当前工作目录下的 potcar_lib
 
     Returns
     -------
@@ -241,54 +248,106 @@ def prepare_potcar(
         成功返回True
     """
     try:
-        from pymatgen.io.vasp.inputs import Poscar, PotcarSingle
-
-        # 读取POSCAR获取元素列表
-        poscar = Poscar.from_file(str(poscar_file))
-        elements = [str(el) for el in poscar.structure.composition.elements]
+        elements = _parse_poscar_elements(poscar_file)
+        if not elements:
+            logger.error("未能从 POSCAR 解析元素列表")
+            return False
 
         logger.info(f"从POSCAR读取到元素: {elements}")
 
-        # 组合POTCAR
-        potcar_content = []
+        potcar_lib = potcar_lib_root or Path.cwd() / "potcar_lib"
+        potcar_lib.mkdir(parents=True, exist_ok=True)
+
+        potcar_content: List[str] = []
 
         for element in elements:
-            # 尝试多种POTCAR文件路径
-            # 1. 标准路径: potcar_dir/PBE/元素/POTCAR
-            # 2. 直接路径: potcar_dir/元素/POTCAR (如potpaw_PBE54/)
-            # 3. _sv变体
-            potcar_path = None
+            # 1) 先看 potcar_lib 是否已有选定的赝势
+            existing = _locate_potcar_in_lib(potcar_lib, element)
+            if existing:
+                logger.info(f"使用 potcar_lib 中的赝势: {existing}")
+                potcar_content.append(existing.read_text())
+                continue
 
-            possible_paths = [
-                potcar_dir / potcar_type / element / "POTCAR",  # 标准: PBE/Li/POTCAR
-                potcar_dir / element / "POTCAR",  # 直接: Li/POTCAR
-                potcar_dir / potcar_type / f"{element}_sv" / "POTCAR",  # 标准_sv
-                potcar_dir / f"{element}_sv" / "POTCAR",  # 直接_sv
-                potcar_dir / f"{element}_pv" / "POTCAR",  # _pv变体
-            ]
-
-            for path in possible_paths:
-                if path.exists():
-                    potcar_path = path
-                    break
-
-            if not potcar_path:
-                logger.error(f"未找到元素 {element} 的POTCAR，尝试了以下路径: {[str(p) for p in possible_paths]}")
+            # 2) 从 potcar_dir 搜索候选
+            if not potcar_dir:
+                logger.error(f"potcar_lib 缺少 {element}，且未提供 potcar_dir，请将所选 POTCAR 放入 {potcar_lib} 后重试")
                 return False
 
-            # 读取POTCAR内容
-            with open(potcar_path, 'r') as f:
-                potcar_content.append(f.read())
+            candidates = _search_potcar_candidates(potcar_dir, element, potcar_type)
+            if len(candidates) == 0:
+                logger.error(f"未找到元素 {element} 的POTCAR，请在 {potcar_lib} 手动放置或检查 potcar_dir")
+                return False
+            if len(candidates) > 1:
+                logger.error(
+                    f"找到多个 {element} 候选：{[str(c) for c in candidates]}，"
+                    f"请手动选择一个复制到 {potcar_lib}（命名为 {element} 或 {element}/POTCAR）后重试"
+                )
+                return False
 
-            logger.info(f"添加元素 {element} 的POTCAR")
+            chosen = candidates[0]
+            dest = potcar_lib / element
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy(chosen, dest)
+            logger.info(f"已将 {element} 赝势复制到 {dest}，后续重复计算将复用")
+            potcar_content.append(Path(dest).read_text())
 
-        # 写入合并的POTCAR
-        with open(output_file, 'w') as f:
-            f.write(''.join(potcar_content))
-
+        output_file.parent.mkdir(parents=True, exist_ok=True)
+        output_file.write_text("".join(potcar_content))
         logger.info(f"POTCAR已生成: {output_file}")
         return True
 
     except Exception as e:
         logger.error(f"准备POTCAR失败: {e}", exc_info=True)
         return False
+
+
+def _parse_poscar_elements(poscar_file: Path) -> List[str]:
+    """简单解析 POSCAR 的元素行（第6行），返回元素符号列表。"""
+    try:
+        lines = poscar_file.read_text().splitlines()
+        if len(lines) < 6:
+            return []
+        candidates = lines[5].split()
+        # 如果这一行是数字，说明不含符号，直接失败
+        if all(item.replace('.', '', 1).isdigit() for item in candidates):
+            return []
+        return candidates
+    except Exception:
+        return []
+
+
+def _locate_potcar_in_lib(potcar_lib: Path, element: str) -> Optional[Path]:
+    """
+    在 potcar_lib 中查找指定元素的 POTCAR。
+    支持两种布局：
+      - potcar_lib/Element  (文件)
+      - potcar_lib/Element/POTCAR  (目录+文件)
+    """
+    file_candidate = potcar_lib / element
+    dir_candidate = potcar_lib / element / "POTCAR"
+    if dir_candidate.exists():
+        return dir_candidate
+    if file_candidate.exists():
+        return file_candidate
+    return None
+
+
+def _search_potcar_candidates(potcar_dir: Path, element: str, potcar_type: str) -> List[Path]:
+    """
+    在 potcar_dir 下搜索元素的 POTCAR 候选。
+    匹配规则：目录名以元素符号开头，内部有 POTCAR。
+    """
+    candidates: List[Path] = []
+    base_dir = Path(potcar_dir)
+
+    # 允许 potcar_type/Element/POTCAR 或 Element*/POTCAR
+    search_roots = [base_dir, base_dir / potcar_type] if potcar_type else [base_dir]
+    for root in search_roots:
+        if not root.exists():
+            continue
+        for child in root.iterdir():
+            if child.is_dir() and child.name.lower().startswith(element.lower()):
+                pot_path = child / "POTCAR"
+                if pot_path.exists():
+                    candidates.append(pot_path)
+    return candidates
