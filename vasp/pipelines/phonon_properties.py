@@ -285,29 +285,33 @@ class PhononPropertiesPipeline(BasePipeline):
                 logger.error("未找到位移超胞，无法执行声子计算")
                 return False
 
-            # 1) 先准备所有位移输入（不提交）
-            for i in range(1, n_disp + 1):
-                disp_num = str(i).zfill(3)
-                disp_dir = self.phonon_dir / f"disp-{disp_num}"
-                disp_dir.mkdir(exist_ok=True)
+            # 1) 若未生成过输入，先准备所有位移输入
+            if not self.steps_data.get("phonon_inputs_ready"):
+                for i in range(1, n_disp + 1):
+                    disp_num = str(i).zfill(3)
+                    disp_dir = self.phonon_dir / f"disp-{disp_num}"
+                    disp_dir.mkdir(exist_ok=True)
 
-                poscar_src = self.phonon_dir / f"POSCAR-{disp_num}"
-                shutil.copy(poscar_src, disp_dir / "POSCAR")
+                    poscar_src = self.phonon_dir / f"POSCAR-{disp_num}"
+                    shutil.copy(poscar_src, disp_dir / "POSCAR")
 
-                self._write_phonon_incar(disp_dir / "INCAR")
-                self._write_kpoints(disp_dir / "KPOINTS", disp_dir / "POSCAR", self.kspacing)
+                    self._write_phonon_incar(disp_dir / "INCAR")
+                    self._write_kpoints(disp_dir / "KPOINTS", disp_dir / "POSCAR", self.kspacing)
 
-                potcar_source = self.relax_dir / "POTCAR"
-                if potcar_source.exists():
-                    shutil.copy(potcar_source, disp_dir / "POTCAR")
-                elif self.potcar_dir:
-                    if not prepare_potcar(disp_dir / "POSCAR", self.potcar_dir, disp_dir / "POTCAR", self.potcar_type):
-                        logger.error("POTCAR准备失败")
-                        return False
-                else:
-                    logger.warning(f"未找到POTCAR文件: {potcar_source}")
+                    potcar_source = self.relax_dir / "POTCAR"
+                    if potcar_source.exists():
+                        shutil.copy(potcar_source, disp_dir / "POTCAR")
+                    elif self.potcar_dir:
+                        if not prepare_potcar(disp_dir / "POSCAR", self.potcar_dir, disp_dir / "POTCAR", self.potcar_type):
+                            logger.error("POTCAR准备失败")
+                            return False
+                    else:
+                        logger.warning(f"未找到POTCAR文件: {potcar_source}")
 
-                self._write_job_script(disp_dir, f"disp{disp_num}")
+                    self._write_job_script(disp_dir, f"disp{disp_num}")
+
+                self.steps_data["phonon_inputs_ready"] = True
+                self._save_checkpoint()
 
             if self.prepare_only:
                 logger.info("prepare_only=True，已生成所有位移输入和脚本，不提交。")
