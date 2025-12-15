@@ -2,7 +2,7 @@ import os
 import shutil
 import sys
 import tempfile
-from typing import Iterable, Tuple
+from typing import Iterable, Tuple, Union
 
 from setuptools.build_meta import (
     _BuildMetaBackend,
@@ -17,7 +17,7 @@ class _PatchedBackend(_BuildMetaBackend):
     def _build_with_temp_dir(
         self,
         setup_command: Iterable[str],
-        result_extension: str | Tuple[str, ...],
+        result_extension: Union[str, Tuple[str, ...]],
         result_directory: str,
         config_settings,
         arbitrary_args: Iterable[str] = (),
