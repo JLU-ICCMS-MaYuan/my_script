@@ -13,7 +13,7 @@ import logging
 import sys
 import re
 from pathlib import Path
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Tuple
 import json
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -143,20 +143,25 @@ def run_properties_command(args, title: str, modules: list[str]):
             }
 
             if is_batch:
-                logger.info(f"批量模式: 压强 {p} GPa, 处理目录 {input_path}")
-                batch = BatchPipeline(
-                    pipeline_class=PropertiesPipeline,
-                    structures_dir=input_path,
+                logger.info(f"批量模式: 处理目录 {input_path}，压强 {pressures}")
+                structures = scan_structure_files(input_path, structure_exts)
+                if not structures:
+                    logger.error("批量模式未找到结构文件")
+                    sys.exit(1)
+
+                tasks_limit = max_workers if max_workers > 0 else 1
+                results = _run_matrix_tasks(
+                    structures=structures,
+                    pressures=pressures,
                     work_root=base_root,
+                    pipeline_class=PropertiesPipeline,
                     pipeline_kwargs=pipeline_kwargs,
-                    parallel=parallel_flag,
-                    max_workers=max_workers,
-                    structure_exts=structure_exts,
-                    pressure_label=pressure_label,
+                    tasks_limit=tasks_limit,
+                    pressure_first=False,
                 )
-                results = batch.run()
                 success_count = sum(1 for r in results if r.get("success"))
-                logger.info(f"\n批量计算完成(压强 {p} GPa): {success_count}/{len(results)} 成功")
+                logger.info(f"\n批量计算完成: {success_count}/{len(results)} 成功")
+                break
             else:
                 logger.info(f"单文件模式: {input_path}, 压强 {p} GPa")
                 pressure_dir.mkdir(parents=True, exist_ok=True)
@@ -305,6 +310,138 @@ def scan_structure_files(structures_dir: Path, structure_exts: Optional[list[str
     return sorted(files)
 
 
+def _run_single_pipeline(
+    pipeline_cls,
+    structure_file: Path,
+    work_dir: Path,
+    pipeline_kwargs: Dict[str, Any],
+    pressure: float,
+):
+    """运行单个 pipeline，返回结果字典。"""
+    try:
+        work_dir.mkdir(parents=True, exist_ok=True)
+        pipeline = pipeline_cls(
+            structure_file=structure_file,
+            work_dir=work_dir,
+            pressure=pressure,
+            **pipeline_kwargs,
+        )
+        success = pipeline.run()
+        return {"structure": structure_file, "pressure": pressure, "success": success}
+    except Exception as exc:
+        logger.error(f"{pipeline_cls.__name__} 执行异常: {exc}", exc_info=True)
+        return {"structure": structure_file, "pressure": pressure, "success": False, "error": str(exc)}
+
+
+def _run_combo_pipeline(
+    modules: List[str],
+    structure_file: Path,
+    work_dir: Path,
+    pressure: float,
+    config: Dict[str, Any],
+):
+    """针对 combo 模式的单任务执行。"""
+    try:
+        work_dir.mkdir(parents=True, exist_ok=True)
+        cfg_common = {
+            "kspacing": config.get("kspacing", 0.2),
+            "encut": config.get("encut"),
+            "potcar_dir": Path(config["potcar_dir"]) if config.get("potcar_dir") else None,
+            "potcar_type": config.get("potcar_type", "PBE"),
+            "job_system": config.get("job_system", "bash"),
+            "mpi_procs": config.get("mpi_procs"),
+            "prepare_only": not config.get("submit", False),
+        }
+
+        need_phonon = "phonon" in modules
+        property_modules = [m for m in modules if m in PROPERTY_MODULES]
+        need_md = "md" in modules
+
+        ok = _run_relax_pipeline(structure_file, work_dir, cfg_common, pressure)
+        if not ok:
+            logger.error("relax 未完成或报错，已停止后续步骤")
+            return {"structure": structure_file, "pressure": pressure, "success": False, "error": "relax failed"}
+
+        if cfg_common.get("prepare_only", True):
+            logger.info("prepare_only=True，仅生成 relax 输入，未准备后续 scf/phonon/md。")
+            return {"structure": structure_file, "pressure": pressure, "success": True}
+
+        relaxed_poscar = work_dir / "POSCAR_relaxed"
+        source_structure = relaxed_poscar if relaxed_poscar.exists() else structure_file
+
+        futures = []
+        success = True
+        with ThreadPoolExecutor(max_workers=3) as executor:
+            if need_phonon:
+                futures.append(executor.submit(_run_phonon_pipeline, source_structure, work_dir, cfg_common, pressure))
+            if property_modules:
+                futures.append(executor.submit(_run_properties_pipeline, source_structure, work_dir, property_modules, cfg_common, pressure))
+            if need_md:
+                futures.append(executor.submit(_run_md_pipeline, source_structure, work_dir, cfg_common, pressure))
+
+            for f in as_completed(futures):
+                if not f.result():
+                    success = False
+
+        if not success:
+            return {"structure": structure_file, "pressure": pressure, "success": False, "error": "sub pipeline failed"}
+        return {"structure": structure_file, "pressure": pressure, "success": True}
+    except Exception as exc:
+        logger.error(f"combo 执行异常: {exc}", exc_info=True)
+        return {"structure": structure_file, "pressure": pressure, "success": False, "error": str(exc)}
+
+
+def _run_matrix_tasks(
+    structures: List[Path],
+    pressures: List[float],
+    work_root: Path,
+    pipeline_class,
+    pipeline_kwargs: Dict[str, Any],
+    tasks_limit: int,
+    pressure_first: bool = False,
+    combo_mode: bool = False,
+):
+    """
+    结构×压强任务矩阵调度，tasks_limit 控制并发。
+    """
+    tasks: List[Tuple[Path, float]] = []
+    for s in structures:
+        for p in pressures:
+            tasks.append((s, p))
+
+    results = []
+    max_workers = max(tasks_limit, 1)
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        future_map = {}
+        for structure_file, pressure in tasks:
+            work_dir = work_root / structure_file.stem / format_pressure_dir(pressure)
+            if combo_mode:
+                future = executor.submit(
+                    _run_combo_pipeline,
+                    pipeline_kwargs["modules"],
+                    structure_file,
+                    work_dir,
+                    pressure,
+                    pipeline_kwargs["config"],
+                )
+            else:
+                future = executor.submit(
+                    _run_single_pipeline,
+                    pipeline_class,
+                    structure_file,
+                    work_dir,
+                    pipeline_kwargs,
+                    pressure,
+                )
+            future_map[future] = (structure_file, pressure)
+
+        for fut in as_completed(future_map):
+            res = fut.result()
+            results.append(res)
+            logger.info(f"完成: {res.get('structure').name} @ {res.get('pressure')} GPa -> {'成功' if res.get('success') else '失败'}")
+    return results
+
+
 def command_relax(args):
     """执行结构优化命令"""
     logger.info("=" * 80)
@@ -341,21 +478,24 @@ def command_relax(args):
             }
 
             if is_batch:
-                logger.info(f"批量模式: 压强 {p} GPa, 处理目录 {input_path}")
+                logger.info(f"批量模式: 处理目录 {input_path}，压强 {pressures}")
+                structures = scan_structure_files(input_path, structure_exts)
+                if not structures:
+                    logger.error("批量模式未找到结构文件")
+                    sys.exit(1)
 
-                batch = BatchPipeline(
-                    pipeline_class=RelaxPipeline,
-                    structures_dir=input_path,
+                tasks_limit = max_workers if max_workers > 0 else 1
+                results = _run_matrix_tasks(
+                    structures=structures,
+                    pressures=pressures,
                     work_root=base_root,
+                    pipeline_class=RelaxPipeline,
                     pipeline_kwargs=pipeline_kwargs,
-                    parallel=parallel_flag,
-                    max_workers=max_workers,
-                    structure_exts=structure_exts,
-                    pressure_label=pressure_dirname,
+                    tasks_limit=tasks_limit,
+                    pressure_first=False,
                 )
-                results = batch.run()
                 success_count = sum(1 for r in results if r.get("success"))
-                logger.info(f"\n批量计算完成(压强 {p} GPa): {success_count}/{len(results)} 成功")
+                logger.info(f"\n批量计算完成: {success_count}/{len(results)} 成功")
             else:
                 logger.info(f"单文件模式: {input_path}, 压强 {p} GPa")
                 pressure_dir = base_root / pressure_dirname
@@ -452,50 +592,49 @@ def command_phonon(args):
     max_workers = tasks or 1
 
     try:
-        for p in pressures:
-            pressure_label = format_pressure_dir(p)
-            pressure_dir = base_root / pressure_label
+        pipeline_kwargs = {
+            'supercell': final_config.get('supercell', [2, 2, 2]),
+            'method': final_config.get('method', 'disp'),
+            'kspacing': final_config.get('kspacing', 0.3),
+            'encut': final_config.get('encut'),
+            'queue_system': final_config.get('job_system', 'bash'),
+            'mpi_procs': final_config.get('mpi_procs'),
+            'potcar_dir': Path(final_config['potcar_dir']) if final_config.get('potcar_dir') else None,
+            'potcar_type': final_config.get('potcar_type', 'PBE'),
+            'prepare_only': not final_config.get('submit', False),
+            'include_relax': True,
+        }
 
-            pipeline_kwargs = {
-                'supercell': final_config.get('supercell', [2, 2, 2]),
-                'method': final_config.get('method', 'disp'),
-                'kspacing': final_config.get('kspacing', 0.3),
-                'encut': final_config.get('encut'),
-                'queue_system': final_config.get('job_system', 'bash'),
-                'mpi_procs': final_config.get('mpi_procs'),
-                'potcar_dir': Path(final_config['potcar_dir']) if final_config.get('potcar_dir') else None,
-                'potcar_type': final_config.get('potcar_type', 'PBE'),
-                'prepare_only': not final_config.get('submit', False),
-                'include_relax': True,
-                'pressure': p,
-            }
+        if is_batch:
+            logger.info(f"批量模式: 处理目录 {input_path}，压强 {pressures}")
+            structures = scan_structure_files(input_path, structure_exts)
+            if not structures:
+                logger.error("批量模式未找到结构文件")
+                sys.exit(1)
 
-            if is_batch:
-                logger.info(f"批量模式: 压强 {p} GPa, 处理目录 {input_path}")
+            tasks_limit = max_workers if max_workers > 0 else 1
+            results = _run_matrix_tasks(
+                structures=structures,
+                pressures=pressures,
+                work_root=base_root,
+                pipeline_class=PhononPropertiesPipeline,
+                pipeline_kwargs=pipeline_kwargs,
+                tasks_limit=tasks_limit,
+                pressure_first=False,
+            )
+            success_count = sum(1 for r in results if r.get('success'))
+            logger.info(f"\n批量计算完成: {success_count}/{len(results)} 成功")
 
-                batch = BatchPipeline(
-                    pipeline_class=PhononPropertiesPipeline,
-                    structures_dir=input_path,
-                    work_root=base_root,
-                    pipeline_kwargs=pipeline_kwargs,
-                    parallel=parallel_flag,
-                    max_workers=max_workers,
-                    structure_exts=structure_exts,
-                    pressure_label=pressure_label,
-                )
-
-                results = batch.run()
-
-                success_count = sum(1 for r in results if r.get('success'))
-                logger.info(f"\n批量计算完成: {success_count}/{len(results)} 成功 (压强 {p} GPa)")
-
-            else:
-                logger.info(f"单文件模式: {input_path}, 压强 {p} GPa")
+        else:
+            for p in pressures:
+                pressure_label = format_pressure_dir(p)
+                pressure_dir = base_root / pressure_label
                 pressure_dir.mkdir(parents=True, exist_ok=True)
 
                 pipeline = PhononPropertiesPipeline(
                     structure_file=input_path,
                     work_dir=pressure_dir,
+                    pressure=p,
                     **pipeline_kwargs
                 )
 
@@ -720,67 +859,26 @@ def command_combo(args):
         structures = [input_path]
 
     try:
-        for p in pressures:
-            pressure_label = format_pressure_dir(p)
-            logger.info(f"处理压强: {pressure_label}")
-
-            def worker(structure_file: Path):
-                work_root = Path.cwd() / structure_file.stem / pressure_label
-                work_root.mkdir(parents=True, exist_ok=True)
-
-                cfg_common = {
-                    "kspacing": final_config.get("kspacing", 0.2),
-                    "encut": final_config.get("encut"),
-                    "potcar_dir": Path(final_config["potcar_dir"]) if final_config.get("potcar_dir") else None,
-                    "potcar_type": final_config.get("potcar_type", "PBE"),
-                    "job_system": final_config.get("job_system", "bash"),
-                    "mpi_procs": final_config.get("mpi_procs"),
-                    "prepare_only": not final_config.get("submit", False),
-                }
-
-                # relax
-                ok = _run_relax_pipeline(structure_file, work_root, cfg_common, p) if need_relax else True
-                if not ok:
-                    logger.error("relax 未完成或报错，已停止后续步骤")
-                    return False
-
-                # 仅准备模式：生成 relax 输入后即退出，不再准备下游
-                if cfg_common.get("prepare_only", True):
-                    logger.info("prepare_only=True，仅生成 relax 输入，未准备后续 scf/phonon/md。")
-                    return True
-
-                relaxed_poscar = work_root / "POSCAR_relaxed"
-                source_structure = relaxed_poscar if relaxed_poscar.exists() else structure_file
-
-                futures = []
-                with ThreadPoolExecutor(max_workers=3) as executor:
-                    if need_phonon:
-                        futures.append(executor.submit(_run_phonon_pipeline, source_structure, work_root, cfg_common, p))
-                    if property_modules:
-                        futures.append(executor.submit(_run_properties_pipeline, source_structure, work_root, property_modules, cfg_common, p))
-                    if need_md:
-                        futures.append(executor.submit(_run_md_pipeline, source_structure, work_root, cfg_common, p))
-
-                    for f in as_completed(futures):
-                        if not f.result():
-                            logger.error("子流程执行失败，已停止")
-                            return False
-
-                return True
-
-            if tasks > 1 and len(structures) > 1:
-                with ThreadPoolExecutor(max_workers=tasks) as executor:
-                    future_map = {executor.submit(worker, s): s for s in structures}
-                    success = True
-                    for fut in as_completed(future_map):
-                        if not fut.result():
-                            success = False
-                    if not success:
-                        sys.exit(1)
-            else:
-                for s in structures:
-                    if not worker(s):
-                        sys.exit(1)
+        logger.info(f"批量模式: 处理目录 {input_path}，压强 {pressures}")
+        tasks_limit = tasks if tasks > 0 else 1
+        results = _run_matrix_tasks(
+            structures=structures,
+            pressures=pressures,
+            work_root=base_root,
+            pipeline_class=None,  # combo 特殊处理
+            pipeline_kwargs={
+                "modules": modules,
+                "need_phonon": need_phonon,
+                "property_modules": property_modules,
+                "need_md": need_md,
+                "config": final_config,
+            },
+            tasks_limit=tasks_limit,
+            pressure_first=False,
+            combo_mode=True,
+        )
+        success_count = sum(1 for r in results if r.get("success"))
+        logger.info(f"\n批量组合计算完成: {success_count}/{len(results)} 成功")
 
     except Exception as exc:
         logger.error(f"\n计算异常: {exc}", exc_info=True)
