@@ -327,6 +327,9 @@ class PropertiesPipeline(BasePipeline):
 
         # 复制文件
         shutil.copy(self.scf_dir / "POSCAR", self.dos_dir / "POSCAR")
+        if not (self.scf_dir / "CHGCAR").exists():
+            logger.error("缺少 CHGCAR，DOS 无法继续")
+            return False
         shutil.copy(self.scf_dir / "CHGCAR", self.dos_dir / "CHGCAR")
         shutil.copy(self.scf_dir / "POTCAR", self.dos_dir / "POTCAR")
 
@@ -359,6 +362,9 @@ class PropertiesPipeline(BasePipeline):
 
         # 复制文件
         shutil.copy(self.scf_dir / "POSCAR", self.band_dir / "POSCAR")
+        if not (self.scf_dir / "CHGCAR").exists():
+            logger.error("缺少 CHGCAR，Band 无法继续")
+            return False
         shutil.copy(self.scf_dir / "CHGCAR", self.band_dir / "CHGCAR")
         shutil.copy(self.scf_dir / "POTCAR", self.band_dir / "POTCAR")
 

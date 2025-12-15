@@ -27,11 +27,12 @@ logger = logging.getLogger(__name__)
 
 class StepStatus(str, Enum):
     """步骤状态枚举"""
-    PENDING = "pending"
-    RUNNING = "running"
-    COMPLETED = "completed"
-    FAILED = "failed"
-    SKIPPED = "skipped"
+    PENDING = "pending"       # 未执行
+    PREPARED = "prepared"     # 仅生成输入
+    RUNNING = "running"       # 正在执行
+    COMPLETED = "completed"   # 已完成且有产物
+    FAILED = "failed"         # 失败
+    SKIPPED = "skipped"       # 跳过
 
 
 class BasePipeline(ABC):
@@ -48,7 +49,7 @@ class BasePipeline(ABC):
         work_dir: Path,
         checkpoint_file: Optional[Path] = None,
         report_file: Optional[Path] = None,
-        max_retries: int = 3,
+        max_retries: int = 1,
         retry_delay: int = 60,
         prepare_only: bool = False,
         pressure: float = 0.0,
@@ -152,10 +153,12 @@ class BasePipeline(ABC):
             self.steps_status[step_name] = StepStatus.COMPLETED
             self._save_checkpoint()
 
-            # 仅准备模式：生成输入后退出
+            # 仅准备模式：生成输入但不提交，仅标记为 PREPARED
             if self.prepare_only:
-                logger.info("prepare_only=True，本次仅生成输入和脚本，不提交。")
-                break
+                self.steps_status[step_name] = StepStatus.PREPARED
+                self._save_checkpoint()
+                logger.info("prepare_only=True，本次仅生成输入和脚本，不提交。继续准备后续步骤的输入。")
+                continue
 
         logger.info(f"\n{'='*60}")
         logger.info("Pipeline执行完成！")
