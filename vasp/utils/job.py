@@ -161,6 +161,20 @@ def submit_job(script_path: Path, queue_system: str) -> str:
     queue = (queue_system or "bash").lower()
     script_path = Path(script_path).resolve()
     workdir = script_path.parent
+    jobid_file = workdir / "job_id.txt"
+
+    # 如果已有作业ID且仍在运行，直接复用，不再重复提交
+    if jobid_file.exists():
+        try:
+            existing_id = jobid_file.read_text().strip()
+            if existing_id:
+                from vasp.utils.job import is_job_active  # 避免循环导入
+                active = is_job_active(existing_id, queue_system)
+                if active:
+                    logger.info(f"检测到目录已有运行中的任务 {existing_id}，跳过重复提交")
+                    return existing_id
+        except Exception:
+            pass
 
     attempts = 0
     while True:
@@ -178,9 +192,12 @@ def submit_job(script_path: Path, queue_system: str) -> str:
                 ).strip()
                 # 典型输出: "Submitted batch job 123456"
                 parts = output.split()
-                return parts[-1] if parts else output
+                job_id = parts[-1] if parts else output
+                jobid_file.write_text(str(job_id))
+                return job_id
             if queue == "pbs":
                 output = subprocess.check_output(["qsub", script_path.name], cwd=workdir, text=True).strip()
+                jobid_file.write_text(str(output))
                 return output
             if queue == "lsf":
                 cmd = f"bsub < {shlex.quote(str(script_path))}"
@@ -188,7 +205,9 @@ def submit_job(script_path: Path, queue_system: str) -> str:
                 # 典型输出: "Job <123456> is submitted ..."
                 import re
                 m = re.search(r"<(\d+)>", output)
-                return m.group(1) if m else output
+                job_id = m.group(1) if m else output
+                jobid_file.write_text(str(job_id))
+                return job_id
         except subprocess.CalledProcessError as exc:
             msg = exc.output if hasattr(exc, "output") else str(exc)
             if queue == "slurm" and "AssocMaxSubmitJobLimit" in msg:

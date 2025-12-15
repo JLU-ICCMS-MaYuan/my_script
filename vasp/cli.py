@@ -360,8 +360,8 @@ def _run_combo_pipeline(
         property_modules = [m for m in modules if m in PROPERTY_MODULES]
         need_md = "md" in modules
 
-        ok = _run_relax_pipeline(structure_file, work_dir, cfg_common, pressure)
-        if not ok:
+        relax_res = _run_relax_pipeline(structure_file, work_dir, cfg_common, pressure)
+        if not relax_res.get("success"):
             logger.error("relax 未完成或报错，已停止后续步骤")
             return {"structure": structure_file, "pressure": pressure, "success": False, "error": "relax failed"}
 
@@ -369,8 +369,8 @@ def _run_combo_pipeline(
             logger.info("prepare_only=True，仅生成 relax 输入，未准备后续 scf/phonon/md。")
             return {"structure": structure_file, "pressure": pressure, "success": True}
 
-        relaxed_poscar = work_dir / "POSCAR_relaxed"
-        source_structure = relaxed_poscar if relaxed_poscar.exists() else structure_file
+        relaxed_poscar = relax_res.get("primitive") or relax_res.get("relaxed") or structure_file
+        source_structure = relaxed_poscar if Path(relaxed_poscar).exists() else structure_file
 
         futures = []
         success = True
@@ -746,7 +746,12 @@ def _run_relax_pipeline(structure_file: Path, work_dir: Path, cfg: Dict[str, Any
         pressure=pressure,
     )
     ok = pipeline.run()
-    return ok
+    return {
+        "success": ok,
+        "relaxed": work_dir / "POSCAR_relaxed",
+        "primitive": Path(pipeline.steps_data.get("primitive_structure")) if pipeline.steps_data.get("primitive_structure") else None,
+        "conventional": Path(pipeline.steps_data.get("conventional_structure")) if pipeline.steps_data.get("conventional_structure") else None,
+    }
 
 
 def _run_phonon_pipeline(structure_file: Path, work_dir: Path, cfg: Dict[str, Any], pressure: float):

@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import List, Dict, Any, Optional, Tuple
 
 from ase.io import read as ase_read, write as ase_write
+import spglib
 
 logger = logging.getLogger(__name__)
 
@@ -225,6 +226,41 @@ def ensure_poscar(src: Path, dest: Path) -> Path:
         logger.error(f"转换结构为 POSCAR 失败: {src} -> {dest}，错误: {exc}")
         raise
     return dest
+
+
+def find_symmetry(poscar: Path, output_dir: Path, symprec: float = 1e-3) -> tuple[Optional[Path], Optional[Path], Optional[str]]:
+    """
+    使用 spglib 生成原胞和标准晶胞，并返回路径与空间群。
+    """
+    try:
+        atoms = ase_read(poscar)
+        cell = (atoms.get_cell(), atoms.get_scaled_positions(), atoms.get_atomic_numbers())
+        spacegroup = spglib.get_spacegroup(cell, symprec=symprec)
+
+        prim_lat, prim_pos, prim_num = spglib.find_primitive(cell, symprec=symprec)
+        std_lat, std_pos, std_num = spglib.standardize_cell(cell, symprec=symprec)
+
+        prim_atoms = ase_read(poscar)
+        prim_atoms.set_cell(prim_lat, scale_atoms=False)
+        prim_atoms.set_scaled_positions(prim_pos)
+
+        std_atoms = ase_read(poscar)
+        std_atoms.set_cell(std_lat, scale_atoms=False)
+        std_atoms.set_scaled_positions(std_pos)
+
+        output_dir.mkdir(parents=True, exist_ok=True)
+        prim_path = output_dir / "POSCAR_primitive"
+        std_path = output_dir / "POSCAR_conventional"
+        ase_write(prim_path, prim_atoms, format="vasp", direct=True)
+        ase_write(std_path, std_atoms, format="vasp", direct=True)
+
+        info_file = output_dir / "symmetry.txt"
+        info_file.write_text(f"Spacegroup: {spacegroup}\nSymprec: {symprec}\nPrimitive: {prim_path.name}\nConventional: {std_path.name}\n")
+
+        return prim_path, std_path, spacegroup
+    except Exception as exc:
+        logger.warning(f"对称性分析失败: {exc}")
+        return None, None, None
 
 
 def prepare_potcar(
