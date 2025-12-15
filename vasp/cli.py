@@ -322,6 +322,9 @@ def command_relax(args):
     pressures = parse_pressures(final_config.get("pressure"))
     base_root = derive_work_root(input_path)
     is_batch = detect_batch_mode(input_path, structure_exts)
+    tasks = final_config.get("tasks")
+    parallel_flag = tasks is not None and tasks > 1
+    max_workers = tasks or 1
 
     try:
         for p in pressures:
