@@ -191,7 +191,7 @@ def submit_job(script_path: Path, queue_system: str) -> str:
                 return m.group(1) if m else output
         except subprocess.CalledProcessError as exc:
             msg = exc.output if hasattr(exc, "output") else str(exc)
-            if queue == "slurm" and "AssocMaxSubmitJobLimit" in msg and attempts < 10:
+            if queue == "slurm" and "AssocMaxSubmitJobLimit" in msg:
                 logger.warning("提交超出作业数限制，等待20秒后重试（第 %d 次）...", attempts)
                 time.sleep(20)
                 continue
