@@ -112,7 +112,9 @@ def read_frequencies(path: Path) -> Tuple[List[Tuple[float, float, float]], List
     idx = 0
     while idx < len(lines):
         q_tokens = [float(x) for x in lines[idx].split()]
-        if len(q_tokens) != 3:
+        if len(q_tokens) == 3 or len(q_tokens) == 4:
+            pass
+        else:
             raise ValueError("Malformed q-point entry in frequency file.")
         q_points.append(tuple(q_tokens))
         idx += 1
