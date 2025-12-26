@@ -514,6 +514,32 @@ if [ -d "$xsf" ];then
 fi
 ```
 
+##### <span style="font-size: 18px; color: lightblue;"> 5.6 RELAX/task*.sh关于slurm脚本时长设置过短，会导致脚本提前结束，导致acnn_ckrelax没有被执行，没有优化好的结构被提取出来。
+
+下面的脚本可以把提取优化好的结构的代码输出到一个脚本中`acnn_ckrelax.sh`, 这个脚本原本只有slurm的头，除此之外，没有别的东西了。
+
+```shell
+ for i in task{0..199}.sh; do echo $i;  grep -E "opt_dir=|export opt_dir|acnn_ckrelax|echo CHECK_DONE" $i >> acnn_ckrelax.sh; echo "#-----------------------------" >> acnn_ckrelax.sh;  done
+```
+
+**特别的：`#SBATCH --job-name=ACNNCHECKCeScH`必须被设置到acnn_ckrelax.sh中。这样就可以在auto中设置：`acnn_wait ACNNCHECKCeScH`**
+```shell
+acnn_wait ACNNCHECKCeScH
+
+cd RELAX
+./ppr >> log 2>&1
+cd ..
+
+for l in $(seq 32 50);do
+  ...
+  ...
+done
+```
+最后就可以提交任务了。
+```shell
+ sbatch acnn_ckrelax.sh
+```
+
 
 ##### <span style="font-size: 20px; color: lightblue;"> 8. 关于PD目录某一代IT${IT}没有新一代结构信息
 
