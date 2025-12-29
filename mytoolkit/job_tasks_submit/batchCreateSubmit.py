@@ -8,13 +8,13 @@ import glob
 
 header_forChem = """#!/bin/bash -l
 #SBATCH --job-name=vasp
-#SBATCH --partition=phys
+#SBATCH --partition=cpu
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=1
 #SBATCH --ntasks-per-node=56
 #SBATCH --error=%j.err
 #SBATCH --output=%j.out
-#SBATCH --account=mslab
+#SBATCH --exclude=cpu58,cpu9
 
 source /public/env/intel2021
 ulimit -v unlimited
