@@ -33,7 +33,7 @@ def set_more_args(parser: ArgumentParser):
         nargs='+',  # 接受一个或多个参数
         dest='presses',
         help="please tell me your press values (in GPa), separated by spaces; default is '100 200 300'",
-        default=None,
+        default=[0.0],
     )
     # 指明工作目录
     parser.add_argument(
