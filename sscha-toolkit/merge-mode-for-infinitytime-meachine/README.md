@@ -327,3 +327,7 @@ DETAILS OF ERROR:
     (They should be both 3)
 
 ```
+
+### <span style="color:yellow"> 7.3 ValueError: Error, resubmissions exceeded the maximum number of 10
+
+这个报错基本是因为完成了指定数量的全部结构的自洽，但是某些自洽在跑完全部自洽步数后依然不收敛。所以需要做的唯一一件事就是检查哪些文件自洽没收敛。
