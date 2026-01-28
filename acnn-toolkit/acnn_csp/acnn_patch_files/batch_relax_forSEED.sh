@@ -172,13 +172,11 @@ for src in "${INPUTS[@]}"; do
     workdir="$SCRIPT_DIR/$work"
     if [[ -d "$workdir" ]]; then
         warn "$workdir 已存在，执行覆盖"
-        rm -rf "$workdir"
     fi
     mkdir -p "$workdir"
 
     if ! convert_structure "$src" "$workdir/POSCAR"; then
         warn "$bname: 不支持的格式，跳过"
-        rm -rf "$workdir"
         continue
     fi
 
