@@ -3,7 +3,7 @@
 echo "NOTE --------------------"
 echo "    This script have to run in eband directory !"
 # 设置新的费米能级
-new_fermi_energy=`grep E-fermi ../scf/OUTCAR | awk '{print $3}'`
+new_fermi_energy=`grep E-fermi ../vasp_scf/OUTCAR | awk '{print $3}'`
 echo "efermi =" $new_fermi_energy
 
 # 打开DOSCAR文件
