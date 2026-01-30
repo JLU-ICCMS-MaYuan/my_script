@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import argparse
 import re
 import sys
 from pathlib import Path
@@ -6,6 +7,8 @@ from typing import Dict, List, Tuple
 
 DEFAULT_INPUT = "/home/mayuan/code/my_script/test/acnn/cam"
 DEFAULT_OUTPUT_DIR = "/home/mayuan/code/my_script/test/acnn"
+DEFAULT_EBH_LOWER = 0.0
+DEFAULT_EBH_UPPER = 0.05
 
 FORMULA_RE = re.compile(r"^([A-Z][a-z]?\d*)+$")
 ELEMENT_RE = re.compile(r"([A-Z][a-z]?)(\d*)")
@@ -64,9 +67,40 @@ def parse_lines(lines: List[str]) -> Tuple[List[Tuple[int, str, Dict[str, int], 
     return parsed, warnings
 
 
+def parse_args(argv: List[str]) -> Tuple[Path, Path, float, float]:
+    parser = argparse.ArgumentParser(
+        description="从 cam 文件提取化学式与能量并生成 stable/unstable CSV。",
+    )
+    parser.add_argument(
+        "input_path",
+        nargs="?",
+        default=DEFAULT_INPUT,
+        help="cam 文件路径",
+    )
+    parser.add_argument(
+        "output_dir",
+        nargs="?",
+        default=DEFAULT_OUTPUT_DIR,
+        help="输出目录",
+    )
+    parser.add_argument(
+        "-ebh",
+        nargs=2,
+        type=float,
+        metavar=("LOWER", "UPPER"),
+        default=[DEFAULT_EBH_LOWER, DEFAULT_EBH_UPPER],
+        help="不稳定相筛选范围：大于下限且小于等于上限",
+    )
+    args = parser.parse_args(argv)
+
+    input_path = Path(args.input_path)
+    output_dir = Path(args.output_dir)
+    ebh_lower, ebh_upper = float(args.ebh[0]), float(args.ebh[1])
+    return input_path, output_dir, ebh_lower, ebh_upper
+
+
 def main() -> int:
-    input_path = Path(sys.argv[1] if len(sys.argv) > 1 else DEFAULT_INPUT)
-    output_dir = Path(sys.argv[2] if len(sys.argv) > 2 else DEFAULT_OUTPUT_DIR)
+    input_path, output_dir, ebh_lower, ebh_upper = parse_args(sys.argv[1:])
 
     if not input_path.exists():
         print(f"输入文件不存在: {input_path}", file=sys.stderr)
@@ -91,7 +125,7 @@ def main() -> int:
 
         if abs(enthalpy_value) <= 1e-8:
             stable_rows.append(line)
-        elif 0 < enthalpy_value <= 0.05:
+        elif enthalpy_value > ebh_lower and enthalpy_value <= ebh_upper:
             unstable_rows.append(line)
 
     output_dir.mkdir(parents=True, exist_ok=True)
