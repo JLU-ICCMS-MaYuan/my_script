@@ -53,11 +53,17 @@ if (!fs.existsSync(inputPath)) {
 const content = fs.readFileSync(inputPath, "utf8");
 const lines = content.split(/\r?\n/);
 
-const header = "Number,formula,H,Lu,Li,enthalpy";
-const stableRows: string[] = [header];
-const unstableRows: string[] = [header];
+type ParsedLine = {
+  number: number;
+  formula: string;
+  enthalpyValue: number;
+  enthalpyText: string;
+  counts: Record<string, number>;
+};
 
 const warnings: string[] = [];
+const parsedLines: ParsedLine[] = [];
+const elementSet = new Set<string>();
 
 for (let index = 0; index < lines.length; index += 1) {
   const rawLine = lines[index];
@@ -85,17 +91,33 @@ for (let index = 0; index < lines.length; index += 1) {
   }
 
   const counts = parseFormulaCounts(formula);
-  const hCount = counts.H ?? 0;
-  const luCount = counts.Lu ?? 0;
-  const liCount = counts.Li ?? 0;
+  Object.keys(counts).forEach((element) => elementSet.add(element));
 
-  const number = index + 1;
-  const enthalpyText = normalizeEnthalpy(enthalpyValue, enthalpyToken);
-  const row = `${number},${formula},${hCount},${luCount},${liCount},${enthalpyText}`;
+  parsedLines.push({
+    number: index + 1,
+    formula,
+    enthalpyValue,
+    enthalpyText: normalizeEnthalpy(enthalpyValue, enthalpyToken),
+    counts,
+  });
+}
 
-  if (Math.abs(enthalpyValue) <= 1e-8) {
+const elements = Array.from(elementSet).sort((a, b) =>
+  a.localeCompare(b, "en"),
+);
+const header = ["Number", "formula", ...elements, "enthalpy"].join(",");
+const stableRows: string[] = [header];
+const unstableRows: string[] = [header];
+
+for (const line of parsedLines) {
+  const elementCounts = elements.map((element) => line.counts[element] ?? 0);
+  const row = [line.number, line.formula, ...elementCounts, line.enthalpyText].join(
+    ",",
+  );
+
+  if (Math.abs(line.enthalpyValue) <= 1e-8) {
     stableRows.push(row);
-  } else if (enthalpyValue > 0 && enthalpyValue <= 0.05) {
+  } else if (line.enthalpyValue > 0 && line.enthalpyValue <= 0.05) {
     unstableRows.push(row);
   }
 }
