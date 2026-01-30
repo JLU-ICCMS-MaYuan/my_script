@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Dict, List, Tuple
 
 DEFAULT_INPUT = "/home/mayuan/code/my_script/test/acnn/cam"
-DEFAULT_OUTPUT_DIR = "/home/mayuan/code/my_script/test/acnn"
+DEFAULT_OUTPUT_DIR = "."
 DEFAULT_EBH_LOWER = 0.0
 DEFAULT_EBH_UPPER = 0.05
 
