@@ -529,12 +529,12 @@ def main():
     all_dir_names = []
     for i, comp in enumerate(compositions):
         current_composition = np.array(comp)
-        dir_name = "".join([f\"{el}{num}\" for el, num in zip(args.elements, current_composition)])
+        dir_name = "".join([f"{el}{num}" for el, num in zip(args.elements, current_composition)])
         all_dir_names.append(dir_name)
 
         log_formula = format_formula_for_log(config, current_composition)
         log_text = log_formula if log_formula else dir_name
-        print(f\"[{i+1}/{total_files}] Generating input for {log_text}...\")
+        print(f"[{i+1}/{total_files}] Generating input for {log_text}...")
         generate_input_file(
             elements=args.elements,
             radii=np.array(args.radii),
@@ -549,11 +549,11 @@ def main():
         output_filename = "composition.dat"
         with open(output_filename, 'w') as f:
             for name in all_dir_names:
-                f.write(f\"./{name}\\n\")
-        print(f\"\\nSuccessfully created all {total_files} input files.\")
-        print(f\"All {len(all_dir_names)} directory paths have been written to '{output_filename}'.\")
+                f.write(f"./{name}\n")
+        print(f"\nSuccessfully created all {total_files} input files.")
+        print(f"All {len(all_dir_names)} directory paths have been written to '{output_filename}'.")
     except IOError as e:
-        print(f\"\\nWarning: Could not write to file '{output_filename}': {e}\")
+        print(f"\nWarning: Could not write to file '{output_filename}': {e}")
         print(\"Input files were still created successfully.\")
 
 
