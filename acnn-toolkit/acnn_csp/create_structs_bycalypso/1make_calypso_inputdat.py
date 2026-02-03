@@ -554,7 +554,7 @@ def main():
         print(f"All {len(all_dir_names)} directory paths have been written to '{output_filename}'.")
     except IOError as e:
         print(f"\nWarning: Could not write to file '{output_filename}': {e}")
-        print(\"Input files were still created successfully.\")
+        print("Input files were still created successfully.")
 
 
 if __name__ == "__main__":
