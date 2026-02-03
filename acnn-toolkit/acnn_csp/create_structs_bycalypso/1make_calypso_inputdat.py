@@ -66,10 +66,6 @@ def setup_arg_parser():
     )
     # --- Core Arguments ---
     parser.add_argument(
-        '-e', '--elements', nargs='+', required=True, type=str,
-        help="List of element names.\nExample: -e Si O"
-    )
-    parser.add_argument(
         '-r', '--radii', nargs='+', required=True, type=float,
         help="List of covalent radii for each element (in Bohr).\nRequired for distance matrix.\nExample: -r 1.11 0.60"
     )
@@ -512,13 +508,11 @@ def main():
     if args.method == 'uspex' and args.pressure is None:
         parser.error("--pressure (-P) is required when using --method uspex")
 
-    num_elements = len(args.elements)
-    if not (len(args.radii) == num_elements and len(config.symbols) == num_elements):
-        print("Error: The number of arguments for --elements (-e), --radii (-r), and --atom/--block must be the same.")
+    num_elements = len(config.symbols)
+    if len(args.radii) != num_elements:
+        print("Error: The number of arguments for --radii (-r) must match the element count from --atom/--block.")
         sys.exit(1)
-    if args.elements != config.symbols:
-        print("Error: --elements 的顺序必须与 --atom/--block 中元素顺序一致。")
-        sys.exit(1)
+    elements = config.symbols
 
     write_parameter_log(args)
 
@@ -529,14 +523,14 @@ def main():
     all_dir_names = []
     for i, comp in enumerate(compositions):
         current_composition = np.array(comp)
-        dir_name = "".join([f"{el}{num}" for el, num in zip(args.elements, current_composition)])
+        dir_name = "".join([f"{el}{num}" for el, num in zip(elements, current_composition)])
         all_dir_names.append(dir_name)
 
         log_formula = format_formula_for_log(config, current_composition)
         log_text = log_formula if log_formula else dir_name
         print(f"[{i+1}/{total_files}] Generating input for {log_text}...")
         generate_input_file(
-            elements=args.elements,
+            elements=elements,
             radii=np.array(args.radii),
             composition=current_composition,
             popsize=args.popsize,
