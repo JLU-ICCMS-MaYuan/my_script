@@ -41,6 +41,7 @@ class GenerationConfig:
     block_atom_limit: Optional[int]
     mh_range: Optional[Tuple[float, float]]
     max_atoms: Optional[int]
+    reducible_divisors: Optional[Tuple[int, ...]]
 
 
 def parse_element_spec(spec: str) -> Tuple[str, range]:
@@ -243,6 +244,13 @@ def build_argument_parser() -> argparse.ArgumentParser:
         metavar="ELEMENT",
         help="指定输出配比的元素顺序，例如 -od Ce Mg H",
     )
+    parser.add_argument(
+        "--require-reducible",
+        nargs="+",
+        type=int,
+        metavar="DIVISOR",
+        help="仅保留所有元素计数可同时被指定因子整除的配比，例如 --require-reducible 4 6 8",
+    )
     return parser
 
 
@@ -277,6 +285,11 @@ def build_config(parser: argparse.ArgumentParser, args: argparse.Namespace) -> G
         parser.error("每个配比的结构数 (-n/--num-structures) 必须为正整数")
     if args.natom is not None and args.natom <= 0:
         parser.error("--natom 需要是正整数")
+    reducible_divisors: Optional[Tuple[int, ...]] = None
+    if args.require_reducible:
+        if any(divisor <= 1 for divisor in args.require_reducible):
+            parser.error("--require-reducible 需要大于 1 的正整数")
+        reducible_divisors = tuple(args.require_reducible)
 
     mode: Optional[str] = None
     spec_map: List[Tuple[str, range]] = []
@@ -335,6 +348,7 @@ def build_config(parser: argparse.ArgumentParser, args: argparse.Namespace) -> G
         block_atom_limit=args.natom,
         mh_range=mh_range,
         max_atoms=max_atoms,
+        reducible_divisors=reducible_divisors,
     )
 
 
@@ -362,6 +376,14 @@ def counts_in_mh_range(config: GenerationConfig, counts: Sequence[int]) -> bool:
     return low <= ratio <= high
 
 
+def counts_reducible(counts: Sequence[int], divisors: Optional[Tuple[int, ...]]) -> bool:
+    """判断计数是否可被任一因子整体约分。"""
+
+    if not divisors:
+        return True
+    return any(all(count % divisor == 0 for count in counts) for divisor in divisors)
+
+
 def filter_formulas(
     config: GenerationConfig,
     base_iter: Iterable[Tuple[int, ...]],
@@ -381,6 +403,8 @@ def filter_formulas(
         if config.max_atoms is not None and sum(final_counts) > config.max_atoms:
             continue
         if not counts_in_mh_range(config, final_counts):
+            continue
+        if not counts_reducible(final_counts, config.reducible_divisors):
             continue
         yield formula
 
